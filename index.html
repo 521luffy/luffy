@@ -120,10 +120,8 @@ textarea { resize: none; }
 .wb-title { font-weight: bold; color: #333; margin-bottom: 8px; font-size: 15px; }
 .wb-prev { font-size: 13px; color: #666; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 
-.sticker-drawer { position: absolute; bottom: 0; left: 0; width: 100%; height: 55%; background: #f5f6f8; border-top-left-radius: 20px; border-top-right-radius: 20px;
-box-shadow: 0 -4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; z-index: 100; transform: translateY(150%); opacity: 0; pointer-events: none; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-box-sizing: border-box; }
-.sticker-drawer.show { transform: translateY(0); opacity: 1; pointer-events: auto; }
+.sticker-drawer { position: absolute; bottom: 0; left: 0; width: 100%; height: 55%; background: #f5f6f8; border-top-left-radius: 20px; border-top-right-radius: 20px; box-shadow: 0 -4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; z-index: -10; visibility: hidden; transform: translateY(150%); opacity: 0; pointer-events: none; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); box-sizing: border-box; } .sticker-drawer.show { transform: translateY(0); opacity: 1; pointer-events: auto; z-index: 100; visibility: visible; }
+
 
 .sticker-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: #eef2ff; border-top-left-radius: 20px; border-top-right-radius: 20px; flex-shrink: 0; }
 .sticker-header span { color: #4a6ee0; font-size: 13px; cursor: pointer; white-space: nowrap; }
@@ -184,10 +182,8 @@ box-sizing: border-box; }
 .log-summon-btn:active { transform: scale(0.95); }
 .log-comment-area { background: #f9f9f9; padding: 12px; border-radius: 12px; font-size: 13px; color: #555; border-left: 3px solid #6c5ce7;     margin-top: 10px; }
 #btnNewMenu { padding: 5px 15px; margin-left: -5px; margin-right: -5px; }
-.menu-drawer { position: absolute; bottom: 85px; left: 15px;
-width: calc(100% - 30px); height: 55%; background: #f5f6f8; border-radius: 24px; box-shadow: 0 5px 25px rgba(0,0,0,0.15); display: flex; flex-direction: column;
-z-index: 95; transform: translateY(150%); opacity: 0; pointer-events: none; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); box-sizing: border-box; padding: 25px 20px; }
-.menu-drawer.show { transform: translateY(0); opacity: 1; pointer-events: auto; }
+.menu-drawer { position: absolute; bottom: 85px; left: 15px; width: calc(100% - 30px); height: 55%; background: #f5f6f8; border-radius: 24px; box-shadow: 0 5px 25px rgba(0,0,0,0.15); display: flex; flex-direction: column; z-index: -10; visibility: hidden; transform: translateY(150%); opacity: 0; pointer-events: none; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); box-sizing: border-box; padding: 25px 20px; } .menu-drawer.show { transform: translateY(0); opacity: 1; pointer-events: auto; z-index: 95; visibility: visible; }
+
 
 .menu-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px 10px; align-content: start; }
 .menu-icon-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; transition: 0.2s; }
@@ -981,14 +977,17 @@ function cmp(id, key) {
         r.onload = ev => {
             let img = new Image();
             img.onload = () => {
-                let cvs = document.createElement(`canvas`), ctx = cvs.getContext(`2d`);
-                let maxW = (key === 'bgI') ? 400 : 150; 
-                let maxH = (key === 'bgI') ? 700 : 150;
+                                let cvs = document.createElement(`canvas`), ctx = cvs.getContext(`2d`);
+                let maxW = (key === 'bgI') ? 800 : 300; 
+                let maxH = (key === 'bgI') ? 1400 : 300;
                 let w = img.width, h = img.height;
-                if(w>h && w>maxW) { h*=maxW/w; w=maxW; } else if(h>maxH) { w*=maxH/h; h=maxH; }
-                cvs.width = w; cvs.height = h; ctx.drawImage(img, 0, 0, w, h);
+                if(w>h && w>maxW) { h*=maxW/w; w=maxW; } else if(h>maxH) { w*=maxH/h; h=maxH;
+                }
+                cvs.width = w;
+                cvs.height = h; ctx.drawImage(img, 0, 0, w, h);
                 try {
-                    ls.setItem(key, cvs.toDataURL(`image/webp`, 0.4));
+                    ls.setItem(key, cvs.toDataURL(`image/webp`, 0.8));
+
                     applyVis(); alert(`应用成功！`);
                 } catch(err) {
                     alert(`本地空间不足啦！请先删除一些不要的动态或表情包再试试。`);
