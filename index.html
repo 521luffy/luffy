@@ -1944,19 +1944,19 @@ $(`btnLemon`).onclick = async () =>{
     if($(`cfgAiP`).value) sys += `你的设定：` + $(`cfgAiP`).value + `\n`;
     if($(`cfgMyName`).value) sys += `我的名字：` + $(`cfgMyName`).value + `\n`;
     if($(`cfgMyP`).value) sys += `我的设定：` + $(`cfgMyP`).value + `\n`;
-    if($(`cfgTime`).checked) sys += `当前现实时间：` + updTime().toLocaleString() + `，请保持感知。\n`;
+        if($(`cfgTime`).checked) sys += `当前现实时间：` + updTime().toLocaleString() + `，请保持感知。\n`;
     
     let charStickers = [];
-localforage.getItem(`charStickers`).then(res =>{
-    if(res) charStickers = JSON.parse(res);
+    let resStickers = await localforage.getItem(`charStickers`);
+    if(resStickers) charStickers = JSON.parse(resStickers);
     else if(ls.getItem(`charStickers`)) {
         charStickers = JSON.parse(ls.getItem(`charStickers`));
         localforage.setItem(`charStickers`, ls.getItem(`charStickers`));
     }
-});
 
-    if(charStickers.length > 0) {
+if(charStickers.length > 0) {
         let names = charStickers.map(x => x.name).join(`、`);
+
         sys += `\n【你的专属表情包库】如果你想发表情配合情绪，请务必在【回复】中插入代码“[发送表情：表情名称]”。当前你拥有的表情名称有：` + names + `。警告：绝对不要捏造列表外的表情！不要发多余的链接！`;
     }
             sys += `\n【资金互动规则】如果玩家发了转账（显示未收款），你必须在回复的最开头写上系统指令 [收取转账] 或 [拒绝转账]。如果玩家发了红包（显示未领取），你必须在回复的最开头写上系统指令 [领取红包] 或 [退回红包]。指令必须严格带上方括号！然后再写你的文字回复。如果不写指令，系统将彻底报错崩溃！`;
@@ -1996,11 +1996,12 @@ localforage.getItem(`charStickers`).then(res =>{
 
         let res = await fetch(pxy, { method:`POST`, headers:{Authorization:`Bearer `+key, [`Content-Type`]:`application/json`}, body:JSON.stringify({model:mod, messages:arr, temperature:tp}) });
         let dat = await res.json(); rmThk();
-                if(dat.choices && dat.choices.length > 0) {
+                                if(dat.choices && dat.choices.length > 0) {
             let txt = dat.choices[0].message.content;
-            let currentStickers = JSON.parse(ls.getItem(`charStickers`) || `[]`);
+            let currentStickers = charStickers;
             txt = txt.replace(/\[发送表情：(.*?)\]/g, (match, p1) => {
                 let s = currentStickers.find(x => x.name === p1.trim());
+
                 if(s) return `[图片消息：` + s.url + `]`;
                 return `[试图发送表情：` + p1 + `]`; 
             });
