@@ -1943,7 +1943,8 @@ localforage.getItem(`charStickers`).then(res =>{
         let names = charStickers.map(x => x.name).join(`、`);
         sys += `\n【你的专属表情包库】如果你想发表情配合情绪，请务必在【回复】中插入代码“[发送表情：表情名称]”。当前你拥有的表情名称有：` + names + `。警告：绝对不要捏造列表外的表情！不要发多余的链接！`;
     }
-        sys += `\n【资金互动规则】如果玩家近期给你发了转账（记录显示“未收款”），你必须在【回复】中插入“[收取转账]”或“[拒绝转账]”。如果玩家给你发了红包（记录显示“未领取”），你必须在【回复】中插入“[领取红包]”或“[退回红包]”。结合性格决定是否收下，并给出符合人设的回复！绝对不能忘记带上指令代码。`;
+            sys += `\n【资金互动规则】如果玩家发了转账（显示未收款），你必须在回复的最开头写上系统指令 [收取转账] 或 [拒绝转账]。如果玩家发了红包（显示未领取），你必须在回复的最开头写上系统指令 [领取红包] 或 [退回红包]。指令必须严格带上方括号！然后再写你的文字回复。如果不写指令，系统将彻底报错崩溃！`;
+
 
 
 
@@ -1988,10 +1989,54 @@ localforage.getItem(`charStickers`).then(res =>{
                 return `[试图发送表情：` + p1 + `]`; 
             });
             
-            let hasAccept = txt.includes(`[收取转账]`);
+                        let hasAccept = txt.includes(`[收取转账]`);
+            let hasReject = txt.includes(`[拒绝转账]`);
+            let hasAcceptRp = txt.includes(`[领取红包]`);
+            let hasRejectRp = txt.includes(`[退回红包]`);
+            
+            if (hasAccept || hasReject || hasAcceptRp || hasRejectRp) {
+                txt = txt.replace(/\[收取转账\]/g, ``).replace(/\[拒绝转账\]/g, ``).replace(/\[领取红包\]/g, ``).replace(/\[退回红包\]/g, ``);
+                for (let i = history.length - 1; i >= 0; i--) {
+                    if (history[i].role === `user` && history[i].content.includes(`|未收款]`)) {
+                        let match = history[i].content.match(/^\[转账消息：([\d\.]+)\|(.*?)\|未收款\]$/);
+                        if (match) {
+                            let amt = parseFloat(match[1]);
+                            if (hasAccept) {
+                                history[i].content = history[i].content.replace(`|未收款]`, `|已收款]`);
+                            } else {
+                                history[i].content = history[i].content.replace(`|未收款]`, `|已拒绝收款]`);
+                                myWallet.balance += amt;
+                                let dn = $(`cfgRem`).value || $(`cfgName`).value || `专属恋人`;
+                                myWallet.bills.push({ title: `转账退回 - ` + dn, time: updTime().toLocaleString(), amount: amt, type: `wallet` });
+                                ls.setItem(`myWallet`, JSON.stringify(myWallet));
+                                if(typeof renderWallet === `function`) renderWallet();
+                            }
+                            break;
+                        }
+                    }
+                    if (history[i].role === `user` && history[i].content.includes(`|未领取|`)) {
+                        let match = history[i].content.match(/^\[红包消息：([\d\.]+)\|(.*?)\|未领取\|(.*?)\]$/);
+                        if (match) {
+                            let amt = parseFloat(match[1]);
+                            if (hasAcceptRp) {
+                                history[i].content = history[i].content.replace(`|未领取|`, `|已打开|`);
+                            } else {
+                                history[i].content = history[i].content.replace(`|未领取|`, `|对方已退回红包|`);
+                                myWallet.balance += amt;
+                                let dn = $(`cfgRem`).value || $(`cfgName`).value || `专属恋人`;
+                                myWallet.bills.push({ title: `红包退回 - ` + dn, time: updTime().toLocaleString(), amount: amt, type: `wallet` });
+                                ls.setItem(`myWallet`, JSON.stringify(myWallet));
+                                if(typeof renderWallet === `function`) renderWallet();
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
             
             history.push({role: `assistant`, content: txt});
             ls.setItem(`chatHistory`, JSON.stringify(history));
+
 
             
             let out = txt, wM = txt.match(/【定位与天气】([\s\S]*?)【/), cM = txt.match(/【服装】([\s\S]*?)【/), aM = txt.match(/【表情与动作】([\s\S]*?)【/), tM = txt.match(/【心声】([\s\S]*?)【/), rM = txt.match(/【回复】([\s\S]*)$/);
@@ -2065,7 +2110,8 @@ function renderQuoteBlock(b, txt) {
         return;
     }
     
-    let rpMatch = txt.match(/^\[红包消息：([\d\.]+)\|(.*?)\|(未领取|已领取|对方已退回红包)\|(.*?)\]$/);
+        let rpMatch = txt.match(/^\[红包消息：([\d\.]+)\|(.*?)\|(未领取|已打开|已领取|对方已退回红包)\|(.*?)\]$/);
+
     if(rpMatch) {
         let note = rpMatch[2];
         let status = rpMatch[3];
