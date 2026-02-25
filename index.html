@@ -832,9 +832,17 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
                 </div>
             </div>
         </div>
-        <div style="flex:1; background:#f5f6fa; border-top-left-radius:20px; border-top-right-radius:20px; margin-top:-20px; padding:20px; overflow-y:auto; display:flex; flex-direction:column;">
-            <h3 style="margin:0 0 15px 0; font-size:15px; color:#333;">账单记录</h3>
+                <div style="flex:1; background:#f5f6fa; border-top-left-radius:20px; border-top-right-radius:20px; margin-top:-20px; padding:20px; overflow-y:auto; display:flex; flex-direction:column;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h3 style="margin:0; font-size:15px; color:#333;">账单记录</h3>
+                <span id="btnEditWalletBill" style="font-size:13px; color:#6c5ce7; cursor:pointer; font-weight:bold;">管理</span>
+            </div>
+            <div id="walletBillActions" style="display:none; padding-bottom:12px; border-bottom:1px solid #eee; margin-bottom:12px; justify-content:space-between; align-items:center; flex-shrink:0;">
+                <span id="btnSelAllBill" style="font-size:13px; color:#333; cursor:pointer; font-weight:bold;">全选</span>
+                <span id="btnDelSelBill" style="font-size:13px; color:#ff4d4f; cursor:pointer; font-weight:bold;">删除并退还金额</span>
+            </div>
             <div id="walletBillList" style="display:flex; flex-direction:column; gap:12px; flex:1;"></div>
+
             <button id="btnTopUpBank" style="width:100%; padding:15px; border-radius:15px; background:#fff; color:#6c5ce7; border:1px solid #6c5ce7; font-size:16px; font-weight:bold; margin-top:20px; cursor:pointer; flex-shrink:0;">给储蓄卡充值</button>
         </div>
     </div>
@@ -3390,6 +3398,9 @@ if($(`btnFavBack`)) {
 }
 let myWallet = ls.getItem(`myWallet`) ? JSON.parse(ls.getItem(`myWallet`)) : { balance: 0.00, bank: 0.00, bills: [] };
 
+let isWalletEditMode = false;
+let selWalletBills = new Set();
+
 function renderWallet() {
     $(`walletTotal`).innerText = (myWallet.balance + myWallet.bank).toFixed(2);
     $(`walletBalance`).innerText = myWallet.balance.toFixed(2);
@@ -3400,15 +3411,29 @@ function renderWallet() {
     if(myWallet.bills.length === 0) {
         billList.innerHTML = `<div style="text-align:center; color:#999; font-size:12px; margin-top:20px;">暂无交易记录</div>`;
     } else {
-        [...myWallet.bills].reverse().forEach(b => {
+        let revBills = [...myWallet.bills].reverse();
+        revBills.forEach((b, idx) => {
             let icon = b.type === `transfer` ? `💸` : `💰`;
             let color = b.amount < 0 ? `#333` : `#ff4d4f`;
             let sign = b.amount > 0 ? `+` : ``;
+            
+            let isSel = selWalletBills.has(idx);
+            let borderStyle = (isWalletEditMode && isSel) ? `border:2px solid #ff4d4f;` : `border:2px solid transparent;`;
+            let pointerStyle = isWalletEditMode ? `cursor:pointer;` : ``;
+            
+            let checkHtml = ``;
+            if(isWalletEditMode) {
+                let cbColor = isSel ? `#ff4d4f` : `#ccc`;
+                let innerDot = isSel ? `<div style="width:10px;height:10px;border-radius:50%;background:#ff4d4f;"></div>` : ``;
+                checkHtml = `<div style="width:20px;height:20px;border-radius:50%;border:2px solid ${cbColor};display:flex;justify-content:center;align-items:center;margin-right:10px;flex-shrink:0;">${innerDot}</div>`;
+            }
+
             billList.innerHTML += `
-            <div style="background:#fff; padding:15px; border-radius:12px; display:flex; align-items:center; gap:15px; box-shadow:0 2px 8px rgba(0,0,0,0.02);">
-                <div style="font-size:24px; width:40px; height:40px; background:#f5f6fa; border-radius:50%; display:flex; justify-content:center; align-items:center;">${icon}</div>
-                <div style="flex:1;">
-                    <div style="font-size:15px; font-weight:bold; color:#333;">${b.title}</div>
+            <div style="background:#fff; padding:13px; border-radius:12px; display:flex; align-items:center; box-shadow:0 2px 8px rgba(0,0,0,0.02); margin-bottom:12px; transition:0.2s; ${borderStyle} ${pointerStyle}" onclick="if(typeof toggleWalletBillSel === 'function') toggleWalletBillSel(${idx})">
+                ${checkHtml}
+                <div style="font-size:24px; width:40px; height:40px; background:#f5f6fa; border-radius:50%; display:flex; justify-content:center; align-items:center; margin-right:15px;">${icon}</div>
+                <div style="flex:1; overflow:hidden;">
+                    <div style="font-size:15px; font-weight:bold; color:#333; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${b.title}</div>
                     <div style="font-size:12px; color:#999; margin-top:4px;">${b.time}</div>
                 </div>
                 <div style="font-size:16px; font-weight:bold; color:${color};">${sign}${b.amount.toFixed(2)}</div>
@@ -3416,6 +3441,60 @@ function renderWallet() {
         });
     }
 }
+
+window.toggleWalletBillSel = function(idx) {
+    if(!isWalletEditMode) return;
+    if(selWalletBills.has(idx)) selWalletBills.delete(idx);
+    else selWalletBills.add(idx);
+    renderWallet();
+};
+if($(`btnEditWalletBill`)) {
+    $(`btnEditWalletBill`).onclick = () => {
+        isWalletEditMode = !isWalletEditMode;
+        $(`btnEditWalletBill`).innerText = isWalletEditMode ? `完成` : `管理`;
+        $(`walletBillActions`).style.display = isWalletEditMode ? `flex` : `none`;
+        selWalletBills.clear();
+        renderWallet();
+    };
+}
+if($(`btnSelAllBill`)) {
+    $(`btnSelAllBill`).onclick = () => {
+        if(selWalletBills.size === myWallet.bills.length) selWalletBills.clear();
+        else myWallet.bills.forEach((_, i) => selWalletBills.add(i));
+        renderWallet();
+    };
+}
+if($(`btnDelSelBill`)) {
+    $(`btnDelSelBill`).onclick = () => {
+        if(selWalletBills.size === 0) { alert(`请先勾选要删除的账单哦！`); return; }
+        if(confirm(`确定删除选中的 ` + selWalletBills.size + ` 笔账单并自动退还对应金额吗？`)) {
+            let realIndices = Array.from(selWalletBills).map(i => myWallet.bills.length - 1 - i).sort((a,b)=>b-a);
+            realIndices.forEach(ri => {
+                let b = myWallet.bills[ri];
+                if(b.amount < 0) {
+                    myWallet.balance += Math.abs(b.amount);
+                } else if(b.amount > 0) {
+                    if(b.type === `bank`) myWallet.bank -= b.amount;
+                    else myWallet.balance -= b.amount;
+                }
+                myWallet.bills.splice(ri, 1);
+            });
+            
+            if(myWallet.balance < 0) myWallet.balance = 0;
+            if(myWallet.bank < 0) myWallet.bank = 0;
+            
+            ls.setItem(`myWallet`, JSON.stringify(myWallet));
+            selWalletBills.clear();
+            isWalletEditMode = false;
+            $(`btnEditWalletBill`).innerText = `管理`;
+            $(`walletBillActions`).style.display = `none`;
+            renderWallet();
+            alert(`删除成功！相关金额已重新结算完毕。`);
+        }
+    };
+}
+
+
 
 if($(`btnOpenWallet`)) $(`btnOpenWallet`).onclick = () =>{ renderWallet(); showScreen(`scrWallet`); };
 if($(`btnWalletBack`)) $(`btnWalletBack`).onclick = () =>showScreen(`scrMe`);
