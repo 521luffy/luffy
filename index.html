@@ -139,8 +139,12 @@ textarea { resize: none; }
 .sticker-item.edit-mode { animation: shake 0.5s infinite alternate; }
 .sticker-item.edit-mode .sticker-delete-btn { display: block; }
 @keyframes shake { 0% { transform: rotate(-1deg); } 100% { transform: rotate(1deg); } }
-.sticker-footer { padding: 10px 15px; background: #fff; border-top: 1px solid #eee; flex-shrink: 0; box-sizing: border-box; }
-.category-btn { background: #1890ff; color: #fff; border: none; padding: 6px 18px; border-radius: 15px; font-size: 12px; }
+.sticker-tabs { display: flex; padding: 0 15px 10px 28px; gap: 20px; border-bottom: 1px solid #eee; flex-shrink: 0; background: #f5f6f8; }
+
+.st-tab { font-size: 14px; color: #888; cursor: pointer; font-weight: bold; position: relative; padding-bottom: 5px; transition: 0.2s; }
+.st-tab.active { color: #4a6ee0; }
+.st-tab.active::after { content: ''; position: absolute; bottom: -1px; left: 10%; width: 80%; height: 3px; background: #4a6ee0; border-radius: 2px; }
+
 .batch-modal-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 200; display: none; justify-content: center; align-items: center; }
 .batch-modal { background: #fff; width: 75%; border-radius: 16px; padding: 20px 0 0 0; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
 .batch-modal h3 { text-align: center; margin-top: 0; font-size: 16px; margin-bottom: 15px; color: #333; }
@@ -287,16 +291,42 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
                         <button id=btnSend class=send-btn>发送</button>
         </div>
         
-                        <div id=newMenuDrawer class=menu-drawer>
+                                                <div id=newMenuDrawer class=menu-drawer>
             <div class=menu-grid>
                 <div id=btnRegenNew class=menu-icon-btn>
                     <div class=menu-icon-svg>
-                        <svg width=16 height=16 viewBox="0 0 24 24" fill=none stroke=#fff stroke-width=2 stroke-linecap=round stroke-linejoin=round><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><polyline points="3 3 3 8 8 8"></polyline></svg>
+             
+           <svg width=16 height=16 viewBox="0 0 24 24" fill=none stroke=#fff stroke-width=2 stroke-linecap=round stroke-linejoin=round><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><polyline points="3 3 3 8 8 8"></polyline></svg>
                     </div>
                     <div class=menu-icon-text>重新生成</div>
                 </div>
+                
+                                <div id=btnTakePhoto class=menu-icon-btn>
+                    <div class=menu-icon-svg style="background:#f3e5f5;">
+                        <svg width=20 height=20 viewBox="0 0 24 24" fill=none stroke=#6c5ce7 stroke-width=2 stroke-linecap=round stroke-linejoin=round><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                    </div>
+                    <div class=menu-icon-text>拍照</div>
+                </div>
+                
+                <div id=btnUploadPic class=menu-icon-btn>
+                    <div class=menu-icon-svg style="background:#f3e5f5;">
+                        <svg width=20 height=20 viewBox="0 0 24 24" fill=none stroke=#6c5ce7 stroke-width=2 stroke-linecap=round stroke-linejoin=round><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                    </div>
+                    <div class=menu-icon-text>图片</div>
+                    <input type=file id=picUploadInput accept=image/* style=display:none;>
+                </div>
+                <div id=btnTransfer class=menu-icon-btn>
+                    <div class=menu-icon-svg style="background:#f3e5f5;">
+                        <svg width=20 height=20 viewBox="0 0 24 24" fill=none stroke=#6c5ce7 stroke-width=2 stroke-linecap=round stroke-linejoin=round><line x1="6" y1="11" x2="18" y2="11"></line><line x1="6" y1="15" x2="18" y2="15"></line><polyline points="6 5 12 11 18 5"></polyline><line x1="12" y1="11" x2="12" y2="20"></line></svg>
+                    </div>
+                    <div class=menu-icon-text>转账</div>
+                </div>
+
+
+ 
             </div>
         </div>
+
 
 
         
@@ -519,14 +549,16 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
                 <input type=file id=stickerUploadInput accept=image/* style=display:none;>
             </div>
         </div>
-        <div class=sticker-search>
+                <div class=sticker-search>
             <input type=text id=stickerSearch placeholder=搜索表情包名称...>
         </div>
-        <div class=sticker-grid id=stickerGrid></div>
-        <div class=sticker-footer>
-            <button class=category-btn>未分类</button>
+        <div class=sticker-tabs>
+            <span id=tabRecentSticker class="st-tab">最近</span>
+            <span id=tabAllSticker class="st-tab active">全部</span>
         </div>
+        <div class=sticker-grid id=stickerGrid></div>
     </div>
+
 
     <div id=batchModal class=batch-modal-overlay>
         <div class=batch-modal>
@@ -770,6 +802,36 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
     </div>
 
 </div>
+            <div id="scrWallet" class="scr-flex">
+        <div class="room-header" style="background:#6c5ce7; color:white; border:none;">
+            <span id="btnWalletBack" class="back-btn" style="color:white;">＜</span>
+            <span class="header-center">我的钱包</span>
+            <span id="btnWalletSet" style="font-size:18px; cursor:pointer;">⚙️</span>
+        </div>
+
+        <div style="background:#6c5ce7; padding:30px 20px; color:white; display:flex; flex-direction:column; align-items:center;">
+            <div style="font-size:14px; opacity:0.8; margin-bottom:10px;">总资产 (元)</div>
+            <div style="font-size:40px; font-weight:bold; margin-bottom:20px;">¥ <span id="walletTotal">0.00</span></div>
+            <div style="display:flex; width:100%; justify-content:space-around; background:rgba(255,255,255,0.1); padding:15px; border-radius:15px;">
+                <div id="btnGoBalance" style="text-align:center; cursor:pointer; flex:1;">
+                    <div style="font-size:12px; opacity:0.8;">零钱 ＞</div>
+                    <div style="font-size:16px; font-weight:bold; margin-top:5px;" id="walletBalance">0.00</div>
+                </div>
+                <div style="width:1px; background:rgba(255,255,255,0.2);"></div>
+                <div id="btnGoBank" style="text-align:center; cursor:pointer; flex:1;">
+                    <div style="font-size:12px; opacity:0.8;">储蓄卡 ＞</div>
+                    <div style="font-size:16px; font-weight:bold; margin-top:5px;" id="bankBalance">0.00</div>
+                </div>
+            </div>
+        </div>
+        <div style="flex:1; background:#f5f6fa; border-top-left-radius:20px; border-top-right-radius:20px; margin-top:-20px; padding:20px; overflow-y:auto; display:flex; flex-direction:column;">
+            <h3 style="margin:0 0 15px 0; font-size:15px; color:#333;">账单记录</h3>
+            <div id="walletBillList" style="display:flex; flex-direction:column; gap:12px; flex:1;"></div>
+            <button id="btnTopUpBank" style="width:100%; padding:15px; border-radius:15px; background:#fff; color:#6c5ce7; border:1px solid #6c5ce7; font-size:16px; font-weight:bold; margin-top:20px; cursor:pointer; flex-shrink:0;">给储蓄卡充值</button>
+        </div>
+    </div>
+
+
     <div id="scrFav" class="scr-flex">
         <div class="room-header">
             <span id="btnFavBack" class="back-btn">＜</span>
@@ -788,6 +850,85 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
             </div>
         </div>
     </div>
+    <div id="takePhotoModal" class="modal-base">
+        <div class="modal-ctx" style="width:80%; max-width:300px; padding:20px; border-radius:20px; background:#fff; display:flex; flex-direction:column; align-items:center;">
+            <h3 style="margin:0 0 15px 0; font-size:18px; color:#333;">发送现拍照片</h3>
+            <textarea id="takePhotoInput" style="width:100%; height:150px; background:#f5f6fa; border:none; border-radius:15px; padding:15px; box-sizing:border-box; font-size:14px; resize:none; outline:none;" placeholder="请在这里写上你拍照的内容，例如：一个女孩子在阳光下奔跑。"></textarea>
+            <div style="display:flex; width:100%; gap:15px; margin-top:20px;">
+                <button id="btnCancelTakePhoto" style="flex:1; padding:12px; border-radius:25px; border:none; background:#f0f2f5; color:#666; font-size:15px; font-weight:bold; cursor:pointer;">取消</button>
+                <button id="btnSendTakePhoto" style="flex:1; padding:12px; border-radius:25px; border:none; background:#000; color:#fff; font-size:15px; font-weight:bold; cursor:pointer;">发送</button>
+            </div>
+        </div>
+    </div>
+    <div id="transferModal" class="modal-base">
+        <div class="modal-ctx" style="width:80%; max-width:300px; padding:20px; border-radius:20px; background:#fff; display:flex; flex-direction:column; align-items:center;">
+            <h3 style="margin:0 0 15px 0; font-size:18px; color:#333;">转账给对方</h3>
+            <div style="width:100%; display:flex; flex-direction:column; gap:12px;">
+                <div style="display:flex; align-items:center; background:#f5f6fa; border-radius:15px; padding:10px 15px;">
+                    <span style="font-size:20px; font-weight:bold; color:#333; margin-right:10px;">¥</span>
+                    <input type="number" id="transferAmount" style="flex:1; border:none; background:transparent; outline:none; font-size:24px; color:#333; font-weight:bold;" placeholder="0.00">
+                </div>
+                <input type="text" id="transferNote" style="width:100%; background:#f5f6fa; border:none; border-radius:15px; padding:15px; box-sizing:border-box; font-size:14px; outline:none; color:#333;" placeholder="添加备注（选填）">
+            </div>
+            <div style="display:flex; width:100%; gap:15px; margin-top:20px;">
+                <button id="btnCancelTransfer" style="flex:1; padding:12px; border-radius:25px; border:none; background:#f0f2f5; color:#333; font-size:15px; font-weight:bold; cursor:pointer;">取消</button>
+                <button id="btnSendTransfer" style="flex:1; padding:12px; border-radius:25px; border:none; background:#6c5ce7; color:#fff; font-size:15px; font-weight:bold; cursor:pointer;">转账</button>
+            </div>
+        </div>
+    </div>
+    <div id="payPwdModal" class="modal-base">
+        <div class="modal-ctx" style="width:80%; max-width:300px; padding:20px; border-radius:20px; background:#fff; display:flex; flex-direction:column; align-items:center;">
+            <h3 style="margin:0 0 15px 0; font-size:18px; color:#333;">确认付款</h3>
+            <div style="width:100%; display:flex; flex-direction:column; gap:12px; margin-bottom:15px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:#f5f6fa; border-radius:10px;">
+                    <span style="font-size:14px; color:#666;">付款方式</span>
+                    <select id="payMethodSelect" style="border:none; background:transparent; font-size:14px; color:#333; outline:none; font-weight:bold; text-align:right;">
+                        <option value="wallet">零钱 (余额充沛)</option>
+                        <option value="bank">储蓄卡 (尾号8888)</option>
+                    </select>
+                </div>
+                <div style="font-size:24px; font-weight:bold; color:#333; text-align:center; margin:10px 0;">
+                    <span style="font-size:18px;">¥</span><span id="payModalAmount">0.00</span>
+                </div>
+                <input type="password" id="payPwdInput" maxlength="6" style="width:100%; background:#f5f6fa; border:none; border-radius:15px; padding:15px; box-sizing:border-box; font-size:18px; text-align:center; letter-spacing:10px; outline:none; color:#333;" placeholder="输入6位密码">
+            </div>
+            <div style="display:flex; width:100%; gap:15px;">
+                <button id="btnCancelPay" style="flex:1; padding:12px; border-radius:25px; border:none; background:#f0f2f5; color:#333; font-size:15px; font-weight:bold; cursor:pointer;">取消</button>
+                <button id="btnConfirmPay" style="flex:1; padding:12px; border-radius:25px; border:none; background:#6c5ce7; color:#fff; font-size:15px; font-weight:bold; cursor:pointer;">付款</button>
+            </div>
+        </div>
+    </div>
+    <div id="balanceModal" class="modal-base">
+        <div class="modal-ctx" style="width:80%; max-width:300px; padding:25px 20px; border-radius:20px; background:#fff; display:flex; flex-direction:column; align-items:center;">
+            <div style="width:100%; display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h3 style="margin:0; font-size:18px; color:#333;">我的零钱</h3>
+                <span id="btnBalanceHelp" style="width:22px; height:22px; border-radius:50%; border:1px solid #999; color:#999; display:flex; justify-content:center; align-items:center; font-size:14px; cursor:pointer; font-weight:bold;">?</span>
+            </div>
+            <div style="font-size:14px; color:#666; margin-top:10px;">零钱余额</div>
+            <div style="font-size:40px; font-weight:bold; color:#333; margin:10px 0 25px 0;">
+                <span style="font-size:24px;">¥</span><span id="modalBalanceAmount">0.00</span>
+            </div>
+            <div style="display:flex; width:100%; flex-direction:column; gap:12px;">
+                <button id="btnBalanceTopUp" style="width:100%; padding:14px; border-radius:25px; border:none; background:#6c5ce7; color:#fff; font-size:16px; font-weight:bold; cursor:pointer;">充值</button>
+                <button id="btnBalanceWithdraw" style="width:100%; padding:14px; border-radius:25px; border:none; background:#f0f2f5; color:#333; font-size:16px; font-weight:bold; cursor:pointer;">提现</button>
+            </div>
+            <button id="btnCloseBalanceModal" style="margin-top:20px; padding:10px; border:none; background:transparent; color:#888; font-size:14px; cursor:pointer; font-weight:bold;">关闭</button>
+        </div>
+    </div>
+    <div id="walletPwdModal" class="modal-base">
+        <div class="modal-ctx" style="width:80%; max-width:300px; padding:20px; border-radius:20px; background:#fff; display:flex; flex-direction:column; align-items:center;">
+            <h3 style="margin:0 0 15px 0; font-size:18px; color:#333;">设置支付密码</h3>
+            <input type="password" id="newWalletPwd" maxlength="6" style="width:100%; background:#f5f6fa; border:none; border-radius:15px; padding:15px; box-sizing:border-box; font-size:18px; text-align:center; letter-spacing:10px; outline:none; color:#333;" placeholder="输入6位新密码">
+            <div style="display:flex; width:100%; gap:15px; margin-top:20px;">
+                <button id="btnCancelWalletPwd" style="flex:1; padding:12px; border-radius:25px; border:none; background:#f0f2f5; color:#333; font-size:15px; font-weight:bold; cursor:pointer;">取消</button>
+                <button id="btnSaveWalletPwd" style="flex:1; padding:12px; border-radius:25px; border:none; background:#6c5ce7; color:#fff; font-size:15px; font-weight:bold; cursor:pointer;">保存</button>
+            </div>
+        </div>
+    </div>
+
+
+
+
 
     
 
@@ -847,14 +988,15 @@ let pressTimer = null;
 let selEl = null;
 let currentQuote = "";
 function showScreen(showId) {
-    [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrSpace, scrLogList, scrLogEdit, $("scrFav")].forEach(s => { if(s) s.style.display = "none"; });
+    [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrSpace, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet")].forEach(s => { if(s) s.style.display = "none"; });
     let target = $(showId);
     if(target) {
-        if(showId === "scrRoom" || showId === "scrList" || showId === "scrSetApi" || showId === "scrSetChat" || showId === "scrWb" || showId === "scrWbEdit" || showId === "scrMe" || showId === "scrCharSticker" || showId === "scrSpace" || showId === "scrLogList" || showId === "scrLogEdit" || showId === "scrFav") {
+        if(showId === "scrRoom" || showId === "scrList" || showId === "scrSetApi" || showId === "scrSetChat" || showId === "scrWb" || showId === "scrWbEdit" || showId === "scrMe" || showId === "scrCharSticker" || showId === "scrSpace" || showId === "scrLogList" || showId === "scrLogEdit" || showId === "scrFav" || showId === "scrWallet") {
             target.style.display = "flex";
         } else { target.style.display = "block"; }
     }
 }
+
 
 
 
@@ -1381,15 +1523,18 @@ $(`ctxCopy`).onclick = () => { if(selEl) navigator.clipboard.writeText(getCleanT
 $(`ctxDel`).onclick = () => { 
     if(selEl) { 
         if(confirm(`确定要删除这1条信息吗？`)) {
-            let imgEl = selEl.querySelector(`img`);
-            let searchTarget = ``;
-            if (imgEl) searchTarget = imgEl.getAttribute(`src`);
-            else searchTarget = getCleanText(selEl);
-            for(let i=history.length-1; i>=0; i--) {
-                if(history[i].content.includes(searchTarget)) {
-                    let newContent = history[i].content.replace(searchTarget, ``).trim();
-                    newContent = newContent.replace(/^\n+|\n+$/g, ``).replace(/\n{2,}/g, `\n`);
-                    let afterReply = newContent.split(`【回复】`)[1];
+                                let imgEl = selEl.querySelector(`img`);
+                    let searchTarget = ``;
+                    if (imgEl) searchTarget = imgEl.getAttribute(`src`);
+                    else searchTarget = getCleanText(selEl);
+                    for(let i=history.length-1; i>=0; i--) {
+                        if(history[i].content.includes(searchTarget)) {
+                            let newContent = history[i].content;
+                            if(imgEl) newContent = newContent.replace(new RegExp(`\\[图片消息：` + searchTarget.replace(/[-\/\\^$*+?.()|[\]{}]/g, `\\$&`) + `\\](?:\\n\\(系统提示：.*?\\))?`), ``);
+                            else newContent = newContent.replace(searchTarget, ``);
+                            newContent = newContent.trim().replace(/^\n+|\n+$/g, ``).replace(/\n{2,}/g, `\n`);
+                            let afterReply = newContent.split(`【回复】`)[1];
+
                     if (newContent === `` || (newContent.includes(`【回复】`) && (!afterReply || afterReply.trim() === ``))) {
                         history.splice(i, 1);
                         let lmc = parseInt(ls.getItem(`lastMemCount`)) || 0;
@@ -1508,6 +1653,133 @@ if($("btnSendVoice")) {
         $("voiceModal").style.display = "none";
     };
 }
+if($("btnTakePhoto")) {
+    $("btnTakePhoto").onclick = () => {
+        toggleMenuDrawer(false);
+        $("takePhotoInput").value = "";
+        $("takePhotoModal").style.display = "flex";
+    };
+}
+if($("btnCancelTakePhoto")) {
+    $("btnCancelTakePhoto").onclick = () => $("takePhotoModal").style.display = "none";
+}
+if($("btnSendTakePhoto")) {
+    $("btnSendTakePhoto").onclick = () => {
+        let txt = $("takePhotoInput").value.trim();
+        if(!txt) { alert("请先描述一下你拍的内容哦！"); return; }
+        let msgText = "[照片消息：" + txt + "]";
+        mkBub(msgText, "r");
+        history.push({role: "user", content: msgText});
+        ls.setItem("chatHistory", JSON.stringify(history));
+        if(typeof updateListPreview === "function") updateListPreview();
+        $("takePhotoModal").style.display = "none";
+    };
+}
+if($(`btnTransfer`)) {
+    $(`btnTransfer`).onclick = () => {
+        toggleMenuDrawer(false);
+        $(`transferAmount`).value = ``;
+        $(`transferNote`).value = ``;
+        $(`transferModal`).style.display = `flex`;
+    };
+}
+if($(`btnCancelTransfer`)) {
+    $(`btnCancelTransfer`).onclick = () => $(`transferModal`).style.display = `none`;
+}
+if($(`btnSendTransfer`)) {
+    $(`btnSendTransfer`).onclick = () => {
+        let amt = parseFloat($(`transferAmount`).value);
+        if(isNaN(amt) || amt <= 0) { alert(`请输入正确的转账金额哦！`); return; }
+        
+        let optWallet = $(`payMethodSelect`).querySelector(`option[value="wallet"]`);
+        if(optWallet) optWallet.innerText = `零钱 (余额: ¥` + myWallet.balance.toFixed(2) + `)`;
+        
+        $(`payModalAmount`).innerText = amt.toFixed(2);
+        $(`payPwdInput`).value = ``;
+        $(`transferModal`).style.display = `none`;
+        $(`payPwdModal`).style.display = `flex`;
+    };
+}
+
+if($(`btnCancelPay`)) {
+    $(`btnCancelPay`).onclick = () => {
+        $(`payPwdModal`).style.display = `none`;
+        $(`transferModal`).style.display = `flex`;
+    };
+}
+if($(`btnConfirmPay`)) {
+    $(`btnConfirmPay`).onclick = () => {
+        let pwd = $(`payPwdInput`).value;
+        if(pwd.length !== 6) { alert(`请输入6位数的支付密码！`); return; }
+        let realPwd = myWallet.password || `123456`;
+        if(pwd !== realPwd) { alert(`密码错误！`); return; }
+        
+        let amt = parseFloat($(`transferAmount`).value);
+        let payMethod = $(`payMethodSelect`).value;
+        
+        if(payMethod === `wallet`) {
+            if(myWallet.balance < amt) { alert(`余额不足啦！请前往我的钱包页面给零钱充值哦。`); return; }
+            myWallet.balance -= amt;
+        } else {
+            if(myWallet.bank < amt) { alert(`储蓄卡余额不足啦！请前往我的钱包页面充值哦。`); return; }
+            myWallet.bank -= amt;
+        }
+        
+        let dn = $(`cfgRem`).value || $(`cfgName`).value || `专属恋人`;
+        myWallet.bills.push({
+            title: `转账给 - ` + dn,
+            time: updTime().toLocaleString(),
+            amount: -amt,
+            type: `transfer`
+        });
+        ls.setItem(`myWallet`, JSON.stringify(myWallet));
+        
+        let note = $(`transferNote`).value.trim() || `转账`;
+        let msgText = `[转账消息：` + amt.toFixed(2) + `|` + note + `|未收款]`;
+        mkBub(msgText, `r`);
+        history.push({role: `user`, content: msgText});
+        ls.setItem(`chatHistory`, JSON.stringify(history));
+        if(typeof updateListPreview === `function`) updateListPreview();
+        $(`payPwdModal`).style.display = `none`;
+    };
+}
+
+
+
+
+if($(`btnUploadPic`)) {
+    $(`btnUploadPic`).onclick = () => {
+        toggleMenuDrawer(false);
+        $(`picUploadInput`).click();
+    };
+}
+if($(`picUploadInput`)) {
+    $(`picUploadInput`).onchange = e => {
+        let f = e.target.files[0];
+        if(!f) return;
+        let r = new FileReader();
+        r.onload = ev => {
+            let img = new Image();
+            img.onload = () => {
+                let cvs = document.createElement(`canvas`), ctx = cvs.getContext(`2d`);
+                let w = img.width, h = img.height, max = 512;
+                if(w > h && w > max) { h *= max/w; w = max; }
+                else if(h > max) { w *= max/h; h = max; }
+                cvs.width = w; cvs.height = h;
+                ctx.drawImage(img, 0, 0, w, h);
+                let b64 = cvs.toDataURL(`image/webp`, 0.6);
+                let msgText = `[图片消息：` + b64 + `]`;
+                mkBub(msgText, `r`);
+                history.push({role: `user`, content: msgText});
+                ls.setItem(`chatHistory`, JSON.stringify(history));
+                if(typeof updateListPreview === `function`) updateListPreview();
+            };
+            img.src = ev.target.result;
+        };
+        r.readAsDataURL(f);
+        e.target.value = ``;
+    };
+}
 
 
 
@@ -1561,25 +1833,72 @@ localforage.getItem(`charStickers`).then(res => {
         let names = charStickers.map(x => x.name).join(`、`);
         sys += `\n【你的专属表情包库】如果你想发表情配合情绪，请务必在【回复】中插入代码“[发送表情：表情名称]”。当前你拥有的表情名称有：` + names + `。警告：绝对不要捏造列表外的表情！不要发多余的链接！`;
     }
+    sys += `\n【转账处理规则】如果玩家近期给你发送了转账（记录中会显示“未收款”），你必须在【回复】中插入指令代码“[收取转账]”或“[拒绝转账]”。请结合你的性格决定是否收下这笔钱，并给出符合人设的文字回复！绝对不要忘记带上指令代码。`;
 
-    let arr = sys ? [{role: `system`, content: sys}] : [];
-    arr = arr.concat(history.slice(-(parseInt($(`cfgCtx`).value)||10)));
+
+        let arr = sys ? [{role: `system`, content: sys}] : [];
+    let ctxHist = history.slice(-(parseInt($(`cfgCtx`).value)||10));
+    let mappedHist = ctxHist.map(m => {
+        if(m.content.includes(`[图片消息：data:image`)) {
+            let parts = m.content.split(/\[图片消息：(.*?)\]/);
+            let cArr = [];
+            for(let i=0; i<parts.length; i++) {
+                if(parts[i].startsWith(`data:image`)) cArr.push({type: `image_url`, image_url: {url: parts[i]}});
+                else if(parts[i].trim()) cArr.push({type: `text`, text: parts[i].trim()});
+            }
+            return {role: m.role, content: cArr};
+        }
+        return m;
+    });
+    arr = arr.concat(mappedHist);
     
     try {
+
         let res = await fetch(pxy, { method:`POST`, headers:{Authorization:`Bearer `+key, [`Content-Type`]:`application/json`}, body:JSON.stringify({model:mod, messages:arr, temperature:tp}) });
         let dat = await res.json(); rmThk();
-        if(dat.choices && dat.choices.length > 0) {
+                if(dat.choices && dat.choices.length > 0) {
             let txt = dat.choices[0].message.content;
-            
             let currentStickers = JSON.parse(ls.getItem(`charStickers`) || `[]`);
             txt = txt.replace(/\[发送表情：(.*?)\]/g, (match, p1) => {
                 let s = currentStickers.find(x => x.name === p1.trim());
                 if(s) return `[图片消息：` + s.url + `]`;
                 return `[试图发送表情：` + p1 + `]`; 
             });
-
+            
+            let hasAccept = txt.includes(`[收取转账]`);
+            let hasReject = txt.includes(`[拒绝转账]`);
+            if (hasAccept || hasReject) {
+                txt = txt.replace(/\[收取转账\]/g, ``).replace(/\[拒绝转账\]/g, ``);
+                for (let i = history.length - 1; i >= 0; i--) {
+                    if (history[i].role === `user` && history[i].content.includes(`|未收款]`)) {
+                        let match = history[i].content.match(/^\[转账消息：([\d\.]+)\|(.*?)\|未收款\]$/);
+                        if (match) {
+                            let amt = parseFloat(match[1]);
+                            if (hasAccept) {
+                                history[i].content = history[i].content.replace(`|未收款]`, `|已收款]`);
+                            } else {
+                                history[i].content = history[i].content.replace(`|未收款]`, `|对方已拒绝收款]`);
+                                myWallet.balance += amt;
+                                let dn = $(`cfgRem`).value || $(`cfgName`).value || `专属恋人`;
+                                myWallet.bills.push({
+                                    title: `转账退回 - ` + dn,
+                                    time: updTime().toLocaleString(),
+                                    amount: amt,
+                                    type: `wallet`
+                                });
+                                ls.setItem(`myWallet`, JSON.stringify(myWallet));
+                                if(typeof renderWallet === `function`) renderWallet();
+                            }
+                            redrawChat();
+                            break;
+                        }
+                    }
+                }
+            }
+            
             history.push({role: `assistant`, content: txt});
             ls.setItem(`chatHistory`, JSON.stringify(history));
+
             
             let out = txt, wM = txt.match(/【定位与天气】([\s\S]*?)【/), cM = txt.match(/【服装】([\s\S]*?)【/), aM = txt.match(/【表情与动作】([\s\S]*?)【/), tM = txt.match(/【心声】([\s\S]*?)【/), rM = txt.match(/【回复】([\s\S]*)$/);
                         if(rM) {
@@ -1628,9 +1947,47 @@ localforage.getItem(`charStickers`).then(res => {
 
 function renderQuoteBlock(b, txt) {
     b.dataset.raw = txt;
-    let voiceMatch = txt.match(/^\[语音消息：(\d+)秒\]([\s\S]*)$/);
+    let transferMatch = txt.match(/^\[转账消息：([\d\.]+)\|(.*?)\|(未收款|已收款|对方已拒绝收款)\]$/);
+    if(transferMatch) {
+        let amt = transferMatch[1];
+        let note = transferMatch[2];
+        let status = transferMatch[3];
+        b.innerHTML = `<div style="width:200px; background:#f3e5f5; border-radius:12px; overflow:hidden; border:1px solid #e1bee7; cursor:pointer;" onclick="alert('转账详情：\\n金额：¥${amt}\\n备注：${note}\\n状态：${status}')">
+            <div style="padding:15px; display:flex; align-items:center; gap:12px;">
+                <div style="width:36px; height:36px; background:#6c5ce7; border-radius:50%; display:flex; justify-content:center; align-items:center; color:white; font-size:18px; font-weight:bold; flex-shrink:0;">¥</div>
+                <div style="display:flex; flex-direction:column; overflow:hidden;">
+                    <span style="font-size:15px; color:#333; font-weight:bold;">¥ ${amt}</span>
+                    <span style="font-size:12px; color:#666; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${note}</span>
+                </div>
+            </div>
+            <div style="padding:4px 15px; background:rgba(255,255,255,0.6); font-size:11px; color:#888; border-top:1px solid rgba(0,0,0,0.05);">
+                专属转账 · ${status}
+            </div>
+        </div>`;
+        b.style.background = `transparent`;
+        b.style.boxShadow = `none`;
+        b.style.padding = `0`;
+        b.style.border = `none`;
+        return;
+    }
 
+    
+    let photoMatch = txt.match(/^\[照片消息：([\s\S]*?)\]$/);
+    if(photoMatch) {
+        let desc = photoMatch[1];
+        b.innerHTML = `<div style="width:130px; height:170px; background:#fce4ec; border-radius:12px; display:flex; justify-content:center; align-items:center; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.05);" onclick="alert('照片内容：\\n' + decodeURIComponent('${encodeURIComponent(desc)}'))">
+            <div style="font-size:40px; filter:grayscale(100%) opacity(50%);">📷</div>
+        </div>`;
+        b.style.background = "transparent";
+        b.style.boxShadow = "none";
+        b.style.padding = "0";
+        b.style.border = "none";
+        return;
+    }
+    
+let voiceMatch = txt.match(/^\[语音消息：(\d+)秒\]([\s\S]*)$/);
     if(voiceMatch) {
+
         let sec = voiceMatch[1];
         let calcW = Math.min(70 + parseInt(sec)*3, 220);
         let p0 = `<s` + `vg width=16 height=16 viewBox="0 0 24 24" fill=#000><path d="M5 3l14 9-14 9V3z"/></s` + `vg>`;
@@ -1726,8 +2083,10 @@ localforage.getItem(`myPhoneStickers`).then(res => {
 
 let isStickerEditMode = false;
 let selectedStickers = new Set();
-
 let isMenuDrawerOpen = false;
+let currStickerTab = `all`;
+let recentStickers = ls.getItem(`recentStickers`) ? JSON.parse(ls.getItem(`recentStickers`)) : [];
+
 function toggleMenuDrawer(show) {
     let drawer = $(`newMenuDrawer`);
     if(drawer) {
@@ -1776,6 +2135,9 @@ $(`btnUploadStickerClick`).onclick = () => $(`stickerUploadInput`).click();
 $(`btnCancelBatch`).onclick = () => toggleBatchModal(false);
 $(`btnConfirmBatch`).onclick = () => confirmBatchStickers();
 $(`stickerSearch`).oninput = () => renderStickers();
+$(`tabAllSticker`).onclick = () => { currStickerTab = `all`; $(`tabAllSticker`).className = `st-tab active`; $(`tabRecentSticker`).className = `st-tab`; renderStickers(); };
+$(`tabRecentSticker`).onclick = () => { currStickerTab = `recent`; $(`tabRecentSticker`).className = `st-tab active`; $(`tabAllSticker`).className = `st-tab`; renderStickers(); };
+
 
 $(`stickerUploadInput`).onchange = e => {
     let file = e.target.files[0];
@@ -1848,25 +2210,40 @@ function sendSticker(url, name) {
 }
 
 function renderStickers() {
-    let grid = $(`stickerGrid`); let searchWord = $(`stickerSearch`).value.toLowerCase(); grid.innerHTML = ``;
-    stickerData.forEach((sticker, index) => {
+    let grid = $(`stickerGrid`);
+    let searchWord = $(`stickerSearch`).value.toLowerCase(); 
+    grid.innerHTML = ``;
+    let displayList = stickerData;
+    if (currStickerTab === `recent`) {
+        displayList = recentStickers.map(url => stickerData.find(s => s.url === url)).filter(Boolean);
+        if (displayList.length === 0) {
+            grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#888;font-size:12px;margin-top:20px;">还没有使用过表情包哦</div>`;
+            return;
+        }
+    }
+    displayList.forEach((sticker) => {
+        let index = stickerData.indexOf(sticker);
         if (sticker.name.toLowerCase().includes(searchWord)) {
             let item = document.createElement(`div`);
-                        let isSel = selectedStickers.has(index);
+            let isSel = selectedStickers.has(index);
             item.className = "sticker-item" + (isStickerEditMode ? " edit-mode" : "");
             if(isStickerEditMode && isSel) item.style.border = "2px solid #ff4d4f";
             item.innerHTML = `<div class="sticker-delete-btn" onclick="deleteSticker(event, ${index})">×</div><img src="${sticker.url}"><div class="name">${sticker.name}</div>`;
             item.onclick = e => {
-
                 if(isStickerEditMode) {
                     if(selectedStickers.has(index)) selectedStickers.delete(index); else selectedStickers.add(index);
                     renderStickers();
-                } else { sendSticker(sticker.url, sticker.name); }
+                } else { 
+                    sendSticker(sticker.url, sticker.name);
+                    recentStickers = [sticker.url, ...recentStickers.filter(u => u !== sticker.url)].slice(0, 16);
+                    ls.setItem(`recentStickers`, JSON.stringify(recentStickers));
+                }
             };
             grid.appendChild(item);
         }
     });
 }
+
 
 function toggleStickerEditMode() {
     isStickerEditMode = !isStickerEditMode;
@@ -1960,7 +2337,8 @@ if($("btnSaveEditMe")) $("btnSaveEditMe").onclick = () => {
 if($("btnSetMeAvatar")) $("btnSetMeAvatar").onclick = () => $("upMeAvatar").click();
 cmp("upMeAvatar", "myI");
 
-if($("btnOpenWallet")) $("btnOpenWallet").onclick = () => alert("【我的钱包】系统结构拼装中，即将上线！");
+
+
 
 if($("btnHomeSpace")) $("btnHomeSpace").onclick = () => showScreen("scrSpace");
 if($("btnSpaceBack")) $("btnSpaceBack").onclick = () => showScreen("scrHome");
@@ -2598,17 +2976,20 @@ function deleteSelectedMsgs() {
             let el = allItems[idx];
             if (el) {
                 let bubble = el.querySelector(`.bubble`); 
-                let imgEl = el.querySelector(`img`);
-                if (imgEl) targetsToDelete.push(imgEl.getAttribute(`src`));
-                else targetsToDelete.push(getCleanText(bubble));
+                                let imgEl = el.querySelector(`img`);
+                if (imgEl) targetsToDelete.push({type: `img`, val: imgEl.getAttribute(`src`)});
+                else targetsToDelete.push({type: `txt`, val: getCleanText(bubble)});
             }
         });
-        targetsToDelete.forEach(searchTarget => {
+        targetsToDelete.forEach(target => {
             for(let i=history.length-1; i>=0; i--) {
-                if(history[i].content.includes(searchTarget)) {
-                    let newContent = history[i].content.replace(searchTarget, ``).trim();
-                    newContent = newContent.replace(/^\n+|\n+$/g, ``).replace(/\n{2,}/g, `\n`);
+                if(history[i].content.includes(target.val)) {
+                    let newContent = history[i].content;
+                    if(target.type === `img`) newContent = newContent.replace(new RegExp(`\\[图片消息：` + target.val.replace(/[-\/\\^$*+?.()|[\]{}]/g, `\\$&`) + `\\](?:\\n\\(系统提示：.*?\\))?`), ``);
+                    else newContent = newContent.replace(target.val, ``);
+                    newContent = newContent.trim().replace(/^\n+|\n+$/g, ``).replace(/\n{2,}/g, `\n`);
                     let afterReply = newContent.split(`【回复】`)[1];
+
                     if (newContent === `` || (newContent.includes(`【回复】`) && (!afterReply || afterReply.trim() === ``))) {
                         history.splice(i, 1);
                         let lmc = parseInt(ls.getItem(`lastMemCount`)) || 0;
@@ -2834,6 +3215,143 @@ if($(`btnGoFav`)) {
 if($(`btnFavBack`)) {
     $(`btnFavBack`).onclick = () => showScreen(`scrMe`);
 }
+let myWallet = ls.getItem(`myWallet`) ? JSON.parse(ls.getItem(`myWallet`)) : { balance: 0.00, bank: 0.00, bills: [] };
+
+function renderWallet() {
+    $(`walletTotal`).innerText = (myWallet.balance + myWallet.bank).toFixed(2);
+    $(`walletBalance`).innerText = myWallet.balance.toFixed(2);
+    $(`bankBalance`).innerText = myWallet.bank.toFixed(2);
+    
+    let billList = $(`walletBillList`);
+    billList.innerHTML = ``;
+    if(myWallet.bills.length === 0) {
+        billList.innerHTML = `<div style="text-align:center; color:#999; font-size:12px; margin-top:20px;">暂无交易记录</div>`;
+    } else {
+        [...myWallet.bills].reverse().forEach(b => {
+            let icon = b.type === `transfer` ? `💸` : `💰`;
+            let color = b.amount < 0 ? `#333` : `#ff4d4f`;
+            let sign = b.amount > 0 ? `+` : ``;
+            billList.innerHTML += `
+            <div style="background:#fff; padding:15px; border-radius:12px; display:flex; align-items:center; gap:15px; box-shadow:0 2px 8px rgba(0,0,0,0.02);">
+                <div style="font-size:24px; width:40px; height:40px; background:#f5f6fa; border-radius:50%; display:flex; justify-content:center; align-items:center;">${icon}</div>
+                <div style="flex:1;">
+                    <div style="font-size:15px; font-weight:bold; color:#333;">${b.title}</div>
+                    <div style="font-size:12px; color:#999; margin-top:4px;">${b.time}</div>
+                </div>
+                <div style="font-size:16px; font-weight:bold; color:${color};">${sign}${b.amount.toFixed(2)}</div>
+            </div>`;
+        });
+    }
+}
+
+if($(`btnOpenWallet`)) $(`btnOpenWallet`).onclick = () => { renderWallet(); showScreen(`scrWallet`); };
+if($(`btnWalletBack`)) $(`btnWalletBack`).onclick = () => showScreen(`scrMe`);
+
+if($(`btnTopUpBank`)) $(`btnTopUpBank`).onclick = () => {
+    let amtStr = prompt(`请输入给储蓄卡充值的金额：`);
+    if(amtStr === null) return;
+    let amt = parseFloat(amtStr);
+    if(isNaN(amt) || amt <= 0) { alert(`金额无效！`); return; }
+    myWallet.bank += amt;
+    myWallet.bills.push({
+        title: `储蓄卡充值`,
+        time: updTime().toLocaleString(),
+        amount: amt,
+        type: `bank`
+    });
+    ls.setItem(`myWallet`, JSON.stringify(myWallet));
+    renderWallet();
+    alert(`充值成功！`);
+};
+
+if($(`btnGoBalance`)) $(`btnGoBalance`).onclick = () => {
+    $(`modalBalanceAmount`).innerText = myWallet.balance.toFixed(2);
+    $(`balanceModal`).style.display = `flex`;
+};
+
+if($(`btnCloseBalanceModal`)) $(`btnCloseBalanceModal`).onclick = () => {
+    $(`balanceModal`).style.display = `none`;
+};
+
+if($(`btnBalanceHelp`)) $(`btnBalanceHelp`).onclick = () => {
+    alert(`【零钱规则说明】\n1. 资金来源：可通过对方转账、发红包或使用储蓄卡充值获得。\n2. 提现规则：余额提现至储蓄卡，将按照微信标准收取 0.1% 的服务费，单笔最低 0.1 元。`);
+};
+
+if($(`btnBalanceTopUp`)) $(`btnBalanceTopUp`).onclick = () => {
+    let amtStr = prompt(`请输入使用【储蓄卡】充值到零钱的金额：`);
+    if(amtStr === null) return;
+    let amt = parseFloat(amtStr);
+    if(isNaN(amt) || amt <= 0) { alert(`金额无效！`); return; }
+    
+    // 校验储蓄卡余额
+    if(myWallet.bank < amt) { 
+        alert(`储蓄卡余额不足，无法充值！请先给储蓄卡注入资金。`); 
+        return; 
+    }
+    
+    myWallet.bank -= amt;
+    myWallet.balance += amt;
+    myWallet.bills.push({
+        title: `零钱充值 (来自储蓄卡)`,
+        time: updTime().toLocaleString(),
+        amount: amt,
+        type: `wallet`
+    });
+    ls.setItem(`myWallet`, JSON.stringify(myWallet));
+    $(`modalBalanceAmount`).innerText = myWallet.balance.toFixed(2);
+    renderWallet();
+    alert(`充值成功！`);
+};
+
+if($(`btnBalanceWithdraw`)) $(`btnBalanceWithdraw`).onclick = () => {
+    let amtStr = prompt(`请输入提现到【储蓄卡】的金额：\n(将额外扣除 0.1% 手续费，最低 0.1 元)`);
+    if(amtStr === null) return;
+    let amt = parseFloat(amtStr);
+    if(isNaN(amt) || amt <= 0) { alert(`金额无效！`); return; }
+    
+    // 微信标准手续费算法：0.1%，最低1毛钱
+    let fee = Math.max(0.1, amt * 0.001);
+    let totalDeduct = amt + fee;
+    
+    // 校验零钱余额是否够扣除本金+手续费
+    if(myWallet.balance < totalDeduct) { 
+        alert(`零钱余额不足！提现 ${amt.toFixed(2)} 元需要手续费 ${fee.toFixed(2)} 元，共需扣除 ${totalDeduct.toFixed(2)} 元。`); 
+        return; 
+    }
+    
+    myWallet.balance -= totalDeduct;
+    myWallet.bank += amt;
+    myWallet.bills.push({
+        title: `零钱提现 (扣除手续费 ￥${fee.toFixed(2)})`,
+        time: updTime().toLocaleString(),
+        amount: -totalDeduct,
+        type: `transfer`
+    });
+    ls.setItem(`myWallet`, JSON.stringify(myWallet));
+    $(`modalBalanceAmount`).innerText = myWallet.balance.toFixed(2);
+    renderWallet();
+    alert(`提现成功！已提现 ${amt.toFixed(2)} 元至储蓄卡，扣除手续费 ${fee.toFixed(2)} 元。`);
+};
+
+if($(`btnGoBank`)) $(`btnGoBank`).onclick = () => {
+    alert(`这是你的储蓄卡，可以直接点击下方的【给储蓄卡充值】按钮进行外部资金注入，为零钱提供后盾。`);
+};
+
+if($(`btnWalletSet`)) $(`btnWalletSet`).onclick = () => {
+    $(`newWalletPwd`).value = ``;
+    $(`walletPwdModal`).style.display = `flex`;
+};
+if($(`btnCancelWalletPwd`)) $(`btnCancelWalletPwd`).onclick = () => {
+    $(`walletPwdModal`).style.display = `none`;
+};
+if($(`btnSaveWalletPwd`)) $(`btnSaveWalletPwd`).onclick = () => {
+    let pwd = $(`newWalletPwd`).value;
+    if(pwd.length !== 6) { alert(`密码必须是6位数字哦！`); return; }
+    myWallet.password = pwd;
+    ls.setItem(`myWallet`, JSON.stringify(myWallet));
+    alert(`支付密码设置成功！`);
+    $(`walletPwdModal`).style.display = `none`;
+};
 
 </script>
 
