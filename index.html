@@ -1513,14 +1513,18 @@ function redrawChat() {
                 lns = out.replace(/([。！？!?])/g, `$1\n`).split(/\n+/).filter(x => x.trim() !== ``); 
             }
             
-            let newLines = [];
-            lns.forEach(line => {
-                                let voiceMatch = line.match(/\[?【?语音消息[^0-9]*(\d+)[^\]】]*\]?】?/);
+                        let newLines = [];
+            let skipNext = false;
+            lns.forEach((line, i) => {
+                if(skipNext) { skipNext = false; return; }
+                let voiceMatch = line.match(/\[?【?语音消息[^0-9]*(\d+)[^\]】]*\]?】?/);
                 if(voiceMatch) {
                     let sec = voiceMatch[1];
-              
                     let pureText = line.replace(voiceMatch[0], ``).replace(/['""“”‘’]/g, ``).replace(/\s+/g, `，`).replace(/，+/g, `，`).replace(/([。！？!?…])，/g, `$1`).replace(/^，|，$/g, ``);
-
+                    if(!pureText && i + 1 < lns.length) {
+                        pureText = lns[i+1].replace(/['""“”‘’]/g, ``).replace(/\s+/g, `，`).replace(/，+/g, `，`).replace(/([。！？!?…])，/g, `$1`).replace(/^，|，$/g, ``);
+                        skipNext = true;
+                    }
                     if(pureText && !/[。！？!?…]$/.test(pureText)) pureText += `。`;
                     let cleanVoice = `[语音消息：${sec}秒]` + pureText;
                     newLines.push(cleanVoice);
@@ -1530,6 +1534,7 @@ function redrawChat() {
                     mkBubSync(line, `l`);
                 }
             });
+
             
             let newOut = newLines.join(`\n`);
             if(out !== newOut && rM) {
@@ -2072,14 +2077,18 @@ if(charStickers.length > 0) {
                     lns = out.replace(/([。！？!?])/g, `$1\n`).split(/\n+/).filter(x => x.trim() !== ``); 
                 }
                 
-                let newLines = [];
+                                let newLines = [];
+                let skipNext = false;
                 lns.forEach((line, i) => {
-                                        let voiceMatch = line.match(/\[?【?语音消息[^0-9]*(\d+)[^\]】]*\]?】?/);
+                    if(skipNext) { skipNext = false; return; }
+                    let voiceMatch = line.match(/\[?【?语音消息[^0-9]*(\d+)[^\]】]*\]?】?/);
                     if(voiceMatch) {
                         let sec = voiceMatch[1];
-                        let pureText 
-= line.replace(voiceMatch[0], ``).replace(/['""“”‘’]/g, ``).replace(/\s+/g, `，`).replace(/，+/g, `，`).replace(/([。！？!?…])，/g, `$1`).replace(/^，|，$/g, ``);
-
+                        let pureText = line.replace(voiceMatch[0], ``).replace(/['""“”‘’]/g, ``).replace(/\s+/g, `，`).replace(/，+/g, `，`).replace(/([。！？!?…])，/g, `$1`).replace(/^，|，$/g, ``);
+                        if(!pureText && i + 1 < lns.length) {
+                            pureText = lns[i+1].replace(/['""“”‘’]/g, ``).replace(/\s+/g, `，`).replace(/，+/g, `，`).replace(/([。！？!?…])，/g, `$1`).replace(/^，|，$/g, ``);
+                            skipNext = true;
+                        }
                         if(pureText && !/[。！？!?…]$/.test(pureText)) pureText += `。`;
                         let cleanVoice = `[语音消息：${sec}秒]` + pureText;
                         newLines.push(cleanVoice);
@@ -2089,6 +2098,7 @@ if(charStickers.length > 0) {
                         setTimeout(() => mkBub(line, `l`), i * 1500);
                     }
                 });
+
                 
                 let newOut = newLines.join(`\n`);
                 if(out !== newOut && rM) {
