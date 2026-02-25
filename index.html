@@ -2001,11 +2001,12 @@ localforage.getItem(`charStickers`).then(res =>{
                         let match = history[i].content.match(/^\[转账消息：([\d\.]+)\|(.*?)\|未收款\]$/);
                         if (match) {
                             let amt = parseFloat(match[1]);
-                            if (hasAccept) {
+                                                        if (hasAccept) {
                                 history[i].content = history[i].content.replace(`|未收款]`, `|已收款]`);
                             } else {
-                                history[i].content = history[i].content.replace(`|未收款]`, `|已拒绝收款]`);
+                                history[i].content = history[i].content.replace(`|未收款]`, `|对方已拒绝收款]`);
                                 myWallet.balance += amt;
+
                                 let dn = $(`cfgRem`).value || $(`cfgName`).value || `专属恋人`;
                                 myWallet.bills.push({ title: `转账退回 - ` + dn, time: updTime().toLocaleString(), amount: amt, type: `wallet` });
                                 ls.setItem(`myWallet`, JSON.stringify(myWallet));
@@ -2086,7 +2087,8 @@ localforage.getItem(`charStickers`).then(res =>{
 
 function renderQuoteBlock(b, txt) {
     b.dataset.raw = txt;
-        let transferMatch = txt.match(/^\[转账消息：([\d\.]+)\|(.*?)\|(未收款|已收款|对方已拒绝收款)\]$/);
+        let transferMatch = txt.match(/^\[转账消息：([\d\.]+)\|(.*?)\|(未收款|已收款|对方已拒绝收款|已拒绝收款)\]$/);
+
     if(transferMatch) {
         let amt = transferMatch[1];
         let note = transferMatch[2];
