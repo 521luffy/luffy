@@ -1734,6 +1734,15 @@ function toggleMenuDrawer(show) {
 }
 $(`btnOpenSticker`).onclick = () => { toggleStickerDrawer(true); toggleMenuDrawer(false); };
 $(`btnNewMenu`).onclick = () => toggleMenuDrawer(!isMenuDrawerOpen);
+iptMsg.onfocus = () => {
+    toggleMenuDrawer(false);
+    if(typeof toggleStickerDrawer === `function`) toggleStickerDrawer(false);
+};
+iptMsg.onclick = () => {
+    toggleMenuDrawer(false);
+    if(typeof toggleStickerDrawer === `function`) toggleStickerDrawer(false);
+};
+
 
 $(`btnRegenNew`).onclick = () => {
     toggleMenuDrawer(false);
