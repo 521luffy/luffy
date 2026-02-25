@@ -2573,9 +2573,17 @@ if($("btnSpaceBoard")) $("btnSpaceBoard").onclick = () =>alert("【留言板】�
 if($("btnSpaceMoments")) $("btnSpaceMoments").onclick = () =>alert("【我的说说】模块正在拼装中...");
 
 
-let charStickers = JSON.parse(ls.getItem(`charStickers`) || `[]`);
+let charStickers = [];
+localforage.getItem(`charStickers`).then(res =>{
+    if(res) charStickers = JSON.parse(res);
+    else if(ls.getItem(`charStickers`)) {
+        charStickers = JSON.parse(ls.getItem(`charStickers`));
+        localforage.setItem(`charStickers`, ls.getItem(`charStickers`));
+    }
+});
 let isCharStickerEdit = false;
 let selCharStickers = new Set();
+
 
 function renderCharStickers() {
     let list = $(`charStickerList`); list.innerHTML = ``;
