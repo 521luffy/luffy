@@ -129,8 +129,9 @@ textarea { resize: none; }
 .sticker-actions { display: flex; gap: 8px; flex-wrap: nowrap; }
 .sticker-search { padding: 8px 15px; background: #f5f6f8; flex-shrink: 0; }
 .sticker-search input { width: 100%; padding: 8px 15px; border: none; border-radius: 20px; background: #fff; outline: none; font-size: 13px; box-sizing: border-box; }
-.sticker-grid { flex: 1; min-height: 0; overflow-y: auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 10px; align-content: start; }
-.sticker-item { background: #fff; border-radius: 10px; padding: 6px; display: flex; flex-direction: column; align-items: center; cursor: pointer; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+.sticker-grid { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding: 10px; align-content: start; }
+.sticker-item { background: #fff; border-radius: 10px; padding: 6px; display: flex; flex-direction: column; align-items: center; cursor: pointer; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.02); min-width: 0; }
+
 .sticker-item img { width: 45px; height: 45px; object-fit: contain; margin-bottom: 5px; background: transparent; border-radius: 8px; }
 .sticker-item .name { font-size: 11px; color: #666; text-align: center; width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 
@@ -617,7 +618,8 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
             </div>
             <div class=section-card>
                 <div class=section-title>📦 角色已掌握的表情</div>
-               <div id=charStickerList style=display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-height:300px;overflow-y:auto;padding-right:5px;></div>
+               <div id=charStickerList style=display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;max-height:300px;overflow-y:auto;overflow-x:hidden;padding-right:5px;></div>
+
 
             </div>
         </div>
