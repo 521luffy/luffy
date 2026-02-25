@@ -3,7 +3,7 @@
 <head>
 <meta charset=utf-8>
 <meta name=viewport content=width=device-width,initial-scale=1>
-<meta name="referrer" content="no-referrer">
+<meta name="referrer"content="no-referrer">
 <title>专属手机</title>
 
 <style>
@@ -143,7 +143,7 @@ textarea { resize: none; }
 
 .st-tab { font-size: 14px; color: #888; cursor: pointer; font-weight: bold; position: relative; padding-bottom: 5px; transition: 0.2s; }
 .st-tab.active { color: #4a6ee0; }
-.st-tab.active::after { content: ''; position: absolute; bottom: -1px; left: 10%; width: 80%; height: 3px; background: #4a6ee0; border-radius: 2px; }
+.st-tab.active::after { content:''; position: absolute; bottom: -1px; left: 10%; width: 80%; height: 3px; background: #4a6ee0; border-radius: 2px; }
 
 .batch-modal-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 200; display: none; justify-content: center; align-items: center; }
 .batch-modal { background: #fff; width: 75%; border-radius: 16px; padding: 20px 0 0 0; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
@@ -315,12 +315,20 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
                     <div class=menu-icon-text>图片</div>
                     <input type=file id=picUploadInput accept=image/* style=display:none;>
                 </div>
-                <div id=btnTransfer class=menu-icon-btn>
+                                <div id=btnTransfer class=menu-icon-btn>
                     <div class=menu-icon-svg style="background:#f3e5f5;">
                         <svg width=20 height=20 viewBox="0 0 24 24" fill=none stroke=#6c5ce7 stroke-width=2 stroke-linecap=round stroke-linejoin=round><line x1="6" y1="11" x2="18" y2="11"></line><line x1="6" y1="15" x2="18" y2="15"></line><polyline points="6 5 12 11 18 5"></polyline><line x1="12" y1="11" x2="12" y2="20"></line></svg>
                     </div>
                     <div class=menu-icon-text>转账</div>
                 </div>
+
+                <div id=btnRedPacket class=menu-icon-btn>
+                    <div class=menu-icon-svg style="background:#ffefef;">
+                        <svg width=20 height=20 viewBox="0 0 24 24" fill=none stroke=#ff4d4f stroke-width=2 stroke-linecap=round stroke-linejoin=round><rect x="3" y="4" width="18" height="16" rx="2" ry="2"></rect><line x1="3" y1="10" x2="21" y2="10"></line><circle cx="12" cy="10" r="2"></circle></svg>
+                    </div>
+                    <div class=menu-icon-text>红包</div>
+                </div>
+
 
 
  
@@ -697,7 +705,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
     </div>
 </div>
 
-<div id="scrLogList" class="scr-flex">
+<div id="scrLogList"class="scr-flex">
     <div class="room-header">
         <span id="btnLogListBack" class="back-btn">＜</span>
         <span class="header-center">专属日志本</span>
@@ -711,7 +719,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
     </div>
 </div>
 
-<div id="scrLogEdit" class="scr-flex">
+<div id="scrLogEdit"class="scr-flex">
     <div class="room-header">
         <span id="btnLogEditBack" class="back-btn">＜</span>
         <span class="header-center">写日志</span>
@@ -862,12 +870,14 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
     </div>
     <div id="transferModal" class="modal-base">
         <div class="modal-ctx" style="width:80%; max-width:300px; padding:20px; border-radius:20px; background:#fff; display:flex; flex-direction:column; align-items:center;">
-            <h3 style="margin:0 0 15px 0; font-size:18px; color:#333;">转账给对方</h3>
-            <div style="width:100%; display:flex; flex-direction:column; gap:12px;">
-                <div style="display:flex; align-items:center; background:#f5f6fa; border-radius:15px; padding:10px 15px;">
-                    <span style="font-size:20px; font-weight:bold; color:#333; margin-right:10px;">¥</span>
-                    <input type="number" id="transferAmount" style="flex:1; border:none; background:transparent; outline:none; font-size:24px; color:#333; font-weight:bold;" placeholder="0.00">
+                        <h3 style="margin:0 0 15px 0; font-size:18px; color:#333;">转账给对方</h3>
+                        <div style="width:100%; display:flex; flex-direction:column; gap:12px;">
+                <div style="display:flex; align-items:center; background:#f5f6fa; border-radius:15px; padding:10px 15px; box-sizing:border-box; overflow:hidden;">
+                    <span style="font-size:20px; font-weight:bold; color:#333; margin-right:10px; flex-shrink:0;">¥</span>
+                    <input type="number" id="transferAmount" style="flex:1; width:50px; min-width:0; border:none; background:transparent; outline:none; font-size:24px; color:#333; font-weight:bold; padding-right:10px;" placeholder="0.00">
                 </div>
+
+
                 <input type="text" id="transferNote" style="width:100%; background:#f5f6fa; border:none; border-radius:15px; padding:15px; box-sizing:border-box; font-size:14px; outline:none; color:#333;" placeholder="添加备注（选填）">
             </div>
             <div style="display:flex; width:100%; gap:15px; margin-top:20px;">
@@ -876,6 +886,33 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
             </div>
         </div>
     </div>
+    <div id="redPacketModal" class="modal-base">
+        <div class="modal-ctx" style="width:80%; max-width:300px; padding:20px; border-radius:20px; background:#fffafb; display:flex; flex-direction:column; align-items:center;">
+            <h3 style="margin:0 0 15px 0; font-size:18px; color:#d63031;">发红包</h3>
+                                    <div style="width:100%; display:flex; flex-direction:column; gap:12px;">
+                <div style="display:flex; align-items:center; background:#fff; border:1px solid #ffeaa7; border-radius:15px; padding:10px 15px; box-sizing:border-box; overflow:hidden;">
+                    <span style="font-size:16px; font-weight:bold; color:#333; margin-right:10px; flex-shrink:0;">金额</span>
+                    <input type="number" id="redPacketAmount" style="flex:1; width:50px; min-width:0; border:none; background:transparent; outline:none; font-size:20px; color:#d63031; font-weight:bold; text-align:right; padding-right:10px;" placeholder="0.00">
+                    <span style="font-size:16px; font-weight:bold; color:#333; margin-left:10px; flex-shrink:0;">元</span>
+                </div>
+
+
+                <input type="text" id="redPacketNote" style="width:100%; background:#fff; border:1px solid #ffeaa7; border-radius:15px; padding:15px; box-sizing:border-box; font-size:14px; outline:none; color:#333;" placeholder="恭喜发财，大吉大利">
+                
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#fff; border:1px solid #ffeaa7; border-radius:15px; padding:10px 15px;">
+                    <span style="font-size:14px; color:#666;">红包封面</span>
+                    <div id="btnSelectRpCover" style="font-size:12px; color:#d63031; cursor:pointer; font-weight:bold; padding:4px 8px; background:#ffefef; border-radius:8px;">点击选择图片</div>
+                    <input type="file" id="rpCoverInput" accept="image/*" style="display:none;">
+                </div>
+                <img id="rpCoverPreview" style="width:100%; height:80px; object-fit:cover; border-radius:10px; display:none; border:1px solid #ffeaa7;">
+            </div>
+            <div style="display:flex; width:100%; gap:15px; margin-top:20px;">
+                <button id="btnCancelRedPacket" style="flex:1; padding:12px; border-radius:25px; border:none; background:#f0f2f5; color:#333; font-size:15px; font-weight:bold; cursor:pointer;">取消</button>
+                <button id="btnSendRedPacket" style="flex:1; padding:12px; border-radius:25px; border:none; background:#d63031; color:#fff; font-size:15px; font-weight:bold; cursor:pointer;">塞钱进红包</button>
+            </div>
+        </div>
+    </div>
+
     <div id="payPwdModal" class="modal-base">
         <div class="modal-ctx" style="width:80%; max-width:300px; padding:20px; border-radius:20px; background:#fff; display:flex; flex-direction:column; align-items:center;">
             <h3 style="margin:0 0 15px 0; font-size:18px; color:#333;">确认付款</h3>
@@ -940,14 +977,14 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 <script>
 
 
-const $ = id => document.getElementById(id);
+const $ = id =>document.getElementById(id);
 let lock=$("scrLock"), home=$("scrHome"), list=$("scrList"), room=$("scrRoom"), setApi=$("scrSetApi"), setChat=$("scrSetChat"), scrWb=$("scrWb"), scrWbEdit=$("scrWbEdit"), scrMe=$("scrMe"), scrCharSticker=$("scrCharSticker"), scrSpace=$("scrSpace"), scrLogList=$("scrLogList"), scrLogEdit=$("scrLogEdit");
 let iptMsg=$("iptMsg"), msgs=$("msgs"), modal=$("modal");
 let stW=$("stW"), stC=$("stC"), stA=$("stA"), stT=$("stT");
 let ls = localStorage;
-let currentChatId = "default";
+let currentChatId ="default";
 let originalSetItem = ls.setItem;
-let isolatedKeys = ["chatHistory", "aiStatus", "bgI", "aiI", "cMP", "cN", "cR", "cAP", "cCtx", "cT", "cAMem", "cMemT", "cMemP", "linkedWb", "lastMemCount", "memories"];
+let isolatedKeys = ["chatHistory","aiStatus","bgI","aiI","cMP","cN","cR","cAP","cCtx","cT","cAMem","cMemT","cMemP","linkedWb","lastMemCount","memories"];
 ls.setItem = function(key, value) {
     // 全局拦截：只要是存表情包和日志，统统强制扔进大仓库，保护老内存！
     if (key === "myPhoneStickers" || key === "charStickers" || key === "myLogs") {
@@ -986,7 +1023,7 @@ let linkedWb = ls.getItem(`linkedWb`) ? JSON.parse(ls.getItem(`linkedWb`)) : [];
 let pressTimer = null;
 
 let selEl = null;
-let currentQuote = "";
+let currentQuote ="";
 function showScreen(showId) {
     [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrSpace, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet")].forEach(s => { if(s) s.style.display = "none"; });
     let target = $(showId);
@@ -1146,24 +1183,24 @@ function cmp(id, key) {
 
 
 
-$(`btnBgUp`).onclick = () => $(`upBg`).click();
-$(`btnAiUp`).onclick = () => $(`upAi`).click();
-$(`btnMyUp`).onclick = () => $(`upMy`).click();
+$(`btnBgUp`).onclick = () =>$(`upBg`).click();
+$(`btnAiUp`).onclick = () =>$(`upAi`).click();
+$(`btnMyUp`).onclick = () =>$(`upMy`).click();
 cmp(`upBg`, `bgI`); cmp(`upAi`, `aiI`); cmp(`upMy`, `myI`);
 
-lock.onclick = () => { showScreen(`scrHome`); };
-$(`btnHomeChat`).onclick = () => showScreen(`scrList`);
-$(`btnListBack`).onclick = () => showScreen(`scrHome`);
-$(`btnHomeApi`).onclick = () => showScreen(`scrSetApi`);
-$(`btnSetApiBack`).onclick = () => showScreen(`scrHome`);
-$(`btnListToRoom`).onclick = () => { showScreen(`scrRoom`); msgs.scrollTop = msgs.scrollHeight; };
-$(`btnRoomBack`).onclick = () => { showScreen(`scrList`); updateListPreview(); };
-$(`btnRoomSet`).onclick = () => showScreen(`scrSetChat`);
-$(`btnSetChatBack`).onclick = () => showScreen(`scrRoom`);
-$(`btnHomeWb`).onclick = () => { showScreen(`scrWb`); renderWb(); };
-$(`btnCloseModal`).onclick = () => modal.style.display=`none`;
+lock.onclick = () =>{ showScreen(`scrHome`); };
+$(`btnHomeChat`).onclick = () =>showScreen(`scrList`);
+$(`btnListBack`).onclick = () =>showScreen(`scrHome`);
+$(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
+$(`btnSetApiBack`).onclick = () =>showScreen(`scrHome`);
+$(`btnListToRoom`).onclick = () =>{ showScreen(`scrRoom`); msgs.scrollTop = msgs.scrollHeight; };
+$(`btnRoomBack`).onclick = () =>{ showScreen(`scrList`); updateListPreview(); };
+$(`btnRoomSet`).onclick = () =>showScreen(`scrSetChat`);
+$(`btnSetChatBack`).onclick = () =>showScreen(`scrRoom`);
+$(`btnHomeWb`).onclick = () =>{ showScreen(`scrWb`); renderWb(); };
+$(`btnCloseModal`).onclick = () =>modal.style.display=`none`;
 
-$(`btnAddMenu`).onclick = () => { let m = $(`chatMenu`); m.style.display = m.style.display===`block`?`none`:`block`; };
+$(`btnAddMenu`).onclick = () =>{ let m = $(`chatMenu`); m.style.display = m.style.display===`block`?`none`:`block`; };
 let contacts = ls.getItem(`myContacts`) ? JSON.parse(ls.getItem(`myContacts`)) : [];
 function renderContacts() {
     let listItems = document.querySelectorAll(`.chat-item`);
@@ -1217,11 +1254,11 @@ $(`btnListToRoom`).onclick = () => {
 
 
 let menuItems = document.querySelectorAll(`.menu-item`);
-menuItems[0].onclick = () => { $(`chatMenu`).style.display=`none`; $(`addFriendModal`).style.display=`flex`; };
-for(let i=1; i<menuItems.length; i++) { menuItems[i].onclick = () => { alert(`功能开发中！`); $(`chatMenu`).style.display=`none`; }; }
+menuItems[0].onclick = () =>{ $(`chatMenu`).style.display=`none`; $(`addFriendModal`).style.display=`flex`; };
+for(let i=1; i<menuItems.length; i++) { menuItems[i].onclick = () =>{ alert(`功能开发中！`); $(`chatMenu`).style.display=`none`; }; }
 
-$(`btnCancelAddFriend`).onclick = () => { $(`addFriendModal`).style.display=`none`; $(`newFriendName`).value=``; $(`newFriendPrompt`).value=``; };
-$(`btnConfirmAddFriend`).onclick = () => {
+$(`btnCancelAddFriend`).onclick = () =>{ $(`addFriendModal`).style.display=`none`; $(`newFriendName`).value=``; $(`newFriendPrompt`).value=``; };
+$(`btnConfirmAddFriend`).onclick = () =>{
     let n = $(`newFriendName`).value.trim();
     if(!n) { alert(`名字不能为空哦！`); return; }
     let p = $(`newFriendPrompt`).value.trim();
@@ -1234,9 +1271,9 @@ $(`btnConfirmAddFriend`).onclick = () => {
     alert(`角色添加成功！去列表点击TA试试吧。`);
 };
 
-$(`btnClearChat`).onclick = () => { if(confirm(`确认清空当前聊天？`)){ msgs.innerHTML=``; history=[]; ls.removeItem(`chatHistory`); ls.setItem(`lastMemCount`, `0`); updateListPreview(); alert(`已清空`); } };
-$(`btnBlock`).onclick = () => alert(`已将对方拉黑。`);
-$(`btnDelFriend`).onclick = () => { alert(`好友已删除！`); showScreen(`scrHome`); };
+$(`btnClearChat`).onclick = () =>{ if(confirm(`确认清空当前聊天？`)){ msgs.innerHTML=``; history=[]; ls.removeItem(`chatHistory`); ls.setItem(`lastMemCount`, `0`); updateListPreview(); alert(`已清空`); } };
+$(`btnBlock`).onclick = () =>alert(`已将对方拉黑。`);
+$(`btnDelFriend`).onclick = () =>{ alert(`好友已删除！`); showScreen(`scrHome`); };
 let currWbTab = `global`;
 let editingWbId = null;
 function renderWb() {
@@ -1250,7 +1287,7 @@ function renderWb() {
     });
 }
 
-window.editWb = id => {
+window.editWb = id =>{
     let strId = id.toString();
     let item = wbData.find(x => x.id === strId);
     if(!item) return;
@@ -1258,18 +1295,18 @@ window.editWb = id => {
     showScreen(`scrWbEdit`);
 };
 
-window.delWb = id => {
+window.delWb = id =>{
     let strId = id.toString();
     if(confirm(`真的要烧毁这本世界书吗？`)) { wbData = wbData.filter(x => x.id !== strId); ls.setItem(`wbData`, JSON.stringify(wbData)); renderWb(); }
 };
 
-$(`btnWbBack`).onclick = () => showScreen(`scrHome`);
-$(`tabGlobal`).onclick = () => { currWbTab = `global`; $(`tabGlobal`).className=`wb-active`; $(`tabGlobal`).style.background=`#6c5ce7`; $(`tabGlobal`).style.color=`white`; $(`tabLocal`).style.background=`#f0f2f5`; $(`tabLocal`).style.color=`#888`; renderWb(); };
-$(`tabLocal`).onclick = () => { currWbTab = `local`; $(`tabLocal`).className=`wb-active`; $(`tabLocal`).style.background=`#6c5ce7`; $(`tabLocal`).style.color=`white`; $(`tabGlobal`).style.background=`#f0f2f5`; $(`tabGlobal`).style.color=`#888`; renderWb(); };
-$(`btnWbAdd`).onclick = () => { editingWbId = null; $(`wbTitle`).value = ``; $(`wbType`).value = currWbTab; $(`wbContent`).value = ``; showScreen(`scrWbEdit`); };
-$(`btnWbEditBack`).onclick = () => showScreen(`scrWb`);
+$(`btnWbBack`).onclick = () =>showScreen(`scrHome`);
+$(`tabGlobal`).onclick = () =>{ currWbTab = `global`; $(`tabGlobal`).className=`wb-active`; $(`tabGlobal`).style.background=`#6c5ce7`; $(`tabGlobal`).style.color=`white`; $(`tabLocal`).style.background=`#f0f2f5`; $(`tabLocal`).style.color=`#888`; renderWb(); };
+$(`tabLocal`).onclick = () =>{ currWbTab = `local`; $(`tabLocal`).className=`wb-active`; $(`tabLocal`).style.background=`#6c5ce7`; $(`tabLocal`).style.color=`white`; $(`tabGlobal`).style.background=`#f0f2f5`; $(`tabGlobal`).style.color=`#888`; renderWb(); };
+$(`btnWbAdd`).onclick = () =>{ editingWbId = null; $(`wbTitle`).value = ``; $(`wbType`).value = currWbTab; $(`wbContent`).value = ``; showScreen(`scrWbEdit`); };
+$(`btnWbEditBack`).onclick = () =>showScreen(`scrWb`);
 
-$(`btnWbSave`).onclick = () => {
+$(`btnWbSave`).onclick = () =>{
     let t = $(`wbTitle`).value, p = $(`wbType`).value, c = $(`wbContent`).value;
     if(!t || !c) { alert(`标题和内容都必须要填哦！`); return; }
     if(editingWbId) { let item = wbData.find(x => x.id === editingWbId); item.title = t; item.type = p; item.content = c; }
@@ -1277,7 +1314,7 @@ $(`btnWbSave`).onclick = () => {
     ls.setItem(`wbData`, JSON.stringify(wbData)); alert(`成功记录进世界书！`); showScreen(`scrWb`); renderWb();
 };
 
-$(`btnOpenLinkWb`).onclick = () => {
+$(`btnOpenLinkWb`).onclick = () =>{
     let list = $(`linkWbList`); list.innerHTML = ``;
     let locals = wbData.filter(x => x.type === `local`);
     if(locals.length === 0) list.innerHTML = `<div class=stat-txt>你还没有编写任何局部世界书哦。</div>`;
@@ -1290,9 +1327,9 @@ $(`btnOpenLinkWb`).onclick = () => {
     $(`linkWbModal`).style.display = `flex`;
 };
 
-$(`btnCloseLinkWb`).onclick = () => { $(`linkWbModal`).style.display = `none`; };
+$(`btnCloseLinkWb`).onclick = () =>{ $(`linkWbModal`).style.display = `none`; };
 
-$(`btnSaveLinkWb`).onclick = () => {
+$(`btnSaveLinkWb`).onclick = () =>{
     linkedWb = [];
     document.querySelectorAll(`.wb-check`).forEach(c => { if(c.checked) linkedWb.push(c.value); });
     ls.setItem(`linkedWb`, JSON.stringify(linkedWb));
@@ -1367,12 +1404,12 @@ function renderMemList() {
         list.innerHTML += html;
     });
 }
-window.toggleMemSel = idx => {
+window.toggleMemSel = idx =>{
     if(!isMemEditMode) return;
     if(selMems.has(idx)) selMems.delete(idx); else selMems.add(idx);
     renderMemList();
 };
-$(`btnViewMem`).onclick = () => {
+$(`btnViewMem`).onclick = () =>{
     if(!$(`memActions`)) {
         let hdr = $(`memModal`).querySelector(`.modal-hdr`);
         let editBtn = document.createElement(`span`);
@@ -1416,11 +1453,11 @@ $(`btnViewMem`).onclick = () => {
     renderMemList();
     $(`memModal`).style.display = `flex`;
 };
-$(`btnCloseMem`).onclick = () => { $(`memModal`).style.display = `none`; };
+$(`btnCloseMem`).onclick = () =>{ $(`memModal`).style.display = `none`; };
 
-$(`btnGenMem`).onclick = () => { runMemorySummary(false); };
+$(`btnGenMem`).onclick = () =>{ runMemorySummary(false); };
 
-$(`btnSaveChat`).onclick = () => {
+$(`btnSaveChat`).onclick = () =>{
     ls.setItem(`cN`, $(`cfgName`).value); ls.setItem(`cR`, $(`cfgRem`).value);
     ls.setItem(`cMyN`, $(`cfgMyName`).value);
     ls.setItem(`cAP`, $(`cfgAiP`).value); ls.setItem(`cMP`, $(`cfgMyP`).value);
@@ -1429,13 +1466,13 @@ $(`btnSaveChat`).onclick = () => {
     applyVis(); alert(`配置已保存！`); showScreen(`scrRoom`);
 };
 
-$(`btnSaveApi`).onclick = () => {
+$(`btnSaveApi`).onclick = () =>{
     ls.setItem(`pxy`, $(`apiPxy`).value); ls.setItem(`key`, $(`apiK`).value); 
     ls.setItem(`mod`, $(`apiMod`).value); ls.setItem(`temp`, $(`apiTemp`).value);
     alert(`网络已保存！`); showScreen(`scrHome`);
 };
 
-$(`btnPull`).onclick = async () => {
+$(`btnPull`).onclick = async () =>{
     let pxy = $(`apiPxy`).value, k = $(`apiK`).value;
     if(!pxy || !k) { alert(`请先填写地址和密钥！`); return; }
     let url = pxy.includes(`chat/completions`) ? pxy.replace(`chat/completions`, ``) : pxy;
@@ -1519,7 +1556,7 @@ function getCleanText(el) {
 
 
 let editingOldText = ``;
-$(`ctxCopy`).onclick = () => { if(selEl) navigator.clipboard.writeText(getCleanText(selEl)).then(()=>{ alert(`复制成功`); $(`ctxMenu`).style.display = `none`; }); };
+$(`ctxCopy`).onclick = () =>{ if(selEl) navigator.clipboard.writeText(getCleanText(selEl)).then(()=>{ alert(`复制成功`); $(`ctxMenu`).style.display = `none`; }); };
 $(`ctxDel`).onclick = () => { 
     if(selEl) { 
         if(confirm(`确定要删除这1条信息吗？`)) {
@@ -1567,8 +1604,8 @@ $(`ctxEdit`).onclick = () => {
         $(`ctxMenu`).style.display = `none`; 
     } 
 };
-$(`btnCancelEdit`).onclick = () => { $(`editMsgModal`).style.display = `none`; };
-$(`btnConfirmEdit`).onclick = () => {
+$(`btnCancelEdit`).onclick = () =>{ $(`editMsgModal`).style.display = `none`; };
+$(`btnConfirmEdit`).onclick = () =>{
     let newTxt = $(`editMsgInput`).value;
     if(!newTxt) return;
     for(let i=history.length-1; i>=0; i--) {
@@ -1582,7 +1619,7 @@ $(`btnConfirmEdit`).onclick = () => {
     $(`editMsgModal`).style.display = `none`;
 };
 
-$(`ctxQuote`).onclick = () => {
+$(`ctxQuote`).onclick = () =>{
     if(selEl) {
         currentQuote = getCleanText(selEl);
         $(`quoteText`).innerText = `引用：` + currentQuote;
@@ -1590,7 +1627,7 @@ $(`ctxQuote`).onclick = () => {
         $(`ctxMenu`).style.display = `none`;
     }
 };
-$(`btnCloseQuote`).onclick = () => { currentQuote = ``; $(`quoteBox`).style.display = `none`; };
+$(`btnCloseQuote`).onclick = () =>{ currentQuote = ``; $(`quoteBox`).style.display = `none`; };
 $(`ctxFav`).onclick = () => { 
     if(selEl) {
         let bubble = selEl.querySelector(`.bubble`) || selEl;
@@ -1620,7 +1657,7 @@ function bindPress(el) {
     el.ontouchmove = () => clearTimeout(pressTimer);
 }
 
-$(`btnRegen`).onclick = () => {
+$(`btnRegen`).onclick = () =>{
     if(history.length === 0) return;
     let last = history[history.length - 1];
     if(last.role === `assistant`) {
@@ -1631,8 +1668,8 @@ $(`btnRegen`).onclick = () => {
     } else { alert(`上一条必须是对方的回复才能重新生成哦`); }
 };
 
-$(`btnPic`).onclick = () => alert(`发图功能开发中`);
-$("btnMic").onclick = () => {
+$(`btnPic`).onclick = () =>alert(`发图功能开发中`);
+$("btnMic").onclick = () =>{
     if(!$("voiceModal")) return;
     $("voiceInputText").value = "";
     $("voiceModal").style.display = "flex";
@@ -1686,14 +1723,52 @@ if($(`btnTransfer`)) {
 if($(`btnCancelTransfer`)) {
     $(`btnCancelTransfer`).onclick = () => $(`transferModal`).style.display = `none`;
 }
+var tempRpCoverUrl = ``;
+var currentPayTask = null;
+
+
+if($(`btnRedPacket`)) {
+    $(`btnRedPacket`).onclick = () => {
+        toggleMenuDrawer(false);
+        $(`redPacketAmount`).value = ``;
+        $(`redPacketNote`).value = ``;
+        $(`rpCoverPreview`).style.display = `none`;
+        tempRpCoverUrl = ``;
+        $(`redPacketModal`).style.display = `flex`;
+    };
+}
+if($(`btnCancelRedPacket`)) $(`btnCancelRedPacket`).onclick = () =>$(`redPacketModal`).style.display = `none`;
+if($(`btnSelectRpCover`)) $(`btnSelectRpCover`).onclick = () =>$(`rpCoverInput`).click();
+if($(`rpCoverInput`)) {
+    $(`rpCoverInput`).onchange = e => {
+        let f = e.target.files[0];
+        if(!f) return;
+        let r = new FileReader();
+        r.onload = ev => {
+            let img = new Image();
+            img.onload = () => {
+                let cvs = document.createElement(`canvas`), ctx = cvs.getContext(`2d`);
+                let w = img.width, h = img.height, max = 300;
+                if(w > h && w > max) { h *= max/w; w = max; } else if(h > max) { w *= max/h; h = max; }
+                cvs.width = w; cvs.height = h; ctx.drawImage(img, 0, 0, w, h);
+                tempRpCoverUrl = cvs.toDataURL(`image/webp`, 0.6);
+                $(`rpCoverPreview`).src = tempRpCoverUrl;
+                $(`rpCoverPreview`).style.display = `block`;
+            };
+            img.src = ev.target.result;
+        };
+        r.readAsDataURL(f);
+        e.target.value = ``;
+    };
+}
+
 if($(`btnSendTransfer`)) {
     $(`btnSendTransfer`).onclick = () => {
         let amt = parseFloat($(`transferAmount`).value);
         if(isNaN(amt) || amt <= 0) { alert(`请输入正确的转账金额哦！`); return; }
-        
         let optWallet = $(`payMethodSelect`).querySelector(`option[value="wallet"]`);
         if(optWallet) optWallet.innerText = `零钱 (余额: ¥` + myWallet.balance.toFixed(2) + `)`;
-        
+        currentPayTask = { type: `transfer`, amt: amt, note: $(`transferNote`).value.trim() || `转账` };
         $(`payModalAmount`).innerText = amt.toFixed(2);
         $(`payPwdInput`).value = ``;
         $(`transferModal`).style.display = `none`;
@@ -1701,12 +1776,29 @@ if($(`btnSendTransfer`)) {
     };
 }
 
+if($(`btnSendRedPacket`)) {
+    $(`btnSendRedPacket`).onclick = () => {
+        let amt = parseFloat($(`redPacketAmount`).value);
+        if(isNaN(amt) || amt <= 0) { alert(`请输入正确的红包金额哦！`); return; }
+        if(amt > 200) { alert(`单个红包金额不可超过200元哦！`); return; }
+        let optWallet = $(`payMethodSelect`).querySelector(`option[value="wallet"]`);
+        if(optWallet) optWallet.innerText = `零钱 (余额: ¥` + myWallet.balance.toFixed(2) + `)`;
+        currentPayTask = { type: `redpacket`, amt: amt, note: $(`redPacketNote`).value.trim() || `恭喜发财，大吉大利`, cover: tempRpCoverUrl };
+        $(`payModalAmount`).innerText = amt.toFixed(2);
+        $(`payPwdInput`).value = ``;
+        $(`redPacketModal`).style.display = `none`;
+        $(`payPwdModal`).style.display = `flex`;
+    };
+}
+
 if($(`btnCancelPay`)) {
     $(`btnCancelPay`).onclick = () => {
         $(`payPwdModal`).style.display = `none`;
-        $(`transferModal`).style.display = `flex`;
+        if(currentPayTask && currentPayTask.type === `redpacket`) $(`redPacketModal`).style.display = `flex`;
+        else $(`transferModal`).style.display = `flex`;
     };
 }
+
 if($(`btnConfirmPay`)) {
     $(`btnConfirmPay`).onclick = () => {
         let pwd = $(`payPwdInput`).value;
@@ -1714,35 +1806,53 @@ if($(`btnConfirmPay`)) {
         let realPwd = myWallet.password || `123456`;
         if(pwd !== realPwd) { alert(`密码错误！`); return; }
         
-        let amt = parseFloat($(`transferAmount`).value);
+        if(!currentPayTask) return;
+        
+        $(`payPwdModal`).style.display = `none`; 
+        
+        let amt = currentPayTask.amt;
         let payMethod = $(`payMethodSelect`).value;
         
         if(payMethod === `wallet`) {
-            if(myWallet.balance < amt) { alert(`余额不足啦！请前往我的钱包页面给零钱充值哦。`); return; }
+            if(myWallet.balance < amt) { 
+                alert(`余额不足啦！请前往我的钱包页面给零钱充值哦。`); 
+                currentPayTask = null; 
+                return; 
+            }
             myWallet.balance -= amt;
         } else {
-            if(myWallet.bank < amt) { alert(`储蓄卡余额不足啦！请前往我的钱包页面充值哦。`); return; }
+            if(myWallet.bank < amt) { 
+                alert(`储蓄卡余额不足啦！请前往我的钱包页面充值哦。`); 
+                currentPayTask = null; 
+                return; 
+            }
             myWallet.bank -= amt;
         }
         
         let dn = $(`cfgRem`).value || $(`cfgName`).value || `专属恋人`;
-        myWallet.bills.push({
-            title: `转账给 - ` + dn,
-            time: updTime().toLocaleString(),
-            amount: -amt,
-            type: `transfer`
-        });
+        let logTitle = currentPayTask.type === `redpacket` ? `发红包给 - ` + dn : `转账给 - ` + dn;
+        
+        myWallet.bills.push({ title: logTitle, time: updTime().toLocaleString(), amount: -amt, type: `transfer` });
         ls.setItem(`myWallet`, JSON.stringify(myWallet));
         
-        let note = $(`transferNote`).value.trim() || `转账`;
-        let msgText = `[转账消息：` + amt.toFixed(2) + `|` + note + `|未收款]`;
+        let msgText = ``;
+        if(currentPayTask.type === `redpacket`) {
+            msgText = `[红包消息：` + amt.toFixed(2) + `|` + currentPayTask.note + `|未领取|` + currentPayTask.cover + `]`;
+        } else {
+            msgText = `[转账消息：` + amt.toFixed(2) + `|` + currentPayTask.note + `|未收款]`;
+        }
+        
+        currentPayTask = null; 
+        $(`payPwdInput`).value = ``;
+        
         mkBub(msgText, `r`);
         history.push({role: `user`, content: msgText});
         ls.setItem(`chatHistory`, JSON.stringify(history));
-        if(typeof updateListPreview === `function`) updateListPreview();
-        $(`payPwdModal`).style.display = `none`;
+        try { if(typeof updateListPreview === `function`) updateListPreview(); } catch(e){}
     };
 }
+
+
 
 
 
@@ -1783,7 +1893,7 @@ if($(`picUploadInput`)) {
 
 
 
-$(`btnSend`).onclick = () => {
+$(`btnSend`).onclick = () =>{
     let t = iptMsg.value; if(!t && !currentQuote) return;
     if(currentQuote) t = `「引用：` + currentQuote + `」\n` + t;
     mkBub(t, `r`); iptMsg.value = ``; $(`quoteBox`).style.display = `none`;
@@ -1793,7 +1903,7 @@ $(`btnSend`).onclick = () => {
     updateListPreview();
 };
 
-$(`btnLemon`).onclick = async () => {
+$(`btnLemon`).onclick = async () =>{
     let t = iptMsg.value;
     if(t || currentQuote) {
         if(currentQuote) t = `「引用：` + currentQuote + `」\n` + t;
@@ -1821,7 +1931,7 @@ $(`btnLemon`).onclick = async () => {
     if($(`cfgTime`).checked) sys += `当前现实时间：` + updTime().toLocaleString() + `，请保持感知。\n`;
     
     let charStickers = [];
-localforage.getItem(`charStickers`).then(res => {
+localforage.getItem(`charStickers`).then(res =>{
     if(res) charStickers = JSON.parse(res);
     else if(ls.getItem(`charStickers`)) {
         charStickers = JSON.parse(ls.getItem(`charStickers`));
@@ -1833,13 +1943,25 @@ localforage.getItem(`charStickers`).then(res => {
         let names = charStickers.map(x => x.name).join(`、`);
         sys += `\n【你的专属表情包库】如果你想发表情配合情绪，请务必在【回复】中插入代码“[发送表情：表情名称]”。当前你拥有的表情名称有：` + names + `。警告：绝对不要捏造列表外的表情！不要发多余的链接！`;
     }
-    sys += `\n【转账处理规则】如果玩家近期给你发送了转账（记录中会显示“未收款”），你必须在【回复】中插入指令代码“[收取转账]”或“[拒绝转账]”。请结合你的性格决定是否收下这笔钱，并给出符合人设的文字回复！绝对不要忘记带上指令代码。`;
+        sys += `\n【资金互动规则】如果玩家近期给你发了转账（记录显示“未收款”），你必须在【回复】中插入“[收取转账]”或“[拒绝转账]”。如果玩家给你发了红包（记录显示“未领取”），你必须在【回复】中插入“[领取红包]”或“[退回红包]”。结合性格决定是否收下，并给出符合人设的回复！绝对不能忘记带上指令代码。`;
+
 
 
         let arr = sys ? [{role: `system`, content: sys}] : [];
     let ctxHist = history.slice(-(parseInt($(`cfgCtx`).value)||10));
-    let mappedHist = ctxHist.map(m => {
-        if(m.content.includes(`[图片消息：data:image`)) {
+        let mappedHist = ctxHist.map(m => {
+        if (m.content.includes(`[红包消息：`) && m.content.includes(`|data:image`)) {
+            let match = m.content.match(/^\[红包消息：([\d\.]+)\|(.*?)\|(.*?)\|(data:image.*?)\]$/);
+            if (match) {
+                return {
+                    role: m.role,
+                    content: [
+                        {type: `text`, text: `[红包消息：${match[1]}元 | 祝福语：${match[2]} | 状态：${match[3]}] (附带了红包封面图片，请看下一张图)`},
+                        {type: `image_url`, image_url: {url: match[4]}}
+                    ]
+                };
+            }
+        } else if (m.content.includes(`[图片消息：data:image`)) {
             let parts = m.content.split(/\[图片消息：(.*?)\]/);
             let cArr = [];
             for(let i=0; i<parts.length; i++) {
@@ -1850,6 +1972,7 @@ localforage.getItem(`charStickers`).then(res => {
         }
         return m;
     });
+
     arr = arr.concat(mappedHist);
     
     try {
@@ -1866,35 +1989,6 @@ localforage.getItem(`charStickers`).then(res => {
             });
             
             let hasAccept = txt.includes(`[收取转账]`);
-            let hasReject = txt.includes(`[拒绝转账]`);
-            if (hasAccept || hasReject) {
-                txt = txt.replace(/\[收取转账\]/g, ``).replace(/\[拒绝转账\]/g, ``);
-                for (let i = history.length - 1; i >= 0; i--) {
-                    if (history[i].role === `user` && history[i].content.includes(`|未收款]`)) {
-                        let match = history[i].content.match(/^\[转账消息：([\d\.]+)\|(.*?)\|未收款\]$/);
-                        if (match) {
-                            let amt = parseFloat(match[1]);
-                            if (hasAccept) {
-                                history[i].content = history[i].content.replace(`|未收款]`, `|已收款]`);
-                            } else {
-                                history[i].content = history[i].content.replace(`|未收款]`, `|对方已拒绝收款]`);
-                                myWallet.balance += amt;
-                                let dn = $(`cfgRem`).value || $(`cfgName`).value || `专属恋人`;
-                                myWallet.bills.push({
-                                    title: `转账退回 - ` + dn,
-                                    time: updTime().toLocaleString(),
-                                    amount: amt,
-                                    type: `wallet`
-                                });
-                                ls.setItem(`myWallet`, JSON.stringify(myWallet));
-                                if(typeof renderWallet === `function`) renderWallet();
-                            }
-                            redrawChat();
-                            break;
-                        }
-                    }
-                }
-            }
             
             history.push({role: `assistant`, content: txt});
             ls.setItem(`chatHistory`, JSON.stringify(history));
@@ -1947,12 +2041,12 @@ localforage.getItem(`charStickers`).then(res => {
 
 function renderQuoteBlock(b, txt) {
     b.dataset.raw = txt;
-    let transferMatch = txt.match(/^\[转账消息：([\d\.]+)\|(.*?)\|(未收款|已收款|对方已拒绝收款)\]$/);
+        let transferMatch = txt.match(/^\[转账消息：([\d\.]+)\|(.*?)\|(未收款|已收款|对方已拒绝收款)\]$/);
     if(transferMatch) {
         let amt = transferMatch[1];
         let note = transferMatch[2];
         let status = transferMatch[3];
-        b.innerHTML = `<div style="width:200px; background:#f3e5f5; border-radius:12px; overflow:hidden; border:1px solid #e1bee7; cursor:pointer;" onclick="alert('转账详情：\\n金额：¥${amt}\\n备注：${note}\\n状态：${status}')">
+        b.innerHTML = `<div style="width:200px; background:#f3e5f5; border-radius:12px; overflow:hidden; border:1px solid #e1bee7;">
             <div style="padding:15px; display:flex; align-items:center; gap:12px;">
                 <div style="width:36px; height:36px; background:#6c5ce7; border-radius:50%; display:flex; justify-content:center; align-items:center; color:white; font-size:18px; font-weight:bold; flex-shrink:0;">¥</div>
                 <div style="display:flex; flex-direction:column; overflow:hidden;">
@@ -1970,6 +2064,37 @@ function renderQuoteBlock(b, txt) {
         b.style.border = `none`;
         return;
     }
+    
+    let rpMatch = txt.match(/^\[红包消息：([\d\.]+)\|(.*?)\|(未领取|已领取|对方已退回红包)\|(.*?)\]$/);
+    if(rpMatch) {
+        let note = rpMatch[2];
+        let status = rpMatch[3];
+        let cover = rpMatch[4];
+        
+        let bgStyle = cover ? `background:url(${cover}) center/cover no-repeat;` : `background:#f25542;`;
+        let maskStyle = cover ? `background:linear-gradient(to bottom, rgba(242,85,66,0.8) 0%, rgba(242,85,66,0) 60%, rgba(0,0,0,0.6) 100%);` : `background:transparent;`;
+        let opacityStatus = status === `未领取` ? `1` : `0.6`;
+        
+        b.innerHTML = `<div style="width:150px; height:200px; ${bgStyle} border-radius:12px; overflow:hidden; border:1px solid #ffcccc; position:relative; opacity:${opacityStatus}; display:flex; flex-direction:column;">
+            <div style="${maskStyle} flex:1; padding:15px; display:flex; flex-direction:column; gap:8px;">
+                <div style="width:30px; height:30px; background:white; border-radius:5px; display:flex; justify-content:center; align-items:center; color:#f25542; font-size:16px; font-weight:bold;">🧧</div>
+                <div style="display:flex; flex-direction:column; overflow:hidden;">
+                    <span style="font-size:14px; color:white; font-weight:bold; word-wrap:break-word; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">${note}</span>
+                    <span style="font-size:11px; color:rgba(255,255,255,0.9); margin-top:4px;">${status === '未领取' ? '专属红包' : status}</span>
+                </div>
+            </div>
+            <div style="padding:6px 12px; background:white; font-size:11px; color:#888;">
+                专属红包
+            </div>
+        </div>`;
+        b.style.background = `transparent`;
+        b.style.boxShadow = `none`;
+        b.style.padding = `0`;
+        b.style.border = `none`;
+        return;
+    }
+
+
 
     
     let photoMatch = txt.match(/^\[照片消息：([\s\S]*?)\]$/);
@@ -2072,7 +2197,7 @@ function mkBubSync(txt, side) {
 
 function rmThk() { let t = $(`thk`); if(t) t.remove(); }
 let stickerData = [];
-localforage.getItem(`myPhoneStickers`).then(res => {
+localforage.getItem(`myPhoneStickers`).then(res =>{
     if(res) {
         stickerData = JSON.parse(res);
     } else if(ls.getItem(`myPhoneStickers`)) {
@@ -2100,19 +2225,19 @@ function toggleMenuDrawer(show) {
         }
     }
 }
-$(`btnOpenSticker`).onclick = () => { toggleStickerDrawer(true); toggleMenuDrawer(false); };
-$(`btnNewMenu`).onclick = () => toggleMenuDrawer(!isMenuDrawerOpen);
-iptMsg.onfocus = () => {
+$(`btnOpenSticker`).onclick = () =>{ toggleStickerDrawer(true); toggleMenuDrawer(false); };
+$(`btnNewMenu`).onclick = () =>toggleMenuDrawer(!isMenuDrawerOpen);
+iptMsg.onfocus = () =>{
     toggleMenuDrawer(false);
     if(typeof toggleStickerDrawer === `function`) toggleStickerDrawer(false);
 };
-iptMsg.onclick = () => {
+iptMsg.onclick = () =>{
     toggleMenuDrawer(false);
     if(typeof toggleStickerDrawer === `function`) toggleStickerDrawer(false);
 };
 
 
-$(`btnRegenNew`).onclick = () => {
+$(`btnRegenNew`).onclick = () =>{
     toggleMenuDrawer(false);
     if(history.length === 0) return;
     let last = history[history.length - 1];
@@ -2124,22 +2249,22 @@ $(`btnRegenNew`).onclick = () => {
     } else { alert(`上一条必须是对方的回复才能重新生成哦`); }
 };
 
-if(typeof msgs !== `undefined`) msgs.addEventListener(`click`, () => { if(isMenuDrawerOpen) toggleMenuDrawer(false); });
+if(typeof msgs !== `undefined`) msgs.addEventListener(`click`, () =>{ if(isMenuDrawerOpen) toggleMenuDrawer(false); });
 
-$(`btnCancelSticker`).onclick = () => toggleStickerDrawer(false);
-
-
-$(`stickerEditBtn`).onclick = () => toggleStickerEditMode();
-$(`btnAddBatchSticker`).onclick = () => toggleBatchModal(true);
-$(`btnUploadStickerClick`).onclick = () => $(`stickerUploadInput`).click();
-$(`btnCancelBatch`).onclick = () => toggleBatchModal(false);
-$(`btnConfirmBatch`).onclick = () => confirmBatchStickers();
-$(`stickerSearch`).oninput = () => renderStickers();
-$(`tabAllSticker`).onclick = () => { currStickerTab = `all`; $(`tabAllSticker`).className = `st-tab active`; $(`tabRecentSticker`).className = `st-tab`; renderStickers(); };
-$(`tabRecentSticker`).onclick = () => { currStickerTab = `recent`; $(`tabRecentSticker`).className = `st-tab active`; $(`tabAllSticker`).className = `st-tab`; renderStickers(); };
+$(`btnCancelSticker`).onclick = () =>toggleStickerDrawer(false);
 
 
-$(`stickerUploadInput`).onchange = e => {
+$(`stickerEditBtn`).onclick = () =>toggleStickerEditMode();
+$(`btnAddBatchSticker`).onclick = () =>toggleBatchModal(true);
+$(`btnUploadStickerClick`).onclick = () =>$(`stickerUploadInput`).click();
+$(`btnCancelBatch`).onclick = () =>toggleBatchModal(false);
+$(`btnConfirmBatch`).onclick = () =>confirmBatchStickers();
+$(`stickerSearch`).oninput = () =>renderStickers();
+$(`tabAllSticker`).onclick = () =>{ currStickerTab = `all`; $(`tabAllSticker`).className = `st-tab active`; $(`tabRecentSticker`).className = `st-tab`; renderStickers(); };
+$(`tabRecentSticker`).onclick = () =>{ currStickerTab = `recent`; $(`tabRecentSticker`).className = `st-tab active`; $(`tabAllSticker`).className = `st-tab`; renderStickers(); };
+
+
+$(`stickerUploadInput`).onchange = e =>{
     let file = e.target.files[0];
     if (!file) return;
     let name = file.name.split(".")[0];
@@ -2154,7 +2279,7 @@ $(`stickerUploadInput`).onchange = e => {
             stickerData.push({ name: name, url: cvs.toDataURL("image/webp", 0.4) });
             localforage.setItem("myPhoneStickers", JSON.stringify(stickerData)).then(() => {
     renderStickers();
-}).catch(err => {
+}).catch(err =>{
     stickerData.pop();
     alert("系统提示：大仓库写入失败！");
 });
@@ -2184,13 +2309,13 @@ function toggleStickerDrawer(show) {
     }
 }
 
-$(`btnSelectAllSticker`).onclick = () => {
+$(`btnSelectAllSticker`).onclick = () =>{
     if(selectedStickers.size === stickerData.length) selectedStickers.clear();
     else stickerData.forEach((_, i) => selectedStickers.add(i));
     renderStickers();
 };
 
-$(`btnDelSelectedSticker`).onclick = () => {
+$(`btnDelSelectedSticker`).onclick = () =>{
     if(selectedStickers.size === 0) { alert(`请先选择要删除的表情哦`); return; }
     if(confirm(`确定要删除选中的 ` + selectedStickers.size + ` 个表情吗？`)) {
         stickerData = stickerData.filter((_, i) => !selectedStickers.has(i));
@@ -2199,7 +2324,7 @@ $(`btnDelSelectedSticker`).onclick = () => {
     }
 };
 
-window.deleteSticker = (event, index) => {
+window.deleteSticker = (event, index) =>{
     event.stopPropagation(); stickerData.splice(index, 1); ls.setItem(`myPhoneStickers`, JSON.stringify(stickerData));
     selectedStickers.clear(); renderStickers();
 };
@@ -2310,48 +2435,48 @@ function confirmBatchStickers() {
 
 
 
-if(history.length > 0) redrawChat();
+if(history.length>0) redrawChat();
 
-if($("navContact")) $("navContact").onclick = () => alert("【角色】版块正在全力开发中...");
-if($("navMoment")) $("navMoment").onclick = () => alert("【动态】朋友圈功能正在全力开发中...");
-if($("navMe")) $("navMe").onclick = () => showScreen("scrMe");
+if($("navContact")) $("navContact").onclick = () =>alert("【角色】版块正在全力开发中...");
+if($("navMoment")) $("navMoment").onclick = () =>alert("【动态】朋友圈功能正在全力开发中...");
+if($("navMe")) $("navMe").onclick = () =>showScreen("scrMe");
 
-if($("navMeToMsg")) $("navMeToMsg").onclick = () => showScreen("scrList");
-if($("navMeToContact")) $("navMeToContact").onclick = () => alert("【角色】版块正在全力开发中...");
-if($("navMeToMoment")) $("navMeToMoment").onclick = () => alert("【动态】朋友圈功能正在全力开发中...");
-if($("btnMeBack")) $("btnMeBack").onclick = () => showScreen("scrHome");
+if($("navMeToMsg")) $("navMeToMsg").onclick = () =>showScreen("scrList");
+if($("navMeToContact")) $("navMeToContact").onclick = () =>alert("【角色】版块正在全力开发中...");
+if($("navMeToMoment")) $("navMeToMoment").onclick = () =>alert("【动态】朋友圈功能正在全力开发中...");
+if($("btnMeBack")) $("btnMeBack").onclick = () =>showScreen("scrHome");
 
-if($("btnEditMe")) $("btnEditMe").onclick = () => {
+if($("btnEditMe")) $("btnEditMe").onclick = () =>{
     $("iptMeName").value = $("cfgMyName").value || "你的名字";
     $("iptMeBio").value = ls.getItem("myBio") || "";
     $("editMeModal").style.display = "flex";
 };
-if($("btnCancelEditMe")) $("btnCancelEditMe").onclick = () => $("editMeModal").style.display = "none";
-if($("btnSaveEditMe")) $("btnSaveEditMe").onclick = () => {
+if($("btnCancelEditMe")) $("btnCancelEditMe").onclick = () =>$("editMeModal").style.display ="none";
+if($("btnSaveEditMe")) $("btnSaveEditMe").onclick = () =>{
     $("cfgMyName").value = $("iptMeName").value;
     ls.setItem("cMyN", $("iptMeName").value);
     ls.setItem("myBio", $("iptMeBio").value);
     applyVis();
     $("editMeModal").style.display = "none";
 };
-if($("btnSetMeAvatar")) $("btnSetMeAvatar").onclick = () => $("upMeAvatar").click();
-cmp("upMeAvatar", "myI");
+if($("btnSetMeAvatar")) $("btnSetMeAvatar").onclick = () =>$("upMeAvatar").click();
+cmp("upMeAvatar","myI");
 
 
 
 
-if($("btnHomeSpace")) $("btnHomeSpace").onclick = () => showScreen("scrSpace");
-if($("btnSpaceBack")) $("btnSpaceBack").onclick = () => showScreen("scrHome");
+if($("btnHomeSpace")) $("btnHomeSpace").onclick = () =>showScreen("scrSpace");
+if($("btnSpaceBack")) $("btnSpaceBack").onclick = () =>showScreen("scrHome");
 
-if($("btnEditSpace")) $("btnEditSpace").onclick = () => {
+if($("btnEditSpace")) $("btnEditSpace").onclick = () =>{
     $("iptMeName").value = $("cfgMyName").value || "你的名字";
     $("iptMeBio").value = ls.getItem("myBio") || "";
     $("editMeModal").style.display = "flex";
 };
 
-if($("btnSpaceLogs")) $("btnSpaceLogs").onclick = () => showScreen("scrLogList");
-if($("btnLogListBack")) $("btnLogListBack").onclick = () => showScreen("scrSpace");
-if($("btnWriteLog")) $("btnWriteLog").onclick = () => {
+if($("btnSpaceLogs")) $("btnSpaceLogs").onclick = () =>showScreen("scrLogList");
+if($("btnLogListBack")) $("btnLogListBack").onclick = () =>showScreen("scrSpace");
+if($("btnWriteLog")) $("btnWriteLog").onclick = () =>{
     $("logImgType").value = "none";
     $("logTextImgBlock").style.display = "none";
     $("logLocalImgBlock").style.display = "none";
@@ -2360,7 +2485,7 @@ if($("btnWriteLog")) $("btnWriteLog").onclick = () => {
     $("logImgPreview").style.display = "none";
     showScreen("scrLogEdit");
 };
-if($("btnLogEditBack")) $("btnLogEditBack").onclick = () => showScreen("scrLogList");
+if($("btnLogEditBack")) $("btnLogEditBack").onclick = () =>showScreen("scrLogList");
 
 if($("logImgType")) {
     $("logImgType").onchange = function() {
@@ -2370,8 +2495,8 @@ if($("logImgType")) {
     };
 }
 
-if($("btnSpaceBoard")) $("btnSpaceBoard").onclick = () => alert("【留言板】模块正在拼装中...");
-if($("btnSpaceMoments")) $("btnSpaceMoments").onclick = () => alert("【我的说说】模块正在拼装中...");
+if($("btnSpaceBoard")) $("btnSpaceBoard").onclick = () =>alert("【留言板】模块正在拼装中...");
+if($("btnSpaceMoments")) $("btnSpaceMoments").onclick = () =>alert("【我的说说】模块正在拼装中...");
 
 
 let charStickers = JSON.parse(ls.getItem(`charStickers`) || `[]`);
@@ -2398,20 +2523,20 @@ function renderCharStickers() {
     });
 }
 
-$(`btnEditCharSticker`).onclick = () => {
+$(`btnEditCharSticker`).onclick = () =>{
     isCharStickerEdit = !isCharStickerEdit;
     $(`btnEditCharSticker`).innerText = isCharStickerEdit ? `完成` : `管理`;
     $(`charStickerActions`).style.display = isCharStickerEdit ? `flex` : `none`;
     selCharStickers.clear(); renderCharStickers();
 };
 
-$(`btnSelAllCharSticker`).onclick = () => {
+$(`btnSelAllCharSticker`).onclick = () =>{
     if(selCharStickers.size === charStickers.length) selCharStickers.clear();
     else charStickers.forEach((_, i) => selCharStickers.add(i));
     renderCharStickers();
 };
 
-$(`btnDelCharSticker`).onclick = () => {
+$(`btnDelCharSticker`).onclick = () =>{
     if(selCharStickers.size === 0) { alert(`请先点击图片选择要删除的表情！`); return; }
     if(confirm(`确定删除选中的 ` + selCharStickers.size + ` 个表情吗？`)) {
         charStickers = charStickers.filter((_, i) => !selCharStickers.has(i));
@@ -2420,14 +2545,14 @@ $(`btnDelCharSticker`).onclick = () => {
     }
 };
 
-if($(`btnCharStickerBack`)) $(`btnCharStickerBack`).onclick = () => {
+if($(`btnCharStickerBack`)) $(`btnCharStickerBack`).onclick = () =>{
     isCharStickerEdit = false; $(`btnEditCharSticker`).innerText = `管理`; $(`charStickerActions`).style.display = `none`; selCharStickers.clear();
     showScreen(`scrMe`);
 };
-if($(`btnGoCharSticker`)) $(`btnGoCharSticker`).onclick = () => { showScreen(`scrCharSticker`); renderCharStickers(); };
+if($(`btnGoCharSticker`)) $(`btnGoCharSticker`).onclick = () =>{ showScreen(`scrCharSticker`); renderCharStickers(); };
 
-if($(`btnUpCharSticker`)) $(`btnUpCharSticker`).onclick = () => $(`upCharSticker`).click();
-if($(`upCharSticker`)) $(`upCharSticker`).onchange = e => {
+if($(`btnUpCharSticker`)) $(`btnUpCharSticker`).onclick = () =>$(`upCharSticker`).click();
+if($(`upCharSticker`)) $(`upCharSticker`).onchange = e =>{
     let files = e.target.files;
     if(!files || files.length === 0) return;
     for(let i=0; i<files.length; i++) {
@@ -2462,7 +2587,7 @@ if($(`upCharSticker`)) $(`upCharSticker`).onchange = e => {
 };
 
 
-if($("btnAddCharSticker")) $("btnAddCharSticker").onclick = () => {
+if($("btnAddCharSticker")) $("btnAddCharSticker").onclick = () =>{
     let text = $("iptCharBatchUrl").value.trim();
     if(!text) return;
     let lines = text.split("\n");
@@ -2502,7 +2627,7 @@ if($("btnAddCharSticker")) $("btnAddCharSticker").onclick = () => {
 
 // ===== 专属日志系统核心逻辑 =====
 let logsData = [];
-localforage.getItem("myLogs").then(res => {
+localforage.getItem("myLogs").then(res =>{
     if(res) logsData = JSON.parse(res);
     else if(ls.getItem("myLogs")) {
         logsData = JSON.parse(ls.getItem("myLogs"));
@@ -2516,8 +2641,8 @@ localforage.getItem("myLogs").then(res => {
     }, 1500);
 });
 
-let currLogTab = "me";
-let tempLogImgUrl = "";
+let currLogTab ="me";
+let tempLogImgUrl ="";
 
 // 修复写日志按钮，每次点开自动清空上一次残留的图片
 if($("btnWriteLog")) {
@@ -2552,7 +2677,7 @@ if($("tabAiLogs")) {
 }
 
 // 处理本地图片的压缩与临时存储
-if($("btnSelectLogImg")) $("btnSelectLogImg").onclick = () => $("upLogImg").click();
+if($("btnSelectLogImg")) $("btnSelectLogImg").onclick = () =>$("upLogImg").click();
 if($("upLogImg")) {
     $("upLogImg").onchange = e => {
         let f = e.target.files[0];
@@ -3244,10 +3369,10 @@ function renderWallet() {
     }
 }
 
-if($(`btnOpenWallet`)) $(`btnOpenWallet`).onclick = () => { renderWallet(); showScreen(`scrWallet`); };
-if($(`btnWalletBack`)) $(`btnWalletBack`).onclick = () => showScreen(`scrMe`);
+if($(`btnOpenWallet`)) $(`btnOpenWallet`).onclick = () =>{ renderWallet(); showScreen(`scrWallet`); };
+if($(`btnWalletBack`)) $(`btnWalletBack`).onclick = () =>showScreen(`scrMe`);
 
-if($(`btnTopUpBank`)) $(`btnTopUpBank`).onclick = () => {
+if($(`btnTopUpBank`)) $(`btnTopUpBank`).onclick = () =>{
     let amtStr = prompt(`请输入给储蓄卡充值的金额：`);
     if(amtStr === null) return;
     let amt = parseFloat(amtStr);
@@ -3264,20 +3389,20 @@ if($(`btnTopUpBank`)) $(`btnTopUpBank`).onclick = () => {
     alert(`充值成功！`);
 };
 
-if($(`btnGoBalance`)) $(`btnGoBalance`).onclick = () => {
+if($(`btnGoBalance`)) $(`btnGoBalance`).onclick = () =>{
     $(`modalBalanceAmount`).innerText = myWallet.balance.toFixed(2);
     $(`balanceModal`).style.display = `flex`;
 };
 
-if($(`btnCloseBalanceModal`)) $(`btnCloseBalanceModal`).onclick = () => {
+if($(`btnCloseBalanceModal`)) $(`btnCloseBalanceModal`).onclick = () =>{
     $(`balanceModal`).style.display = `none`;
 };
 
-if($(`btnBalanceHelp`)) $(`btnBalanceHelp`).onclick = () => {
+if($(`btnBalanceHelp`)) $(`btnBalanceHelp`).onclick = () =>{
     alert(`【零钱规则说明】\n1. 资金来源：可通过对方转账、发红包或使用储蓄卡充值获得。\n2. 提现规则：余额提现至储蓄卡，将按照微信标准收取 0.1% 的服务费，单笔最低 0.1 元。`);
 };
 
-if($(`btnBalanceTopUp`)) $(`btnBalanceTopUp`).onclick = () => {
+if($(`btnBalanceTopUp`)) $(`btnBalanceTopUp`).onclick = () =>{
     let amtStr = prompt(`请输入使用【储蓄卡】充值到零钱的金额：`);
     if(amtStr === null) return;
     let amt = parseFloat(amtStr);
@@ -3303,7 +3428,7 @@ if($(`btnBalanceTopUp`)) $(`btnBalanceTopUp`).onclick = () => {
     alert(`充值成功！`);
 };
 
-if($(`btnBalanceWithdraw`)) $(`btnBalanceWithdraw`).onclick = () => {
+if($(`btnBalanceWithdraw`)) $(`btnBalanceWithdraw`).onclick = () =>{
     let amtStr = prompt(`请输入提现到【储蓄卡】的金额：\n(将额外扣除 0.1% 手续费，最低 0.1 元)`);
     if(amtStr === null) return;
     let amt = parseFloat(amtStr);
@@ -3333,18 +3458,18 @@ if($(`btnBalanceWithdraw`)) $(`btnBalanceWithdraw`).onclick = () => {
     alert(`提现成功！已提现 ${amt.toFixed(2)} 元至储蓄卡，扣除手续费 ${fee.toFixed(2)} 元。`);
 };
 
-if($(`btnGoBank`)) $(`btnGoBank`).onclick = () => {
+if($(`btnGoBank`)) $(`btnGoBank`).onclick = () =>{
     alert(`这是你的储蓄卡，可以直接点击下方的【给储蓄卡充值】按钮进行外部资金注入，为零钱提供后盾。`);
 };
 
-if($(`btnWalletSet`)) $(`btnWalletSet`).onclick = () => {
+if($(`btnWalletSet`)) $(`btnWalletSet`).onclick = () =>{
     $(`newWalletPwd`).value = ``;
     $(`walletPwdModal`).style.display = `flex`;
 };
-if($(`btnCancelWalletPwd`)) $(`btnCancelWalletPwd`).onclick = () => {
+if($(`btnCancelWalletPwd`)) $(`btnCancelWalletPwd`).onclick = () =>{
     $(`walletPwdModal`).style.display = `none`;
 };
-if($(`btnSaveWalletPwd`)) $(`btnSaveWalletPwd`).onclick = () => {
+if($(`btnSaveWalletPwd`)) $(`btnSaveWalletPwd`).onclick = () =>{
     let pwd = $(`newWalletPwd`).value;
     if(pwd.length !== 6) { alert(`密码必须是6位数字哦！`); return; }
     myWallet.password = pwd;
