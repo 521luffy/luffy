@@ -1502,32 +1502,40 @@ function redrawChat() {
     let changed = false;
     history.forEach(msg => {
         if(msg.role === `user`) { mkBubSync(msg.content, `r`); } 
-        else if(msg.role === `assistant`) {
+                else if(msg.role === `assistant`) {
             let txt = msg.content;
             let rM = txt.match(/【回复】([\s\S]*)$/);
             let out = txt;
             if(rM) out = rM[1].trim();
-                 
-                        let voiceMatch = out.match(/\[语音消息[：:](\d+)秒\]/);
-            if(voiceMatch) {
-                let sec = voiceMatch[1];
-                let pureText = out.replace(/\[语音消息[：:]\d+秒\]/g, ``).replace(/['""“”‘’]/g, ``).replace(/\s+/g, `，`).replace(/，+/g, `，`).replace(/([。！？!?…])，/g, `$1`).replace(/^，|，$/g, ``);
-                if(pureText && !/[。！？!?…]$/.test(pureText)) pureText += `。`;
-                let cleanVoice = `[语音消息：${sec}秒]` + pureText;
-                
-                if(out !== cleanVoice && rM) {
-                    msg.content = txt.replace(rM[1], `\n` + cleanVoice);
-                    changed = true;
-                }
-                mkBubSync(cleanVoice, `l`);
-            } else {
-                                let lns = out.split(/\n+/).filter(x => x.trim() !== ``);
-                if(lns.length === 1 && out.length > 30) { lns = out.replace(/([。！？!?])/g, `$1\n`).split(/\n+/).filter(x => x.trim() !== ``); }
-                lns.forEach(line => mkBubSync(line, `l`));
-
+            
+            let lns = out.split(/\n+/).filter(x => x.trim() !== ``);
+            if(lns.length === 1 && out.length > 30 && !out.includes(`[图片消息`)) { 
+                lns = out.replace(/([。！？!?])/g, `$1\n`).split(/\n+/).filter(x => x.trim() !== ``); 
             }
-
+            
+            let newLines = [];
+            lns.forEach(line => {
+                let voiceMatch = line.match(/\[语音消息[：:](\d+)秒\]/);
+                if(voiceMatch) {
+                    let sec = voiceMatch[1];
+                    let pureText = line.replace(/\[语音消息[：:]\d+秒\]/g, ``).replace(/['""“”‘’]/g, ``).replace(/\s+/g, `，`).replace(/，+/g, `，`).replace(/([。！？!?…])，/g, `$1`).replace(/^，|，$/g, ``);
+                    if(pureText && !/[。！？!?…]$/.test(pureText)) pureText += `。`;
+                    let cleanVoice = `[语音消息：${sec}秒]` + pureText;
+                    newLines.push(cleanVoice);
+                    mkBubSync(cleanVoice, `l`);
+                } else {
+                    newLines.push(line);
+                    mkBubSync(line, `l`);
+                }
+            });
+            
+            let newOut = newLines.join(`\n`);
+            if(out !== newOut && rM) {
+                msg.content = txt.replace(rM[1], `\n` + newOut);
+                changed = true;
+            }
         }
+
     });
     if(changed) ls.setItem(`chatHistory`, JSON.stringify(history));
 }
@@ -2056,24 +2064,34 @@ localforage.getItem(`charStickers`).then(res =>{
                 ls.setItem(`aiStatus`, JSON.stringify(aiStatus));
             }
             
-                        let voiceMatch = out.match(/\[语音消息[：:](\d+)秒\]/);
-            if(voiceMatch) {
-                let sec = voiceMatch[1];
-                let pureText = out.replace(/\[语音消息[：:]\d+秒\]/g, ``).replace(/['""“”‘’]/g, ``).replace(/\s+/g, `，`).replace(/，+/g, `，`).replace(/([。！？!?…])，/g, `$1`).replace(/^，|，$/g, ``);
-                if(pureText && !/[。！？!?…]$/.test(pureText)) pureText += `。`;
-                let voiceMsg = `[语音消息：${sec}秒]` + pureText;
+                                        let lns = out.split(/\n+/).filter(x => x.trim() !== ``);
+                if(lns.length === 1 && out.length > 30 && !out.includes(`[图片消息`)) { 
+                    lns = out.replace(/([。！？!?])/g, `$1\n`).split(/\n+/).filter(x => x.trim() !== ``); 
+                }
                 
-                history[history.length-1].content = txt.replace(rM[1], `\n` + voiceMsg);
-                ls.setItem(`chatHistory`, JSON.stringify(history));
-                setTimeout(() => mkBub(voiceMsg, `l`), 0);
-                setTimeout(updateListPreview, 500);
-            } else {
-                                let lns = out.split(/\n+/).filter(x => x.trim() !== ``);
-                if(lns.length === 1 && out.length > 30) { lns = out.replace(/([。！？!?])/g, `$1\n`).split(/\n+/).filter(x => x.trim() !== ``); }
-                for(let i=0; i<lns.length; i++) setTimeout(() => mkBub(lns[i], `l`), i*1500);
+                let newLines = [];
+                lns.forEach((line, i) => {
+                    let voiceMatch = line.match(/\[语音消息[：:](\d+)秒\]/);
+                    if(voiceMatch) {
+                        let sec = voiceMatch[1];
+                        let pureText = line.replace(/\[语音消息[：:]\d+秒\]/g, ``).replace(/['""“”‘’]/g, ``).replace(/\s+/g, `，`).replace(/，+/g, `，`).replace(/([。！？!?…])，/g, `$1`).replace(/^，|，$/g, ``);
+                        if(pureText && !/[。！？!?…]$/.test(pureText)) pureText += `。`;
+                        let cleanVoice = `[语音消息：${sec}秒]` + pureText;
+                        newLines.push(cleanVoice);
+                        setTimeout(() => mkBub(cleanVoice, `l`), i * 1500);
+                    } else {
+                        newLines.push(line);
+                        setTimeout(() => mkBub(line, `l`), i * 1500);
+                    }
+                });
+                
+                let newOut = newLines.join(`\n`);
+                if(out !== newOut && rM) {
+                    history[history.length-1].content = txt.replace(rM[1], `\n` + newOut);
+                    ls.setItem(`chatHistory`, JSON.stringify(history));
+                }
+                setTimeout(updateListPreview, lns.length * 1500 + 500);
 
-                setTimeout(updateListPreview, lns.length*1500 + 500);
-            }
 
 
 
