@@ -2073,9 +2073,14 @@ $(`btnLemon`).onclick = async () =>{
     if($(`cfgMyName`).value) sys += `我的名字：` + $(`cfgMyName`).value + `\n`;
     if($(`cfgMyP`).value) sys += `我的设定：` + $(`cfgMyP`).value + `\n`;
         if($(`cfgTime`).checked) sys += `当前现实时间：` + updTime().toLocaleString() + `，请保持感知。\n`;
+        
+        let curStatus = originalGetItem.call(ls, `cStatusTxt_` + currentChatId) || `在线`;
+        let curSign = originalGetItem.call(ls, `cSign_` + currentChatId) || `你们已成为好友，请开始聊天吧！`;
+        sys += `你当前的在线状态是：${curStatus}，个性签名是：${curSign}。\n【状态更新规则】如果你想根据聊天语境更改你的状态或签名（比如去睡觉了、生气了、或者有了新的感悟），必须在回复的最开头写上系统指令 [更新状态：状态文字|状态颜色|个性签名] （状态颜色限选: status-online代表活跃，status-busy代表忙碌/暴躁，status-offline代表睡觉/冷漠）。如果不更改则不需要写此指令。\n`;
     
     let charStickers = [];
-    let resStickers = await localforage.getItem(`charStickers`);
+let resStickers = await localforage.getItem(`charStickers`);
+
     if(resStickers) charStickers = JSON.parse(resStickers);
     else if(ls.getItem(`charStickers`)) {
         charStickers = JSON.parse(ls.getItem(`charStickers`));
@@ -2127,15 +2132,24 @@ if(charStickers.length > 0) {
                                 if(dat.choices && dat.choices.length > 0) {
             let txt = dat.choices[0].message.content;
             let currentStickers = charStickers;
-            txt = txt.replace(/\[发送表情：(.*?)\]/g, (match, p1) => {
+                        txt = txt.replace(/\[发送表情：(.*?)\]/g, (match, p1) => {
                 let s = currentStickers.find(x => x.name === p1.trim());
-
                 if(s) return `[图片消息：` + s.url + `]`;
                 return `[试图发送表情：` + p1 + `]`; 
             });
             
-                        let hasAccept = txt.includes(`[收取转账]`);
+            let statusMatch = txt.match(/\[更新状态：(.*?)\|(.*?)\|(.*?)\]/);
+            if(statusMatch) {
+                originalSetItem.call(ls, `cStatusTxt_` + currentChatId, statusMatch[1].trim());
+                originalSetItem.call(ls, `cStatusColor_` + currentChatId, statusMatch[2].trim());
+                originalSetItem.call(ls, `cSign_` + currentChatId, statusMatch[3].trim());
+                txt = txt.replace(statusMatch[0], ``);
+                if(typeof renderContacts === `function`) renderContacts();
+            }
+            
+let hasAccept = txt.includes(`[收取转账]`);
             let hasReject = txt.includes(`[拒绝转账]`);
+
             let hasAcceptRp = txt.includes(`[领取红包]`);
             let hasRejectRp = txt.includes(`[退回红包]`);
             
