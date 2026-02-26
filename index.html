@@ -2852,16 +2852,20 @@ function renderQuoteBlock(b, txt) {
         return;
     }
 
-        let aiPhotoMatch = txt.match(/^\[发送照片：([\s\S]*?)\]$/);
+            let aiPhotoMatch = txt.match(/^\[发送照片：([\s\S]*?)\]$/);
     if(aiPhotoMatch) {
-        b.innerHTML = `<div style="background:#fce4ec; padding:10px 15px; border-radius:10px; cursor:pointer; display:flex; align-items:center; gap:8px; border:1px solid #f8bbd0;">
-            <span style="font-size:20px;">📸</span>
-            <span style="font-size:14px; color:#d81b60; font-weight:bold;">[对方发来的照片]</span>
+        let desc = aiPhotoMatch[1];
+        b.innerHTML = `<div style="width:130px; height:170px; background:#fce4ec; border-radius:12px; display:flex; justify-content:center; align-items:center; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.05);"
+        onclick="showCustomText('📸 对方发来的照片：\\n\\n' + decodeURIComponent('${encodeURIComponent(desc)}'))">
+            <div style="font-size:40px; filter:grayscale(100%) opacity(50%);">📷</div>
         </div>`;
-        b.style.background = `transparent`; b.style.boxShadow = `none`; b.style.padding = `0`;
-        b.onclick = () => { showCustomText(`📸 照片画面内容：\n\n` + aiPhotoMatch[1]); };
+        b.style.background = `transparent`;
+        b.style.boxShadow = `none`;
+        b.style.padding = `0`;
+        b.style.border = `none`;
         return;
     }
+
 
     let photoMatch = txt.match(/^\[照片消息：([\s\S]*?)\]$/);
     if(photoMatch) {
