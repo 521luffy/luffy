@@ -264,7 +264,8 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         
         <div class=bottom-nav>
             <div id=navMsg class=nav-item-active><div class=nav-icon>💬</div><div class=nav-text>消息</div></div>
-            <div id=navContact class=nav-item><div class=nav-icon>👥</div><div class=nav-text>角色</div></div>
+            <div id=navContact class=nav-item><div class=nav-icon>👥</div><div class=nav-text>联系人</div></div>
+
             <div id=navMoment class=nav-item><div class=nav-icon>🌍</div><div class=nav-text>动态</div></div>
                         <div id=navMe class=nav-item><div class=nav-icon>👤</div><div class=nav-text>我</div></div>
         </div>
@@ -272,8 +273,10 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
     
         <div id=scrContact class=scr-list>
         <div class=chat-header>
-            <span id=btnContactBack class=back-btn>＜</span>
-            <span class=header-center>角色</span>
+                        <span id=btnContactBack 
+class=back-btn>＜</span>
+            <span class=header-center>联系人</span>
+
             <div style="display:flex; align-items:center; gap:15px;">
                 <span id=btnRoleHelp class=plus-btn style="font-size:20px;">❓</span>
                 <span id=btnAddContact class=plus-btn>+</span>
@@ -298,7 +301,8 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         
         <div class=bottom-nav>
             <div id=navContactToMsg class=nav-item><div class=nav-icon>💬</div><div class=nav-text>消息</div></div>
-            <div class=nav-item-active><div class=nav-icon>👥</div><div class=nav-text>角色</div></div>
+                        <div class=nav-item-active><div class=nav-icon>👥</div><div class=nav-text>联系人</div></div>
+
             <div id=navContactToMoment class=nav-item><div class=nav-icon>🌍</div><div class=nav-text>动态</div></div>
             <div id=navContactToMe class=nav-item><div class=nav-icon>👤</div><div class=nav-text>我</div></div>
         </div>
@@ -418,7 +422,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
     <div id=modal class=modal-base>
         <div class=modal-ctx>
             <div class=modal-hdr>
-                <span>角色当前状态</span>
+                <span>联系人当前状态</span>
                 <span id=btnCloseModal class=close-btn>✖</span>
             </div>
             <div class=modal-bdy>
@@ -651,9 +655,10 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         </div>
 
         <div class=me-menu-list>
-            <div id=btnGoCharSticker class=me-menu-item>
+                        <div id=btnGoCharSticker class=me-menu-item>
                 <div class=me-menu-left>
-                    <div class=me-menu-title>角色表情包库</div>
+                    <div class=me-menu-title>联系人表情包库</div>
+
                     <div class=me-menu-sub>让对方也能随时发送表情包</div>
                 </div>
                 <div class=me-menu-right>＞</div>
@@ -677,15 +682,17 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         
         <div class=bottom-nav>
             <div id=navMeToMsg class=nav-item><div class=nav-icon>💬</div><div class=nav-text>消息</div></div>
-            <div id=navMeToContact class=nav-item><div class=nav-icon>👥</div><div class=nav-text>角色</div></div>
+                        <div id=navMeToContact class=nav-item><div class=nav-icon>👥</div><div class=nav-text>联系人</div></div>
+
             <div id=navMeToMoment class=nav-item><div class=nav-icon>🌍</div><div class=nav-text>动态</div></div>
             <div class=nav-item-active><div class=nav-icon>👤</div><div class=nav-text>我</div></div>
         </div>
     </div>
 <div id=scrCharSticker class=scr-flex>
-                <div class=room-header>
+                                <div class=room-header>
             <span id=btnCharStickerBack class=back-btn>＜</span>
-            <span class=header-center>角色表情包库</span>
+            <span class=header-center>联系人表情包库</span>
+
             <span id=btnEditCharSticker style=cursor:pointer;font-size:14px;color:#6c5ce7;font-weight:bold;>管理</span>
         </div>
         <div id=charStickerActions style=display:none;padding:10px 20px;background:#fff0f0;justify-content:space-between;align-items:center;border-bottom:1px solid #ffeeee;flex-shrink:0;>
@@ -839,13 +846,15 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
     
     <div id=addFriendModal class=modal-base>
         <div class=modal-ctx>
-            <div class=modal-hdr>
-                <span>添加新角色</span>
+                         <div class=modal-hdr>
+                <span>添加新联系人</span>
             </div>
             <div class=modal-bdy style=padding:15px;>
                 <div class=input-group>
-                    <label>角色名称</label>
-                    <input type=text id=newFriendName class=input-field placeholder=输入新角色的名字>
+                    <label>联系人名称</label>
+                 
+                 <input type=text id=newFriendName class=input-field placeholder=输入新联系人的名字>
+
                 </div>
                 <div class=input-group style=margin-top:10px;>
                     <label>初始人设</label>
@@ -1383,7 +1392,8 @@ $(`btnListToRoom`).onclick = () => {
 };
 if($(`btnAddContact`)) $(`btnAddContact`).onclick = () =>{ $(`addFriendModal`).style.display=`flex`; };
 $(`btnCancelAddFriend`).onclick = () =>{ $(`addFriendModal`).style.display=`none`; $(`newFriendName`).value=``; $(`newFriendPrompt`).value=``; };
-if($(`btnRoleHelp`)) $(`btnRoleHelp`).onclick = () => { showCustomText(`【个性签名规则说明】\n\n1. 新建角色初始状态是没有个性签名的。\n2. 你需要在聊天室主动对TA提出要求（例如：「你改个个性签名吧」），TA才会生成第一条专属签名。\n3. 在后续的聊天过程中，当TA的情绪、想法或剧情发生明显变化时，TA拥有主动权，会自动为你更新头顶的状态和个性签名！`); };
+if($(`btnRoleHelp`)) $(`btnRoleHelp`).onclick = () => { showCustomText(`【个性签名规则说明】\n\n1. 新建联系人初始状态是没有个性签名的。\n2. 你需要在聊天室主动对TA提出要求（例如：「你改个个性签名吧」），TA才会生成第一条专属签名。\n3. 在后续的聊天过程中，当TA的情绪、想法或剧情发生明显变化时，TA拥有主动权，会自动为你更新头顶的状态和个性签名！`); };
+
 $(`btnConfirmAddFriend`).onclick = () =>{
     let n = $(`newFriendName`).value.trim();
     if(!n) { alert(`名字不能为空哦！`); return; }
