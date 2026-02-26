@@ -1593,19 +1593,52 @@ $(`btnBlock`).onclick = async () =>{
                             if(reply.includes(`拒绝`)) success = false;
                         }
                     } catch(e) { console.error(e); }
-                    $(`btnBlock`).style.pointerEvents = `auto`;
                 } else {
                     success = Math.random() > 0.5;
                 }
 
                 if(success) {
-                    showCustomText(`你们已重新添加好友！`);
+                    showCustomText(`你们已重新添加好友！Ta有话想对你说...`);
                     originalSetItem.call(ls, `isBlocked_` + currentChatId, `false`);
+                    
+                    if(pxy && key && mod) {
+                        $(`btnBlock`).innerText = `对方正在输入...`;
+                        let myN = $(`cfgMyName`).value || `我`;
+                        let charN = $(`cfgName`).value || `对方`;
+                        let charP = $(`cfgAiP`).value || ``;
+                        let msgSys = `你现在的身份是：${charN}。你的底层性格是：${charP}。\n【核心剧情强制要求】：玩家（${myN}）刚刚解除了对你的拉黑，并且你同意了重新添加好友。现在，你必须根据你的性格，主动给玩家发送恢复好友后的第一句话！\n【内容限制】：你必须在这句话中明确提到自己被拉黑这件事，并表达你此时真实的情绪。请直接输出对话内容，绝对不要包含任何动作描写或旁白，也绝对不要使用任何形式的引号符号。`;
+                        try {
+                            let url = pxy.includes(`chat/completions`) ? pxy : pxy.replace(/\/$/, ``) + `/chat/completions`;
+                            let resMsg = await fetch(url, {
+                                method: `POST`, headers: {Authorization: `Bearer ` + key, "Content-Type": `application/json`},
+                                body: JSON.stringify({model: mod, messages: [{role: `user`, content: msgSys}], temperature: 0.8})
+                            });
+                            let datMsg = await resMsg.json();
+                            if(datMsg.choices && datMsg.choices.length > 0) {
+                                let replyMsg = datMsg.choices[0].message.content.trim();
+                                let histStr = originalGetItem.call(ls, `chatHistory_` + currentChatId) || `[]`;
+                                let histArr = JSON.parse(histStr);
+                                histArr.push({role: `assistant`, content: replyMsg});
+                                originalSetItem.call(ls, `chatHistory_` + currentChatId, JSON.stringify(histArr));
+                                if(currentChatId === `default`) {
+                                    originalSetItem.call(ls, `chatHistory`, JSON.stringify(histArr));
+                                }
+                                if(currentChatId === window.currentChatId) {
+                                    history = histArr;
+                                }
+                                if(typeof redrawChat === `function`) redrawChat();
+                            }
+                        } catch(e) { console.error(e); }
+                    }
+
                     applyVis();
                     renderContacts();
+                    $(`btnBlock`).style.pointerEvents = `auto`;
+                    $(`btnBlock`).innerText = `拉黑好友`;
                 } else {
                     showCustomText(`对方已拒绝添加你为好友，请一小时后重试！`);
                     originalSetItem.call(ls, `blockTime_` + currentChatId, Date.now());
+                    $(`btnBlock`).style.pointerEvents = `auto`;
                     $(`btnBlock`).innerText = `解除拉黑`;
                 }
             };
@@ -1616,6 +1649,7 @@ $(`btnBlock`).onclick = async () =>{
         }
     }
 };
+
 
 
 
