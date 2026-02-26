@@ -3682,28 +3682,70 @@ if($(`btnSaveWalletPwd`)) $(`btnSaveWalletPwd`).onclick = () =>{
     alert(`支付密码设置成功！`);
     $(`walletPwdModal`).style.display = `none`;
 };
+async function initCharProfile(c) {
+    let apiUrl = ls.getItem(`cfgApi`) || ``;
+    let apiKey = ls.getItem(`cfgKey`) || ``;
+    let model = ls.getItem(`cfgModel`) || ``;
+    if(!apiUrl || !apiKey) return;
+    
+    let prompt = originalGetItem.call(ls, `cAP_` + c.id) || c.prompt || ``;
+    let sysMsg = `请根据以下人设，用第一人称写一句符合该角色性格的个性签名（20字内），并给出一个初始在线状态（只能输出：online、offline、busy、away 中的一个）。\n\n人设：${prompt}\n\n严格按此格式返回（不要有任何多余字符）：\n【在线状态】online\n【个性签名】这里是签名内容`;
+    
+    try {
+        let res = await fetch(apiUrl, {
+            method: `POST`,
+            headers: { 'Content-Type': `application/json`, 'Authorization': `Bearer ` + apiKey },
+            body: JSON.stringify({
+                model: model,
+                messages: [{role: `user`, content: sysMsg}],
+                temperature: 0.7
+            })
+        });
+        let dat = await res.json();
+        if(dat.choices && dat.choices.length > 0) {
+            let txt = dat.choices[0].message.content;
+            let oM = txt.match(/【在线状态】([\s\S]*?)【/);
+            let sM = txt.match(/【个性签名】([\s\S]*)$/);
+            let newStat = { weather:`未知`, clothing:`未知`, action:`未知`, thought:`未知`, online:`online`, signature:`暂无签名` };
+            if(oM) newStat.online = oM[1].replace(/[^a-zA-Z]/g, ``).toLowerCase() || `online`;
+            if(sM) newStat.signature = sM[1].trim();
+            
+            ls.setItem(`aiStatus_` + c.id, JSON.stringify(newStat));
+            renderContactPage(); 
+        }
+    } catch(e) {}
+}
+
 function renderContactPage() {
-    let container = $("contactListContent");
+    let container = $(`contactListContent`);
     if(!container) return;
     container.innerHTML = ``;
     
     contacts.forEach(c => {
-        let div = document.createElement("div");
-        div.className = "chat-item";
+        let div = document.createElement(`div`);
+        div.className = `chat-item`;
         
-        let aiStatStr = originalGetItem.call(ls, "aiStatus_" + c.id);
-        let aiStat = aiStatStr ? JSON.parse(aiStatStr) : {};
-        let onlineStatus = aiStat.online || "online"; 
-        let signature = aiStat.signature || "TA还没有写个性签名哦~";
+        let aiStatStr = originalGetItem.call(ls, `aiStatus_` + c.id);
+        let aiStat = {};
+        if(aiStatStr) {
+            aiStat = JSON.parse(aiStatStr);
+        } else {
+            aiStat = { online: `online`, signature: `正在构思个性签名...` };
+            ls.setItem(`aiStatus_` + c.id, JSON.stringify(aiStat));
+            initCharProfile(c);
+        }
         
-        let statusColor = "#10ac84"; 
-        if(onlineStatus === "offline") statusColor = "#8395a7";
-        else if(onlineStatus === "busy") statusColor = "#ff6b6b";
-        else if(onlineStatus === "away") statusColor = "#feca57";
+        let onlineStatus = aiStat.online || `online`; 
+        let signature = aiStat.signature || `正在构思个性签名...`;
+        
+        let statusColor = `#10ac84`; 
+        if(onlineStatus === `offline`) statusColor = `#8395a7`;
+        else if(onlineStatus === `busy`) statusColor = `#ff6b6b`;
+        else if(onlineStatus === `away`) statusColor = `#feca57`;
 
-        let isoAiA = originalGetItem.call(ls, "aiI_" + c.id);
+        let isoAiA = originalGetItem.call(ls, `aiI_` + c.id);
         let avaBg = isoAiA ? `background-image:url(${isoAiA});font-size:0;` : ``;
-        let isoName = originalGetItem.call(ls, "cN_" + c.id) || c.name;
+        let isoName = originalGetItem.call(ls, `cN_` + c.id) || c.name;
         
         div.innerHTML = `
             <div style="position:relative; margin-right:15px; flex-shrink:0;">
@@ -3718,20 +3760,21 @@ function renderContactPage() {
         
         div.onclick = () => {
             currentChatId = c.id;
-            $("cfgName").value = originalGetItem.call(ls, "cN_" + c.id) || c.name;
-            $("cfgRem").value = originalGetItem.call(ls, "cR_" + c.id) || "";
-            $("cfgAiP").value = originalGetItem.call(ls, "cAP_" + c.id) || c.prompt;
-            $("cfgMyP").value = originalGetItem.call(ls, "cMP_" + c.id) || "";
-            history = ls.getItem("chatHistory") ? JSON.parse(ls.getItem("chatHistory")) : [];
-            aiStatus = ls.getItem("aiStatus") ? JSON.parse(ls.getItem("aiStatus")) : {weather:"等待连接...",clothing:"等待连接...",action:"等待连接...",thought:"等待连接..."};
+            $(`cfgName`).value = originalGetItem.call(ls, `cN_` + c.id) || c.name;
+            $(`cfgRem`).value = originalGetItem.call(ls, `cR_` + c.id) || ``;
+            $(`cfgAiP`).value = originalGetItem.call(ls, `cAP_` + c.id) || c.prompt;
+            $(`cfgMyP`).value = originalGetItem.call(ls, `cMP_` + c.id) || ``;
+            history = ls.getItem(`chatHistory`) ? JSON.parse(ls.getItem(`chatHistory`)) : [];
+            aiStatus = ls.getItem(`aiStatus`) ? JSON.parse(ls.getItem(`aiStatus`)) : {weather:`等待连接...`,clothing:`等待连接...`,action:`等待连接...`,thought:`等待连接...`};
             applyVis(); 
             redrawChat();
-            showScreen("scrRoom");
+            showScreen(`scrRoom`);
             msgs.scrollTop = msgs.scrollHeight;
         };
         container.appendChild(div);
     });
 }
+
 
 if($("navContact")) $("navContact").onclick = () => { showScreen("scrContact"); renderContactPage(); };
 if($("navMeToContact")) $("navMeToContact").onclick = () => { showScreen("scrContact"); renderContactPage(); };
