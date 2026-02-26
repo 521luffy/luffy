@@ -232,11 +232,12 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
     </div>
     
     <div id=scrList class=scr-list>
-        <div class=chat-header>
-            <span id=btnListBack class=back-btn>＜</span>
-            <span class=header-center>消息</span>
-            <span id=btnAddMenu class=plus-btn>+</span>
-        </div>
+            <div class=chat-header>
+        <span id=btnListBack class=back-btn>＜</span>
+        <span class=header-center>消息</span>
+        <span class=empty-btn></span>
+    </div>
+
         <div id=chatMenu class=drop-menu>
             <div class=menu-item>添加好友</div>
             <div class=menu-item>新建群聊</div>
@@ -1012,7 +1013,7 @@ window.showCustomText = function(text) {
     if($(`customTextContent`)) $(`customTextContent`).innerText = text;
     if($(`customTextModal`)) $(`customTextModal`).style.display = `flex`;
 };
-if($(`btnCustomTextClose`)) $(`btnCustomTextClose`).onclick = () => $(`customTextModal`).style.display = `none`;
+if($(`btnCustomTextClose`)) $(`btnCustomTextClose`).onclick = () =>$(`customTextModal`).style.display = `none`;
 
 let lock=$("scrLock"), home=$("scrHome"), list=$("scrList"), room=$("scrRoom"), setApi=$("scrSetApi"), setChat=$("scrSetChat"), scrWb=$("scrWb"), scrWbEdit=$("scrWbEdit"), scrMe=$("scrMe"), scrCharSticker=$("scrCharSticker"), scrSpace=$("scrSpace"), scrLogList=$("scrLogList"), scrLogEdit=$("scrLogEdit"), scrContact=$("scrContact");
 
@@ -1300,14 +1301,22 @@ $(`btnConfirmAddFriend`).onclick = () =>{
     let n = $(`newFriendName`).value.trim();
     if(!n) { alert(`名字不能为空哦！`); return; }
     let p = $(`newFriendPrompt`).value.trim();
-    contacts.push({ name: n, prompt: p, id: Date.now() });
+    let newId = Date.now().toString();
+    contacts.push({ name: n, prompt: p, id: newId });
     ls.setItem(`myContacts`, JSON.stringify(contacts));
+    
+    let initHist = [{role: `assistant`, content: `你们已成为好友，请开始聊天吧！`}];
+    originalSetItem.call(ls, `chatHistory_` + newId, JSON.stringify(initHist));
+    
     renderContacts();
+    if(typeof renderContactPage === `function`) renderContactPage();
+    
     $(`addFriendModal`).style.display=`none`;
     $(`newFriendName`).value=``;
     $(`newFriendPrompt`).value=``;
     alert(`角色添加成功！去列表点击TA试试吧。`);
 };
+
 
 $(`btnClearChat`).onclick = () =>{ if(confirm(`确认清空当前聊天？`)){ msgs.innerHTML=``; history=[]; ls.removeItem(`chatHistory`); ls.setItem(`lastMemCount`, `0`); updateListPreview(); alert(`已清空`); } };
 $(`btnBlock`).onclick = () =>alert(`已将对方拉黑。`);
@@ -1992,7 +2001,7 @@ $(`btnLemon`).onclick = async () =>{
         localforage.setItem(`charStickers`, ls.getItem(`charStickers`));
     }
 
-if(charStickers.length > 0) {
+if(charStickers.length>0) {
         let names = charStickers.map(x => x.name).join(`、`);
 
         sys += `\n【你的专属表情包库】如果你想发表情配合情绪，请务必在【回复】中插入代码“[发送表情：表情名称]”。当前你拥有的表情名称有：` + names + `。警告：绝对不要捏造列表外的表情！不要发多余的链接！`;
@@ -3683,16 +3692,18 @@ if($(`btnSaveWalletPwd`)) $(`btnSaveWalletPwd`).onclick = () =>{
     $(`walletPwdModal`).style.display = `none`;
 };
 async function initCharProfile(c) {
-    let apiUrl = $(`cfgApi`) ? $(`cfgApi`).value : (ls.getItem(`cfgApi`) || ``);
-    let apiKey = $(`cfgKey`) ? $(`cfgKey`).value : (ls.getItem(`cfgKey`) || ``);
-    let model = $(`cfgModel`) ? $(`cfgModel`).value : (ls.getItem(`cfgModel`) || ``);
+    let apiUrl = $(`apiPxy`) ? $(`apiPxy`).value : (ls.getItem(`pxy`) || ``);
+    let apiKey = $(`apiK`) ? $(`apiK`).value : (ls.getItem(`key`) || ``);
+    let model = $(`apiMod`) ? $(`apiMod`).value : (ls.getItem(`mod`) || ``);
+    let fallback = { online: `online`, signature: `暂时没有想好个性签名` };
     
     if(!apiUrl || !apiKey) {
-        let fallback = { online: `online`, signature: `暂时没有想好个性签名` };
         ls.setItem(`aiStatus_` + c.id, JSON.stringify(fallback));
-        renderContactPage();
+        if($(`scrContact`).style.display !== `none`) renderContactPage();
         return;
     }
+    
+    if(!apiUrl.includes(`chat/completions`)) apiUrl = apiUrl.replace(/\/$/, ``) + `/chat/completions`;
     
     let prompt = originalGetItem.call(ls, `cAP_` + c.id) || c.prompt || ``;
     let sysMsg = `请根据以下人设，用第一人称写一句符合该角色性格的个性签名（20字内），并给出一个初始在线状态（只能输出：online、offline、busy、away 中的一个）。\n\n人设：${prompt}\n\n严格按此格式返回（不要有任何多余字符）：\n【在线状态】online\n【个性签名】这里是签名内容`;
@@ -3712,20 +3723,21 @@ async function initCharProfile(c) {
             let txt = dat.choices[0].message.content;
             let oM = txt.match(/【在线状态】([\s\S]*?)【/);
             let sM = txt.match(/【个性签名】([\s\S]*)$/);
-            let newStat = { weather:`未知`, clothing:`未知`, action:`未知`, thought:`未知`, online:`online`, signature:`暂时没有想好个性签名` };
+            let newStat = { weather:`未知`, clothing:`未知`, action:`未知`, thought:`未知`, online:`online`, signature: fallback.signature };
             if(oM) newStat.online = oM[1].replace(/[^a-zA-Z]/g, ``).toLowerCase() || `online`;
             if(sM) newStat.signature = sM[1].trim();
             else newStat.signature = txt.replace(/【.*?】/g, ``).trim().substring(0,20) || `已自动报到`;
-            
             ls.setItem(`aiStatus_` + c.id, JSON.stringify(newStat));
-            renderContactPage(); 
+        } else {
+            ls.setItem(`aiStatus_` + c.id, JSON.stringify(fallback));
         }
     } catch(e) {
-        let fallback = { online: `online`, signature: `暂时没有想好个性签名` };
         ls.setItem(`aiStatus_` + c.id, JSON.stringify(fallback));
-        renderContactPage();
     }
+    if($(`scrContact`).style.display !== `none`) renderContactPage();
 }
+
+
 
 
 function renderContactPage() {
@@ -3735,10 +3747,14 @@ function renderContactPage() {
     container.style.paddingBottom = `90px`; 
     container.style.overflowY = `auto`;
     
-    let localContacts = ls.getItem(`contacts`);
+    let localContacts = ls.getItem(`myContacts`);
     if(localContacts) contacts = JSON.parse(localContacts);
     
-    contacts.forEach(c => {
+    let defName = originalGetItem.call(ls, `cN_default`) || originalGetItem.call(ls, `cN`) || `专属恋人`;
+    let defPrompt = originalGetItem.call(ls, `cAP_default`) || originalGetItem.call(ls, `cAP`) || ``;
+    let allChars = [{ id: `default`, name: defName, prompt: defPrompt }].concat(contacts);
+    
+    allChars.forEach(c => {
         let div = document.createElement(`div`);
         div.className = `chat-item`;
         
@@ -3760,9 +3776,9 @@ function renderContactPage() {
         else if(onlineStatus === `busy`) statusColor = `#ff6b6b`;
         else if(onlineStatus === `away`) statusColor = `#feca57`;
 
-        let isoAiA = originalGetItem.call(ls, `aiI_` + c.id);
+        let isoAiA = originalGetItem.call(ls, `aiI_` + c.id) || (c.id === `default` ? ls.getItem(`aiI`) : ``);
         let avaBg = isoAiA ? `background-image:url(${isoAiA});font-size:0;` : ``;
-        let isoName = originalGetItem.call(ls, `cN_` + c.id) || c.name;
+        let isoName = originalGetItem.call(ls, `cN_` + c.id) || (c.id === `default` ? ls.getItem(`cN`) : ``) || c.name;
         
         div.innerHTML = `
             <div style="position:relative; margin-right:15px; flex-shrink:0;">
@@ -3777,10 +3793,10 @@ function renderContactPage() {
         
         div.onclick = () => {
             currentChatId = c.id;
-            $(`cfgName`).value = originalGetItem.call(ls, `cN_` + c.id) || c.name;
-            $(`cfgRem`).value = originalGetItem.call(ls, `cR_` + c.id) || ``;
-            $(`cfgAiP`).value = originalGetItem.call(ls, `cAP_` + c.id) || c.prompt;
-            $(`cfgMyP`).value = originalGetItem.call(ls, `cMP_` + c.id) || ``;
+            $(`cfgName`).value = originalGetItem.call(ls, `cN_` + c.id) || (c.id === `default` ? ls.getItem(`cN`) : ``) || c.name;
+            $(`cfgRem`).value = originalGetItem.call(ls, `cR_` + c.id) || (c.id === `default` ? ls.getItem(`cR`) : ``) || ``;
+            $(`cfgAiP`).value = originalGetItem.call(ls, `cAP_` + c.id) || (c.id === `default` ? ls.getItem(`cAP`) : ``) || c.prompt;
+            $(`cfgMyP`).value = originalGetItem.call(ls, `cMP_` + c.id) || (c.id === `default` ? ls.getItem(`cMP`) : ``) || ``;
             history = ls.getItem(`chatHistory`) ? JSON.parse(ls.getItem(`chatHistory`)) : [];
             aiStatus = ls.getItem(`aiStatus`) ? JSON.parse(ls.getItem(`aiStatus`)) : {weather:`等待连接...`,clothing:`等待连接...`,action:`等待连接...`,thought:`等待连接...`};
             applyVis(); 
@@ -3794,12 +3810,14 @@ function renderContactPage() {
 
 
 
-if($("navContact")) $("navContact").onclick = () => { showScreen("scrContact"); renderContactPage(); };
-if($("navMeToContact")) $("navMeToContact").onclick = () => { showScreen("scrContact"); renderContactPage(); };
-if($("navContactToMsg")) $("navContactToMsg").onclick = () => showScreen("scrList");
-if($("navContactToMoment")) $("navContactToMoment").onclick = () => alert("【动态】朋友圈功能正在全力开发中...");
-if($("navContactToMe")) $("navContactToMe").onclick = () => showScreen("scrMe");
-if($("btnAddContact")) $("btnAddContact").onclick = () => $("addFriendModal").style.display="flex";
+
+
+if($("navContact")) $("navContact").onclick = () =>{ showScreen("scrContact"); renderContactPage(); };
+if($("navMeToContact")) $("navMeToContact").onclick = () =>{ showScreen("scrContact"); renderContactPage(); };
+if($("navContactToMsg")) $("navContactToMsg").onclick = () =>showScreen("scrList");
+if($("navContactToMoment")) $("navContactToMoment").onclick = () =>alert("【动态】朋友圈功能正在全力开发中...");
+if($("navContactToMe")) $("navContactToMe").onclick = () =>showScreen("scrMe");
+if($("btnAddContact")) $("btnAddContact").onclick = () =>$("addFriendModal").style.display="flex";
 
 </script>
 
