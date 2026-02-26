@@ -2594,7 +2594,7 @@ function renderQuoteBlock(b, txt) {
         return;
     }
 
-        let aiRpMatch = txt.match(/^\[AI红包：([\d\.]+)\|(.*?)\|(0|1)\|(.*?)\]$/);
+            let aiRpMatch = txt.match(/^\[AI红包：([\d\.]+)\|(.*?)\|(0|1)\|(.*?)\]$/);
     if(aiRpMatch) {
         let amt = parseFloat(aiRpMatch[1]);
         let note = aiRpMatch[2];
@@ -2604,14 +2604,15 @@ function renderQuoteBlock(b, txt) {
         let bgStyle = `background:#f25542;`;
         let cursorStyle = status === `0` ? `cursor:pointer;` : `cursor:default;`;
         let opacityStatus = status === `0` ? `1` : `0.6`;
-        let statusText = status === `0` ? `未领取` : `已领取`;
+        let titleText = status === `0` ? note : `¥ ${amt.toFixed(2)}`;
+        let subText = status === `0` ? `未领取` : `已领取`;
         
         b.innerHTML = `<div style="width:200px; ${bgStyle} ${cursorStyle} border-radius:12px; overflow:hidden; border:1px solid #ffcccc; display:flex; flex-direction:column; transition:0.2s; opacity:${opacityStatus};" class="ai-rp-bubble">
             <div style="flex:1; padding:15px; display:flex; align-items:center; gap:12px;">
                 <div style="width:36px; height:36px; background:white; border-radius:8px; display:flex; justify-content:center; align-items:center; color:#f25542; font-size:20px; font-weight:bold; flex-shrink:0;">🧧</div>
                 <div style="display:flex; flex-direction:column; overflow:hidden;">
-                    <span style="font-size:15px; color:white; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${note}</span>
-                    <span style="font-size:12px; color:rgba(255,255,255,0.9); margin-top:4px;">${statusText}</span>
+                    <span style="font-size:15px; color:white; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${titleText}</span>
+                    <span style="font-size:12px; color:rgba(255,255,255,0.9); margin-top:4px;">${subText}</span>
                 </div>
             </div>
             <div style="padding:6px 15px; background:white; font-size:11px; color:#888; display:flex; justify-content:space-between;">
@@ -2634,7 +2635,6 @@ function renderQuoteBlock(b, txt) {
                     myWallet.bills.push({ title: `领取红包 - ` + dn, time: updTime().toLocaleString(), amount: amt, type: `wallet` });
                     ls.setItem(`myWallet`, JSON.stringify(myWallet));
                     
-                    // 修复核心：使用 includes 和 replace 来精准修改大段文本中的这一行
                     for(let i=history.length-1; i>=0; i--) {
                         if(history[i].role === `assistant` && history[i].content.includes(txt)) {
                             history[i].content = history[i].content.replace(txt, `[AI红包：${amt.toFixed(2)}|${note}|1|${tid}]`);
@@ -2642,7 +2642,6 @@ function renderQuoteBlock(b, txt) {
                             break;
                         }
                     }
-                    showCustomText(`🧧 成功领取 ${dn} 发来的 ${amt.toFixed(2)} 元红包！\n已自动存入钱包零钱。`);
                     redrawChat();
                 };
             }
@@ -2651,6 +2650,7 @@ function renderQuoteBlock(b, txt) {
     }
 
     let photoMatch = txt.match(/^\[照片消息：([\s\S]*?)\]$/);
+
 
     if(photoMatch) {
 
