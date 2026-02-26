@@ -2333,16 +2333,16 @@ $(`btnLemon`).onclick = async () =>{
     if($(`cfgAiP`).value) sys += `你的设定：` + $(`cfgAiP`).value + `\n`;
     if($(`cfgMyName`).value) sys += `我的名字：` + $(`cfgMyName`).value + `\n`;
     if($(`cfgMyP`).value) sys += `我的设定：` + $(`cfgMyP`).value + `\n`;
-            if($(`cfgCustomTime`).checked) {
+                        if($(`cfgCustomTime`).checked) {
                 let cy = $(`ctYear`).value, cm = $(`ctMonth`).value, cd = $(`ctDay`).value, ch = $(`ctHour`).value, cmin = $(`ctMinute`).value, cw = $(`ctWeekday`).innerText;
                 sys += `当前设定的时间：` + cy + `年` + cm + `月` + cd + `日 ` + ch + `:` + cmin + ` ` + cw + `，请保持感知。\n`;
             } else if($(`cfgTime`).checked) {
                 sys += `当前现实时间：` + updTime().toLocaleString() + `，请保持感知。\n`;
             }
         let curStatus = originalGetItem.call(ls, `cStatusTxt_` + currentChatId) || `在线`;
-
         let curSign = originalGetItem.call(ls, `cSign_` + currentChatId) || `（暂无个性签名）`;
-        sys += `你当前的面板状态是：${curStatus}，个性签名是：${curSign}。\n【状态主动更新规则 - 极度重要】你有绝对的自主权修改自己的面板状态和签名！绝对不要等玩家要求你改，只要根据当前剧情，你的情绪、所处环境或想法发生了一丁点变化（例如你要去睡觉、你生气了、开心了、有了新感悟等），你必须主动且立即在回复的最开头加上系统指令：[更新状态：状态文字|状态颜色|个性签名] （状态颜色限选: status-online代表活跃，status-busy代表忙碌/暴躁，status-offline代表冷漠/睡觉）。如果不改则不写。\n`;
+        sys += `你当前的面板状态是：${curStatus}，个性签名是：${curSign}。\n【状态主动更新规则】你有绝对自主权修改面板状态和签名，发生情绪环境变化时必须立即在回复最开头加指令：[更新状态：状态文字|状态颜色|个性签名]（颜色限选: status-online代表活跃，status-busy代表忙碌，status-offline代表冷漠）。如果不改则不写。\n【主动发红包规则 - 极度重要】如果你想给玩家发红包表达心意（限制最高200元），请务必在回复中加入指令 [发送红包：金额|留言语]（例如 [发送红包：52.00|拿去买奶茶]）。如果玩家一直没领，你可以在后续聊天里催促。\n`;
+
     
     let charStickers = [];
 
@@ -2405,7 +2405,7 @@ if(charStickers.length > 0) {
                 return `[试图发送表情：` + p1 + `]`; 
             });
             
-                        let statusMatch = txt.match(/\[更新状态：(.*?)\|(.*?)\|(.*?)\]/);
+                                    let statusMatch = txt.match(/\[更新状态：(.*?)\|(.*?)\|(.*?)\]/);
             if(statusMatch) {
                 originalSetItem.call(ls, `cStatusTxt_` + currentChatId, statusMatch[1].trim());
                 originalSetItem.call(ls, `cStatusColor_` + currentChatId, statusMatch[2].trim());
@@ -2414,6 +2414,13 @@ if(charStickers.length > 0) {
                 if(typeof renderContacts === `function`) renderContacts();
                 if(typeof applyVis === `function`) applyVis();
             }
+            txt = txt.replace(/\[发送红包：([\d\.]+)\|(.*?)\]/g, (match, p1, p2) => {
+                let amt = parseFloat(p1);
+                if(isNaN(amt) || amt <= 0) amt = 1;
+                if(amt > 200) amt = 200;
+                return `[AI红包：${amt.toFixed(2)}|${p2}|0|${Date.now()}]`;
+            });
+
 
             
 let hasAccept = txt.includes(`[收取转账]`);
@@ -2583,15 +2590,66 @@ function renderQuoteBlock(b, txt) {
         b.style.background = `transparent`;
         b.style.boxShadow = `none`;
         b.style.padding = `0`;
-        b.style.border = `none`;
+                b.style.border = `none`;
         return;
     }
 
+    let aiRpMatch = txt.match(/^\[AI红包：([\d\.]+)\|(.*?)\|(0|1)\|(.*?)\]$/);
+    if(aiRpMatch) {
+        let amt = parseFloat(aiRpMatch[1]);
+        let note = aiRpMatch[2];
+        let status = aiRpMatch[3];
+        let tid = aiRpMatch[4];
+        
+        let bgStyle = status === `0` ? `background:#f25542;cursor:pointer;` : `background:#fbc5bc;opacity:0.8;`;
+        let statusText = status === `0` ? `领取红包` : `已领取`;
+        
+        b.innerHTML = `<div style="width:200px; ${bgStyle} border-radius:12px; overflow:hidden; border:1px solid #ffcccc; display:flex; flex-direction:column; transition:0.2s;" class="ai-rp-bubble">
+            <div style="flex:1; padding:15px; display:flex; align-items:center; gap:12px;">
+                <div style="width:36px; height:36px; background:white; border-radius:8px; display:flex; justify-content:center; align-items:center; color:#f25542; font-size:20px; font-weight:bold; flex-shrink:0;">🧧</div>
+                <div style="display:flex; flex-direction:column; overflow:hidden;">
+                    <span style="font-size:15px; color:white; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${note}</span>
+                    <span style="font-size:12px; color:rgba(255,255,255,0.9); margin-top:4px;">${statusText}</span>
+                </div>
+            </div>
+            <div style="padding:6px 15px; background:white; font-size:11px; color:#888; display:flex; justify-content:space-between;">
+                <span>专属红包</span>
+                <span>${status === `1` ? `已存入零钱` : ``}</span>
+            </div>
+        </div>`;
+        b.style.background = `transparent`;
+        b.style.boxShadow = `none`;
+        b.style.padding = `0`;
+        b.style.border = `none`;
+        
+        if(status === `0`) {
+            let rpNode = b.querySelector(`.ai-rp-bubble`);
+            if(rpNode) {
+                rpNode.onclick = (e) => {
+                    e.stopPropagation();
+                    myWallet.balance += amt;
+                    let dn = $(`cfgRem`).value || $(`cfgName`).value || `专属恋人`;
+                    myWallet.bills.push({ title: `领取红包 - ` + dn, time: updTime().toLocaleString(), amount: amt, type: `wallet` });
+                    ls.setItem(`myWallet`, JSON.stringify(myWallet));
+                    
+                    for(let i=history.length-1; i>=0; i--) {
+                        if(history[i].content === txt && history[i].role === `assistant`) {
+                            history[i].content = `[AI红包：${amt.toFixed(2)}|${note}|1|${tid}]`;
+                            ls.setItem(`chatHistory`, JSON.stringify(history));
+                            break;
+                        }
+                    }
+                    showCustomText(`🧧 成功领取 ${dn} 发来的 ${amt.toFixed(2)} 元红包！\n已自动存入钱包零钱。`);
+                    redrawChat();
+                };
+            }
+        }
+        return;
+    }
 
-
-    
-        let photoMatch = txt.match(/^\[照片消息：([\s\S]*?)\]$/);
+    let photoMatch = txt.match(/^\[照片消息：([\s\S]*?)\]$/);
     if(photoMatch) {
+
         let desc = photoMatch[1];
         b.innerHTML = `<div style="width:130px; height:170px; background:#fce4ec; border-radius:12px; display:flex; justify-content:center; align-items:center; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.05);"
         onclick="showCustomText('照片内容：\\n' + decodeURIComponent('${encodeURIComponent(desc)}'))">
