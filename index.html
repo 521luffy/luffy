@@ -33,8 +33,11 @@ body { background-color: #f5f6fa; display: flex; justify-content: center; align-
 .app-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
 .icon-chat { width: 50px; height: 50px; border-radius: 16px; display: flex; justify-content: center; align-items: center; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); background: linear-gradient(135deg, #a29bfe, #6c5ce7); }
 .icon-api { width: 50px; height: 50px; border-radius: 16px; display: flex; justify-content: center; align-items: center; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); background: linear-gradient(135deg, #fab1a0, #e17055); }
-.icon-wb { width: 50px; height: 50px; border-radius: 16px; display: flex; justify-content: center; align-items: center; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); background: linear-gradient(135deg, #81ecec, #00cec9); }
+.icon-wb { width: 50px; height: 50px; border-radius: 16px; display: flex; justify-content: center; align-items: center; font-size: 24px;
+box-shadow: 0 4px 10px rgba(0,0,0,0.2); background: linear-gradient(135deg, #81ecec, #00cec9); }
 .icon-space { width: 50px; height: 50px; border-radius: 16px; display: flex; justify-content: center; align-items: center; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); background: linear-gradient(135deg, #fdcb6e, #e17055); }
+.icon-font { width: 50px; height: 50px; border-radius: 16px; display: flex; justify-content: center; align-items: center; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); background: linear-gradient(135deg, #ff9a9e, #fecfef); color: white; font-weight: bold; }
+
 
 .icon-space { width: 50px; height: 50px; border-radius: 16px; display: flex; justify-content: center; align-items: center; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); background: linear-gradient(135deg, #fdcb6e, #e17055); }
 
@@ -234,13 +237,14 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
                         <div class="app-grid">
             <div id="btnHomeChat" class="app-item"><div class="icon-chat">💬</div><div class="app-name">聊天</div></div>
             <div id="btnHomeApi" class="app-item"><div class="icon-api">⚙️</div><div class="app-name">网络配置</div></div>
-            <div id="btnHomeWb" class="app-item"><div class="icon-wb">📖</div><div class="app-name">世界书</div></div>
+                        <div id="btnHomeWb" class="app-item"><div class="icon-wb">📖</div><div class="app-name">世界书</div></div>
             <div id="btnHomeSpace" class="app-item"><div class="icon-space">⭐</div><div class="app-name">我的空间</div></div>
+            <div id="btnHomeFont" class="app-item"><div class="icon-font">Aa</div><div class="app-name">字体</div></div>
         </div>
-
-
+     
         <div class=dock>
             <div class=dock-icon>📞</div><div class=dock-icon>📷</div><div class=dock-icon>🎵</div><div class=dock-icon>🌐</div>
+
         </div>
     </div>
     
@@ -583,12 +587,51 @@ class=back-btn>＜</span>
                     <button id=btnPull class=tool-btn>📡 拉取模型列表</button>
                 </div>
             </div>
-            <button id=btnSaveApi class=save-btn>💾 保存网络配置</button>
+                        <button id=btnSaveApi class=save-btn>💾 保存网络配置</button>
         </div>
     </div>
     
+    <div id="scrSetFont" class="scr-flex">
+        <div class="room-header">
+            <span id="btnSetFontBack" class="back-btn">＜</span>
+            <span class="header-title">字体与排版设置</span>
+            <span class="empty-btn"></span>
+        </div>
+        <div class="api-form">
+            <div class="section-card">
+                <div class="section-title" style="color:#fd79a8;">🎨 字体文件URL</div>
+                <div style="font-size:12px;color:#888;margin-bottom:8px;">请输入以 .ttf 或 .woff 结尾的字体直链（留空则恢复默认）</div>
+                <div class="input-group">
+                    <input type="text" id="fontUrl" class="input-field" placeholder="https://...">
+                </div>
+            </div>
+            <div class="section-card">
+                <div class="section-title" style="color:#fd79a8;">📏 气泡字体大小: <span id="fontSizeVal">14</span> px</div>
+                <div class="input-group" style="padding: 10px 0;">
+                    <input type="range" id="fontSizeSlider" min="10" max="30" step="1" value="14" style="width:100%;">
+                </div>
+            </div>
+            <div class="section-card">
+                <div class="section-title" style="color:#fd79a8;">🖌️ 气泡文字颜色</div>
+                <div class="flex-row" style="margin-top:5px;">
+                    <label style="flex:1; font-size:13px; color:#333; font-weight:bold;">对方字体颜色</label>
+                    <input type="color" id="fontColorChar" value="#4a4a4a" style="width:45px; height:35px; border:none; border-radius:8px; cursor:pointer;">
+                </div>
+                <div class="flex-row" style="margin-top:15px; border-top:1px dashed #eee; padding-top:15px;">
+                    <label style="flex:1; font-size:13px; color:#333; font-weight:bold;">我的字体颜色</label>
+                    <input type="color" id="fontColorUser" value="#474747" style="width:45px; height:35px; border:none; border-radius:8px; cursor:pointer;">
+                </div>
+            </div>
+            <div class="flex-row" style="margin-top:10px;">
+                <button id="btnCancelFont" class="clear-btn" style="background:#f0f2f5; color:#333; border:none; font-size:15px; padding:15px;">取消</button>
+                <button id="btnSaveFont" class="save-btn" style="margin-top:0; flex:1; margin-left:10px;">💾 保存配置</button>
+            </div>
+        </div>
+    </div>
+
     <div id=scrWb class=scr-flex>
         <div class=room-header>
+
             <span id=btnWbBack class=back-btn>＜</span>
             <span class=header-center>世界书系统</span>
             <span id=btnWbAdd class=plus-btn>+</span>
@@ -1152,14 +1195,41 @@ let pressTimer = null;
 let selEl = null;
 let currentQuote ="";
 function showScreen(showId) {
-    [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrSpace, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet"), $("scrContact")].forEach(s => { if(s) s.style.display = "none"; });
+    [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrSpace, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet"), $("scrContact"), $("scrSetFont")].forEach(s => { if(s) s.style.display = "none"; });
     let target = $(showId);
     if(target) {
-        if(showId === "scrRoom" || showId === "scrList" || showId === "scrSetApi" || showId === "scrSetChat" || showId === "scrWb" || showId === "scrWbEdit" || showId === "scrMe" || showId === "scrCharSticker" || showId === "scrSpace" || showId === "scrLogList" || showId === "scrLogEdit" || showId === "scrFav" || showId === "scrWallet" || showId === "scrContact") {
+        if(showId === "scrRoom" || showId === "scrList" || showId === "scrSetApi" || showId === "scrSetChat" || showId === "scrWb" || showId === "scrWbEdit" || showId === "scrMe" || showId === "scrCharSticker" || showId === "scrSpace" || showId === "scrLogList" || showId === "scrLogEdit" || showId === "scrFav" || showId === "scrWallet" || showId === "scrContact" || showId === "scrSetFont") {
             target.style.display = "flex";
         } else { target.style.display = "block"; }
     }
 }
+
+function applyCustomFont() {
+    let url = ls.getItem('customFontUrl') || '';
+    let size = ls.getItem('customFontSize') || '14';
+    let cColor = ls.getItem('customFontColorChar') || '';
+    let uColor = ls.getItem('customFontColorUser') || '';
+
+    let styleTag = $('customFontStyleTag');
+    if(!styleTag) {
+        styleTag = document.createElement('style');
+        styleTag.id = 'customFontStyleTag';
+        document.head.appendChild(styleTag);
+    }
+    let css = '';
+    if(url) {
+        css += `@font-face { font-family: 'MyCustomFont'; src: url('${url}'); } \n`;
+        css += `body, .bubble, .input-field, textarea, .chat-preview, .role-name, .me-name, .app-name, .wb-title, .wb-prev, .log-card-content, .quote-txt, .me-menu-title { font-family: 'MyCustomFont', sans-serif !important; } \n`;
+    } else {
+        css += `body, .bubble, .input-field, textarea, .chat-preview, .role-name, .me-name, .app-name, .wb-title, .wb-prev, .log-card-content, .quote-txt, .me-menu-title { font-family: sans-serif; } \n`;
+    }
+    if(size) css += `.bubble { font-size: ${size}px !important; } \n`;
+    if(cColor) css += `.bub-left { color: ${cColor} !important; } \n`;
+    if(uColor) css += `.bub-right { color: ${uColor} !important; } \n`;
+    styleTag.innerHTML = css;
+}
+applyCustomFont();
+
 
 
 
@@ -1430,7 +1500,36 @@ $(`btnHomeChat`).onclick = () =>showScreen(`scrList`);
 $(`btnListBack`).onclick = () =>showScreen(`scrHome`);
 $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
 $(`btnSetApiBack`).onclick = () =>showScreen(`scrHome`);
+
+if($(`btnHomeFont`)) {
+    $(`btnHomeFont`).onclick = () => {
+        $(`fontUrl`).value = ls.getItem('customFontUrl') || '';
+        $(`fontSizeSlider`).value = ls.getItem('customFontSize') || '14';
+        $(`fontSizeVal`).innerText = $(`fontSizeSlider`).value;
+        $(`fontColorChar`).value = ls.getItem('customFontColorChar') || '#6B6B8E';
+        $(`fontColorUser`).value = ls.getItem('customFontColorUser') || '#8E6B7A';
+        showScreen(`scrSetFont`);
+    };
+}
+if($(`btnSetFontBack`)) $(`btnSetFontBack`).onclick = () => showScreen(`scrHome`);
+if($(`btnCancelFont`)) $(`btnCancelFont`).onclick = () => showScreen(`scrHome`);
+if($(`fontSizeSlider`)) {
+    $(`fontSizeSlider`).oninput = function() { $(`fontSizeVal`).innerText = this.value; };
+}
+if($(`btnSaveFont`)) {
+    $(`btnSaveFont`).onclick = () => {
+        ls.setItem('customFontUrl', $(`fontUrl`).value.trim());
+        ls.setItem('customFontSize', $(`fontSizeSlider`).value);
+        ls.setItem('customFontColorChar', $(`fontColorChar`).value);
+        ls.setItem('customFontColorUser', $(`fontColorUser`).value);
+        applyCustomFont();
+        alert('🎨 字体与排版设置已生效！快去聊天室看看吧。');
+        showScreen('scrHome');
+    };
+}
+
 $(`btnListToRoom`).onclick = () =>{ showScreen(`scrRoom`); msgs.scrollTop = msgs.scrollHeight; };
+
 $(`btnRoomBack`).onclick = () =>{ showScreen(`scrList`); updateListPreview(); };
 $(`btnRoomSet`).onclick = () =>showScreen(`scrSetChat`);
 $(`btnSetChatBack`).onclick = () =>showScreen(`scrRoom`);
