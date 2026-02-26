@@ -1314,11 +1314,18 @@ $(`spaceAvatar`).innerHTML = `<div style=width:100%;height:100%;display:flex;jus
 }
     }
     
-    if($(`spaceName`)) $(`spaceName`).innerText = myN;
-    if($(`spaceBio`)) $(`spaceBio`).innerText = myBio;
-    linkedWb = ls.getItem(`linkedWb`) ? JSON.parse(ls.getItem(`linkedWb`)) : [];
-    updateListPreview();
-}
+            if($(`spaceName`)) $(`spaceName`).innerText = myN;
+        if($(`spaceBio`)) $(`spaceBio`).innerText = myBio;
+        linkedWb = ls.getItem(`linkedWb`) ? JSON.parse(ls.getItem(`linkedWb`)) : [];
+        
+        if($(`btnBlock`)) {
+            let isBlk = originalGetItem.call(ls, `isBlocked_` + currentChatId);
+            $(`btnBlock`).innerText = isBlk ? `解除拉黑` : `拉黑好友`;
+        }
+        
+        updateListPreview();
+    }
+
 
 
 
@@ -1396,11 +1403,14 @@ function renderContacts() {
         let prevTxt = getPreviewText(isoHist);
         let isoAiA = originalGetItem.call(ls, `aiI_` + c.id);
   
-        let avaHtml = isoAiA ? `<div class=avatar-list style=background-image:url(`+isoAiA+`);font-size:0;></div>` : `<div class=avatar-list>👤</div>`;
-        let isoName = originalGetItem.call(ls, `cN_` + c.id) || c.name;
-        
-        div.innerHTML = avaHtml + `<div class=chat-info><div class=chat-name>` + isoName + `</div><div class=chat-preview>` + prevTxt + `</div></div>`;
-        div.onclick = () => {
+                    let avaHtml = isoAiA ? `<div class=avatar-list style=background-image:url(`+isoAiA+`);font-size:0;></div>` : `<div class=avatar-list>👤</div>`;
+            let isoName = originalGetItem.call(ls, `cN_` + c.id) || c.name;
+            let isBlk = originalGetItem.call(ls, `isBlocked_` + c.id);
+            if (isBlk) isoName += `<span style="color:#ff4757;font-size:10px;margin-left:4px;border:1px solid #ff4757;padding:0 2px;border-radius:3px;">已拉黑</span>`;
+            
+            div.innerHTML = avaHtml + `<div class=chat-info><div class=chat-name>` + isoName + `</div><div class=chat-preview>` + prevTxt + `</div></div>`;
+            div.onclick = () => {
+
             currentChatId = c.id;
            
             $(`cfgName`).value = originalGetItem.call(ls, `cN_` + c.id) || c.name;
@@ -1481,9 +1491,53 @@ $(`btnConfirmAddFriend`).onclick = () =>{
 
 
 
-$(`btnClearChat`).onclick = () =>{ if(confirm(`确认清空当前聊天？`)){ msgs.innerHTML=``; history=[]; ls.removeItem(`chatHistory`); ls.setItem(`lastMemCount`, `0`); updateListPreview(); alert(`已清空`); } };
-$(`btnBlock`).onclick = () =>alert(`已将对方拉黑。`);
+$(`btnClearChat`).onclick = () =>{ 
+    if(confirm(`确认清空当前聊天？`)){ 
+        msgs.innerHTML=``; 
+        history=[]; 
+        ls.removeItem(`chatHistory_` + currentChatId); 
+        if(currentChatId === `default`) ls.removeItem(`chatHistory`);
+        ls.setItem(`lastMemCount`, `0`); 
+        updateListPreview(); 
+        alert(`已清空`); 
+    } 
+};
+
+$(`btnBlock`).onclick = () =>{
+    let isBlk = originalGetItem.call(ls, `isBlocked_` + currentChatId);
+    if(!isBlk) {
+        if(confirm(`⚠️ 你确定要将好友拉黑吗？一旦拉黑，一小时内将无法再次添加好友！`)) {
+            originalSetItem.call(ls, `isBlocked_` + currentChatId, true);
+            originalSetItem.call(ls, `blockTime_` + currentChatId, Date.now());
+            applyVis();
+            renderContacts();
+        }
+    } else {
+        let bTime = parseInt(originalGetItem.call(ls, `blockTime_` + currentChatId)) || 0;
+        let pass = Date.now() - bTime;
+        if(pass < 60000) {
+            let left = Math.ceil((60000 - pass) / 60000);
+            alert(`⚠️ 还没到一小时，暂时无法解除拉黑！剩余时间：` + left + ` 分钟`);
+        } else {
+            let choice = prompt(`解除拉黑请选择操作（输入 1 或 2）：\n1. 你可以尝试重新添加好友，有几率被拒绝\n2. 系统会强制触发让Ta加你好友，有几率失败`, `1`);
+            if(choice === `1` || choice === `2`) {
+                let success = Math.random() > 0.4; 
+                if(success) {
+                    alert(`你们已重新添加好友！`);
+                    originalSetItem.call(ls, `isBlocked_` + currentChatId, false);
+                    applyVis();
+                    renderContacts();
+                } else {
+                    alert(`对方已拒绝添加你为好友，请一小时后重试！`);
+                    originalSetItem.call(ls, `blockTime_` + currentChatId, Date.now());
+                }
+            }
+        }
+    }
+};
+
 $(`btnDelFriend`).onclick = () =>{ alert(`好友已删除！`); showScreen(`scrHome`); };
+
 let currWbTab = `global`;
 let editingWbId = null;
 function renderWb() {
