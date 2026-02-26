@@ -279,11 +279,12 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
                         <div id=btnContactToRoom class=chat-item>
                 <div id=contactAva class=avatar-list>👤</div>
                 <div class=chat-info>
-                    <div class=role-header-row>
+                                        <div class=role-header-row>
                         <div id=contactName class=role-name>专属恋人</div>
                         <div class=role-status><div class="status-dot status-online"></div>在线</div>
                     </div>
-                    <div class=role-signature>嗨，我是你的专属恋人，快来和我聊天吧！</div>
+                    <div class=role-signature>你们已成为好友，请开始聊天吧！</div>
+
                 </div>
             </div>
 
@@ -1319,9 +1320,10 @@ function renderContacts() {
             let divC = document.createElement(`div`);
             divC.className = `chat-item`;
             
-            let charStatusText = originalGetItem.call(ls, `cStatusTxt_` + c.id) || "在线";
+                        let charStatusText = originalGetItem.call(ls, `cStatusTxt_` + c.id) || "在线";
             let charStatusColorClass = originalGetItem.call(ls, `cStatusColor_` + c.id) || "status-online";
-            let charSign = originalGetItem.call(ls, `cSign_` + c.id) || "（该角色还没有设置个性签名哦）";
+            let charSign = originalGetItem.call(ls, `cSign_` + c.id) || "你们已成为好友，请开始聊天吧！";
+
             
             divC.innerHTML = avaHtml + `<div class=chat-info>
                 <div class=role-header-row>
@@ -1356,19 +1358,47 @@ $(`btnListToRoom`).onclick = () => {
 };
 if($(`btnAddContact`)) $(`btnAddContact`).onclick = () =>{ $(`addFriendModal`).style.display=`flex`; };
 $(`btnCancelAddFriend`).onclick = () =>{ $(`addFriendModal`).style.display=`none`; $(`newFriendName`).value=``; $(`newFriendPrompt`).value=``; };
-$(`btnConfirmAddFriend`).onclick = () =>{
-
+$(`btnConfirmAddFriend`).onclick = async () =>{
     let n = $(`newFriendName`).value.trim();
     if(!n) { alert(`名字不能为空哦！`); return; }
     let p = $(`newFriendPrompt`).value.trim();
-    contacts.push({ name: n, prompt: p, id: Date.now() });
+    let newId = Date.now();
+    
+    $(`btnConfirmAddFriend`).innerText = `正在生成TA的专属状态...`;
+    $(`btnConfirmAddFriend`).style.pointerEvents = `none`;
+    
+    let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value;
+    if(pxy && key && mod) {
+        let sys = `你现在的任务是为新添加的角色生成初始的在线状态和个性签名。\n角色名字：${n}\n角色设定：${p}\n请严格返回纯JSON格式，绝对不要包含其他多余字符：\n{"statusTxt":"状态文字(如:摸鱼中、发呆等，最多4字)","statusColor":"状态颜色(限选: status-online代表活跃，status-busy代表忙碌/暴躁，status-offline代表睡觉/冷漠)","sign":"个性签名(符合性格的一句简短的话)"}`;
+        try {
+            let url = pxy.includes(`chat/completions`) ? pxy : pxy.replace(/\/$/, ``) + `/chat/completions`;
+            let res = await fetch(url, {
+                method: `POST`, headers: {Authorization: `Bearer ` + key, "Content-Type": `application/json`},
+                body: JSON.stringify({model: mod, messages: [{role: `user`, content: sys}], temperature: 0.8})
+            });
+            let dat = await res.json();
+            if(dat.choices && dat.choices.length > 0) {
+                let text = dat.choices[0].message.content.trim().replace(/```json/g, ``).replace(/```/g, ``).trim();
+                let aiData = JSON.parse(text);
+                originalSetItem.call(ls, `cStatusTxt_` + newId, aiData.statusTxt || `在线`);
+                originalSetItem.call(ls, `cStatusColor_` + newId, aiData.statusColor || `status-online`);
+                originalSetItem.call(ls, `cSign_` + newId, aiData.sign || `你们已成为好友，请开始聊天吧！`);
+            }
+        } catch(e) { console.error(`AI状态生成失败`, e); }
+    }
+    
+    contacts.push({ name: n, prompt: p, id: newId });
     ls.setItem(`myContacts`, JSON.stringify(contacts));
     renderContacts();
+    
+    $(`btnConfirmAddFriend`).innerText = `确定添加`;
+    $(`btnConfirmAddFriend`).style.pointerEvents = `auto`;
     $(`addFriendModal`).style.display=`none`;
     $(`newFriendName`).value=``;
     $(`newFriendPrompt`).value=``;
-    alert(`角色添加成功！去列表点击TA试试吧。`);
+    alert(`角色添加成功！快去角色列表看看TA的专属状态吧。`);
 };
+
 
 $(`btnClearChat`).onclick = () =>{ if(confirm(`确认清空当前聊天？`)){ msgs.innerHTML=``; history=[]; ls.removeItem(`chatHistory`); ls.setItem(`lastMemCount`, `0`); updateListPreview(); alert(`已清空`); } };
 $(`btnBlock`).onclick = () =>alert(`已将对方拉黑。`);
