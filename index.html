@@ -2594,7 +2594,7 @@ function renderQuoteBlock(b, txt) {
         return;
     }
 
-            let aiRpMatch = txt.match(/^\[AI红包：([\d\.]+)\|(.*?)\|(0|1)\|(.*?)\]$/);
+                let aiRpMatch = txt.match(/^\[AI红包：([\d\.]+)\|(.*?)\|(0|1|2)\|(.*?)\]$/);
     if(aiRpMatch) {
         let amt = parseFloat(aiRpMatch[1]);
         let note = aiRpMatch[2];
@@ -2605,7 +2605,8 @@ function renderQuoteBlock(b, txt) {
         let cursorStyle = status === `0` ? `cursor:pointer;` : `cursor:default;`;
         let opacityStatus = status === `0` ? `1` : `0.6`;
         let titleText = status === `0` ? note : `¥ ${amt.toFixed(2)}`;
-        let subText = status === `0` ? `未领取` : `已领取`;
+        let subText = status === `0` ? `未领取` : (status === `1` ? `已领取` : `已拒收`);
+        let footerText = status === `1` ? `已存入零钱` : (status === `2` ? `红包已退回` : ``);
         
         b.innerHTML = `<div style="width:200px; ${bgStyle} ${cursorStyle} border-radius:12px; overflow:hidden; border:1px solid #ffcccc; display:flex; flex-direction:column; transition:0.2s; opacity:${opacityStatus};" class="ai-rp-bubble">
             <div style="flex:1; padding:15px; display:flex; align-items:center; gap:12px;">
@@ -2617,7 +2618,7 @@ function renderQuoteBlock(b, txt) {
             </div>
             <div style="padding:6px 15px; background:white; font-size:11px; color:#888; display:flex; justify-content:space-between;">
                 <span>专属红包</span>
-                <span>${status === `1` ? `已存入零钱` : ``}</span>
+                <span>${footerText}</span>
             </div>
         </div>`;
         b.style.background = `transparent`;
@@ -2630,19 +2631,55 @@ function renderQuoteBlock(b, txt) {
             if(rpNode) {
                 rpNode.onclick = (e) => {
                     e.stopPropagation();
-                    myWallet.balance += amt;
                     let dn = $(`cfgRem`).value || $(`cfgName`).value || `专属恋人`;
-                    myWallet.bills.push({ title: `领取红包 - ` + dn, time: updTime().toLocaleString(), amount: amt, type: `wallet` });
-                    ls.setItem(`myWallet`, JSON.stringify(myWallet));
                     
-                    for(let i=history.length-1; i>=0; i--) {
-                        if(history[i].role === `assistant` && history[i].content.includes(txt)) {
-                            history[i].content = history[i].content.replace(txt, `[AI红包：${amt.toFixed(2)}|${note}|1|${tid}]`);
+                    $(`customPromptText`).innerText = `🧧 来自 ${dn} 的红包\n\n金额：${amt.toFixed(2)} 元\n留言：${note}`;
+                    $(`btnPromptOpt1`).innerText = `1. 开心收下 🧧`;
+                    $(`btnPromptOpt2`).innerText = `2. 狠心拒收 ❌`;
+                    $(`customPromptModal`).style.display = `flex`;
+                    
+                    let handleRpChoice = (choice) => {
+                        $(`customPromptModal`).style.display = `none`;
+                        $(`btnPromptOpt1`).innerText = `1. 尝试重新添加 (有几率被拒绝)`;
+                        $(`btnPromptOpt2`).innerText = `2. 强制系统触发 (有几率失败)`;
+                        
+                        if(choice === `1`) {
+                            myWallet.balance += amt;
+                            myWallet.bills.push({ title: `领取红包 - ` + dn, time: updTime().toLocaleString(), amount: amt, type: `wallet` });
+                            ls.setItem(`myWallet`, JSON.stringify(myWallet));
+                            
+                            for(let i=history.length-1; i>=0; i--) {
+                                if(history[i].role === `assistant` && history[i].content.includes(txt)) {
+                                    history[i].content = history[i].content.replace(txt, `[AI红包：${amt.toFixed(2)}|${note}|1|${tid}]`);
+                                    ls.setItem(`chatHistory`, JSON.stringify(history));
+                                    break;
+                                }
+                            }
+                            redrawChat();
+                        } else if(choice === `2`) {
+                            for(let i=history.length-1; i>=0; i--) {
+                                if(history[i].role === `assistant` && history[i].content.includes(txt)) {
+                                    history[i].content = history[i].content.replace(txt, `[AI红包：${amt.toFixed(2)}|${note}|2|${tid}]`);
+                                    ls.setItem(`chatHistory`, JSON.stringify(history));
+                                    break;
+                                }
+                            }
+                            let rejectMsg = `[系统提示：我拒收了你的红包！请立刻对我拒收红包这件事作出符合你人设的反应。]`;
+                            mkBub(rejectMsg, `r`);
+                            history.push({role: `user`, content: rejectMsg});
                             ls.setItem(`chatHistory`, JSON.stringify(history));
-                            break;
+                            redrawChat();
+                            setTimeout(() => { if($(`btnLemon`)) $(`btnLemon`).click(); }, 500);
                         }
-                    }
-                    redrawChat();
+                    };
+                    
+                    $(`btnPromptOpt1`).onclick = () => handleRpChoice(`1`);
+                    $(`btnPromptOpt2`).onclick = () => handleRpChoice(`2`);
+                    $(`btnCustomPromptCancel`).onclick = () => { 
+                        $(`customPromptModal`).style.display = `none`; 
+                        $(`btnPromptOpt1`).innerText = `1. 尝试重新添加 (有几率被拒绝)`;
+                        $(`btnPromptOpt2`).innerText = `2. 强制系统触发 (有几率失败)`;
+                    };
                 };
             }
         }
@@ -2650,6 +2687,7 @@ function renderQuoteBlock(b, txt) {
     }
 
     let photoMatch = txt.match(/^\[照片消息：([\s\S]*?)\]$/);
+
 
 
     if(photoMatch) {
