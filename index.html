@@ -1062,15 +1062,15 @@ let pressTimer = null;
 let selEl = null;
 let currentQuote ="";
 function showScreen(showId) {
-        [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrSpace, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet"), scrContact].forEach(s => { if(s) s.style.display = "none"; });
-
+    [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrSpace, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet"), scrContact].forEach(s => { if(s) s.style.display = "none"; });
     let target = $(showId);
     if(target) {
-        if(showId === "scrRoom" || showId === "scrList" || showId === "scrSetApi" || showId === "scrSetChat" || showId === "scrWb" || showId === "scrWbEdit" || showId === "scrMe" || showId === "scrCharSticker" || showId === "scrSpace" || showId === "scrLogList" || showId === "scrLogEdit" || showId === "scrFav" || showId === "scrWallet") {
+        if(showId === "scrRoom" || showId === "scrList" || showId === "scrSetApi" || showId === "scrSetChat" || showId === "scrWb" || showId === "scrWbEdit" || showId === "scrMe" || showId === "scrCharSticker" || showId === "scrSpace" || showId === "scrLogList" || showId === "scrLogEdit" || showId === "scrFav" || showId === "scrWallet" || showId === "scrContact") {
             target.style.display = "flex";
         } else { target.style.display = "block"; }
     }
 }
+
 
 
 
@@ -1969,9 +1969,10 @@ $(`btnLemon`).onclick = async () =>{
     if(!pxy.includes(`chat/completions`)) pxy = pxy.replace(/\/$/, ``) + `/chat/completions`;
     mkBub(`对方正在输入...`, `l`, true);
     
-    let sys = `严格按格式回复，勿加多余字符。内容必须极致生动：\n【定位与天气】（100字内，首字为天气emoji）\n【服装】（100字内）\n【表情与动作】（100字内）\n【心声】（200字内）\n【回复】（对我说的话。重要规则：如有多句，必须用回车换行严格分段，严禁只发一段！）\n\n`;
+        let sys = `严格按格式回复，勿加多余字符。内容必须极致生动：\n【定位与天气】（100字内，首字为天气emoji）\n【服装】（100字内）\n【表情与动作】（100字内）\n【心声】（200字内）\n【在线状态】（必填。只能输出：online、offline、busy、away 中的一个英文单词。根据你当前的心情或作息决定）\n【个性签名】（必填。根据当时的心情或聊天内容随时更新的一句话，20字内。若玩家在聊天中要求你修改签名，请完全听从并更改）\n【回复】（对我说的话。重要规则：如有多句，必须用回车换行严格分段，严禁只发一段！）\n\n`;
     
     let globals = wbData.filter(x => x.type === `global`);
+
     let locals = wbData.filter(x => x.type === `local` && linkedWb.includes(x.id));
     let wbText = ``;
     globals.forEach(x => wbText += `【全局世界设定】` + x.content + `\n`);
@@ -2094,13 +2095,16 @@ if(charStickers.length > 0) {
 
 
             
-            let out = txt, wM = txt.match(/【定位与天气】([\s\S]*?)【/), cM = txt.match(/【服装】([\s\S]*?)【/), aM = txt.match(/【表情与动作】([\s\S]*?)【/), tM = txt.match(/【心声】([\s\S]*?)【/), rM = txt.match(/【回复】([\s\S]*)$/);
-                        if(rM) {
+                        let out = txt, wM = txt.match(/【定位与天气】([\s\S]*?)【/), cM = txt.match(/【服装】([\s\S]*?)【/), aM = txt.match(/【表情与动作】([\s\S]*?)【/), tM = txt.match(/【心声】([\s\S]*?)【/), oM = txt.match(/【在线状态】([\s\S]*?)【/), sM = txt.match(/【个性签名】([\s\S]*?)【/), rM = txt.match(/【回复】([\s\S]*)$/);
+            if(rM) {
                 out = rM[1].trim();
                 if(wM) aiStatus.weather = wM[1].trim(); if(cM) aiStatus.clothing = cM[1].trim();
                 if(aM) aiStatus.action = aM[1].trim(); if(tM) aiStatus.thought = tM[1].trim();
+                if(oM) aiStatus.online = oM[1].replace(/[^a-zA-Z]/g, ``).toLowerCase() || `online`;
+                if(sM) aiStatus.signature = sM[1].trim();
                 ls.setItem(`aiStatus`, JSON.stringify(aiStatus));
             }
+
             
                                         let lns = out.split(/\n+/).filter(x => x.trim() !== ``);
                 if(lns.length === 1 && out.length > 30 && !out.includes(`[图片消息`)) { 
