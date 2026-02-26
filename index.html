@@ -3683,10 +3683,16 @@ if($(`btnSaveWalletPwd`)) $(`btnSaveWalletPwd`).onclick = () =>{
     $(`walletPwdModal`).style.display = `none`;
 };
 async function initCharProfile(c) {
-    let apiUrl = ls.getItem(`cfgApi`) || ``;
-    let apiKey = ls.getItem(`cfgKey`) || ``;
-    let model = ls.getItem(`cfgModel`) || ``;
-    if(!apiUrl || !apiKey) return;
+    let apiUrl = $(`cfgApi`) ? $(`cfgApi`).value : (ls.getItem(`cfgApi`) || ``);
+    let apiKey = $(`cfgKey`) ? $(`cfgKey`).value : (ls.getItem(`cfgKey`) || ``);
+    let model = $(`cfgModel`) ? $(`cfgModel`).value : (ls.getItem(`cfgModel`) || ``);
+    
+    if(!apiUrl || !apiKey) {
+        let fallback = { online: `online`, signature: `暂时没有想好个性签名` };
+        ls.setItem(`aiStatus_` + c.id, JSON.stringify(fallback));
+        renderContactPage();
+        return;
+    }
     
     let prompt = originalGetItem.call(ls, `cAP_` + c.id) || c.prompt || ``;
     let sysMsg = `请根据以下人设，用第一人称写一句符合该角色性格的个性签名（20字内），并给出一个初始在线状态（只能输出：online、offline、busy、away 中的一个）。\n\n人设：${prompt}\n\n严格按此格式返回（不要有任何多余字符）：\n【在线状态】online\n【个性签名】这里是签名内容`;
@@ -3706,20 +3712,31 @@ async function initCharProfile(c) {
             let txt = dat.choices[0].message.content;
             let oM = txt.match(/【在线状态】([\s\S]*?)【/);
             let sM = txt.match(/【个性签名】([\s\S]*)$/);
-            let newStat = { weather:`未知`, clothing:`未知`, action:`未知`, thought:`未知`, online:`online`, signature:`暂无签名` };
+            let newStat = { weather:`未知`, clothing:`未知`, action:`未知`, thought:`未知`, online:`online`, signature:`暂时没有想好个性签名` };
             if(oM) newStat.online = oM[1].replace(/[^a-zA-Z]/g, ``).toLowerCase() || `online`;
             if(sM) newStat.signature = sM[1].trim();
+            else newStat.signature = txt.replace(/【.*?】/g, ``).trim().substring(0,20) || `已自动报到`;
             
             ls.setItem(`aiStatus_` + c.id, JSON.stringify(newStat));
             renderContactPage(); 
         }
-    } catch(e) {}
+    } catch(e) {
+        let fallback = { online: `online`, signature: `暂时没有想好个性签名` };
+        ls.setItem(`aiStatus_` + c.id, JSON.stringify(fallback));
+        renderContactPage();
+    }
 }
+
 
 function renderContactPage() {
     let container = $(`contactListContent`);
     if(!container) return;
     container.innerHTML = ``;
+    container.style.paddingBottom = `90px`; 
+    container.style.overflowY = `auto`;
+    
+    let localContacts = ls.getItem(`contacts`);
+    if(localContacts) contacts = JSON.parse(localContacts);
     
     contacts.forEach(c => {
         let div = document.createElement(`div`);
@@ -3774,6 +3791,7 @@ function renderContactPage() {
         container.appendChild(div);
     });
 }
+
 
 
 if($("navContact")) $("navContact").onclick = () => { showScreen("scrContact"); renderContactPage(); };
