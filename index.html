@@ -2340,9 +2340,10 @@ $(`btnLemon`).onclick = async () =>{
             } else if($(`cfgTime`).checked) {
                 sys += `当前现实时间：` + updTime().toLocaleString() + `，请保持感知。\n`;
             }
-                let curStatus = originalGetItem.call(ls, `cStatusTxt_` + currentChatId) || `在线`;
+                        let curStatus = originalGetItem.call(ls, `cStatusTxt_` + currentChatId) || `在线`;
         let curSign = originalGetItem.call(ls, `cSign_` + currentChatId) || `（暂无个性签名）`;
-        sys += `你当前的面板状态是：${curStatus}，个性签名是：${curSign}。\n【状态主动更新规则】你有绝对自主权修改面板状态和签名，发生情绪环境变化时必须立即在回复最开头加指令：[更新状态：状态文字|状态颜色|个性签名]（状态文字请填简短中文如在线/忙碌/睡觉等；状态颜色限选: status-online代表活跃，status-busy代表忙碌，status-offline代表冷漠）。如果不改则不写。\n【主动发红包规则 - 极度重要】如果你想给玩家发红包表达心意（限制最高200元），请务必在回复中加入指令 [发送红包：金额|留言语]（例如 [发送红包：52.00|拿去买奶茶]）。如果玩家一直没领，你可以在后续聊天里催促。\n`;
+        sys += `你当前的面板状态是：${curStatus}，个性签名是：${curSign}。\n【状态主动更新规则】你有绝对自主权修改面板状态和签名，发生情绪环境变化时必须立即在回复最开头加指令：[更新状态：状态文字|状态颜色|个性签名]（状态文字请填简短中文如在线/忙碌/睡觉等；状态颜色限选: status-online代表活跃，status-busy代表忙碌，status-offline代表冷漠）。如果不改则不写。\n【主动资金互动规则 - 极度重要】如果你想给玩家钱表达心意，请在回复中加入以下其一指令：\n1. 发红包（限200元内）：[发送红包：金额|留言语]\n2. 发起转账（无上限，完全符合你人设的财力）：[发起转账：金额|转账说明]\n（例如 [发起转账：5200.00|给你买衣服]）。如果玩家一直没领/没收，你可以在后续聊天里催促。\n`;
+
 
 
     
@@ -2421,12 +2422,18 @@ if(charStickers.length > 0) {
                 if(typeof applyVis === `function`) applyVis();
             }
 
-            txt = txt.replace(/\[发送红包：([\d\.]+)\|(.*?)\]/g, (match, p1, p2) => {
+                        txt = txt.replace(/\[发送红包：([\d\.]+)\|(.*?)\]/g, (match, p1, p2) => {
                 let amt = parseFloat(p1);
                 if(isNaN(amt) || amt <= 0) amt = 1;
                 if(amt > 200) amt = 200;
                 return `[AI红包：${amt.toFixed(2)}|${p2}|0|${Date.now()}]`;
             });
+            txt = txt.replace(/\[发起转账：([\d\.]+)\|(.*?)\]/g, (match, p1, p2) => {
+                let amt = parseFloat(p1);
+                if(isNaN(amt) || amt <= 0) amt = 1;
+                return `[AI转账：${amt.toFixed(2)}|${p2}|0|${Date.now()}]`;
+            });
+
 
 
             
@@ -2713,6 +2720,126 @@ function renderQuoteBlock(b, txt) {
                     
                     $(`btnPromptOpt1`).onclick = () => handleRpChoice(`1`);
                     $(`btnPromptOpt2`).onclick = () => handleRpChoice(`2`);
+                                        $(`btnCustomPromptCancel`).onclick = () => { 
+                        $(`customPromptModal`).style.display = `none`; 
+                        $(`btnPromptOpt1`).innerText = `1. 尝试重新添加 (有几率被拒绝)`;
+                        $(`btnPromptOpt2`).innerText = `2. 强制系统触发 (有几率失败)`;
+                    };
+                };
+            }
+        }
+        return;
+    }
+
+    let aiTransferMatch = txt.match(/^\[AI转账：([\d\.]+)\|(.*?)\|(0|1|2)\|(.*?)\]$/);
+    if(aiTransferMatch) {
+        let amt = parseFloat(aiTransferMatch[1]);
+        let note = aiTransferMatch[2];
+        let status = aiTransferMatch[3];
+        let tid = aiTransferMatch[4];
+        
+        let bgStyle = `background:#e67e22;`;
+        let cursorStyle = status === `0` ? `cursor:pointer;` : `cursor:default;`;
+        let opacityStatus = status === `0` ? `1` : `0.6`;
+        let titleText = `¥ ${amt.toFixed(2)}`;
+        let subText = status === `0` ? note : (status === `1` ? `已收款` : `已退还`);
+        let footerText = status === `1` ? `已存入零钱` : (status === `2` ? `资金已原路退回` : `转账给您`);
+        
+        b.innerHTML = `<div style="width:200px; ${bgStyle} ${cursorStyle} border-radius:12px; overflow:hidden; border:1px solid #f39c12; display:flex; flex-direction:column; transition:0.2s; opacity:${opacityStatus};" class="ai-tf-bubble">
+            <div style="flex:1; padding:15px; display:flex; align-items:center; gap:12px;">
+                <div style="width:36px; height:36px; background:white; border-radius:8px; display:flex; justify-content:center; align-items:center; color:#e67e22; font-size:20px; font-weight:bold; flex-shrink:0;">💸</div>
+                <div style="display:flex; flex-direction:column; overflow:hidden;">
+                    <span style="font-size:15px; color:white; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${titleText}</span>
+                    <span style="font-size:12px; color:rgba(255,255,255,0.9); margin-top:4px;">${subText}</span>
+                </div>
+            </div>
+            <div style="padding:6px 15px; background:white; font-size:11px; color:#888; display:flex; justify-content:space-between;">
+                <span>专属转账</span>
+                <span>${footerText}</span>
+            </div>
+        </div>`;
+        b.style.background = `transparent`;
+        b.style.boxShadow = `none`;
+        b.style.padding = `0`;
+        b.style.border = `none`;
+        
+        if(status === `0`) {
+            let tfNode = b.querySelector(`.ai-tf-bubble`);
+            if(tfNode) {
+                tfNode.onclick = (e) => {
+                    e.stopPropagation();
+                    let dn = $(`cfgRem`).value || $(`cfgName`).value || `专属恋人`;
+                    
+                    $(`customPromptText`).innerText = `💸 来自 ${dn} 的转账\n\n金额：${amt.toFixed(2)} 元\n说明：${note}`;
+                    $(`btnPromptOpt1`).innerText = `1. 确认收款 💸`;
+                    $(`btnPromptOpt2`).innerText = `2. 立即退还 ❌`;
+                    $(`customPromptModal`).style.display = `flex`;
+                    
+                    let handleTfChoice = (choice) => {
+                        $(`customPromptModal`).style.display = `none`;
+                        $(`btnPromptOpt1`).innerText = `1. 尝试重新添加 (有几率被拒绝)`;
+                        $(`btnPromptOpt2`).innerText = `2. 强制系统触发 (有几率失败)`;
+                        
+                        if(choice === `1`) {
+                            myWallet.balance += amt;
+                            myWallet.bills.push({ title: `确认收款 - ` + dn, time: updTime().toLocaleString(), amount: amt, type: `wallet` });
+                            ls.setItem(`myWallet`, JSON.stringify(myWallet));
+                            
+                            for(let i=history.length-1; i>=0; i--) {
+                                if(history[i].role === `assistant` && history[i].content.includes(txt)) {
+                                    history[i].content = history[i].content.replace(txt, `[AI转账：${amt.toFixed(2)}|${note}|1|${tid}]`);
+                                    ls.setItem(`chatHistory`, JSON.stringify(history));
+                                    break;
+                                }
+                            }
+                            redrawChat();
+                        } else if(choice === `2`) {
+                            myWallet.bills.push({ title: `退还转账 - ` + dn, time: updTime().toLocaleString(), amount: 0, type: `wallet` });
+                            ls.setItem(`myWallet`, JSON.stringify(myWallet));
+                            
+                            for(let i=history.length-1; i>=0; i--) {
+                                if(history[i].role === `assistant` && history[i].content.includes(txt)) {
+                                    history[i].content = history[i].content.replace(txt, `[AI转账：${amt.toFixed(2)}|${note}|2|${tid}]`);
+                                    ls.setItem(`chatHistory`, JSON.stringify(history));
+                                    break;
+                                }
+                            }
+                            redrawChat();
+                            
+                            let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value;
+                            if(pxy && key && mod) {
+                                if(typeof showTyping === `function`) showTyping();
+
+                                let myN = $(`cfgMyName`).value || `我`;
+                                let charN = $(`cfgName`).value || `对方`;
+                                let charP = $(`cfgAiP`).value || ``;
+                                let recentChat = history.slice(-10).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
+                                let sys = `你现在的身份是：${charN}。你的底层性格是：${charP}。\n这是近期的聊天记录：\n${recentChat}\n\n【突发剧情】：玩家（${myN}）刚刚退还了你发起的 ${amt.toFixed(2)} 元转账（你的转账说明是：${note}）。\n你的任务：请严格遵循你的底层性格，对此事作出第一反应！可以直接表达你的情绪、质问玩家、或者傲娇地吐槽。绝对不要使用任何形式的引号符号。`;
+                                
+                                (async () => {
+                                    try {
+                                        let url = pxy.includes(`chat/completions`) ? pxy : pxy.replace(/\/$/, ``) + `/chat/completions`;
+                                        let res = await fetch(url, {
+                                            method: `POST`, headers: {Authorization: `Bearer ` + key, "Content-Type": `application/json`},
+                                            body: JSON.stringify({model: mod, messages: [{role: `user`, content: sys}], temperature: 0.8})
+                                        });
+                                        let dat = await res.json();
+                                        if(typeof rmThk === `function`) rmThk();
+                                        if(dat.choices && dat.choices.length > 0) {
+                                            let replyMsg = dat.choices[0].message.content.trim();
+                                            history.push({role: `assistant`, content: replyMsg});
+                                            ls.setItem(`chatHistory_` + currentChatId, JSON.stringify(history));
+                                            if(currentChatId === `default`) { ls.setItem(`chatHistory`, JSON.stringify(history)); }
+                                            redrawChat();
+                                        }
+                                    } catch(e) { console.error(e); if(typeof rmThk === `function`) rmThk(); }
+                                })();
+                            }
+                        }
+                    };
+                    
+                    $(`btnPromptOpt1`).onclick = () => handleTfChoice(`1`);
+                    $(`btnPromptOpt2`).onclick = () => handleTfChoice(`2`);
                     $(`btnCustomPromptCancel`).onclick = () => { 
                         $(`customPromptModal`).style.display = `none`; 
                         $(`btnPromptOpt1`).innerText = `1. 尝试重新添加 (有几率被拒绝)`;
@@ -2725,6 +2852,7 @@ function renderQuoteBlock(b, txt) {
     }
 
     let photoMatch = txt.match(/^\[照片消息：([\s\S]*?)\]$/);
+
 
 
 
