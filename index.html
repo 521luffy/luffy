@@ -231,12 +231,13 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         </div>
     </div>
     
-    <div id=scrList class=scr-list>
+        <div id=scrList class=scr-list>
         <div class=chat-header>
             <span id=btnListBack class=back-btn>＜</span>
             <span class=header-center>消息</span>
-            <span id=btnAddMenu class=plus-btn>+</span>
+            <span class=empty-btn></span>
         </div>
+
         <div id=chatMenu class=drop-menu>
             <div class=menu-item>添加好友</div>
             <div class=menu-item>新建群聊</div>
@@ -258,11 +259,37 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
             <div id=navMsg class=nav-item-active><div class=nav-icon>💬</div><div class=nav-text>消息</div></div>
             <div id=navContact class=nav-item><div class=nav-icon>👥</div><div class=nav-text>角色</div></div>
             <div id=navMoment class=nav-item><div class=nav-icon>🌍</div><div class=nav-text>动态</div></div>
-            <div id=navMe class=nav-item><div class=nav-icon>👤</div><div class=nav-text>我</div></div>
+                        <div id=navMe class=nav-item><div class=nav-icon>👤</div><div class=nav-text>我</div></div>
+        </div>
+    </div>
+    
+    <div id=scrContact class=scr-list>
+        <div class=chat-header>
+            <span id=btnContactBack class=back-btn>＜</span>
+            <span class=header-center>角色</span>
+            <span id=btnAddContact class=plus-btn>+</span>
+        </div>
+        
+        <div id=contactContent class=list-content>
+            <div id=btnContactToRoom class=chat-item>
+                <div id=contactAva class=avatar-list>👤</div>
+                <div class=chat-info>
+                    <div id=contactName class=chat-name>专属恋人</div>
+                    <div class=chat-preview>查看角色详情</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class=bottom-nav>
+            <div id=navContactToMsg class=nav-item><div class=nav-icon>💬</div><div class=nav-text>消息</div></div>
+            <div class=nav-item-active><div class=nav-icon>👥</div><div class=nav-text>角色</div></div>
+            <div id=navContactToMoment class=nav-item><div class=nav-icon>🌍</div><div class=nav-text>动态</div></div>
+            <div id=navContactToMe class=nav-item><div class=nav-icon>👤</div><div class=nav-text>我</div></div>
         </div>
     </div>
     
     <div id=scrRoom class=scr-room>
+
         <div class=room-header>
             <span id=btnRoomBack class=back-btn>＜</span>
             <span id=roomTitle class=room-center>专属恋人</span>
@@ -1045,14 +1072,15 @@ let pressTimer = null;
 let selEl = null;
 let currentQuote ="";
 function showScreen(showId) {
-    [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrSpace, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet")].forEach(s => { if(s) s.style.display = "none"; });
+    [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrSpace, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet"), $("scrContact")].forEach(s => { if(s) s.style.display = "none"; });
     let target = $(showId);
     if(target) {
-        if(showId === "scrRoom" || showId === "scrList" || showId === "scrSetApi" || showId === "scrSetChat" || showId === "scrWb" || showId === "scrWbEdit" || showId === "scrMe" || showId === "scrCharSticker" || showId === "scrSpace" || showId === "scrLogList" || showId === "scrLogEdit" || showId === "scrFav" || showId === "scrWallet") {
+        if(showId === "scrRoom" || showId === "scrList" || showId === "scrSetApi" || showId === "scrSetChat" || showId === "scrWb" || showId === "scrWbEdit" || showId === "scrMe" || showId === "scrCharSticker" || showId === "scrSpace" || showId === "scrLogList" || showId === "scrLogEdit" || showId === "scrFav" || showId === "scrWallet" || showId === "scrContact") {
             target.style.display = "flex";
         } else { target.style.display = "block"; }
     }
 }
+
 
 
 
@@ -1116,54 +1144,71 @@ function updateListPreview() {
 function applyVis() {
     let dn = $(`cfgRem`).value || $(`cfgName`).value || `专属恋人`;
     $(`roomTitle`).innerText = dn;
-    
     let defName = originalGetItem.call(ls, `cR_default`) || originalGetItem.call(ls, `cN_default`) || originalGetItem.call(ls, `cR`) || originalGetItem.call(ls, `cN`) || `专属恋人`;
     if (currentChatId === `default`) defName = dn;
     $(`listName`).innerText = defName;
+    if($(`contactName`)) $(`contactName`).innerText = defName;
     
     let bg = ls.getItem(`bgI`);
     if(bg) { 
         room.style.backgroundImage = `url(${bg})`; 
-        if($(`bgPreview`)) { $(`bgPreview`).style.backgroundImage = `url(${bg})`; $(`bgPreview`).innerText = ``; }
+        if($(`bgPreview`)) { $(`bgPreview`).style.backgroundImage = `url(${bg})`;
+$(`bgPreview`).innerText = ``; }
     } else { 
-        room.style.backgroundImage = `none`; 
-        if($(`bgPreview`)) { $(`bgPreview`).style.backgroundImage = `none`; $(`bgPreview`).innerText = `🖼️ 点击选择背景`; }
+        room.style.backgroundImage = `none`;
+if($(`bgPreview`)) { $(`bgPreview`).style.backgroundImage = `none`; $(`bgPreview`).innerText = `🖼️ 点击选择背景`; }
     }
     
-    let defAiA = originalGetItem.call(ls, `aiI_default`) || originalGetItem.call(ls, `aiI`);
+    let defAiA = originalGetItem.call(ls, `aiI_default`) ||
+originalGetItem.call(ls, `aiI`);
     if (currentChatId === `default`) defAiA = ls.getItem(`aiI`);
-    if(defAiA) { $(`listAva`).style.backgroundImage = `url(${defAiA})`; $(`listAva`).innerText = ``; }
-    else { $(`listAva`).style.backgroundImage = `none`; $(`listAva`).innerText = `👤`; }
+    if(defAiA) { 
+        $(`listAva`).style.backgroundImage = `url(${defAiA})`; $(`listAva`).innerText = ``;
+        if($(`contactAva`)) { $(`contactAva`).style.backgroundImage = `url(${defAiA})`; $(`contactAva`).innerText = ``; }
+    }
+    else { 
+        $(`listAva`).style.backgroundImage = `none`; $(`listAva`).innerText = `👤`;
+        if($(`contactAva`)) { $(`contactAva`).style.backgroundImage = `none`; $(`contactAva`).innerText = `👤`; }
+    }
     
     let curAiA = ls.getItem(`aiI`);
-    if(curAiA) {
-        if($(`aiPreview`)) { $(`aiPreview`).style.backgroundImage = `url(${curAiA})`; $(`aiPreview`).innerText = ``; }
+if(curAiA) {
+        if($(`aiPreview`)) { $(`aiPreview`).style.backgroundImage = `url(${curAiA})`; $(`aiPreview`).innerText = ``;
+}
     } else {
-        if($(`aiPreview`)) { $(`aiPreview`).style.backgroundImage = `none`; $(`aiPreview`).innerText = `👤`; }
+        if($(`aiPreview`)) { $(`aiPreview`).style.backgroundImage = `none`;
+$(`aiPreview`).innerText = `👤`; }
     }
     
-    let myN = $(`cfgMyName`).value || `你的名字`;
+    let myN = $(`cfgMyName`).value ||
+`你的名字`;
     if($(`meName`)) $(`meName`).innerText = myN;
     let myBio = ls.getItem(`myBio`) || `请添加你的个性签名吧！`;
     if($(`meBio`)) $(`meBio`).innerText = myBio;
     
     let myA = ls.getItem(`myI`);
-    if(myA) { 
-        if($(`meAvatar`)) { $(`meAvatar`).style.backgroundImage = `url(${myA})`; $(`meAvatar`).innerHTML = ``; }
-        if($(`spaceAvatar`)) { $(`spaceAvatar`).style.backgroundImage = `url(${myA})`; $(`spaceAvatar`).innerHTML = ``; }
-        if($(`myPreview`)) { $(`myPreview`).style.backgroundImage = `url(${myA})`; $(`myPreview`).innerText = ``; }
+if(myA) { 
+        if($(`meAvatar`)) { $(`meAvatar`).style.backgroundImage = `url(${myA})`; $(`meAvatar`).innerHTML = ``;
+}
+        if($(`spaceAvatar`)) { $(`spaceAvatar`).style.backgroundImage = `url(${myA})`; $(`spaceAvatar`).innerHTML = ``;
+}
+        if($(`myPreview`)) { $(`myPreview`).style.backgroundImage = `url(${myA})`; $(`myPreview`).innerText = ``;
+}
     } else { 
-        if($(`meAvatar`)) { $(`meAvatar`).style.backgroundImage = `none`; $(`meAvatar`).innerHTML = `<div style=width:100%;height:100%;display:flex;justify-content:center;align-items:center;font-size:35px;color:#999;>👤</div>`; }
-        if($(`spaceAvatar`)) { $(`spaceAvatar`).style.backgroundImage = `none`; $(`spaceAvatar`).innerHTML = `<div style=width:100%;height:100%;display:flex;justify-content:center;align-items:center;font-size:35px;color:#999;>👤</div>`; }
-        if($(`myPreview`)) { $(`myPreview`).style.backgroundImage = `none`; $(`myPreview`).innerText = `👤`; }
+        if($(`meAvatar`)) { $(`meAvatar`).style.backgroundImage = `none`;
+$(`meAvatar`).innerHTML = `<div style=width:100%;height:100%;display:flex;justify-content:center;align-items:center;font-size:35px;color:#999;>👤</div>`; }
+        if($(`spaceAvatar`)) { $(`spaceAvatar`).style.backgroundImage = `none`;
+$(`spaceAvatar`).innerHTML = `<div style=width:100%;height:100%;display:flex;justify-content:center;align-items:center;font-size:35px;color:#999;>👤</div>`; }
+        if($(`myPreview`)) { $(`myPreview`).style.backgroundImage = `none`; $(`myPreview`).innerText = `👤`;
+}
     }
     
     if($(`spaceName`)) $(`spaceName`).innerText = myN;
     if($(`spaceBio`)) $(`spaceBio`).innerText = myBio;
-    
     linkedWb = ls.getItem(`linkedWb`) ? JSON.parse(ls.getItem(`linkedWb`)) : [];
     updateListPreview();
 }
+
 
 
 
@@ -1223,8 +1268,14 @@ $(`btnCloseModal`).onclick = () =>modal.style.display=`none`;
 $(`btnAddMenu`).onclick = () =>{ let m = $(`chatMenu`); m.style.display = m.style.display===`block`?`none`:`block`; };
 let contacts = ls.getItem(`myContacts`) ? JSON.parse(ls.getItem(`myContacts`)) : [];
 function renderContacts() {
-    let listItems = document.querySelectorAll(`.chat-item`);
+    let listItems = document.querySelectorAll(`#listContent .chat-item`);
     for(let i=1; i<listItems.length; i++) listItems[i].remove();
+    
+    let contactItems = document.querySelectorAll(`#contactContent .chat-item`);
+    if(contactItems) {
+        for(let i=1; i<contactItems.length; i++) contactItems[i].remove();
+    }
+    
     contacts.forEach(c => {
         let div = document.createElement(`div`);
         div.className = `chat-item`;
@@ -1233,14 +1284,15 @@ function renderContacts() {
         let isoHist = isoHistStr ? JSON.parse(isoHistStr) : [];
         if(currentChatId === c.id) isoHist = history;
         let prevTxt = getPreviewText(isoHist);
-
         let isoAiA = originalGetItem.call(ls, `aiI_` + c.id);
+  
         let avaHtml = isoAiA ? `<div class=avatar-list style=background-image:url(`+isoAiA+`);font-size:0;></div>` : `<div class=avatar-list>👤</div>`;
         let isoName = originalGetItem.call(ls, `cN_` + c.id) || c.name;
         
         div.innerHTML = avaHtml + `<div class=chat-info><div class=chat-name>` + isoName + `</div><div class=chat-preview>` + prevTxt + `</div></div>`;
         div.onclick = () => {
             currentChatId = c.id;
+           
             $(`cfgName`).value = originalGetItem.call(ls, `cN_` + c.id) || c.name;
             $(`cfgRem`).value = originalGetItem.call(ls, `cR_` + c.id) || ``;
             $(`cfgAiP`).value = originalGetItem.call(ls, `cAP_` + c.id) || c.prompt;
@@ -1253,8 +1305,17 @@ function renderContacts() {
             msgs.scrollTop = msgs.scrollHeight;
         };
         $(`listContent`).appendChild(div);
+        
+        if($(`contactContent`)) {
+            let divC = document.createElement(`div`);
+            divC.className = `chat-item`;
+            divC.innerHTML = avaHtml + `<div class=chat-info><div class=chat-name>` + isoName + `</div><div class=chat-preview>查看角色详情</div></div>`;
+            divC.onclick = div.onclick;
+            $(`contactContent`).appendChild(divC);
+        }
     });
 }
+
 renderContacts();
 
 
@@ -2541,8 +2602,9 @@ function confirmBatchStickers() {
 
 if(history.length>0) redrawChat();
 
-if($("navContact")) $("navContact").onclick = () =>alert("【角色】版块正在全力开发中...");
-if($("navMoment")) $("navMoment").onclick = () =>alert("【动态】朋友圈功能正在全力开发中...");
+if($("navMeToContact")) $("navMeToContact").onclick = () =>alert("【角色】版块正在全力开发中...");
+if($("navMeToMoment")) $("navMeToMoment").onclick = () =>alert("【动态】朋友圈功能正在全力开发中...");
+
 if($("navMe")) $("navMe").onclick = () =>showScreen("scrMe");
 
 if($("navMeToMsg")) $("navMeToMsg").onclick = () =>showScreen("scrList");
