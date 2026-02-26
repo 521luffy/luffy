@@ -979,6 +979,12 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 
             
 
+    <div id=customTextModal class=modal-base>
+        <div class=modal-ctx style=width:80%;max-width:300px;padding:25px;border-radius:20px;background:#fff;display:flex;flex-direction:column;align-items:center;>
+            <div id=customTextContent style=width:100%;font-size:15px;color:#333;line-height:1.6;word-wrap:break-word;white-space:pre-wrap;margin-bottom:20px;max-height:60vh;overflow-y:auto;></div>
+            <button id=btnCustomTextClose style=width:100%;padding:12px;border-radius:25px;border:none;background:#6c5ce7;color:#fff;font-size:15px;font-weight:bold;cursor:pointer;>确定</button>
+        </div>
+    </div>
 
 
 <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
@@ -986,6 +992,12 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 
 
 const $ = id =>document.getElementById(id);
+window.showCustomText = function(text) {
+    if($(`customTextContent`)) $(`customTextContent`).innerText = text;
+    if($(`customTextModal`)) $(`customTextModal`).style.display = `flex`;
+};
+if($(`btnCustomTextClose`)) $(`btnCustomTextClose`).onclick = () => $(`customTextModal`).style.display = `none`;
+
 let lock=$("scrLock"), home=$("scrHome"), list=$("scrList"), room=$("scrRoom"), setApi=$("scrSetApi"), setChat=$("scrSetChat"), scrWb=$("scrWb"), scrWbEdit=$("scrWbEdit"), scrMe=$("scrMe"), scrCharSticker=$("scrCharSticker"), scrSpace=$("scrSpace"), scrLogList=$("scrLogList"), scrLogEdit=$("scrLogEdit");
 let iptMsg=$("iptMsg"), msgs=$("msgs"), modal=$("modal");
 let stW=$("stW"), stC=$("stC"), stA=$("stA"), stT=$("stT");
@@ -2186,12 +2198,14 @@ function renderQuoteBlock(b, txt) {
 
 
     
-    let photoMatch = txt.match(/^\[照片消息：([\s\S]*?)\]$/);
+        let photoMatch = txt.match(/^\[照片消息：([\s\S]*?)\]$/);
     if(photoMatch) {
         let desc = photoMatch[1];
-        b.innerHTML = `<div style="width:130px; height:170px; background:#fce4ec; border-radius:12px; display:flex; justify-content:center; align-items:center; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.05);" onclick="alert('照片内容：\\n' + decodeURIComponent('${encodeURIComponent(desc)}'))">
+        b.innerHTML = `<div style="width:130px; height:170px; background:#fce4ec; border-radius:12px; display:flex; justify-content:center; align-items:center; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.05);"
+        onclick="showCustomText('照片内容：\\n' + decodeURIComponent('${encodeURIComponent(desc)}'))">
             <div style="font-size:40px; filter:grayscale(100%) opacity(50%);">📷</div>
         </div>`;
+
         b.style.background = "transparent";
         b.style.boxShadow = "none";
         b.style.padding = "0";
@@ -2199,15 +2213,16 @@ function renderQuoteBlock(b, txt) {
         return;
     }
     
-    let voiceMatch = txt.match(/^\[?【?语音消息[^0-9]*(\d+)[^\]】]*\]?】?\s*([\s\S]*)$/);
-        if(voiceMatch) {
+        let voiceMatch = txt.match(/^\[?【?语音消息[^0-9]*(\d+)[^\]】]*\]?】?\s*([\s\S]*)$/);
+    if(voiceMatch) {
             let sec = voiceMatch[1];
             let calcW = Math.min(70 + parseInt(sec)*3, 220);
-
         let p0 = `<s` + `vg width=16 height=16 viewBox="0 0 24 24" fill=#000><path d="M5 3l14 9-14 9V3z"/></s` + `vg>`;
         let p1 = `<s` + `vg width=24 height=24 viewBox="0 0 24 24" fill=none stroke=#000 stroke-width=2.5 stroke-linecap=round>`;
         let p2 = `<path class=w-1 d="M17 12h.01"/><path class=w-2 d="M13 8a6 6 0 0 0 0 8"/><path class=w-3 d="M9 4a12 12 0 0 0 0 16"/></s` + `vg>`;
-        b.innerHTML = `<div style="display:flex; align-items:center; justify-content:space-between; width:${calcW}px; padding:8px 15px; background:#fff; border:2px solid #000; border-radius:25px; color:#000; font-weight:bold; cursor:pointer;" onclick="alert('文字内容：\\n' + decodeURIComponent('${encodeURIComponent(voiceMatch[2])}'))">` + p0 + p1 + p2 + `</div>`;
+        b.innerHTML = `<div style="display:flex; align-items:center; justify-content:space-between; width:${calcW}px; padding:8px 15px; background:#fff; border:2px solid #000; border-radius:25px; color:#000; font-weight:bold; cursor:pointer;"
+        onclick="showCustomText('文字内容：\\n' + decodeURIComponent('${encodeURIComponent(voiceMatch[2])}'))">` + p0 + p1 + p2 + `</div>`;
+
         b.style.background = "transparent";
         b.style.boxShadow = "none";
         b.style.padding = "0";
@@ -2976,8 +2991,8 @@ function renderLogs() {
     let container = $(`logListContainer`);
     if(!container) return;
     container.innerHTML = ``;
-    
-    let tipHtml = `<div style="text-align:center; padding:8px 15px; background:#fff9e6; color:#d35400; font-size:12px; margin-bottom:10px; cursor:pointer; border-bottom:1px solid #fdebd0;" onclick="alert('【玩法提示】\\n这里的日志相当于发在公开空间的动态哦！\\n角色们都会披着社交马甲，保持自己的人设伪装，不会把最深层的心里话直接说出来。\\n\\n真正的【私密日记】功能正在全力开发中，敬请期待！')">❓ 这里的日志和私密日记有什么区别？(点击查看)</div>`;
+    let tipHtml = `<div style="text-align:center; padding:8px 15px; background:#fff9e6; color:#d35400; font-size:12px; margin-bottom:10px; cursor:pointer; border-bottom:1px solid #fdebd0;" onclick="showCustomText('【玩法提示】\\n这里的日志相当于发在公开空间的动态哦！\\n角色们都会披着社交马甲，保持自己的人设伪装，不会把最深层的心里话直接说出来。\\n\\n真正的【私密日记】功能正在全力开发中，敬请期待！')">❓ 这里的日志和私密日记有什么区别？(点击查看)</div>`;
+
     container.innerHTML += tipHtml;
     
     let activeChar = $(`cfgName`).value || `专属恋人`;
