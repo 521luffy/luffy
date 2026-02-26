@@ -2315,13 +2315,14 @@ $(`btnLemon`).onclick = async () =>{
         mkBub(t, `r`); iptMsg.value = ``; $(`quoteBox`).style.display = `none`; currentQuote = ``;
         history.push({role: `user`, content: t}); ls.setItem(`chatHistory`, JSON.stringify(history)); updateListPreview();
     }
-    if(history.length === 0) return;
+        if(history.length === 0) return;
     let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value, tp = parseFloat($(`apiTemp`).value)||0.8;
     if(!pxy || !key || !mod) { mkBub(`请先配置网络。`, `l`); return; }
     if(!pxy.includes(`chat/completions`)) pxy = pxy.replace(/\/$/, ``) + `/chat/completions`;
-    mkBub(`对方正在输入...`, `l`, true);
+    if(typeof showTyping === `function`) showTyping();
     
     let sys = `严格按格式回复，勿加多余字符。内容必须极致生动：\n【定位与天气】（100字内，首字为天气emoji）\n【服装】（100字内）\n【表情与动作】（100字内）\n【心声】（200字内）\n【回复】（对我说的话。重要规则：如有多句，必须用回车换行严格分段，严禁只发一段！）\n\n`;
+
     
     let globals = wbData.filter(x => x.type === `global`);
     let locals = wbData.filter(x => x.type === `local` && linkedWb.includes(x.id));
@@ -2339,9 +2340,10 @@ $(`btnLemon`).onclick = async () =>{
             } else if($(`cfgTime`).checked) {
                 sys += `当前现实时间：` + updTime().toLocaleString() + `，请保持感知。\n`;
             }
-        let curStatus = originalGetItem.call(ls, `cStatusTxt_` + currentChatId) || `在线`;
+                let curStatus = originalGetItem.call(ls, `cStatusTxt_` + currentChatId) || `在线`;
         let curSign = originalGetItem.call(ls, `cSign_` + currentChatId) || `（暂无个性签名）`;
-        sys += `你当前的面板状态是：${curStatus}，个性签名是：${curSign}。\n【状态主动更新规则】你有绝对自主权修改面板状态和签名，发生情绪环境变化时必须立即在回复最开头加指令：[更新状态：状态文字|状态颜色|个性签名]（颜色限选: status-online代表活跃，status-busy代表忙碌，status-offline代表冷漠）。如果不改则不写。\n【主动发红包规则 - 极度重要】如果你想给玩家发红包表达心意（限制最高200元），请务必在回复中加入指令 [发送红包：金额|留言语]（例如 [发送红包：52.00|拿去买奶茶]）。如果玩家一直没领，你可以在后续聊天里催促。\n`;
+        sys += `你当前的面板状态是：${curStatus}，个性签名是：${curSign}。\n【状态主动更新规则】你有绝对自主权修改面板状态和签名，发生情绪环境变化时必须立即在回复最开头加指令：[更新状态：状态文字|状态颜色|个性签名]（状态文字请填简短中文如在线/忙碌/睡觉等；状态颜色限选: status-online代表活跃，status-busy代表忙碌，status-offline代表冷漠）。如果不改则不写。\n【主动发红包规则 - 极度重要】如果你想给玩家发红包表达心意（限制最高200元），请务必在回复中加入指令 [发送红包：金额|留言语]（例如 [发送红包：52.00|拿去买奶茶]）。如果玩家一直没领，你可以在后续聊天里催促。\n`;
+
 
     
     let charStickers = [];
@@ -2405,15 +2407,20 @@ if(charStickers.length > 0) {
                 return `[试图发送表情：` + p1 + `]`; 
             });
             
-                                    let statusMatch = txt.match(/\[更新状态：(.*?)\|(.*?)\|(.*?)\]/);
+                                                let statusMatch = txt.match(/\[更新状态：(.*?)\|(.*?)\|(.*?)\]/);
             if(statusMatch) {
-                originalSetItem.call(ls, `cStatusTxt_` + currentChatId, statusMatch[1].trim());
+                let sTxt = statusMatch[1].trim();
+                if(sTxt === `status-busy`) sTxt = `忙碌`;
+                if(sTxt === `status-online`) sTxt = `在线`;
+                if(sTxt === `status-offline`) sTxt = `离线`;
+                originalSetItem.call(ls, `cStatusTxt_` + currentChatId, sTxt);
                 originalSetItem.call(ls, `cStatusColor_` + currentChatId, statusMatch[2].trim());
                 originalSetItem.call(ls, `cSign_` + currentChatId, statusMatch[3].trim());
                 txt = txt.replace(statusMatch[0], ``);
                 if(typeof renderContacts === `function`) renderContacts();
                 if(typeof applyVis === `function`) applyVis();
             }
+
             txt = txt.replace(/\[发送红包：([\d\.]+)\|(.*?)\]/g, (match, p1, p2) => {
                 let amt = parseFloat(p1);
                 if(isNaN(amt) || amt <= 0) amt = 1;
@@ -2667,19 +2674,12 @@ function renderQuoteBlock(b, txt) {
                             redrawChat();
                             
                             let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value;
-                            if(pxy && key && mod) {
-                                let typingDiv = document.createElement(`div`);
-                                typingDiv.id = `rpTyping`;
-                                typingDiv.style.textAlign = `center`;
-                                typingDiv.style.fontSize = `12px`;
-                                typingDiv.style.color = `#999`;
-                                typingDiv.style.padding = `10px`;
-                                typingDiv.innerText = `对方正在输入...`;
-                                msgs.appendChild(typingDiv);
-                                msgs.scrollTop = msgs.scrollHeight;
+                                                        if(pxy && key && mod) {
+                                if(typeof showTyping === `function`) showTyping();
 
                                 let myN = $(`cfgMyName`).value || `我`;
                                 let charN = $(`cfgName`).value || `对方`;
+
                                 let charP = $(`cfgAiP`).value || ``;
                                 let recentChat = history.slice(-10).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
                                 let sys = `你现在的身份是：${charN}。你的底层性格是：${charP}。\n这是近期的聊天记录：\n${recentChat}\n\n【突发剧情】：玩家（${myN}）刚刚狠心拒收了你发出的 ${amt.toFixed(2)} 元红包（你的留言是：${note}）。\n你的任务：请严格遵循你的底层性格，对此事作出第一反应！可以直接表达你的情绪、质问玩家、或者傲娇地吐槽。绝对不要使用任何形式的引号符号。`;
@@ -2687,12 +2687,12 @@ function renderQuoteBlock(b, txt) {
                                 (async () => {
                                     try {
                                         let url = pxy.includes(`chat/completions`) ? pxy : pxy.replace(/\/$/, ``) + `/chat/completions`;
-                                        let res = await fetch(url, {
+                                                                                let res = await fetch(url, {
                                             method: `POST`, headers: {Authorization: `Bearer ` + key, "Content-Type": `application/json`},
                                             body: JSON.stringify({model: mod, messages: [{role: `user`, content: sys}], temperature: 0.8})
                                         });
                                         let dat = await res.json();
-                                        if($(`rpTyping`)) $(`rpTyping`).remove();
+                                        if(typeof rmThk === `function`) rmThk();
                                         if(dat.choices && dat.choices.length > 0) {
                                             let replyMsg = dat.choices[0].message.content.trim();
                                             history.push({role: `assistant`, content: replyMsg});
@@ -2700,7 +2700,8 @@ function renderQuoteBlock(b, txt) {
                                             if(currentChatId === `default`) { ls.setItem(`chatHistory`, JSON.stringify(history)); }
                                             redrawChat();
                                         }
-                                    } catch(e) { console.error(e); if($(`rpTyping`)) $(`rpTyping`).remove(); }
+                                    } catch(e) { console.error(e); if(typeof rmThk === `function`) rmThk(); }
+
                                 })();
                             }
                         }
@@ -2808,7 +2809,6 @@ function mkBubSync(txt, side) {
     row.className = `msg-row ` + (side===`l`?`row-left`:`row-right`);
     let b = document.createElement(`div`); b.className = `bubble ` + (side===`l`?`bub-left`:`bub-right`); 
     renderQuoteBlock(b, txt); bindPress(b);
-    
     if(side===`l`) {
         let a = document.createElement(`div`); a.className = `ava-sm ava-l`;
         let img = ls.getItem(`aiI`);
@@ -2824,9 +2824,20 @@ function mkBubSync(txt, side) {
     }
     msgs.appendChild(row);
 }
-
-function rmThk() { let t = $(`thk`); if(t) t.remove(); }
+function showTyping() {
+    if($(`roomTitle`)) $(`roomTitle`).innerText = `对方正在输入...`;
+    if($(`roomStatus`)) $(`roomStatus`).style.display = `none`;
+    if($(`roomSignature`)) $(`roomSignature`).style.display = `none`;
+}
+function rmThk() { 
+    let t = $(`thk`); if(t) t.remove(); 
+    if($(`rpTyping`)) $(`rpTyping`).remove();
+    if($(`roomStatus`)) $(`roomStatus`).style.display = `flex`;
+    if($(`roomSignature`)) $(`roomSignature`).style.display = `-webkit-box`;
+    if(typeof applyVis === `function`) applyVis();
+}
 let stickerData = [];
+
 localforage.getItem(`myPhoneStickers`).then(res =>{
     if(res) {
         stickerData = JSON.parse(res);
