@@ -261,7 +261,23 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
             <div id=navMe class=nav-item><div class=nav-icon>👤</div><div class=nav-text>我</div></div>
         </div>
     </div>
-    
+        <div id=scrContact class=scr-list>
+        <div class=chat-header>
+            <span class=empty-btn></span>
+            <span class=header-center>角色列表</span>
+            <span id=btnAddContact class=plus-btn>+</span>
+        </div>
+        
+        <div id=contactListContent class=list-content style=padding-top:10px;></div>
+        
+        <div class=bottom-nav>
+            <div id=navContactToMsg class=nav-item><div class=nav-icon>💬</div><div class=nav-text>消息</div></div>
+            <div class=nav-item-active><div class=nav-icon>👥</div><div class=nav-text>角色</div></div>
+            <div id=navContactToMoment class=nav-item><div class=nav-icon>🌍</div><div class=nav-text>动态</div></div>
+            <div id=navContactToMe class=nav-item><div class=nav-icon>👤</div><div class=nav-text>我</div></div>
+        </div>
+    </div>
+
     <div id=scrRoom class=scr-room>
         <div class=room-header>
             <span id=btnRoomBack class=back-btn>＜</span>
@@ -998,7 +1014,8 @@ window.showCustomText = function(text) {
 };
 if($(`btnCustomTextClose`)) $(`btnCustomTextClose`).onclick = () => $(`customTextModal`).style.display = `none`;
 
-let lock=$("scrLock"), home=$("scrHome"), list=$("scrList"), room=$("scrRoom"), setApi=$("scrSetApi"), setChat=$("scrSetChat"), scrWb=$("scrWb"), scrWbEdit=$("scrWbEdit"), scrMe=$("scrMe"), scrCharSticker=$("scrCharSticker"), scrSpace=$("scrSpace"), scrLogList=$("scrLogList"), scrLogEdit=$("scrLogEdit");
+let lock=$("scrLock"), home=$("scrHome"), list=$("scrList"), room=$("scrRoom"), setApi=$("scrSetApi"), setChat=$("scrSetChat"), scrWb=$("scrWb"), scrWbEdit=$("scrWbEdit"), scrMe=$("scrMe"), scrCharSticker=$("scrCharSticker"), scrSpace=$("scrSpace"), scrLogList=$("scrLogList"), scrLogEdit=$("scrLogEdit"), scrContact=$("scrContact");
+
 let iptMsg=$("iptMsg"), msgs=$("msgs"), modal=$("modal");
 let stW=$("stW"), stC=$("stC"), stA=$("stA"), stT=$("stT");
 let ls = localStorage;
@@ -1045,7 +1062,8 @@ let pressTimer = null;
 let selEl = null;
 let currentQuote ="";
 function showScreen(showId) {
-    [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrSpace, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet")].forEach(s => { if(s) s.style.display = "none"; });
+        [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrSpace, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet"), scrContact].forEach(s => { if(s) s.style.display = "none"; });
+
     let target = $(showId);
     if(target) {
         if(showId === "scrRoom" || showId === "scrList" || showId === "scrSetApi" || showId === "scrSetChat" || showId === "scrWb" || showId === "scrWbEdit" || showId === "scrMe" || showId === "scrCharSticker" || showId === "scrSpace" || showId === "scrLogList" || showId === "scrLogEdit" || showId === "scrFav" || showId === "scrWallet") {
@@ -3660,6 +3678,63 @@ if($(`btnSaveWalletPwd`)) $(`btnSaveWalletPwd`).onclick = () =>{
     alert(`支付密码设置成功！`);
     $(`walletPwdModal`).style.display = `none`;
 };
+function renderContactPage() {
+    let container = $("contactListContent");
+    if(!container) return;
+    container.innerHTML = ``;
+    
+    contacts.forEach(c => {
+        let div = document.createElement("div");
+        div.className = "chat-item";
+        
+        let aiStatStr = originalGetItem.call(ls, "aiStatus_" + c.id);
+        let aiStat = aiStatStr ? JSON.parse(aiStatStr) : {};
+        let onlineStatus = aiStat.online || "online"; 
+        let signature = aiStat.signature || "TA还没有写个性签名哦~";
+        
+        let statusColor = "#10ac84"; 
+        if(onlineStatus === "offline") statusColor = "#8395a7";
+        else if(onlineStatus === "busy") statusColor = "#ff6b6b";
+        else if(onlineStatus === "away") statusColor = "#feca57";
+
+        let isoAiA = originalGetItem.call(ls, "aiI_" + c.id);
+        let avaBg = isoAiA ? `background-image:url(${isoAiA});font-size:0;` : ``;
+        let isoName = originalGetItem.call(ls, "cN_" + c.id) || c.name;
+        
+        div.innerHTML = `
+            <div style="position:relative; margin-right:15px; flex-shrink:0;">
+                <div class="avatar-list" style="margin-right:0; ${avaBg}">${isoAiA ? '' : '👤'}</div>
+                <div style="position:absolute; bottom:0; right:0; width:12px; height:12px; border-radius:50%; border:2px solid #fff; background-color:${statusColor};"></div>
+            </div>
+            <div class="chat-info">
+                <div class="chat-name">${isoName}</div>
+                <div class="chat-preview">${signature}</div>
+            </div>
+        `;
+        
+        div.onclick = () => {
+            currentChatId = c.id;
+            $("cfgName").value = originalGetItem.call(ls, "cN_" + c.id) || c.name;
+            $("cfgRem").value = originalGetItem.call(ls, "cR_" + c.id) || "";
+            $("cfgAiP").value = originalGetItem.call(ls, "cAP_" + c.id) || c.prompt;
+            $("cfgMyP").value = originalGetItem.call(ls, "cMP_" + c.id) || "";
+            history = ls.getItem("chatHistory") ? JSON.parse(ls.getItem("chatHistory")) : [];
+            aiStatus = ls.getItem("aiStatus") ? JSON.parse(ls.getItem("aiStatus")) : {weather:"等待连接...",clothing:"等待连接...",action:"等待连接...",thought:"等待连接..."};
+            applyVis(); 
+            redrawChat();
+            showScreen("scrRoom");
+            msgs.scrollTop = msgs.scrollHeight;
+        };
+        container.appendChild(div);
+    });
+}
+
+if($("navContact")) $("navContact").onclick = () => { showScreen("scrContact"); renderContactPage(); };
+if($("navMeToContact")) $("navMeToContact").onclick = () => { showScreen("scrContact"); renderContactPage(); };
+if($("navContactToMsg")) $("navContactToMsg").onclick = () => showScreen("scrList");
+if($("navContactToMoment")) $("navContactToMoment").onclick = () => alert("【动态】朋友圈功能正在全力开发中...");
+if($("navContactToMe")) $("navContactToMe").onclick = () => showScreen("scrMe");
+if($("btnAddContact")) $("btnAddContact").onclick = () => $("addFriendModal").style.display="flex";
 
 </script>
 
