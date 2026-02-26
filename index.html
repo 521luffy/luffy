@@ -232,20 +232,14 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
     </div>
     
         <div id=scrList class=scr-list>
-        <div class=chat-header>
+                <div class=chat-header>
             <span id=btnListBack class=back-btn>＜</span>
             <span class=header-center>消息</span>
             <span class=empty-btn></span>
         </div>
-
-        <div id=chatMenu class=drop-menu>
-            <div class=menu-item>添加好友</div>
-            <div class=menu-item>新建群聊</div>
-            <div class=menu-item>新建分组</div>
-            <div class=menu-item>扫一扫</div>
-        </div>
         
         <div id=listContent class=list-content>
+
             <div id=btnListToRoom class=chat-item>
                 <div id=listAva class=avatar-list>👤</div>
                 <div class=chat-info>
@@ -1264,10 +1258,9 @@ $(`btnRoomSet`).onclick = () =>showScreen(`scrSetChat`);
 $(`btnSetChatBack`).onclick = () =>showScreen(`scrRoom`);
 $(`btnHomeWb`).onclick = () =>{ showScreen(`scrWb`); renderWb(); };
 $(`btnCloseModal`).onclick = () =>modal.style.display=`none`;
-
-$(`btnAddMenu`).onclick = () =>{ let m = $(`chatMenu`); m.style.display = m.style.display===`block`?`none`:`block`; };
 let contacts = ls.getItem(`myContacts`) ? JSON.parse(ls.getItem(`myContacts`)) : [];
 function renderContacts() {
+
     let listItems = document.querySelectorAll(`#listContent .chat-item`);
     for(let i=1; i<listItems.length; i++) listItems[i].remove();
     
@@ -1329,17 +1322,13 @@ $(`btnListToRoom`).onclick = () => {
     aiStatus = ls.getItem(`aiStatus`) ? JSON.parse(ls.getItem(`aiStatus`)) : {weather:"等待连接...",clothing:"等待连接...",action:"等待连接...",thought:"等待连接..."};
     applyVis(); 
     redrawChat();
-    showScreen(`scrRoom`); 
-    msgs.scrollTop = msgs.scrollHeight; 
+        showScreen(`scrRoom`); 
+    msgs.scrollTop = msgs.scrollHeight;
 };
-
-
-let menuItems = document.querySelectorAll(`.menu-item`);
-menuItems[0].onclick = () =>{ $(`chatMenu`).style.display=`none`; $(`addFriendModal`).style.display=`flex`; };
-for(let i=1; i<menuItems.length; i++) { menuItems[i].onclick = () =>{ alert(`功能开发中！`); $(`chatMenu`).style.display=`none`; }; }
-
+if($(`btnAddContact`)) $(`btnAddContact`).onclick = () =>{ $(`addFriendModal`).style.display=`flex`; };
 $(`btnCancelAddFriend`).onclick = () =>{ $(`addFriendModal`).style.display=`none`; $(`newFriendName`).value=``; $(`newFriendPrompt`).value=``; };
 $(`btnConfirmAddFriend`).onclick = () =>{
+
     let n = $(`newFriendName`).value.trim();
     if(!n) { alert(`名字不能为空哦！`); return; }
     let p = $(`newFriendPrompt`).value.trim();
@@ -2601,18 +2590,23 @@ function confirmBatchStickers() {
 
 
 if(history.length>0) redrawChat();
+if($(`navMsg`)) $(`navMsg`).onclick = () =>showScreen(`scrList`);
+if($(`navContact`)) $(`navContact`).onclick = () =>showScreen(`scrContact`);
+if($(`navMoment`)) $(`navMoment`).onclick = () =>alert(`【动态】正在开发中...`);
+if($(`navMe`)) $(`navMe`).onclick = () =>showScreen(`scrMe`);
 
-if($("navMeToContact")) $("navMeToContact").onclick = () =>alert("【角色】版块正在全力开发中...");
-if($("navMeToMoment")) $("navMeToMoment").onclick = () =>alert("【动态】朋友圈功能正在全力开发中...");
+if($(`navContactToMsg`)) $(`navContactToMsg`).onclick = () =>showScreen(`scrList`);
+if($(`navContactToMoment`)) $(`navContactToMoment`).onclick = () =>alert(`【动态】正在开发中...`);
+if($(`navContactToMe`)) $(`navContactToMe`).onclick = () =>showScreen(`scrMe`);
 
-if($("navMe")) $("navMe").onclick = () =>showScreen("scrMe");
+if($(`navMeToMsg`)) $(`navMeToMsg`).onclick = () =>showScreen(`scrList`);
+if($(`navMeToContact`)) $(`navMeToContact`).onclick = () =>showScreen(`scrContact`);
+if($(`navMeToMoment`)) $(`navMeToMoment`).onclick = () =>alert(`【动态】正在开发中...`);
 
-if($("navMeToMsg")) $("navMeToMsg").onclick = () =>showScreen("scrList");
-if($("navMeToContact")) $("navMeToContact").onclick = () =>alert("【角色】版块正在全力开发中...");
-if($("navMeToMoment")) $("navMeToMoment").onclick = () =>alert("【动态】朋友圈功能正在全力开发中...");
-if($("btnMeBack")) $("btnMeBack").onclick = () =>showScreen("scrHome");
-
+if($(`btnMeBack`)) $(`btnMeBack`).onclick = () =>showScreen(`scrHome`);
+if($(`btnContactBack`)) $(`btnContactBack`).onclick = () =>showScreen(`scrHome`);
 if($("btnEditMe")) $("btnEditMe").onclick = () =>{
+
     $("iptMeName").value = $("cfgMyName").value || "你的名字";
     $("iptMeBio").value = ls.getItem("myBio") || "";
     $("editMeModal").style.display = "flex";
