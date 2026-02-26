@@ -1056,12 +1056,34 @@ class=back-btn>＜</span>
 
             
 
-    <div id=customTextModal class=modal-base>
+        <div id=customTextModal class=modal-base>
         <div class=modal-ctx style=width:80%;max-width:300px;padding:25px;border-radius:20px;background:#fff;display:flex;flex-direction:column;align-items:center;>
             <div id=customTextContent style=width:100%;font-size:15px;color:#333;line-height:1.6;word-wrap:break-word;white-space:pre-wrap;margin-bottom:20px;max-height:60vh;overflow-y:auto;></div>
             <button id=btnCustomTextClose style=width:100%;padding:12px;border-radius:25px;border:none;background:#6c5ce7;color:#fff;font-size:15px;font-weight:bold;cursor:pointer;>确定</button>
         </div>
     </div>
+
+    <div id=customConfirmModal class=modal-base>
+        <div class=modal-ctx style=width:80%;max-width:300px;padding:25px;border-radius:20px;background:#fff;display:flex;flex-direction:column;align-items:center;>
+            <div id=customConfirmText style=width:100%;font-size:15px;color:#333;line-height:1.6;text-align:center;margin-bottom:20px;white-space:pre-wrap;></div>
+            <div style=display:flex;width:100%;gap:15px;>
+                <button id=btnCustomConfirmCancel style=flex:1;padding:12px;border-radius:25px;border:none;background:#f0f2f5;color:#333;font-size:15px;font-weight:bold;cursor:pointer;>取消</button>
+                <button id=btnCustomConfirmOk style=flex:1;padding:12px;border-radius:25px;border:none;background:#ff4757;color:#fff;font-size:15px;font-weight:bold;cursor:pointer;>确定</button>
+            </div>
+        </div>
+    </div>
+
+    <div id=customPromptModal class=modal-base>
+        <div class=modal-ctx style=width:80%;max-width:300px;padding:25px;border-radius:20px;background:#fff;display:flex;flex-direction:column;align-items:center;>
+            <div id=customPromptText style=width:100%;font-size:15px;color:#333;line-height:1.6;margin-bottom:15px;font-weight:bold;></div>
+            <div style=display:flex;flex-direction:column;width:100%;gap:10px;margin-bottom:20px;>
+                <button id=btnPromptOpt1 style="width:100%;padding:12px;border-radius:15px;border:1px solid #6c5ce7;background:#eef2ff;color:#6c5ce7;font-size:14px;font-weight:bold;cursor:pointer;text-align:left;">1. 尝试重新添加 (有几率被拒绝)</button>
+                <button id=btnPromptOpt2 style="width:100%;padding:12px;border-radius:15px;border:1px solid #ff7675;background:#fff0f0;color:#ff7675;font-size:14px;font-weight:bold;cursor:pointer;text-align:left;">2. 强制系统触发 (有几率失败)</button>
+            </div>
+            <button id=btnCustomPromptCancel style=width:100%;padding:12px;border-radius:25px;border:none;background:#f0f2f5;color:#333;font-size:15px;font-weight:bold;cursor:pointer;>取消</button>
+        </div>
+    </div>
+
 
 
 <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
@@ -1518,38 +1540,84 @@ $(`btnClearChat`).onclick = () =>{
     } 
 };
 
-$(`btnBlock`).onclick = () =>{
-    let isBlk = originalGetItem.call(ls, `isBlocked_` + currentChatId) === 'true';
+$(`btnBlock`).onclick = async () =>{
+    let isBlk = originalGetItem.call(ls, `isBlocked_` + currentChatId) === `true`;
     if(!isBlk) {
-        if(confirm(`⚠️ 你确定要将好友拉黑吗？一旦拉黑，一小时内将无法再次添加好友！`)) {
-            originalSetItem.call(ls, `isBlocked_` + currentChatId, 'true');
+        $(`customConfirmText`).innerText = `⚠️ 你确定要将好友拉黑吗？\n一旦拉黑，一小时内将无法再次添加好友！`;
+        $(`customConfirmModal`).style.display = `flex`;
+        $(`btnCustomConfirmOk`).onclick = () => {
+            $(`customConfirmModal`).style.display = `none`;
+            originalSetItem.call(ls, `isBlocked_` + currentChatId, `true`);
             originalSetItem.call(ls, `blockTime_` + currentChatId, Date.now());
             applyVis();
             renderContacts();
-        }
+        };
+        $(`btnCustomConfirmCancel`).onclick = () => { $(`customConfirmModal`).style.display = `none`; };
     } else {
         let bTime = parseInt(originalGetItem.call(ls, `blockTime_` + currentChatId)) || 0;
         let pass = Date.now() - bTime;
         if(pass < 60000) { 
             let left = Math.ceil((60000 - pass) / 60000);
-            alert(`⚠️ 还没到一小时，暂时无法解除拉黑！剩余时间：` + left + ` 分钟`);
+            showCustomText(`⚠️ 还没到一小时，暂时无法解除拉黑！\n剩余时间：` + left + ` 分钟`);
         } else {
-            let choice = prompt(`解除拉黑请选择操作（输入 1 或 2）：\n1. 你可以尝试重新添加好友，有几率被拒绝\n2. 系统会强制触发让Ta加你好友，有几率失败`, `1`);
-            if(choice === `1` || choice === `2`) {
-                let success = Math.random() > 0.1; 
+            $(`customPromptText`).innerText = `解除拉黑请选择操作：`;
+            $(`customPromptModal`).style.display = `flex`;
+            
+            let handleChoice = async (choice) => {
+                $(`customPromptModal`).style.display = `none`;
+                let success = true;
+                let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value;
+                if(pxy && key && mod) {
+                    $(`btnBlock`).innerText = `等待对方回应...`;
+                    $(`btnBlock`).style.pointerEvents = `none`;
+                    
+                    let myN = $(`cfgMyName`).value || `我`;
+                    let charN = $(`cfgName`).value || `对方`;
+                    let charP = $(`cfgAiP`).value || ``;
+                    let specHistStr = originalGetItem.call(ls, `chatHistory_` + currentChatId) || `[]`;
+                    let specHist = JSON.parse(specHistStr);
+                    if(currentChatId === `default`) specHist = history;
+                    let recentChat = specHist.slice(-10).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
+                    
+                    let sys = `你现在的身份是：${charN}。你的底层性格是：${charP}。\n这是你们拉黑前的近期聊天记录：\n${recentChat}\n\n【重要剧情节点】：玩家（${myN}）在一个小时前由于某些原因拉黑了你，现在玩家正在尝试解除拉黑并重新加你为好友。\n你的任务：请严格根据你的底层性格，以及拉黑前最后的聊天内容（判断你此刻是否还在生气、是否愿意原谅），来决定是否同意重新添加好友。\n注意：请严格且仅输出纯文本，同意请输出【同意】，拒绝请输出【拒绝】，绝对不要输出任何多余字符！`;
+                    
+                    try {
+                        let url = pxy.includes(`chat/completions`) ? pxy : pxy.replace(/\/$/, ``) + `/chat/completions`;
+                        let res = await fetch(url, {
+                            method: `POST`, headers: {Authorization: `Bearer ` + key, "Content-Type": `application/json`},
+                            body: JSON.stringify({model: mod, messages: [{role: `user`, content: sys}], temperature: 0.7})
+                        });
+                        let dat = await res.json();
+                        if(dat.choices && dat.choices.length > 0) {
+                            let reply = dat.choices[0].message.content.trim();
+                            if(reply.includes(`拒绝`)) success = false;
+                        }
+                    } catch(e) { console.error(e); }
+                    $(`btnBlock`).style.pointerEvents = `auto`;
+                } else {
+                    success = Math.random() > 0.5;
+                }
+
                 if(success) {
-                    alert(`你们已重新添加好友！`);
-                    originalSetItem.call(ls, `isBlocked_` + currentChatId, 'false');
+                    showCustomText(`你们已重新添加好友！`);
+                    originalSetItem.call(ls, `isBlocked_` + currentChatId, `false`);
                     applyVis();
                     renderContacts();
                 } else {
-                    alert(`对方已拒绝添加你为好友，请一小时后重试！`);
+                    showCustomText(`对方已拒绝添加你为好友，请一小时后重试！`);
                     originalSetItem.call(ls, `blockTime_` + currentChatId, Date.now());
+                    $(`btnBlock`).innerText = `解除拉黑`;
                 }
-            }
+            };
+
+            $(`btnPromptOpt1`).onclick = () => handleChoice(`1`);
+            $(`btnPromptOpt2`).onclick = () => handleChoice(`2`);
+            $(`btnCustomPromptCancel`).onclick = () => { $(`customPromptModal`).style.display = `none`; };
         }
     }
 };
+
+
 
 
 $(`btnDelFriend`).onclick = () =>{ alert(`好友已删除！`); showScreen(`scrHome`); };
