@@ -76,7 +76,9 @@ textarea { resize: none; }
 .status-online { background-color: #10ac84; }
 .status-offline { background-color: #8395a7; }
 .status-busy { background-color: #ff6b6b; }
-.role-signature { font-size: 12px; color: #888888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.role-signature { font-size: 12px; color: #a29bfe; white-space: nowrap;
+overflow: hidden; text-overflow: ellipsis; }
+
 
 .drop-menu { display: none; position: absolute; top: 65px; right: 15px; background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.15); border-radius: 12px;
 z-index: 100; overflow: hidden; }
@@ -268,12 +270,16 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         </div>
     </div>
     
-    <div id=scrContact class=scr-list>
+        <div id=scrContact class=scr-list>
         <div class=chat-header>
             <span id=btnContactBack class=back-btn>＜</span>
             <span class=header-center>角色</span>
-            <span id=btnAddContact class=plus-btn>+</span>
+            <div style="display:flex; align-items:center; gap:15px;">
+                <span id=btnRoleHelp class=plus-btn style="font-size:20px;">❓</span>
+                <span id=btnAddContact class=plus-btn>+</span>
+            </div>
         </div>
+
         
         <div id=contactContent class=list-content>
                         <div id=btnContactToRoom class=chat-item>
@@ -298,13 +304,19 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         </div>
     </div>
     
-    <div id=scrRoom class=scr-room>
-
+        <div id=scrRoom class=scr-room>
         <div class=room-header>
             <span id=btnRoomBack class=back-btn>＜</span>
-            <span id=roomTitle class=room-center>专属恋人</span>
+            <div id=roomTitleContainer class=room-center style="display:flex; flex-direction:column; align-items:center; line-height:1.2;">
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <span id=roomTitle style="font-weight:bold; font-size:16px; color:#333;">专属恋人</span>
+                    <div id=roomStatus class=role-status style="font-size:11px; transform:scale(0.9);"></div>
+                </div>
+                <div id=roomSignature style="font-size:11px; color:#a29bfe; margin-top:3px; max-width:220px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; word-break:break-all;"></div>
+            </div>
             <span id=btnRoomSet class=settings-btn>⚙️</span>
         </div>
+
         <div id=msgs class=chat-msgs></div>
         
         <div id=quoteBox class=quote-box>
@@ -1154,9 +1166,22 @@ function updateListPreview() {
 }
 function applyVis() {
     let dn = $(`cfgRem`).value || $(`cfgName`).value || `专属恋人`;
-    $(`roomTitle`).innerText = dn;
+    if($(`roomTitle`)) $(`roomTitle`).innerText = dn;
+    
+    let curStatusTxt = originalGetItem.call(ls, `cStatusTxt_` + currentChatId) || `在线`;
+    let curStatusCol = originalGetItem.call(ls, `cStatusColor_` + currentChatId) || `status-online`;
+    let curSign = originalGetItem.call(ls, `cSign_` + currentChatId) || `（暂无个性签名）`;
+    if (currentChatId === `default`) {
+         curStatusTxt = originalGetItem.call(ls, `cStatusTxt`) || `在线`;
+         curStatusCol = originalGetItem.call(ls, `cStatusColor`) || `status-online`;
+         curSign = originalGetItem.call(ls, `cSign`) || `（暂无个性签名）`;
+    }
+    if($(`roomStatus`)) $(`roomStatus`).innerHTML = `<div class="status-dot ` + curStatusCol + `"></div>` + curStatusTxt;
+    if($(`roomSignature`)) $(`roomSignature`).innerText = curSign;
+
     let defName = originalGetItem.call(ls, `cR_default`) || originalGetItem.call(ls, `cN_default`) || originalGetItem.call(ls, `cR`) || originalGetItem.call(ls, `cN`) || `专属恋人`;
     if (currentChatId === `default`) defName = dn;
+
     $(`listName`).innerText = defName;
     if($(`contactName`)) $(`contactName`).innerText = defName;
     
@@ -1357,55 +1382,27 @@ $(`btnListToRoom`).onclick = () => {
 };
 if($(`btnAddContact`)) $(`btnAddContact`).onclick = () =>{ $(`addFriendModal`).style.display=`flex`; };
 $(`btnCancelAddFriend`).onclick = () =>{ $(`addFriendModal`).style.display=`none`; $(`newFriendName`).value=``; $(`newFriendPrompt`).value=``; };
-$(`btnConfirmAddFriend`).onclick = async () =>{
+if($(`btnRoleHelp`)) $(`btnRoleHelp`).onclick = () => { showCustomText(`【个性签名规则说明】\n\n1. 新建角色初始状态是没有个性签名的。\n2. 你需要在聊天室主动对TA提出要求（例如：「你改个个性签名吧」），TA才会生成第一条专属签名。\n3. 在后续的聊天过程中，当TA的情绪、想法或剧情发生明显变化时，TA拥有主动权，会自动为你更新头顶的状态和个性签名！`); };
+$(`btnConfirmAddFriend`).onclick = () =>{
     let n = $(`newFriendName`).value.trim();
     if(!n) { alert(`名字不能为空哦！`); return; }
     let p = $(`newFriendPrompt`).value.trim();
     let newId = Date.now();
     
-        $(`btnConfirmAddFriend`).innerText = `正在生成TA的专属状态...`;
-    $(`btnConfirmAddFriend`).style.pointerEvents = `none`;
-    let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value;
-    
-    let defaultStatusTxt = "在线";
-    let defaultStatusColor = "status-online";
-    let defaultSign = "（暂无个性签名，你可以主动和TA聊天让TA更新）";
-
-    if(pxy && key && mod) {
-        let sys = `你现在的任务是为新添加的角色生成初始的在线状态和个性签名。\n角色名字：${n}\n角色设定：${p}\n请严格返回纯JSON格式，绝对不要包含其他多余字符：\n{"statusTxt":"状态文字(如:摸鱼中、发呆等，最多4字)","statusColor":"状态颜色(限选: status-online代表活跃，status-busy代表忙碌/暴躁，status-offline代表睡觉/冷漠)","sign":"个性签名(符合性格的一句简短的话)"}`;
-        try {
-            let url = pxy.includes(`chat/completions`) ? pxy : pxy.replace(/\/$/, ``) + `/chat/completions`;
-            let res = await fetch(url, {
-                method: `POST`, headers: {Authorization: `Bearer ` + key, "Content-Type": `application/json`},
-                body: JSON.stringify({model: mod, messages: [{role: `user`, content: sys}], temperature: 0.8})
-            });
-            let dat = await res.json();
-            if(dat.choices && dat.choices.length > 0) {
-                let text = dat.choices[0].message.content.trim().replace(/```json/g, ``).replace(/```/g, ``).trim();
-                let aiData = JSON.parse(text);
-                defaultStatusTxt = aiData.statusTxt || "在线";
-                defaultStatusColor = aiData.statusColor || "status-online";
-                defaultSign = aiData.sign || "（角色在思考个性签名...）";
-            }
-        } catch(e) { console.error(`AI状态生成失败`, e); }
-    }
-    
-    originalSetItem.call(ls, `cStatusTxt_` + newId, defaultStatusTxt);
-    originalSetItem.call(ls, `cStatusColor_` + newId, defaultStatusColor);
-    originalSetItem.call(ls, `cSign_` + newId, defaultSign);
+    originalSetItem.call(ls, `cStatusTxt_` + newId, `在线`);
+    originalSetItem.call(ls, `cStatusColor_` + newId, `status-online`);
+    originalSetItem.call(ls, `cSign_` + newId, `（暂无个性签名）`);
     
     contacts.push({ name: n, prompt: p, id: newId });
-
     ls.setItem(`myContacts`, JSON.stringify(contacts));
     renderContacts();
     
-    $(`btnConfirmAddFriend`).innerText = `确定添加`;
-    $(`btnConfirmAddFriend`).style.pointerEvents = `auto`;
     $(`addFriendModal`).style.display=`none`;
     $(`newFriendName`).value=``;
     $(`newFriendPrompt`).value=``;
-    alert(`角色添加成功！快去角色列表看看TA的专属状态吧。`);
+    alert(`添加成功！快去聊天室跟TA提议修改个性签名吧。`);
 };
+
 
 
 $(`btnClearChat`).onclick = () =>{ if(confirm(`确认清空当前聊天？`)){ msgs.innerHTML=``; history=[]; ls.removeItem(`chatHistory`); ls.setItem(`lastMemCount`, `0`); updateListPreview(); alert(`已清空`); } };
@@ -2146,14 +2143,16 @@ if(charStickers.length > 0) {
                 return `[试图发送表情：` + p1 + `]`; 
             });
             
-            let statusMatch = txt.match(/\[更新状态：(.*?)\|(.*?)\|(.*?)\]/);
+                        let statusMatch = txt.match(/\[更新状态：(.*?)\|(.*?)\|(.*?)\]/);
             if(statusMatch) {
                 originalSetItem.call(ls, `cStatusTxt_` + currentChatId, statusMatch[1].trim());
                 originalSetItem.call(ls, `cStatusColor_` + currentChatId, statusMatch[2].trim());
                 originalSetItem.call(ls, `cSign_` + currentChatId, statusMatch[3].trim());
                 txt = txt.replace(statusMatch[0], ``);
                 if(typeof renderContacts === `function`) renderContacts();
+                if(typeof applyVis === `function`) applyVis();
             }
+
             
 let hasAccept = txt.includes(`[收取转账]`);
             let hasReject = txt.includes(`[拒绝转账]`);
@@ -3327,14 +3326,21 @@ function enterMultiSelectMode(initialIdx) {
 function exitMultiSelectMode() {
     isMultiSelectMode = false;
     selectedMsgs.clear();
-    let hdr = document.querySelector("#scrRoom .room-header");
+        let hdr = document.querySelector("#scrRoom .room-header");
     let dn = $("cfgRem").value || $("cfgName").value || "专属恋人";
     hdr.innerHTML = `
         <span id="btnRoomBack" class="back-btn">＜</span>
-        <span id="roomTitle" class="room-center">${dn}</span>
+        <div id="roomTitleContainer" class="room-center" style="display:flex; flex-direction:column; align-items:center; line-height:1.2;">
+            <div style="display:flex; align-items:center; gap:6px;">
+                <span id="roomTitle" style="font-weight:bold; font-size:16px; color:#333;">${dn}</span>
+                <div id="roomStatus" class="role-status" style="font-size:11px; transform:scale(0.9);"></div>
+            </div>
+            <div id="roomSignature" style="font-size:11px; color:#a29bfe; margin-top:3px; max-width:220px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; word-break:break-all;"></div>
+        </div>
         <span id="btnRoomSet" class="settings-btn">⚙️</span>
     `;
     $("btnRoomBack").onclick = () => { showScreen("scrList"); updateListPreview(); };
+
     $("btnRoomSet").onclick = () => showScreen("scrSetChat");
     if(typeof applyVis === 'function') applyVis();
     renderMultiSelectVisuals();
