@@ -434,16 +434,17 @@ class=back-btn>＜</span>
         </div>
     </div>
     
-    <div id=scrSetChat class=scr-flex>
+        <div id=scrSetChat class=scr-flex>
         <div class=room-header>
             <span id=btnSetChatBack class=back-btn>＜</span>
-            <span class=header-title>✨ 聊天设置 ✨</span>
+            <span class=header-title>好友设置💖</span>
             <span class=empty-btn></span>
         </div>
         <div class=api-form>
-                        <div class=section-card>
-                <div class=section-title>🎨 外观与个性化</div>
+            <div class=section-card>
+                <div class=section-title style="color:#fd79a8;">背景图和头像设置👑</div>
                 <div class=input-group>
+
                     <label>聊天专属背景 (仅聊天室内显示)</label>
                     <div id=btnBgUp class=upload-btn style="height:120px; padding:0; overflow:hidden; border-radius:12px; border:1px dashed #a29bfe;">
                         <div id=bgPreview style="width:100%; height:100%; background-size:cover; background-position:center; display:flex; justify-content:center; align-items:center; background-color:#f8f9fa; color:#888;">🖼️ 点击选择背景</div>
@@ -466,24 +467,25 @@ class=back-btn>＜</span>
                         <input type=file id=upMy accept=image/* style=display:none;>
                     </div>
                 </div>
-            </div>
+                            <div class=input-group><label>角色真名</label><input type=text id=cfgName class=input-field placeholder=设定对方真名></div>
+                <div class=input-group><label>备注名</label><input type=text id=cfgRem class=input-field placeholder=设置专属昵称></div>
 
-            <div class=section-card>
-                <div class=section-title>📝 基础资料</div>
                 <div class=input-group><label>角色真名</label><input type=text id=cfgName class=input-field placeholder=设定对方真名></div>
                 <div class=input-group><label>备注名</label><input type=text id=cfgRem class=input-field placeholder=设置专属昵称></div>
                 <div class=input-group><label>我的名字 (用于记忆提取)</label><input type=text id=cfgMyName class=input-field placeholder=设置你的称呼></div>
-            </div>
+                                    </div>
             <div class=section-card>
-                <div class=section-title>🧠 AI 大脑与设定</div>
+                <div class=section-title style="color:#fd79a8;">角色设定💜</div>
+
+
                 <div class=input-group><label>对方人设</label><textarea id=cfgAiP class=textarea-field rows=3 placeholder=填写性格与身份></textarea></div>
                 <div class=input-group><label>我的人设</label><textarea id=cfgMyP class=textarea-field rows=2 placeholder=填写你的设定></textarea></div>
                 <div class=input-group><label>上下文记忆条数</label><input type=number id=cfgCtx class=input-field value=10 min=2 max=30></div>
                 <div class=flex-row><label style=font-size:12px;color:#888;font-weight:bold;>开启时间感知</label><input type=checkbox id=cfgTime checked style=width:20px;height:20px;></div>
             </div>
             
-            <div class=section-card>
-                <div class=section-title>⏳ 长期记忆日记库</div>
+                        <div class=section-card>
+                <div class=section-title style="color:#fd79a8;">⏳ 长期记忆日记库</div>
                 <div class=flex-row><label style=font-size:12px;color:#888;font-weight:bold;>开启自动总结</label><input type=checkbox id=cfgAutoMem style=width:20px;height:20px;></div>
                 
                 <div class=input-group><label>触发条数 (对话多少条后自动触发)</label><input type=number id=cfgMemTrig class=input-field value=10 min=5 max=100></div>
@@ -492,23 +494,24 @@ class=back-btn>＜</span>
                     <textarea id=cfgMemPmt class=textarea-field rows=4>请用第三人称视角，用一句话极其简练地概括刚才发生的核心剧情。绝对禁止包含日期或符号！直接输出剧情结果。请使用双方名字（[对方]与[我]）。</textarea>
                 </div>
                 <div class=flex-row>
-                    <div id=btnViewMem class=tool-btn style=margin-right:5px;>📖 查看记忆库</div>
-                    <div id=btnGenMem class=tool-btn style=margin-left:5px;background:#eef2ff;>✨ 立即手动总结</div>
+                    <div id=btnViewMem class=tool-btn style="margin-right:5px;color:#fd79a8;border-color:#fd79a8;">📖 查看记忆库</div>
+                    <div id=btnGenMem class=tool-btn style="margin-left:5px;background:#fff0f5;color:#fd79a8;border-color:#fd79a8;">✨ 手动总结记忆</div>
                 </div>
             </div>
             <div class=section-card>
-                <div class=section-title>📚 局部世界书关联</div>
-                <div id=btnOpenLinkWb class=tool-btn>点击选择要关联的剧情</div>
+                <div class=section-title style="color:#fd79a8;">📚 局部世界书关联（全局世界书无需单独勾选）</div>
+                <div id=btnOpenLinkWb class=tool-btn style="color:#fd79a8;border-color:#fd79a8;">点击选择要关联的剧情</div>
             </div>
-            <div class=section-card>
-                <div class=section-title>⚠️ 危险操作</div>
-                <div class=flex-row>
-                    <div id=btnBlock class=clear-btn>拉黑好友</div>
-                    <div id=btnDelFriend class=clear-btn>删除好友</div>
+
+                        <div class=section-card>
+                <div class=flex-row style="justify-content:center;">
+                    <div id=btnBlock class=clear-btn style="max-width:200px;">拉黑好友</div>
+                    <div id=btnDelFriend class=clear-btn style="display:none;">删除好友</div>
                 </div>
                 <div id=btnClearChat class=clear-btn style=margin-top:10px;>清空当前聊天记录</div>
             </div>
-            <button id=btnSaveChat class=save-btn>💾 保存核心配置</button>
+            <button id=btnSaveChat class=save-btn style="background:#fd79a8;box-shadow:0 4px 10px rgba(253, 121, 168, 0.3);">💾 保存核心配置</button>
+
         </div>
     </div>
     
