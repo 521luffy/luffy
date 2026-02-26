@@ -2594,17 +2594,19 @@ function renderQuoteBlock(b, txt) {
         return;
     }
 
-    let aiRpMatch = txt.match(/^\[AI红包：([\d\.]+)\|(.*?)\|(0|1)\|(.*?)\]$/);
+        let aiRpMatch = txt.match(/^\[AI红包：([\d\.]+)\|(.*?)\|(0|1)\|(.*?)\]$/);
     if(aiRpMatch) {
         let amt = parseFloat(aiRpMatch[1]);
         let note = aiRpMatch[2];
         let status = aiRpMatch[3];
         let tid = aiRpMatch[4];
         
-        let bgStyle = status === `0` ? `background:#f25542;cursor:pointer;` : `background:#fbc5bc;opacity:0.8;`;
-        let statusText = status === `0` ? `领取红包` : `已领取`;
+        let bgStyle = `background:#f25542;`;
+        let cursorStyle = status === `0` ? `cursor:pointer;` : `cursor:default;`;
+        let opacityStatus = status === `0` ? `1` : `0.6`;
+        let statusText = status === `0` ? `未领取` : `已领取`;
         
-        b.innerHTML = `<div style="width:200px; ${bgStyle} border-radius:12px; overflow:hidden; border:1px solid #ffcccc; display:flex; flex-direction:column; transition:0.2s;" class="ai-rp-bubble">
+        b.innerHTML = `<div style="width:200px; ${bgStyle} ${cursorStyle} border-radius:12px; overflow:hidden; border:1px solid #ffcccc; display:flex; flex-direction:column; transition:0.2s; opacity:${opacityStatus};" class="ai-rp-bubble">
             <div style="flex:1; padding:15px; display:flex; align-items:center; gap:12px;">
                 <div style="width:36px; height:36px; background:white; border-radius:8px; display:flex; justify-content:center; align-items:center; color:#f25542; font-size:20px; font-weight:bold; flex-shrink:0;">🧧</div>
                 <div style="display:flex; flex-direction:column; overflow:hidden;">
@@ -2632,9 +2634,10 @@ function renderQuoteBlock(b, txt) {
                     myWallet.bills.push({ title: `领取红包 - ` + dn, time: updTime().toLocaleString(), amount: amt, type: `wallet` });
                     ls.setItem(`myWallet`, JSON.stringify(myWallet));
                     
+                    // 修复核心：使用 includes 和 replace 来精准修改大段文本中的这一行
                     for(let i=history.length-1; i>=0; i--) {
-                        if(history[i].content === txt && history[i].role === `assistant`) {
-                            history[i].content = `[AI红包：${amt.toFixed(2)}|${note}|1|${tid}]`;
+                        if(history[i].role === `assistant` && history[i].content.includes(txt)) {
+                            history[i].content = history[i].content.replace(txt, `[AI红包：${amt.toFixed(2)}|${note}|1|${tid}]`);
                             ls.setItem(`chatHistory`, JSON.stringify(history));
                             break;
                         }
@@ -2648,6 +2651,7 @@ function renderQuoteBlock(b, txt) {
     }
 
     let photoMatch = txt.match(/^\[照片消息：([\s\S]*?)\]$/);
+
     if(photoMatch) {
 
         let desc = photoMatch[1];
