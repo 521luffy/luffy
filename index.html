@@ -2663,7 +2663,10 @@ function renderQuoteBlock(b, txt) {
                                 }
                             }
                             redrawChat();
-                                                } else if(choice === `2`) {
+                                                                        } else if(choice === `2`) {
+                            myWallet.bills.push({ title: `拒收红包 - ` + dn, time: updTime().toLocaleString(), amount: 0, type: `wallet` });
+                            ls.setItem(`myWallet`, JSON.stringify(myWallet));
+                            
                             for(let i=history.length-1; i>=0; i--) {
                                 if(history[i].role === `assistant` && history[i].content.includes(txt)) {
                                     history[i].content = history[i].content.replace(txt, `[AI红包：${amt.toFixed(2)}|${note}|2|${tid}]`);
@@ -2672,8 +2675,8 @@ function renderQuoteBlock(b, txt) {
                                 }
                             }
                             redrawChat();
-                            
                             let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value;
+
                                                         if(pxy && key && mod) {
                                 if(typeof showTyping === `function`) showTyping();
 
