@@ -2656,7 +2656,7 @@ function renderQuoteBlock(b, txt) {
                                 }
                             }
                             redrawChat();
-                        } else if(choice === `2`) {
+                                                } else if(choice === `2`) {
                             for(let i=history.length-1; i>=0; i--) {
                                 if(history[i].role === `assistant` && history[i].content.includes(txt)) {
                                     history[i].content = history[i].content.replace(txt, `[AI红包：${amt.toFixed(2)}|${note}|2|${tid}]`);
@@ -2664,14 +2664,48 @@ function renderQuoteBlock(b, txt) {
                                     break;
                                 }
                             }
-                            let rejectMsg = `[系统提示：我拒收了你的红包！请立刻对我拒收红包这件事作出符合你人设的反应。]`;
-                            mkBub(rejectMsg, `r`);
-                            history.push({role: `user`, content: rejectMsg});
-                            ls.setItem(`chatHistory`, JSON.stringify(history));
                             redrawChat();
-                            setTimeout(() => { if($(`btnLemon`)) $(`btnLemon`).click(); }, 500);
+                            
+                            let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value;
+                            if(pxy && key && mod) {
+                                let typingDiv = document.createElement(`div`);
+                                typingDiv.id = `rpTyping`;
+                                typingDiv.style.textAlign = `center`;
+                                typingDiv.style.fontSize = `12px`;
+                                typingDiv.style.color = `#999`;
+                                typingDiv.style.padding = `10px`;
+                                typingDiv.innerText = `对方正在输入...`;
+                                msgs.appendChild(typingDiv);
+                                msgs.scrollTop = msgs.scrollHeight;
+
+                                let myN = $(`cfgMyName`).value || `我`;
+                                let charN = $(`cfgName`).value || `对方`;
+                                let charP = $(`cfgAiP`).value || ``;
+                                let recentChat = history.slice(-10).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
+                                let sys = `你现在的身份是：${charN}。你的底层性格是：${charP}。\n这是近期的聊天记录：\n${recentChat}\n\n【突发剧情】：玩家（${myN}）刚刚狠心拒收了你发出的 ${amt.toFixed(2)} 元红包（你的留言是：${note}）。\n你的任务：请严格遵循你的底层性格，对此事作出第一反应！可以直接表达你的情绪、质问玩家、或者傲娇地吐槽。绝对不要使用任何形式的引号符号。`;
+                                
+                                (async () => {
+                                    try {
+                                        let url = pxy.includes(`chat/completions`) ? pxy : pxy.replace(/\/$/, ``) + `/chat/completions`;
+                                        let res = await fetch(url, {
+                                            method: `POST`, headers: {Authorization: `Bearer ` + key, "Content-Type": `application/json`},
+                                            body: JSON.stringify({model: mod, messages: [{role: `user`, content: sys}], temperature: 0.8})
+                                        });
+                                        let dat = await res.json();
+                                        if($(`rpTyping`)) $(`rpTyping`).remove();
+                                        if(dat.choices && dat.choices.length > 0) {
+                                            let replyMsg = dat.choices[0].message.content.trim();
+                                            history.push({role: `assistant`, content: replyMsg});
+                                            ls.setItem(`chatHistory_` + currentChatId, JSON.stringify(history));
+                                            if(currentChatId === `default`) { ls.setItem(`chatHistory`, JSON.stringify(history)); }
+                                            redrawChat();
+                                        }
+                                    } catch(e) { console.error(e); if($(`rpTyping`)) $(`rpTyping`).remove(); }
+                                })();
+                            }
                         }
                     };
+
                     
                     $(`btnPromptOpt1`).onclick = () => handleRpChoice(`1`);
                     $(`btnPromptOpt2`).onclick = () => handleRpChoice(`2`);
