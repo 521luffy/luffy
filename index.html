@@ -5339,8 +5339,10 @@ function renderSpySecret() {
                         showScreen(`scrRoom`);
                     }
                     
-                    setTimeout(() => {
-                        let msgText = `【我刚才看了你的手机，在隐私空间里发现了这条记录】：\n「${item.content}」\n(请你立刻给我解释一下这是什么意思？)`;
+                                        setTimeout(() => {
+                        // 使用 HTML 内联样式，直接渲染出一个暗黑风的极密卡片气泡
+                        let msgText = `<div style="background:#1a1a1a; border-radius:8px; padding:12px; border-left:3px solid #ef4444; box-shadow: 0 4px 10px rgba(0,0,0,0.3); text-align:left; line-height:1.5; min-width: 180px; margin: 5px 0;"><div style="font-size:12px; color:#ef4444; font-weight:bold; margin-bottom:8px; letter-spacing:1px; border-bottom:1px solid #333; padding-bottom:6px;">⚠️ 极密空间截获记录</div><div style="font-size:13px; color:#e5e5e5; white-space:pre-wrap; word-break:break-all;">${item.content}</div></div>`;
+                        
                         // 直接强行生成聊天气泡并存入历史记录
                         if (typeof mkBub === 'function') mkBub(msgText, 'r');
                         if (typeof history !== 'undefined') {
@@ -5353,6 +5355,7 @@ function renderSpySecret() {
                     }, 350);
                 };
                 if($(`btnCustomConfirmCancel`)) $(`btnCustomConfirmCancel`).onclick = () => {
+
                     if($(`customConfirmModal`)) $(`customConfirmModal`).style.display = `none`;
                 };
             };
