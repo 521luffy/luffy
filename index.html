@@ -5309,11 +5309,11 @@ function renderSpySecret() {
             renderSpySecret();
         };
         
-                        let btnConfront = card.querySelector(`.btn-confront`);
+                                let btnConfront = card.querySelector(`.btn-confront`);
         if(btnConfront) {
             btnConfront.onclick = (e) => {
                 e.stopPropagation();
-                if($(`customConfirmText`)) $(`customConfirmText`).innerText = `【去对峙】功能说明：\n\n点击确定后，系统将带你瞬间传送回与TA的聊天室，并将这条极密记录自动粘贴在你的输入框中。\n\n你可以亲自发给TA，看看TA被抓包后的反应！是否立刻去对峙？`;
+                if($(`customConfirmText`)) $(`customConfirmText`).innerText = `【去对峙】功能说明：\n\n点击确定后，系统将带你瞬间传送回与TA的聊天室，并直接将这条极密记录作为【证据】发送过去！\n\n(注：证据发出后TA不会立刻回复，你可以继续打字补充质问的话，然后再点击发送让TA回应！)\n\n是否立刻去对峙？`;
                 if($(`customConfirmModal`)) $(`customConfirmModal`).style.display = `flex`;
                 
                 if($(`btnCustomConfirmOk`)) $(`btnCustomConfirmOk`).onclick = () => {
@@ -5339,13 +5339,17 @@ function renderSpySecret() {
                         showScreen(`scrRoom`);
                     }
                     
-                                        setTimeout(() => {
-                        let ipt = document.getElementById(`iptMsg`) || document.getElementById(`msgInput`) || document.getElementById(`chatInput`) || document.querySelector(`textarea`);
-                        if(ipt) {
-                            ipt.value = `【隐私空间记录】：\n${item.content}\n\n`;
-                            ipt.dispatchEvent(new Event(`input`, { bubbles: true }));
-                            ipt.focus();
+                    setTimeout(() => {
+                        let msgText = `【我刚才看了你的手机，在隐私空间里发现了这条记录】：\n「${item.content}」\n(请你立刻给我解释一下这是什么意思？)`;
+                        // 直接强行生成聊天气泡并存入历史记录
+                        if (typeof mkBub === 'function') mkBub(msgText, 'r');
+                        if (typeof history !== 'undefined') {
+                            history.push({role: 'user', content: msgText});
+                            ls.setItem(`chatHistory`, JSON.stringify(history));
+                            if(typeof updateListPreview === 'function') updateListPreview();
                         }
+                        let msgContainer = document.getElementById('msgs');
+                        if (msgContainer) msgContainer.scrollTop = msgContainer.scrollHeight;
                     }, 350);
                 };
                 if($(`btnCustomConfirmCancel`)) $(`btnCustomConfirmCancel`).onclick = () => {
@@ -5356,6 +5360,7 @@ function renderSpySecret() {
         container.appendChild(card);
     });
 }
+
 
 
 
