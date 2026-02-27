@@ -5339,8 +5339,8 @@ function renderSpySecret() {
                         showScreen(`scrRoom`);
                     }
                     
-                    setTimeout(() => {
-                        let ipt = document.getElementById(`msgInput`) || document.getElementById(`chatInput`) || document.querySelector(`textarea`);
+                                        setTimeout(() => {
+                        let ipt = document.getElementById(`iptMsg`) || document.getElementById(`msgInput`) || document.getElementById(`chatInput`) || document.querySelector(`textarea`);
                         if(ipt) {
                             ipt.value = `【隐私空间记录】：\n${item.content}\n\n`;
                             ipt.dispatchEvent(new Event(`input`, { bubbles: true }));
@@ -5356,6 +5356,7 @@ function renderSpySecret() {
         container.appendChild(card);
     });
 }
+
 
 
 
