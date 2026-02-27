@@ -5291,16 +5291,34 @@ function renderSpySecret() {
             checkHtml = `<div class="spy-zh-check ${checkedClass}" style="border-color:#555;"></div>`;
         }
         
-        card.innerHTML = `
-            <div style="display:flex; align-items:flex-start;">
-                ${checkHtml}
-                <div style="flex:1; position:relative;">
-                    ${confrontHtml}
-                    <div class="spy-secret-card-title">${item.title}</div>
-                    <div class="spy-secret-card-ctx">${item.content}</div>
+                if (currentSecTab === `movie`) {
+            card.className = `movie-card`;
+            if(isSpySecEditMode && isSel) card.style.borderColor = `#b91c1c`;
+            card.innerHTML = `
+                <div style="position:absolute; top:10px; left:10px; z-index:10;">${checkHtml}</div>
+                ${confrontHtml}
+                <div class="movie-cover">${item.content}</div>
+                <div class="movie-info">
+                    <div class="movie-tags">
+                        <span class="movie-tag">蓝光高清</span>
+                        <span class="movie-tag">私密收藏</span>
+                    </div>
+                    <div style="font-size:12px; color:#888;">${item.title}</div>
                 </div>
-            </div>
-        `;
+            `;
+        } else {
+            card.innerHTML = `
+                <div style="display:flex; align-items:flex-start;">
+                    ${checkHtml}
+                    <div style="flex:1; position:relative;">
+                        ${confrontHtml}
+                        <div class="spy-secret-card-title">${item.title}</div>
+                        <div class="spy-secret-card-ctx">${item.content}</div>
+                    </div>
+                </div>
+            `;
+        }
+
         
         card.onclick = () => {
             if(!isSpySecEditMode) return;
@@ -5339,20 +5357,24 @@ function renderSpySecret() {
                         showScreen(`scrRoom`);
                     }
                     
-                                                            setTimeout(() => {
-                        // 回退为高亮排版的纯文本格式，避免被聊天框的安全机制转译成乱码代码
-                        let msgText = `🚨 【极密空间截获记录】 🚨\n━━━━━━━━━━━━━━\n${item.content}\n━━━━━━━━━━━━━━`;
+                                                                                setTimeout(() => {
+                        // 视觉上只显示干净的证据卡片
+                        let visualText = `🚨 【极密空间截获记录】 🚨\n━━━━━━━━━━━━━━\n${item.content}\n━━━━━━━━━━━━━━`;
+                        // 潜意识里强行塞入性格表现指令
+                        let historyText = visualText + `\n（系统动作与提示：我刚才偷偷查了你的手机，把这条你隐藏在最深处的记录翻出来了！我现在把这个证据砸在你脸上质问你！请你严格根据你的人设性格做出被抓包后的反应。如果你性格高冷淡定，就冷静化解或者满不在乎；如果心虚傲娇，就恼羞成怒。完全遵循你原本的人设行事，不要千篇一律地道歉或反击！）`;
                         
-                        // 直接强行生成聊天气泡并存入历史记录
-                        if (typeof mkBub === 'function') mkBub(msgText, `r`);
+                        // 生成视觉气泡
+                        if (typeof mkBub === 'function') mkBub(visualText, `r`);
+                        // 存入记忆的则是带有隐形指令的文本
                         if (typeof history !== 'undefined') {
-                            history.push({role: `user`, content: msgText});
+                            history.push({role: `user`, content: historyText});
                             ls.setItem(`chatHistory`, JSON.stringify(history));
                             if(typeof updateListPreview === 'function') updateListPreview();
                         }
                         let msgContainer = document.getElementById(`msgs`);
                         if (msgContainer) msgContainer.scrollTop = msgContainer.scrollHeight;
                     }, 350);
+
                 };
                 if($(`btnCustomConfirmCancel`)) $(`btnCustomConfirmCancel`).onclick = () => {
 
@@ -5406,11 +5428,6 @@ if($(`btnDelSpySecret`)) $(`btnDelSpySecret`).onclick = () => {
 };
 
 if($(`btnGenSpySecret`)) $(`btnGenSpySecret`).onclick = async () => {
-    if(currentSecTab !== `draft` && currentSecTab !== `search`) {
-        if(typeof showCustomText === `function`) showCustomText(`当前版块暗网通道建设中，稍后开放！`);
-        return;
-    }
-
     let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value;
     if(!pxy || !key || !mod) return;
     
@@ -5422,13 +5439,18 @@ if($(`btnGenSpySecret`)) $(`btnGenSpySecret`).onclick = async () => {
         tabDesc = `【当前任务：挖掘草稿残骸】\n生成5条你在聊天框里对我打了又删，最终没发出去的极度私密草稿。\n必须体现你心底最深层的情绪（疯狂、卑微、暴躁、极度吃醋或阴暗面），不用顾忌礼貌。`;
     } else if(currentSecTab === `search`) {
         tabDesc = `【当前任务：挖掘深夜无痕搜索记录】\n生成5条你在凌晨两三点独自一人时，偷偷在浏览器无痕模式下搜索的词条记录。\n必须符合你的隐藏XP、特殊癖好、或者是面对当前关系时极度焦虑纠结的阴暗问题。尺度要大，直白露骨。`;
+    } else if(currentSecTab === `black`) {
+        tabDesc = `【当前任务：挖掘黑名单短信】\n生成5条被你拉黑的人（可能是疯狂的前任、骚扰者或仇人）发给你的短信记录。\n必须体现出对方的偏执疯狂，或者包含不为人知的秘密。`;
+    } else if(currentSecTab === `movie`) {
+        tabDesc = `【当前任务：挖掘成人向影片记录】\n生成4部符合你隐藏XP和特殊癖好的成人向影片记录。\n只需要写出直白、充满刺激感和禁忌感的影片标题即可，不用顾忌敏感词，标题可以直接暗示你对当前关系中那个人的幻想。注意：只生成4条记录！`;
     }
 
     let sys = baseSys + `${tabDesc}
 
 必须严格按以下格式输出（条目之间用 --- 分隔）：
 时间：(如 凌晨3:15 或 昨天深夜)
-内容：(具体的草稿内容 或 搜索的关键词条)`;
+内容：(具体的草稿内容，或搜索词，或短信内容，或影片标题)`;
+
 
     let origText = $(`btnGenSpySecret`).innerText;
     $(`btnGenSpySecret`).innerText = `深渊挖掘中...`;
