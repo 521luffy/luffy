@@ -258,7 +258,21 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 .spy-diary-check { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #ccc; display: flex; justify-content: center; align-items: center; margin-right: 15px; flex-shrink: 0; transition: 0.2s; }
 .spy-diary-check.checked { border-color: #ff9a9e; }
 .spy-diary-check.checked::after { content: ''; width: 12px; height: 12px; border-radius: 50%; background: #ff9a9e; }
+
+/* 查手机-知乎专属样式 */
+.spy-zhihu-tab-container { display: flex; background: #fff; padding: 10px 15px; gap: 10px; border-bottom: 1px solid #eee; flex-shrink: 0; }
+.spy-zhihu-tab { flex: 1; text-align: center; padding: 10px 5px; font-size: 13px; color: #888; font-weight: bold; cursor: pointer; transition: 0.3s; border-radius: 8px; }
+.spy-zhihu-tab.active { background: #e3f2fd; color: #0066ff; }
+.spy-zh-card { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: relative; transition: 0.2s; border-left: 4px solid #0066ff; }
+.spy-zh-title { font-weight: bold; font-size: 15px; color: #1e293b; margin-bottom: 10px; line-height: 1.4; }
+.spy-zh-author { font-size: 12px; color: #64748b; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; font-weight: bold; }
+.spy-zh-author img { width: 20px; height: 20px; border-radius: 50%; background: #eee; object-fit: cover; }
+.spy-zh-content { font-size: 13px; color: #334155; line-height: 1.6; text-align: justify; word-break: break-all; white-space: pre-wrap; }
+.spy-zh-check { width: 22px; height: 22px; border-radius: 4px; border: 2px solid #ccc; display: flex; justify-content: center; align-items: center; margin-right: 15px; flex-shrink: 0; transition: 0.2s; }
+.spy-zh-check.checked { border-color: #0066ff; background: #0066ff; }
+.spy-zh-check.checked::after { content: '✓'; color: white; font-size: 14px; font-weight: bold; }
 </style>
+
 
 
 
@@ -1053,11 +1067,39 @@ background-image: none;">
             <div style="font-size:11px; color:#888; margin-top:8px;">(日记基于当前聊天进度与角色潜意识生成)</div>
         </div>
 
-        <div id="spyDiaryList" class="list-content" style="padding: 15px;">
+                <div id="spyDiaryList" class="list-content" style="padding: 15px;">
+            </div>
+    </div>
+
+    <div id="scrSpyZhihu" class="scr-flex" style="z-index: 160; background: #f8fafc;">
+        <div class="room-header" style="background: #fff; border-bottom: none; color: #333;">
+            <span id="btnSpyZhihuBack" class="back-btn" style="color: #333;">＜</span>
+            <span class="header-center">知乎</span>
+            <span id="btnEditSpyZhihu" style="font-size: 14px; color: #0066ff; font-weight: bold; cursor: pointer;">管理</span>
+        </div>
+        
+        <div class="spy-zhihu-tab-container">
+            <div id="tabZhSearch" class="spy-zhihu-tab active">搜索历史</div>
+            <div id="tabZhFav" class="spy-zhihu-tab">收藏夹</div>
+            <div id="tabZhAsk" class="spy-zhihu-tab">匿名提问</div>
+        </div>
+
+        <div id="spyZhihuActions" style="display: none; padding: 10px 20px; background: #eff6ff; justify-content: space-between; align-items: center; border-bottom: 1px solid #dbeafe; flex-shrink: 0;">
+            <span id="btnSelAllSpyZhihu" style="color: #333; font-size: 13px; cursor: pointer; font-weight: bold;">全选</span>
+            <span id="btnDelSpyZhihu" style="color: #ef4444; font-size: 13px; font-weight: bold; cursor: pointer;">删除选中</span>
+        </div>
+
+        <div style="padding: 15px; text-align: center; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.02); flex-shrink: 0; border-top: 1px solid #eee;">
+            <button id="btnGenSpyZhihu" class="save-btn" style="width: auto; padding: 10px 25px; font-size: 14px; border-radius: 25px; background: linear-gradient(135deg, #60a5fa, #3b82f6); box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);">✨ 重新生成当前版块</button>
+            <div style="font-size:11px; color:#888; margin-top:8px;">(基于聊天进度生成网友随机回答)</div>
+        </div>
+
+        <div id="spyZhihuList" class="list-content" style="padding: 15px;">
             </div>
     </div>
 
             <div id="scrWallet" class="scr-flex">
+
 
 
         <div class="room-header" style="background:#6c5ce7; color:white; border:none;">
@@ -1318,16 +1360,17 @@ let pressTimer = null;
 let selEl = null;
 let currentQuote ="";
 function showScreen(showId) {
-    [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrSpace, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet"), $("scrContact"), $("scrSetFont"), $("scrCharPhone"), $("scrSpyDiary")].forEach(s => { if(s) s.style.display = "none"; });
+    [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrSpace, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet"), $("scrContact"), $("scrSetFont"), $("scrCharPhone"), $("scrSpyDiary"), $("scrSpyZhihu")].forEach(s => { if(s) s.style.display = "none"; });
     let target = $(showId);
     if(target) {
-        if(showId === "scrRoom" || showId === "scrList" || showId === "scrSetApi" || showId === "scrSetChat" || showId === "scrWb" || showId === "scrWbEdit" || showId === "scrMe" || showId === "scrCharSticker" || showId === "scrSpace" || showId === "scrLogList" || showId === "scrLogEdit" || showId === "scrFav" || showId === "scrWallet" || showId === "scrContact" || showId === "scrSetFont" || showId === "scrSpyDiary") {
+        if(showId === "scrRoom" || showId === "scrList" || showId === "scrSetApi" || showId === "scrSetChat" || showId === "scrWb" || showId === "scrWbEdit" || showId === "scrMe" || showId === "scrCharSticker" || showId === "scrSpace" || showId === "scrLogList" || showId === "scrLogEdit" || showId === "scrFav" || showId === "scrWallet" || showId === "scrContact" || showId === "scrSetFont" || showId === "scrSpyDiary" || showId === "scrSpyZhihu") {
             target.style.display = "flex";
         } else if (showId === "scrCharPhone") {
             target.style.display = "flex";
         } else { target.style.display = "block"; }
     }
 }
+
 
 
 
@@ -4830,9 +4873,224 @@ ${recentChat || '（暂无聊天记录，请根据人设自由发挥）'}`;
         console.error(e);
     }
     $(`btnGenSpyDiary`).innerText = origText;
-    $(`btnGenSpyDiary`).style.pointerEvents = `auto`;
+        $(`btnGenSpyDiary`).style.pointerEvents = `auto`;
+};
+
+// ====== 查手机：知乎系统代码 ======
+let spyZhihuData = { search: [], fav: [], ask: [] };
+let currentZhTab = `search`;
+let isSpyZhEditMode = false;
+let selSpyZhItems = new Set();
+
+if($(`btnSpyZhihu`)) $(`btnSpyZhihu`).onclick = () => {
+    if(!lastSpyCharId) { alert(`请先在查手机桌面右上角选择要查看的角色哦！`); return; }
+    showScreen(`scrSpyZhihu`);
+    loadSpyZhihu();
+};
+
+if($(`btnSpyZhihuBack`)) $(`btnSpyZhihuBack`).onclick = () => {
+    isSpyZhEditMode = false;
+    if($(`btnEditSpyZhihu`)) $(`btnEditSpyZhihu`).innerText = `管理`;
+    if($(`spyZhihuActions`)) $(`spyZhihuActions`).style.display = `none`;
+    selSpyZhItems.clear();
+    showScreen(`scrCharPhone`);
+};
+
+if($(`tabZhSearch`)) $(`tabZhSearch`).onclick = () => switchZhTab(`search`);
+if($(`tabZhFav`)) $(`tabZhFav`).onclick = () => switchZhTab(`fav`);
+if($(`tabZhAsk`)) $(`tabZhAsk`).onclick = () => switchZhTab(`ask`);
+
+function switchZhTab(tab) {
+    currentZhTab = tab;
+    [`tabZhSearch`, `tabZhFav`, `tabZhAsk`].forEach(id => $(id).classList.remove(`active`));
+    if(tab === `search`) $(`tabZhSearch`).classList.add(`active`);
+    if(tab === `fav`) $(`tabZhFav`).classList.add(`active`);
+    if(tab === `ask`) $(`tabZhAsk`).classList.add(`active`);
+    
+    isSpyZhEditMode = false;
+    if($(`btnEditSpyZhihu`)) $(`btnEditSpyZhihu`).innerText = `管理`;
+    if($(`spyZhihuActions`)) $(`spyZhihuActions`).style.display = `none`;
+    selSpyZhItems.clear();
+    renderSpyZhihu();
+}
+
+function loadSpyZhihu() {
+    let key = `spyZhihu_` + lastSpyCharId;
+    let stored = ls.getItem(key);
+    if(stored) {
+        spyZhihuData = JSON.parse(stored);
+    } else {
+        spyZhihuData = { search: [], fav: [], ask: [] };
+    }
+    switchZhTab(`search`);
+}
+
+function renderSpyZhihu() {
+    let container = $(`spyZhihuList`);
+    if(!container) return;
+    container.innerHTML = ``;
+    
+    let currentData = spyZhihuData[currentZhTab] || [];
+    
+    if(currentData.length === 0) {
+        container.innerHTML = `<div style="text-align:center; color:#999; margin-top:40px; font-size:13px;">当前版块空空如也，赶快点击上方生成吧。</div>`;
+        return;
+    }
+    
+    let displayData = [...currentData].reverse();
+    displayData.forEach((item, idx) => {
+        let realIndex = currentData.length - 1 - idx;
+        let isSel = selSpyZhItems.has(realIndex);
+        
+        let card = document.createElement(`div`);
+        card.className = `spy-zh-card`;
+        if(isSpyZhEditMode && isSel) card.style.borderColor = `#ef4444`;
+        
+        let checkHtml = ``;
+        if(isSpyZhEditMode) {
+            let checkedClass = isSel ? `checked` : ``;
+            checkHtml = `<div class="spy-zh-check ${checkedClass}"></div>`;
+        }
+        
+        card.innerHTML = `
+            <div style="display:flex; align-items:flex-start;">
+                ${checkHtml}
+                <div style="flex:1;">
+                    <div class="spy-zh-title">${item.title}</div>
+                    <div class="spy-zh-author">
+                        <img src="https://api.dujin.org/bing/1920.php" alt="avatar">
+                        <span>${item.author}</span>
+                    </div>
+                    <div class="spy-zh-content">${item.content}</div>
+                </div>
+            </div>
+        `;
+        
+        card.onclick = () => {
+            if(!isSpyZhEditMode) return;
+            if(selSpyZhItems.has(realIndex)) selSpyZhItems.delete(realIndex);
+            else selSpyZhItems.add(realIndex);
+            renderSpyZhihu();
+        };
+        container.appendChild(card);
+    });
+}
+
+if($(`btnEditSpyZhihu`)) $(`btnEditSpyZhihu`).onclick = () => {
+    isSpyZhEditMode = !isSpyZhEditMode;
+    $(`btnEditSpyZhihu`).innerText = isSpyZhEditMode ? `完成` : `管理`;
+    $(`spyZhihuActions`).style.display = isSpyZhEditMode ? `flex` : `none`;
+    selSpyZhItems.clear();
+    renderSpyZhihu();
+};
+
+if($(`btnSelAllSpyZhihu`)) $(`btnSelAllSpyZhihu`).onclick = () => {
+    let currentData = spyZhihuData[currentZhTab] || [];
+    if(selSpyZhItems.size === currentData.length) selSpyZhItems.clear();
+    else currentData.forEach((_, i) => selSpyZhItems.add(i));
+    renderSpyZhihu();
+};
+
+if($(`btnDelSpyZhihu`)) $(`btnDelSpyZhihu`).onclick = () => {
+    if(selSpyZhItems.size === 0) { alert(`请先选中要删除的内容哦！`); return; }
+    if(confirm(`确定删除这 ` + selSpyZhItems.size + ` 条记录吗？`)) {
+        let currentData = spyZhihuData[currentZhTab] || [];
+        spyZhihuData[currentZhTab] = currentData.filter((_, i) => !selSpyZhItems.has(i));
+        ls.setItem(`spyZhihu_` + lastSpyCharId, JSON.stringify(spyZhihuData));
+        selSpyZhItems.clear();
+        renderSpyZhihu();
+    }
+};
+
+if($(`btnGenSpyZhihu`)) $(`btnGenSpyZhihu`).onclick = async () => {
+    let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value;
+    if(!pxy || !key || !mod) { alert(`请先在主设置中配置好API网络哦！`); return; }
+    
+    let charId = lastSpyCharId;
+    let cName = originalGetItem.call(ls, `cN_` + charId) || `对方`;
+    let cPrompt = originalGetItem.call(ls, `cAP_` + charId) || ``;
+    let myN = $(`cfgMyName`).value || `我`;
+    
+    let rawHist = originalGetItem.call(ls, `chatHistory_` + charId);
+    let hist = rawHist ? JSON.parse(rawHist) : [];
+    if(charId === currentChatId) hist = history;
+    let recentChat = hist.slice(-20).map(m => (m.role === `user` ? myN : cName) + `：` + m.content).join(`\n`);
+    
+    let tabDesc = ``;
+    if(currentZhTab === `search`) tabDesc = `在知乎搜索的问题，以及点开看到的某位随机网友的回答。`;
+    if(currentZhTab === `fav`) tabDesc = `在知乎收藏的优质问题，以及对应网友的回答。`;
+    if(currentZhTab === `ask`) {
+        let anonName = cName.substring(0, 1) + `某人`;
+        tabDesc = `在知乎匿名发布的提问，以及随机网友给你的回答。你的匿名ID是：${anonName}。`;
+    }
+
+    let sys = `你现在的身份是：${cName}。这是你的知乎浏览记录生成任务。
+你的底层性格是：${cPrompt}。
+请根据以下最近你和${myN}的聊天记录，生成10条你${tabDesc}
+【极度重要规则】：
+1. 必须生成10条记录！必须严格按照以下格式输出，每条记录之间必须用 --- 分隔。
+格式要求：
+标题：(这里写知乎问题的标题)
+网友：(这里随机生成一个有意思的网友昵称)
+回答：(这里写出网友的具体回答内容，字数不限，要符合知乎的风格，真实且能反映你当前的心理状态、剧情进度或面临的困境)
+
+2. 严格禁止使用任何形式的引号符号！
+3. 内容必须紧密贴合聊天记录，不要OOC。
+    
+【近期聊天记录】：
+${recentChat || '（暂无聊天记录，请根据人设自由发挥）'}`;
+
+    let origText = $(`btnGenSpyZhihu`).innerText;
+    $(`btnGenSpyZhihu`).innerText = `正在为你偷取知乎数据...`;
+    $(`btnGenSpyZhihu`).style.pointerEvents = `none`;
+
+    try {
+        let url = pxy.includes(`chat/completions`) ? pxy : pxy.replace(/\/$/, ``) + `/chat/completions`;
+        let res = await fetch(url, {
+            method: `POST`, 
+            headers: {Authorization: `Bearer ` + key, "Content-Type": `application/json`},
+            body: JSON.stringify({model: mod, messages: [{role: `user`, content: sys}], temperature: 0.85})
+        });
+        let dat = await res.json();
+        if(dat.choices && dat.choices.length > 0) {
+            let aiText = dat.choices[0].message.content.trim();
+            let items = aiText.split(`---`);
+            let newRecords = [];
+            items.forEach(item => {
+                let tMatch = item.match(/标题：(.*)/);
+                let aMatch = item.match(/网友：(.*)/);
+                let cMatch = item.match(/回答：([\s\S]*)/);
+                if(tMatch && cMatch) {
+                    newRecords.push({
+                        title: tMatch[1].trim(),
+                        author: aMatch ? aMatch[1].trim() : `热心网友`,
+                        content: cMatch[1].trim(),
+                        timestamp: Date.now()
+                    });
+                }
+            });
+            
+            if(newRecords.length > 0) {
+                if(!spyZhihuData[currentZhTab]) spyZhihuData[currentZhTab] = [];
+                spyZhihuData[currentZhTab] = spyZhihuData[currentZhTab].concat(newRecords);
+                ls.setItem(`spyZhihu_` + charId, JSON.stringify(spyZhihuData));
+                renderSpyZhihu();
+                alert(`成功生成 ${newRecords.length} 条知乎记录！`);
+            } else {
+                alert(`数据解析失败，大模型没有按格式输出，请重试。`);
+            }
+        } else {
+            alert(`系统开小差了，没能偷看成功。`);
+        }
+    } catch(e) {
+        alert(`网络请求失败，请检查配置或稍后再试。`);
+        console.error(e);
+    }
+    $(`btnGenSpyZhihu`).innerText = origText;
+    $(`btnGenSpyZhihu`).style.pointerEvents = `auto`;
 };
 </script>
+
 
 
 </body>
