@@ -120,8 +120,10 @@ z-index: 100; overflow: hidden; }
 .ctx-item { font-size: 13px; color: #333; cursor: pointer; display: flex; justify-content: center; align-items: center; padding: 10px 0; border-radius: 8px; background: #f5f6fa; transition: 0.2s; font-weight: bold; }
 .ctx-item:active { background: #e0e0e0; }
 .ctx-danger { color: #ff7675; background: #fff0f0; }
-.modal-base { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(5px); z-index: 100; justify-content: center; align-items: center; }
-.modal-ctx { width: 85%; max-height: 80%; background: #fffafb; border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+.modal-base { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+background: rgba(0,0,0,0.4); backdrop-filter: blur(5px); z-index: 999; justify-content: center; align-items: center; }
+.modal-ctx { width: 85%; max-height: 80%; background: #fffafb; border-radius: 20px;
+display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
 .modal-hdr { background: #6c5ce7; color: white; padding: 15px 20px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
 .close-btn { cursor: pointer; font-size: 20px; }
 .modal-bdy { padding: 18px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
@@ -240,9 +242,12 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 .icon-call { background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; }
 .icon-memo { background: linear-gradient(135deg, #f7cd46, #f4a21e); color: white; }
 .icon-diary { background: linear-gradient(135deg, #ff9a9e, #fecfef); color: white; }
-.icon-footprint { background: linear-gradient(135deg, #a18cd1, #fbc2eb); color: white; }
+.icon-footprint { background: linear-gradient(135deg, #a18cd1, #fbc2eb); color: white;
+}
 .icon-settings { background: linear-gradient(135deg, #e0eafc, #cfdef3); color: #333; }
+.icon-meituan { background: linear-gradient(135deg, #ffde28, #ffc800); color: #333; font-weight: bold; }
 </style>
+
 
 
 
@@ -966,35 +971,49 @@ class=back-btn>＜</span>
     </div>
 </div>
 
-        <div id="scrCharPhone" class="scr-char-phone" style="background-color: #ffffff; background-image: none;">
+                <div id="scrCharPhone" class="scr-char-phone" style="background-color: #ffffff;
+background-image: none;">
         <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.2);backdrop-filter:blur(2px);z-index:1;"></div>
         
-        <div class="char-phone-header" style="color:#333; text-shadow:none;">
-            <span id="btnCharPhoneExit" style="cursor:pointer; font-size:18px; font-weight:bold;">＜ 返回</span>
+        <div class="char-phone-header" style="color:#333;
+text-shadow:none;">
+            <span id="btnCharPhoneExit" style="cursor:pointer; font-size:18px;
+font-weight:bold;">＜ 返回</span>
             <div class="char-phone-status-bar">
-                <div class="catch-switch-wrapper" style="background:rgba(0,0,0,0.05); color:#333;">
+                <div class="catch-switch-wrapper" style="background:rgba(0,0,0,0.05);
+color:#333;">
                     <label for="catchSwitch">被抓包</label>
-                    <input type="checkbox" id="catchSwitch" class="catch-switch" style="background:rgba(0,0,0,0.2);">
+                    <input type="checkbox" id="catchSwitch" class="catch-switch">
                     <span id="btnCatchHelp" style="font-size:12px;width:14px;height:14px;border-radius:50%;background:rgba(0,0,0,0.2);color:white;display:flex;justify-content:center;align-items:center;cursor:pointer;font-weight:bold;margin-left:2px;">?</span>
                 </div>
-                <span>📶</span><span>🔋 85%</span>
+                <span>📶</span><span>🔋 
+85%</span>
             </div>
         </div>
+
+        <div style="z-index:2; display:flex; flex-direction:column; align-items:center; padding-top:20px; padding-bottom:10px;">
+            <div id="spyCharAvatar" style="width:70px; height:70px; border-radius:50%; background-color:#f0f2f5; display:flex; justify-content:center; align-items:center; font-size:35px; color:#999; box-shadow:0 4px 12px rgba(0,0,0,0.1); background-size:cover; background-position:center;">👤</div>
+            <div id="spyCharName" style="margin-top:12px; font-size:16px; font-weight:bold; color:#333;">专属恋人</div>
+        </div>
         
-        <div class="char-phone-desktop">
+        <div class="char-phone-desktop" style="padding-top:10px;">
             <div class="char-app-item" id="btnSpyCall"><div class="char-app-icon icon-call" style="font-size:26px;">📞</div><div class="char-app-name">通话记录</div></div>
             <div class="char-app-item" id="btnSpyWechat"><div class="char-app-icon icon-wechat">💬</div><div class="char-app-name">微信</div></div>
             <div class="char-app-item" id="btnSpyAlbum"><div class="char-app-icon icon-album">🖼️</div><div class="char-app-name">相册</div></div>
+           
             <div class="char-app-item" id="btnSpyMemo"><div class="char-app-icon icon-memo" style="font-size:26px;">📝</div><div class="char-app-name">备忘录</div></div>
             <div class="char-app-item" id="btnSpyDiary"><div class="char-app-icon icon-diary" style="font-size:26px;">📖</div><div class="char-app-name">日记</div></div>
             <div class="char-app-item" id="btnSpyMusic"><div class="char-app-icon icon-music">🎵</div><div class="char-app-name">网易云</div></div>
             <div class="char-app-item" id="btnSpyZhihu"><div class="char-app-icon icon-zhihu">知</div><div class="char-app-name">知乎</div></div>
             <div class="char-app-item" id="btnSpyFootprint"><div class="char-app-icon icon-footprint" style="font-size:26px;">📍</div><div class="char-app-name">足迹</div></div>
             <div class="char-app-item" id="btnSpyWallet"><div class="char-app-icon icon-wallet">¥</div><div class="char-app-name">钱包</div></div>
+            <div class="char-app-item" id="btnSpyMeituan"><div class="char-app-icon icon-meituan" style="font-size:26px;">袋</div><div class="char-app-name">美团</div></div>
+      
             <div class="char-app-item" id="btnSpySettings"><div class="char-app-icon icon-settings" style="font-size:26px;">⚙️</div><div class="char-app-name">设置</div></div>
             <div class="char-app-item" id="btnSpySecret"><div class="char-app-icon icon-secret">🔒</div><div class="char-app-name">隐私空间</div></div>
         </div>
     </div>
+
 
 
             <div id="scrWallet" class="scr-flex">
@@ -1446,16 +1465,20 @@ originalGetItem.call(ls, `aiI`);
         if($(`contactAva`)) { $(`contactAva`).style.backgroundImage = `none`; $(`contactAva`).innerText = `👤`; }
     }
     
-    let curAiA = ls.getItem(`aiI`);
-if(curAiA) {
-        if($(`aiPreview`)) { $(`aiPreview`).style.backgroundImage = `url(${curAiA})`; $(`aiPreview`).innerText = ``;
-}
-    } else {
-        if($(`aiPreview`)) { $(`aiPreview`).style.backgroundImage = `none`;
-$(`aiPreview`).innerText = `👤`; }
-    }
-    
-    let myN = $(`cfgMyName`).value ||
+            let curAiA = ls.getItem(`aiI`);
+        if(curAiA) {
+            if($(`aiPreview`)) { $(`aiPreview`).style.backgroundImage = `url(${curAiA})`; $(`aiPreview`).innerText = ``;
+            }
+            if($(`spyCharAvatar`)) { $(`spyCharAvatar`).style.backgroundImage = `url(${curAiA})`; $(`spyCharAvatar`).innerText = ``; }
+        } else {
+            if($(`aiPreview`)) { $(`aiPreview`).style.backgroundImage = `none`;
+            $(`aiPreview`).innerText = `👤`; }
+            if($(`spyCharAvatar`)) { $(`spyCharAvatar`).style.backgroundImage = `none`; $(`spyCharAvatar`).innerText = `👤`; }
+        }
+        if($(`spyCharName`)) $(`spyCharName`).innerText = defName;
+        
+        let myN = $(`cfgMyName`).value ||
+
 `你的名字`;
     if($(`meName`)) $(`meName`).innerText = myN;
     let myBio = ls.getItem(`myBio`) || `请添加你的个性签名吧！`;
