@@ -5199,14 +5199,31 @@ if($(`btnGenSpyZhihu`)) $(`btnGenSpyZhihu`).onclick = async () => {
     let btnText = `✨ 重新生成当前版块`;
     if(currentZhTab === `search`) btnText = `✨ 重新生成【搜索历史】`;
     if(currentZhTab === `fav`) btnText = `✨ 重新生成【收藏夹】`;
-    if(currentZhTab === `ask`) btnText = `✨ 重新生成【匿名提问】`;
+        if(currentZhTab === `ask`) btnText = `✨ 重新生成【匿名提问】`;
     $(`btnGenSpyZhihu`).innerText = btnText;
     
     $(`btnGenSpyZhihu`).style.pointerEvents = `auto`;
 };
 
+// ====== 查手机：隐私空间入口与基础交互 ======
+if($(`btnSpySecret`)) $(`btnSpySecret`).onclick = () => {
+    if(!lastSpyCharId) { alert(`请先在查手机桌面右上角选择要查看的角色哦！`); return; }
+    showScreen(`scrSpySecret`);
+    if($(`spySecretLockView`)) $(`spySecretLockView`).style.display = `flex`;
+    if($(`spySecretMainView`)) $(`spySecretMainView`).style.display = `none`;
+    // 每次进入时初始化密码圆点状态
+    document.querySelectorAll(`.secret-pin-dot`).forEach(d => d.classList.remove(`filled`));
+};
 
+if($(`btnSpySecretExitLock`)) $(`btnSpySecretExitLock`).onclick = () => {
+    showScreen(`scrCharPhone`);
+};
+
+if($(`btnSpySecretBack`)) $(`btnSpySecretBack`).onclick = () => {
+    showScreen(`scrCharPhone`);
+};
 </script>
+
 
 
 
