@@ -4952,14 +4952,23 @@ function renderSpyZhihu() {
             checkHtml = `<div class="spy-zh-check ${checkedClass}"></div>`;
         }
         
+        let titlePrefix = ``;
+        if (item.asker && item.asker !== `主动搜索`) {
+            let tagColor = currentZhTab === `ask` ? `#f43f5e` : `#8b5cf6`;
+            let tagText = currentZhTab === `ask` ? `匿名发布` : `楼主`;
+            titlePrefix = `<div style="font-size:11px;color:#fff;background:${tagColor};padding:2px 6px;border-radius:4px;display:inline-block;margin-bottom:6px;">${tagText}：${item.asker}</div><br>`;
+        } else if (item.asker === `主动搜索` || !item.asker) {
+            titlePrefix = `<div style="font-size:11px;color:#fff;background:#3b82f6;padding:2px 6px;border-radius:4px;display:inline-block;margin-bottom:6px;">🔍 搜索记录</div><br>`;
+        }
+
         card.innerHTML = `
             <div style="display:flex; align-items:flex-start;">
                 ${checkHtml}
                 <div style="flex:1;">
-                    <div class="spy-zh-title">${item.title}</div>
+                    <div class="spy-zh-title">${titlePrefix}${item.title}</div>
                     <div class="spy-zh-author">
-                        <img src="https://api.dujin.org/bing/1920.php" alt="avatar">
-                        <span>${item.author}</span>
+                        <div style="width:20px;height:20px;border-radius:50%;background:#e2e8f0;display:flex;justify-content:center;align-items:center;font-size:12px;color:#64748b;font-weight:normal;">匿</div>
+                        <span>${item.author} 的回答：</span>
                     </div>
                     <div class="spy-zh-content">${item.content}</div>
                 </div>
@@ -4975,6 +4984,7 @@ function renderSpyZhihu() {
         container.appendChild(card);
     });
 }
+
 
 if($(`btnEditSpyZhihu`)) $(`btnEditSpyZhihu`).onclick = () => {
     isSpyZhEditMode = !isSpyZhEditMode;
@@ -5017,25 +5027,30 @@ if($(`btnGenSpyZhihu`)) $(`btnGenSpyZhihu`).onclick = async () => {
     let recentChat = hist.slice(-20).map(m => (m.role === `user` ? myN : cName) + `：` + m.content).join(`\n`);
     
     let tabDesc = ``;
-    if(currentZhTab === `search`) tabDesc = `在知乎搜索的问题，以及点开看到的某位随机网友的回答。`;
-    if(currentZhTab === `fav`) tabDesc = `在知乎收藏的优质问题，以及对应网友的回答。`;
-    if(currentZhTab === `ask`) {
-        let anonName = cName.substring(0, 1) + `某人`;
-        tabDesc = `在知乎匿名发布的提问，以及随机网友给你的回答。你的匿名ID是：${anonName}。`;
+    let anonName = cName.substring(0, 1) + `某人`;
+    if(currentZhTab === `search`) {
+        tabDesc = `当前版块：【搜索历史】\n任务：根据近期聊天记录，推测你会搜索什么问题。并生成随机网友针对该问题的回答。\n核心要求：回答的网友绝对不知道你们的私事和真实经历！他们只能针对“搜索词”本身进行客观或主观的回答！`;
+    } else if(currentZhTab === `fav`) {
+        tabDesc = `当前版块：【收藏夹】\n任务：根据近期聊天记录，推测什么样的“别人提的问题”和“别人的回答”会让你产生共鸣并点击收藏。\n核心要求：提问者必须是随机网友！回答者也是随机网友！这是你在看别人的故事，只是内容恰好切中了你的痛点。`;
+    } else if(currentZhTab === `ask`) {
+        tabDesc = `当前版块：【匿名提问】\n任务：根据近期聊天记录，写出你在极度纠结时，匿名发布的极度私密、羞耻或难以启齿的求助问题。\n核心要求：提问者必须是你的匿名ID：${anonName}。网友只能根据你的提问字面意思来出主意或吐槽，网友没有上帝视角！`;
     }
 
     let sys = `你现在的身份是：${cName}。这是你的知乎浏览记录生成任务。
 你的底层性格是：${cPrompt}。
-请根据以下最近你和${myN}的聊天记录，生成10条你${tabDesc}
-【极度重要规则】：
-1. 必须生成10条记录！必须严格按照以下格式输出，每条记录之间必须用 --- 分隔。
-格式要求：
-标题：(这里写知乎问题的标题)
-网友：(这里随机生成一个有意思的网友昵称)
-回答：(这里写出网友的具体回答内容，字数不限，要符合知乎的风格，真实且能反映你当前的心理状态、剧情进度或面临的困境)
+请根据以下最近你和${myN}的聊天记录，生成10条内容。
+${tabDesc}
 
-2. 严格禁止使用任何形式的引号符号！
-3. 内容必须紧密贴合聊天记录，不要OOC。
+【极度重要规则】：
+1. 必须生成10条记录！每条记录之间必须用 --- 分隔。
+2. 网友没有上帝视角！网友的回答绝对不可以照抄或点明聊天记录里的具体细节，只能基于“标题”的内容给出符合常理的回答。
+3. 网友的语气必须丰富多样，展现真实的互联网生态（必须混合这几种风格：00后网络流行语玩梗、理中客长篇大论分析、中老年人生导师说教、暴躁老哥直接开骂吐槽、温柔女孩子暖心安慰等）。不要千篇一律的严肃。
+4. 严格禁止使用任何形式的引号符号！
+5. 必须严格按照以下四行格式输出，不要增加任何多余字段：
+标题：(具体问题或搜索词)
+提问者：(如果是搜索历史，固定写 主动搜索 ；如果是收藏夹，写随机网友昵称；如果是匿名提问，固定写 ${anonName})
+回答者：(随机网友昵称)
+回答：(网友的具体回答，展现多样化风格)
     
 【近期聊天记录】：
 ${recentChat || '（暂无聊天记录，请根据人设自由发挥）'}`;
@@ -5049,7 +5064,7 @@ ${recentChat || '（暂无聊天记录，请根据人设自由发挥）'}`;
         let res = await fetch(url, {
             method: `POST`, 
             headers: {Authorization: `Bearer ` + key, "Content-Type": `application/json`},
-            body: JSON.stringify({model: mod, messages: [{role: `user`, content: sys}], temperature: 0.85})
+            body: JSON.stringify({model: mod, messages: [{role: `user`, content: sys}], temperature: 0.95})
         });
         let dat = await res.json();
         if(dat.choices && dat.choices.length > 0) {
@@ -5058,12 +5073,14 @@ ${recentChat || '（暂无聊天记录，请根据人设自由发挥）'}`;
             let newRecords = [];
             items.forEach(item => {
                 let tMatch = item.match(/标题：(.*)/);
-                let aMatch = item.match(/网友：(.*)/);
+                let askerMatch = item.match(/提问者：(.*)/);
+                let authorMatch = item.match(/回答者：(.*)/);
                 let cMatch = item.match(/回答：([\s\S]*)/);
                 if(tMatch && cMatch) {
                     newRecords.push({
                         title: tMatch[1].trim(),
-                        author: aMatch ? aMatch[1].trim() : `热心网友`,
+                        asker: askerMatch ? askerMatch[1].trim() : ``,
+                        author: authorMatch ? authorMatch[1].trim() : `热心网友`,
                         content: cMatch[1].trim(),
                         timestamp: Date.now()
                     });
@@ -5089,6 +5106,7 @@ ${recentChat || '（暂无聊天记录，请根据人设自由发挥）'}`;
     $(`btnGenSpyZhihu`).innerText = origText;
     $(`btnGenSpyZhihu`).style.pointerEvents = `auto`;
 };
+
 </script>
 
 
