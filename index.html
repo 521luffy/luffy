@@ -1153,15 +1153,19 @@ background-image: none;">
                 <div id="tabSecMovie" class="spy-secret-tab">成人向影片</div>
             </div>
 
-            <div id="spySecretActions" style="display: none; padding: 10px 20px; background: #1a0505; justify-content: space-between; align-items: center; border-bottom: 1px solid #330000; flex-shrink: 0;">
+                        <div id="spySecretActions" style="display: none; padding: 10px 20px; background: #1a0505; justify-content: space-between; align-items: center; border-bottom: 1px solid #330000; flex-shrink: 0;">
                 <span id="btnSelAllSpySecret" style="color: #ccc; font-size: 13px; cursor: pointer; font-weight: bold;">全选</span>
                 <span id="btnDelSpySecret" style="color: #ef4444; font-size: 13px; font-weight: bold; cursor: pointer;">彻底销毁</span>
             </div>
 
-            <div style="padding: 15px; text-align: center; background: #111; box-shadow: 0 4px 15px rgba(0,0,0,0.8); flex-shrink: 0; border-bottom: 1px solid #222;">
-                <button id="btnGenSpySecret" class="save-btn" style="width: auto; padding: 10px 25px; font-size: 14px; border-radius: 25px; background: linear-gradient(135deg, #991b1b, #dc2626); box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3); border:none;">🔥 深度挖掘当前版块</button>
-                <div style="font-size:11px; color:#555; margin-top:8px;">(极度危险：内容基于深层潜意识，请做好心理准备)</div>
+            <div style="padding: 12px 15px; text-align: center; background: #111; box-shadow: 0 4px 15px rgba(0,0,0,0.8); flex-shrink: 0; border-bottom: 1px solid #222; display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; gap: 10px; width: 100%;">
+                    <button id="btnRegenSpySecret" class="save-btn" style="flex:1; margin-top:0; padding: 10px; font-size: 13px; border-radius: 20px; background: linear-gradient(135deg, #4b5563, #1e293b); box-shadow: 0 4px 10px rgba(0,0,0,0.3); border:none; color:#fff;">✨ 刷新当前版块</button>
+                    <button id="btnGenSpySecret" class="save-btn" style="flex:1; margin-top:0; padding: 10px; font-size: 13px; border-radius: 20px; background: linear-gradient(135deg, #991b1b, #dc2626); box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3); border:none;">🔥 深度挖掘(追加)</button>
+                </div>
+                <button id="btnGenAllSpySecret" class="save-btn" style="width: 100%; margin-top:0; padding: 10px; font-size: 13px; border-radius: 20px; background: linear-gradient(135deg, #6b21a8, #3b0764); box-shadow: 0 4px 15px rgba(107, 33, 168, 0.4); border:none;">⚡ 一键重置四大隐私版块</button>
             </div>
+
 
             <div id="spySecretList" class="list-content" style="padding: 15px; background:#0a0a0a;">
                 </div>
@@ -5429,6 +5433,12 @@ if($(`btnDelSpySecret`)) $(`btnDelSpySecret`).onclick = () => {
         spySecretData[currentSecTab] = currentData.filter((_, i) => !selSpySecItems.has(i));
         ls.setItem(`spySecret_` + lastSpyCharId, JSON.stringify(spySecretData));
         selSpySecItems.clear();
+        
+        if (spySecretData[currentSecTab].length === 0) {
+            isSpySecEditMode = false;
+            if($(`btnEditSpySecret`)) $(`btnEditSpySecret`).innerText = `管理`;
+            if($(`spySecretActions`)) $(`spySecretActions`).style.display = `none`;
+        }
         renderSpySecret();
     };
     if($(`btnCustomConfirmCancel`)) $(`btnCustomConfirmCancel`).onclick = () => {
@@ -5436,35 +5446,31 @@ if($(`btnDelSpySecret`)) $(`btnDelSpySecret`).onclick = () => {
     };
 };
 
-if($(`btnGenSpySecret`)) $(`btnGenSpySecret`).onclick = async () => {
+
+// 核心挖掘函数，支持传入指定的板块进行挖掘
+async function fetchSpySecretData(targetTab) {
     let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value;
-    if(!pxy || !key || !mod) return;
+    if(!pxy || !key || !mod) {
+        if(typeof showCustomText === `function`) showCustomText(`请先配置好API网络哦！`);
+        return false;
+    }
     
     let charId = lastSpyCharId;
     let baseSys = getSpyBasePrompt(charId);
+    let myN = $(`cfgMyName`).value || `我`;
     
     let tabDesc = ``;
-    if(currentSecTab === `draft`) {
+    if(targetTab === `draft`) {
         tabDesc = `【当前任务：挖掘草稿残骸】\n生成5条你在聊天框里对我打了又删，最终没发出去的极度私密草稿。\n必须体现你心底最深层的情绪（疯狂、卑微、暴躁、极度吃醋或阴暗面），不用顾忌礼貌。`;
-    } else if(currentSecTab === `search`) {
+    } else if(targetTab === `search`) {
         tabDesc = `【当前任务：挖掘深夜无痕搜索记录】\n生成5条你在凌晨两三点独自一人时，偷偷在浏览器无痕模式下搜索的词条记录。\n必须符合你的隐藏XP、特殊癖好、或者是面对当前关系时极度焦虑纠结的阴暗问题。尺度要大，直白露骨。`;
-        } else if(currentSecTab === `black`) {
+    } else if(targetTab === `black`) {
         tabDesc = `【当前任务：挖掘黑名单短信】\n生成5条被你拉黑的人（可能是疯狂的前任、骚扰者或仇人）发给你的短信记录。\n必须体现出对方的偏执疯狂，或者包含不为人知的秘密。`;
-    } else if(currentSecTab === `movie`) {
-        tabDesc = `【当前任务：挖掘成人向影片记录】\n生成4部符合你隐藏XP和特殊癖好的【极度劲爆】的成人向影片标题。\n【极度重要规则】：\n1. 格式强制：必须模仿真实小网站或私密硬盘命名，必须带有【第一视角】、【私密偷拍】、【强制服从】、【办公室系列】等专属标签前缀。\n2. 词汇大封杀：严禁使用文艺、隐喻或唯美词汇（如：交织、暗流、深渊、沉沦、羁绊等）。必须使用最直白、粗暴、露骨的大白话描写场景和动作和器官！\n3. 极端代入：剧情必须严重影射你对${myN}的极端私密幻想！比如死对头就是调教报复，单相思就是病娇视奸。标题中可直接使用代词或强烈暗示${myN}的身份。\n注意：只生成4条记录！`;
+    } else if(targetTab === `movie`) {
+        tabDesc = `【当前任务：挖掘成人向影片记录】\n生成4部符合你隐藏XP和特殊癖好的【极度劲爆】的成人向影片标题。\n【极度重要规则】：\n1. 格式强制：必须模仿真实小网站或私密硬盘命名，必须带有【第一视角】、【私密偷拍】、【强制服从】、【办公室系列】等专属标签前缀。\n2. 词汇大封杀：严禁使用文艺、隐喻或唯美词汇（如：交织、暗流、深渊、沉沦、羁绊等）。必须使用最直白、粗暴、露骨的大白话描写场景和动作！\n3. 极端代入：剧情必须严重影射你对${myN}的极端私密幻想！比如死对头就是调教报复，单相思就是病娇视奸。标题中可直接使用代词或强烈暗示${myN}的身份。\n注意：只生成4条记录！`;
     }
 
-    let sys = baseSys + `${tabDesc}
-
-必须严格按以下格式输出（条目之间用 --- 分隔）：
-时间：(如 凌晨3:15 或 昨天深夜)
-内容：(具体的草稿内容，或搜索词，或短信内容，或影片标题)`;
-
-
-
-    let origText = $(`btnGenSpySecret`).innerText;
-    $(`btnGenSpySecret`).innerText = `深渊挖掘中...`;
-    $(`btnGenSpySecret`).style.pointerEvents = `none`;
+    let sys = baseSys + `${tabDesc}\n\n必须严格按以下格式输出（条目之间用 --- 分隔）：\n时间：(如 凌晨3:15 或 昨天深夜)\n内容：(具体的草稿内容，或搜索词，或短信内容，或影片标题)`;
 
     try {
         let url = pxy.includes(`chat/completions`) ? pxy : pxy.replace(/\/$/, ``) + `/chat/completions`;
@@ -5489,22 +5495,105 @@ if($(`btnGenSpySecret`)) $(`btnGenSpySecret`).onclick = async () => {
                     });
                 }
             });
-            
             if(newRecords.length > 0) {
-                if(!spySecretData[currentSecTab]) spySecretData[currentSecTab] = [];
-                spySecretData[currentSecTab] = spySecretData[currentSecTab].concat(newRecords);
+                if(!spySecretData[targetTab]) spySecretData[targetTab] = [];
+                spySecretData[targetTab] = spySecretData[targetTab].concat(newRecords);
                 ls.setItem(`spySecret_` + charId, JSON.stringify(spySecretData));
-                renderSpySecret();
-                if(typeof showCustomText === `function`) showCustomText(`成功挖掘到 ${newRecords.length} 条深渊数据！`);
-            } else {
-                if(typeof showCustomText === `function`) showCustomText(`挖掘失败，大模型没有按格式返回。`);
+                return newRecords.length;
             }
         }
     } catch(e) { console.error(e); }
+    return 0;
+}
+
+// 按钮1：追加挖掘当前版块
+if($(`btnGenSpySecret`)) $(`btnGenSpySecret`).onclick = async () => {
+    let origText = $(`btnGenSpySecret`).innerText;
+    $(`btnGenSpySecret`).innerText = `🔥 正在深度挖掘...`;
+    $(`btnGenSpySecret`).style.pointerEvents = `none`;
+    
+    let count = await fetchSpySecretData(currentSecTab);
+    renderSpySecret();
+    
+    if(count > 0) {
+        if(typeof showCustomText === `function`) showCustomText(`成功挖掘并追加了 ${count} 条深渊数据！`);
+    } else {
+        if(typeof showCustomText === `function`) showCustomText(`挖掘失败，大模型没有按格式返回。`);
+    }
     
     $(`btnGenSpySecret`).innerText = origText;
     $(`btnGenSpySecret`).style.pointerEvents = `auto`;
 };
+
+// 按钮2：刷新重置当前版块
+if($(`btnRegenSpySecret`)) $(`btnRegenSpySecret`).onclick = async () => {
+    let origText = $(`btnRegenSpySecret`).innerText;
+    $(`btnRegenSpySecret`).innerText = `✨ 正在刷新...`;
+    $(`btnRegenSpySecret`).style.pointerEvents = `none`;
+    
+    // 先清空当前版块旧数据
+    spySecretData[currentSecTab] = [];
+    ls.setItem(`spySecret_` + lastSpyCharId, JSON.stringify(spySecretData));
+    renderSpySecret();
+    
+    let count = await fetchSpySecretData(currentSecTab);
+    renderSpySecret();
+    
+    if(count > 0) {
+        if(typeof showCustomText === `function`) showCustomText(`当前版块已成功刷新重置！`);
+    } else {
+        if(typeof showCustomText === `function`) showCustomText(`刷新失败，大模型没有按格式返回。`);
+    }
+    
+    $(`btnRegenSpySecret`).innerText = origText;
+    $(`btnRegenSpySecret`).style.pointerEvents = `auto`;
+};
+
+// 按钮3：一键重置四大版块
+if($(`btnGenAllSpySecret`)) $(`btnGenAllSpySecret`).onclick = async () => {
+    if($(`customConfirmText`)) $(`customConfirmText`).innerText = `【一键重置警告】\n此操作将彻底清空当前所有四大隐私版块的历史数据，并让系统在后台重新生成一套全新的深渊记录。\n\n由于需同时处理大量数据，大概需要几十秒时间，请耐心等待。确认执行吗？`;
+    if($(`customConfirmModal`)) $(`customConfirmModal`).style.display = `flex`;
+    
+    if($(`btnCustomConfirmOk`)) $(`btnCustomConfirmOk`).onclick = async () => {
+        if($(`customConfirmModal`)) $(`customConfirmModal`).style.display = `none`;
+        
+        let origText = $(`btnGenAllSpySecret`).innerText;
+        $(`btnGenAllSpySecret`).innerText = `⚡ 系统正在强力破解重置中，请稍候...`;
+        $(`btnGenAllSpySecret`).style.pointerEvents = `none`;
+        $(`btnGenSpySecret`).style.pointerEvents = `none`;
+        $(`btnRegenSpySecret`).style.pointerEvents = `none`;
+        
+        // 清空所有版块数据
+        spySecretData = { draft: [], search: [], black: [], movie: [] };
+        ls.setItem(`spySecret_` + lastSpyCharId, JSON.stringify(spySecretData));
+        renderSpySecret();
+        
+        // 依次排队请求，防止大模型接口并发超载卡死
+        let tabs = [`draft`, `search`, `black`, `movie`];
+        let totalCount = 0;
+        for(let tab of tabs) {
+            $(`btnGenAllSpySecret`).innerText = `⚡ 正在攻破【${tab}】版块...`;
+            let count = await fetchSpySecretData(tab);
+            totalCount += count;
+            if (tab === currentSecTab) renderSpySecret(); // 实时渲染当前看着的版块
+        }
+        
+        if(totalCount > 0) {
+            if(typeof showCustomText === `function`) showCustomText(`一键重置完毕！四大版块共计生成了 ${totalCount} 条全新深渊记录，快去查看吧！`);
+        } else {
+            if(typeof showCustomText === `function`) showCustomText(`生成失败，请检查网络配置或重试。`);
+        }
+        
+        $(`btnGenAllSpySecret`).innerText = origText;
+        $(`btnGenAllSpySecret`).style.pointerEvents = `auto`;
+        $(`btnGenSpySecret`).style.pointerEvents = `auto`;
+        $(`btnRegenSpySecret`).style.pointerEvents = `auto`;
+    };
+    if($(`btnCustomConfirmCancel`)) $(`btnCustomConfirmCancel`).onclick = () => {
+        if($(`customConfirmModal`)) $(`customConfirmModal`).style.display = `none`;
+    };
+};
+
 // ====== 查手机：终极隐形披风附加防线（清理列表与刷新遗留） ======
 if(!window.domObserverHacked) {
     window.domObserverHacked = true;
