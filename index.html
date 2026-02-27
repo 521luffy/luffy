@@ -5309,7 +5309,7 @@ function renderSpySecret() {
             renderSpySecret();
         };
         
-                let btnConfront = card.querySelector(`.btn-confront`);
+                        let btnConfront = card.querySelector(`.btn-confront`);
         if(btnConfront) {
             btnConfront.onclick = (e) => {
                 e.stopPropagation();
@@ -5319,18 +5319,34 @@ function renderSpySecret() {
                 if($(`btnCustomConfirmOk`)) $(`btnCustomConfirmOk`).onclick = () => {
                     if($(`customConfirmModal`)) $(`customConfirmModal`).style.display = `none`;
                     
-                    if(typeof currentChatId !== `undefined`) currentChatId = lastSpyCharId;
-                    ls.setItem(`currentChatId`, lastSpyCharId);
-                    if(typeof loadRoom === `function`) loadRoom();
-                    showScreen(`scrRoom`);
+                    let targetName = originalGetItem.call(ls, `cN_` + lastSpyCharId);
+                    let chatItems = document.querySelectorAll(`.chat-item`);
+                    let clicked = false;
+                    for(let i=0; i<chatItems.length; i++) {
+                        if(chatItems[i].style.display === `none`) continue;
+                        let nameEl = chatItems[i].querySelector(`.chat-name`) || chatItems[i].querySelector(`.role-name`);
+                        if(nameEl && nameEl.innerText.trim() === targetName) {
+                            chatItems[i].click();
+                            clicked = true;
+                            break;
+                        }
+                    }
+                    
+                    if(!clicked) {
+                        if(typeof currentChatId !== `undefined`) currentChatId = lastSpyCharId;
+                        ls.setItem(`currentChatId`, lastSpyCharId);
+                        if(typeof loadRoom === `function`) loadRoom();
+                        showScreen(`scrRoom`);
+                    }
                     
                     setTimeout(() => {
                         let ipt = document.getElementById(`msgInput`) || document.getElementById(`chatInput`) || document.querySelector(`textarea`);
                         if(ipt) {
                             ipt.value = `【隐私空间记录】：\n${item.content}\n\n`;
                             ipt.dispatchEvent(new Event(`input`, { bubbles: true }));
+                            ipt.focus();
                         }
-                    }, 200);
+                    }, 350);
                 };
                 if($(`btnCustomConfirmCancel`)) $(`btnCustomConfirmCancel`).onclick = () => {
                     if($(`customConfirmModal`)) $(`customConfirmModal`).style.display = `none`;
@@ -5340,6 +5356,7 @@ function renderSpySecret() {
         container.appendChild(card);
     });
 }
+
 
 
 if($(`btnEditSpySecret`)) $(`btnEditSpySecret`).onclick = () => {
