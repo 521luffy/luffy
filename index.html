@@ -4910,9 +4910,17 @@ function switchZhTab(tab) {
     isSpyZhEditMode = false;
     if($(`btnEditSpyZhihu`)) $(`btnEditSpyZhihu`).innerText = `管理`;
     if($(`spyZhihuActions`)) $(`spyZhihuActions`).style.display = `none`;
+    
+    let btnText = `✨ 重新生成当前版块`;
+    if(tab === `search`) btnText = `✨ 重新生成【搜索历史】`;
+    if(tab === `fav`) btnText = `✨ 重新生成【收藏夹】`;
+    if(tab === `ask`) btnText = `✨ 重新生成【匿名提问】`;
+    if($(`btnGenSpyZhihu`)) $(`btnGenSpyZhihu`).innerText = btnText;
+
     selSpyZhItems.clear();
     renderSpyZhihu();
 }
+
 
 function loadSpyZhihu() {
     let key = `spyZhihu_` + lastSpyCharId;
@@ -5016,6 +5024,8 @@ if($(`btnGenSpyZhihu`)) $(`btnGenSpyZhihu`).onclick = async () => {
     let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value;
     if(!pxy || !key || !mod) { alert(`请先在主设置中配置好API网络哦！`); return; }
     
+    let targetTab = currentZhTab; 
+    
     let charId = lastSpyCharId;
     let cName = originalGetItem.call(ls, `cN_` + charId) || `对方`;
     let cPrompt = originalGetItem.call(ls, `cAP_` + charId) || ``;
@@ -5028,11 +5038,11 @@ if($(`btnGenSpyZhihu`)) $(`btnGenSpyZhihu`).onclick = async () => {
     
     let tabDesc = ``;
     let anonName = cName.substring(0, 1) + `某人`;
-    if(currentZhTab === `search`) {
-        tabDesc = `当前版块：【搜索历史】\n任务：根据近期聊天记录，推测你会搜索什么问题。并生成随机网友针对该问题的回答。\n核心要求：回答的网友绝对不知道你们的私事和真实经历！他们只能针对“搜索词”本身进行客观或主观的回答！`;
-    } else if(currentZhTab === `fav`) {
-        tabDesc = `当前版块：【收藏夹】\n任务：根据近期聊天记录，推测什么样的“别人提的问题”和“别人的回答”会让你产生共鸣并点击收藏。\n核心要求：提问者必须是随机网友！回答者也是随机网友！这是你在看别人的故事，只是内容恰好切中了你的痛点。`;
-    } else if(currentZhTab === `ask`) {
+    if(targetTab === `search`) {
+        tabDesc = `当前版块：【搜索历史】\n任务：根据近期聊天记录，推测你会搜索什么问题。并生成随机网友针对该问题的回答。\n核心要求：回答的网友绝对不知道你们的私事和真实经历！他们只能针对搜索词本身进行客观或主观的回答！`;
+    } else if(targetTab === `fav`) {
+        tabDesc = `当前版块：【收藏夹】\n任务：根据近期聊天记录，推测什么样的别人提的问题和别人的回答会让你产生共鸣并点击收藏。\n核心要求：提问者必须是随机网友！回答者也是随机网友！这是你在看别人的故事，只是内容恰好切中了你的痛点。`;
+    } else if(targetTab === `ask`) {
         tabDesc = `当前版块：【匿名提问】\n任务：根据近期聊天记录，写出你在极度纠结时，匿名发布的极度私密、羞耻或难以启齿的求助问题。\n核心要求：提问者必须是你的匿名ID：${anonName}。网友只能根据你的提问字面意思来出主意或吐槽，网友没有上帝视角！`;
     }
 
@@ -5043,7 +5053,7 @@ ${tabDesc}
 
 【极度重要规则】：
 1. 必须生成10条记录！每条记录之间必须用 --- 分隔。
-2. 网友没有上帝视角！网友的回答绝对不可以照抄或点明聊天记录里的具体细节，只能基于“标题”的内容给出符合常理的回答。
+2. 网友没有上帝视角！网友的回答绝对不可以照抄或点明聊天记录里的具体细节，只能基于标题的内容给出符合常理的回答。
 3. 网友的语气必须丰富多样，展现真实的互联网生态（必须混合这几种风格：00后网络流行语玩梗、理中客长篇大论分析、中老年人生导师说教、暴躁老哥直接开骂吐槽、温柔女孩子暖心安慰等）。不要千篇一律的严肃。
 4. 严格禁止使用任何形式的引号符号！
 5. 必须严格按照以下四行格式输出，不要增加任何多余字段：
@@ -5056,7 +5066,7 @@ ${tabDesc}
 ${recentChat || '（暂无聊天记录，请根据人设自由发挥）'}`;
 
     let origText = $(`btnGenSpyZhihu`).innerText;
-    $(`btnGenSpyZhihu`).innerText = `正在为你偷取知乎数据...`;
+    $(`btnGenSpyZhihu`).innerText = `正在为你偷取数据...`;
     $(`btnGenSpyZhihu`).style.pointerEvents = `none`;
 
     try {
@@ -5088,11 +5098,14 @@ ${recentChat || '（暂无聊天记录，请根据人设自由发挥）'}`;
             });
             
             if(newRecords.length > 0) {
-                if(!spyZhihuData[currentZhTab]) spyZhihuData[currentZhTab] = [];
-                spyZhihuData[currentZhTab] = spyZhihuData[currentZhTab].concat(newRecords);
+                if(!spyZhihuData[targetTab]) spyZhihuData[targetTab] = [];
+                spyZhihuData[targetTab] = spyZhihuData[targetTab].concat(newRecords);
                 ls.setItem(`spyZhihu_` + charId, JSON.stringify(spyZhihuData));
-                renderSpyZhihu();
-                alert(`成功生成 ${newRecords.length} 条知乎记录！`);
+                
+                if(currentZhTab === targetTab) {
+                    renderSpyZhihu();
+                }
+                alert(`成功生成 ${newRecords.length} 条数据！`);
             } else {
                 alert(`数据解析失败，大模型没有按格式输出，请重试。`);
             }
@@ -5103,9 +5116,16 @@ ${recentChat || '（暂无聊天记录，请根据人设自由发挥）'}`;
         alert(`网络请求失败，请检查配置或稍后再试。`);
         console.error(e);
     }
-    $(`btnGenSpyZhihu`).innerText = origText;
+    
+    let btnText = `✨ 重新生成当前版块`;
+    if(currentZhTab === `search`) btnText = `✨ 重新生成【搜索历史】`;
+    if(currentZhTab === `fav`) btnText = `✨ 重新生成【收藏夹】`;
+    if(currentZhTab === `ask`) btnText = `✨ 重新生成【匿名提问】`;
+    $(`btnGenSpyZhihu`).innerText = btnText;
+    
     $(`btnGenSpyZhihu`).style.pointerEvents = `auto`;
 };
+
 
 </script>
 
