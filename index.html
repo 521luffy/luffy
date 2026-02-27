@@ -978,36 +978,36 @@ class=back-btn>＜</span>
 background-image: none;">
         <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.2);backdrop-filter:blur(2px);z-index:1;"></div>
         
-                <div class="char-phone-header" style="color:#333; text-shadow:none;">
+                        <div class="char-phone-header" style="color:#333; text-shadow:none;">
             <span id="btnCharPhoneExit" style="cursor:pointer; font-size:18px; font-weight:bold;">＜ 返回</span>
             <div class="char-phone-status-bar">
-                <select id="spyCharSelect" style="background:rgba(0,0,0,0.05); border:none; border-radius:12px; padding:4px 2px; font-size:11px; font-weight:bold; color:#333; outline:none; margin-right:5px; max-width:85px; cursor:pointer;">
-                    <option value="">切换角色📱</option>
-                </select>
                 <div class="catch-switch-wrapper" style="background:rgba(0,0,0,0.05); color:#333;">
-
                     <label for="catchSwitch">被抓包</label>
                     <input type="checkbox" id="catchSwitch" class="catch-switch">
                     <span id="btnCatchHelp" style="font-size:12px;width:14px;height:14px;border-radius:50%;background:rgba(0,0,0,0.2);color:white;display:flex;justify-content:center;align-items:center;cursor:pointer;font-weight:bold;margin-left:2px;">?</span>
                 </div>
-                <span>📶</span><span>🔋 
-85%</span>
+                <span>📶</span><span>🔋 85%</span>
             </div>
         </div>
 
-        <div style="z-index:2; display:flex; flex-direction:column; align-items:center; padding-top:20px; padding-bottom:10px;">
-            <div id="spyCharAvatar" style="width:70px; height:70px; border-radius:50%; background-color:#f0f2f5; display:flex; justify-content:center; align-items:center; font-size:35px; color:#999; box-shadow:0 4px 12px rgba(0,0,0,0.1); background-size:cover; background-position:center;">👤</div>
+        <div style="z-index:2; display:flex; flex-direction:column; align-items:center; padding-top:20px; padding-bottom:10px; width:100%;">
+            <div style="display:flex; justify-content:center; align-items:center; width:100%; position:relative;">
+                <select id="spyCharSelect" style="position:absolute; left:20px; background:rgba(0,0,0,0.05); border:none; border-radius:12px; padding:6px 4px; font-size:12px; font-weight:bold; color:#333; outline:none; max-width:95px; cursor:pointer;">
+                    <option value="">切换角色📱</option>
+                </select>
+                <div id="spyCharAvatar" style="width:85px; height:85px; border-radius:50%; background-color:#f0f2f5; display:flex; justify-content:center; align-items:center; font-size:45px; color:#999; box-shadow:0 4px 12px rgba(0,0,0,0.1); background-size:cover; background-position:center;">👤</div>
+                <div id="btnSpyRefresh" style="position:absolute; right:20px; background:#f0f2f5; border-radius:50%; width:36px; height:36px; display:flex; justify-content:center; align-items:center; box-shadow:0 2px 8px rgba(0,0,0,0.1); cursor:pointer; font-size:18px; z-index:10;" title="刷新重新生成">🔄</div>
+            </div>
             <div id="spyCharName" style="margin-top:12px; font-size:16px; font-weight:bold; color:#333;">专属恋人</div>
         </div>
+
         
         <div class="char-phone-desktop" style="padding-top:10px;">
             <div class="char-app-item" id="btnSpyCall"><div class="char-app-icon icon-call" style="font-size:26px;">📞</div><div class="char-app-name">通话记录</div></div>
                         <div class="char-app-item" id="btnSpyWechat"><div class="char-app-icon icon-wechat">💬</div><div class="char-app-name">微信</div></div>
             <div class="char-app-item" id="btnSpyAlbum"><div class="char-app-icon icon-album">🖼️</div><div class="char-app-name">相册</div></div>
-            <div class="char-app-item" id="btnSpyMemo" style="position:relative;">
-                <div id="btnSpyRefresh" style="position:absolute; top:-6px; right:-6px; background:#fff; border-radius:50%; width:20px; height:20px; display:flex; justify-content:center; align-items:center; box-shadow:0 2px 5px rgba(0,0,0,0.2); cursor:pointer; font-size:12px; z-index:10;" title="刷新重新生成">🔄</div>
-                <div class="char-app-icon icon-memo" style="font-size:26px;">📝</div><div class="char-app-name">备忘录</div>
-            </div>
+                        <div class="char-app-item" id="btnSpyMemo"><div class="char-app-icon icon-memo" style="font-size:26px;">📝</div><div class="char-app-name">备忘录</div></div>
+
             <div class="char-app-item" id="btnSpyDiary"><div class="char-app-icon icon-diary" style="font-size:26px;">📖</div><div class="char-app-name">日记</div></div>
 
             <div class="char-app-item" id="btnSpyMusic"><div class="char-app-icon icon-music">🎵</div><div class="char-app-name">网易云</div></div>
@@ -1638,10 +1638,27 @@ function updateSpyPhoneUI(charId) {
 if($("btnSpyRefresh")) $("btnSpyRefresh").onclick = function(e) {
     e.stopPropagation();
     let charId = $("spyCharSelect").value;
-    if(!charId) { alert("请先在右上角下拉选择一个角色哦！"); return; }
-    ls.setItem(`lastSpyCharId`, charId); lastSpyCharId = charId;
-    updateSpyPhoneUI(charId); alert("数据已刷新并生成！");
+    if(!charId) { alert("请先在左侧下拉选择一个角色哦！"); return; }
+    
+    let charName = "未知角色";
+    let contacts = ls.getItem(`myContacts`) ? JSON.parse(ls.getItem(`myContacts`)) : [];
+    let c = contacts.find(x => String(x.id) === String(charId));
+    if(c) charName = originalGetItem.call(ls, `cN_` + c.id) || c.name;
+
+    $("customConfirmText").innerText = `确定要为（${charName}）重新生成手机里所有内容吗？`;
+    $("customConfirmModal").style.display = "flex";
+    
+    $("btnCustomConfirmOk").onclick = () => {
+        $("customConfirmModal").style.display = "none";
+        ls.setItem(`lastSpyCharId`, charId); lastSpyCharId = charId;
+        updateSpyPhoneUI(charId); 
+        alert("数据已刷新并生成！");
+    };
+    $("btnCustomConfirmCancel").onclick = () => {
+        $("customConfirmModal").style.display = "none";
+    };
 };
+
 if($("btnHomeSpy")) $("btnHomeSpy").onclick = () => { 
     showScreen("scrCharPhone"); renderSpyPhone();
     if(lastSpyCharId) { $("spyCharSelect").value = lastSpyCharId; updateSpyPhoneUI(lastSpyCharId); } else { updateSpyPhoneUI(""); }
