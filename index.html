@@ -271,7 +271,31 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 .spy-zh-check { width: 22px; height: 22px; border-radius: 4px; border: 2px solid #ccc; display: flex; justify-content: center; align-items: center; margin-right: 15px; flex-shrink: 0; transition: 0.2s; }
 .spy-zh-check.checked { border-color: #0066ff; background: #0066ff; }
 .spy-zh-check.checked::after { content: '✓'; color: white; font-size: 14px; font-weight: bold; }
+
+/* 查手机-隐私空间专属样式 */
+.spy-secret-bg { background: #111; color: #eee; }
+.spy-secret-lock { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; background:#000; color:#fff; z-index: 200; position: absolute; top:0; left:0; width:100%; }
+.secret-pin-dots { display:flex; gap:15px; margin:40px 0; }
+.secret-pin-dot { width:14px; height:14px; border-radius:50%; border:2px solid #444; transition: 0.2s; }
+.secret-pin-dot.filled { background:#ef4444; border-color:#ef4444; box-shadow: 0 0 8px rgba(239, 68, 68, 0.6); }
+.secret-keypad { display:grid; grid-template-columns:repeat(3, 1fr); gap:25px; padding:20px; }
+.secret-key { width:65px; height:65px; border-radius:50%; background:#1a1a1a; display:flex; justify-content:center; align-items:center; font-size:26px; color:#fff; cursor:pointer; font-weight:bold; box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition: 0.1s; border: 1px solid #333; }
+.secret-key:active { background:#333; transform: scale(0.95); }
+.spy-secret-tabs { display:flex; background:#1a1a1a; padding:12px 10px; gap:8px; overflow-x:auto; border-bottom:1px solid #222; }
+.spy-secret-tab { flex: 1; text-align: center; padding:8px 5px; font-size:13px; color:#666; background:#111; border-radius:6px; white-space:nowrap; cursor:pointer; transition:0.3s; font-weight: bold; border: 1px solid #222; }
+.spy-secret-tab.active { background:rgba(220,38,38,0.1); color:#ef4444; border-color:#ef4444; }
+.spy-secret-card { background:#1a1a1a; border-radius:10px; padding:16px; margin-bottom:15px; border-left:3px solid #ef4444; position:relative; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+.spy-secret-card-title { font-size:14px; color:#ef4444; font-weight:bold; margin-bottom:10px; line-height:1.4; padding-right: 50px; }
+.spy-secret-card-ctx { font-size:13px; color:#a3a3a3; line-height:1.6; word-break:break-all; white-space:pre-wrap; }
+.btn-confront { position:absolute; top:12px; right:12px; background:rgba(239, 68, 68, 0.1); color:#ef4444; padding:5px 10px; border-radius:6px; font-size:11px; cursor:pointer; font-weight:bold; border:1px solid rgba(239, 68, 68, 0.3); transition: 0.2s; }
+.btn-confront:active { background:#ef4444; color:#fff; }
+.movie-card { background:#111; border:1px solid #333; border-radius:8px; overflow:hidden; margin-bottom:15px; position:relative; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+.movie-cover { height:140px; background:linear-gradient(135deg, #450a0a, #000000); display:flex; align-items:center; justify-content:center; padding:20px; text-align:center; color:#fca5a5; font-weight:bold; font-size:18px; font-style:italic; text-shadow:0 2px 8px rgba(0,0,0,0.9); }
+.movie-info { padding:12px; background:#1a1a1a; }
+.movie-tags { display:flex; gap:6px; margin-bottom:8px; flex-wrap:wrap; }
+.movie-tag { background:#7f1d1d; color:#fecaca; font-size:10px; padding:3px 8px; border-radius:4px; font-weight:bold; }
 </style>
+
 
 
 
@@ -1094,11 +1118,58 @@ background-image: none;">
             <div style="font-size:11px; color:#888; margin-top:8px;">(基于聊天进度生成网友随机回答)</div>
         </div>
 
-        <div id="spyZhihuList" class="list-content" style="padding: 15px;">
+                <div id="spyZhihuList" class="list-content" style="padding: 15px;">
             </div>
     </div>
 
+    <div id="scrSpySecret" class="scr-flex spy-secret-bg" style="z-index: 170;">
+        
+        <div id="spySecretLockView" class="spy-secret-lock">
+            <div style="font-size:20px; color:#aaa; font-weight:bold; letter-spacing: 2px;">隐私空间加密访问</div>
+            <div style="font-size:12px; color:#555; margin-top:10px;">请输入四位访问密钥</div>
+            <div class="secret-pin-dots" id="spySecretDots">
+                <div class="secret-pin-dot"></div><div class="secret-pin-dot"></div><div class="secret-pin-dot"></div><div class="secret-pin-dot"></div>
+            </div>
+            <div class="secret-keypad" id="spySecretKeypad">
+                <div class="secret-key">1</div><div class="secret-key">2</div><div class="secret-key">3</div>
+                <div class="secret-key">4</div><div class="secret-key">5</div><div class="secret-key">6</div>
+                <div class="secret-key">7</div><div class="secret-key">8</div><div class="secret-key">9</div>
+                <div style="visibility:hidden;"></div><div class="secret-key">0</div><div class="secret-key" id="btnSecretDel" style="font-size:18px; background:rgba(239, 68, 68, 0.1); color:#ef4444; border-color:rgba(239, 68, 68, 0.3);">退格</div>
+            </div>
+            <div id="btnSpySecretExitLock" style="margin-top:40px; color:#555; cursor:pointer; font-size:14px; text-decoration: underline;">放弃访问并返回</div>
+        </div>
+
+        <div id="spySecretMainView" style="display:none; flex-direction:column; height:100%; width:100%;">
+            <div class="room-header" style="background:#0a0a0a; border-bottom:1px solid #222; color:#fff;">
+                <span id="btnSpySecretBack" class="back-btn" style="color:#ef4444;">＜</span>
+                <span class="header-center" style="color:#ef4444; letter-spacing:3px; font-weight:bold; text-shadow: 0 0 5px rgba(239,68,68,0.5);">S E C R E T</span>
+                <span id="btnEditSpySecret" style="font-size: 14px; color: #666; font-weight: bold; cursor: pointer;">管理</span>
+            </div>
+            
+            <div class="spy-secret-tabs">
+                <div id="tabSecDraft" class="spy-secret-tab active">草稿残骸</div>
+                <div id="tabSecSearch" class="spy-secret-tab">深夜无痕</div>
+                <div id="tabSecBlack" class="spy-secret-tab">黑名单短信</div>
+                <div id="tabSecMovie" class="spy-secret-tab">成人向影片</div>
+            </div>
+
+            <div id="spySecretActions" style="display: none; padding: 10px 20px; background: #1a0505; justify-content: space-between; align-items: center; border-bottom: 1px solid #330000; flex-shrink: 0;">
+                <span id="btnSelAllSpySecret" style="color: #ccc; font-size: 13px; cursor: pointer; font-weight: bold;">全选</span>
+                <span id="btnDelSpySecret" style="color: #ef4444; font-size: 13px; font-weight: bold; cursor: pointer;">彻底销毁</span>
+            </div>
+
+            <div style="padding: 15px; text-align: center; background: #111; box-shadow: 0 4px 15px rgba(0,0,0,0.8); flex-shrink: 0; border-bottom: 1px solid #222;">
+                <button id="btnGenSpySecret" class="save-btn" style="width: auto; padding: 10px 25px; font-size: 14px; border-radius: 25px; background: linear-gradient(135deg, #991b1b, #dc2626); box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3); border:none;">🔥 深度挖掘当前版块</button>
+                <div style="font-size:11px; color:#555; margin-top:8px;">(极度危险：内容基于深层潜意识，请做好心理准备)</div>
+            </div>
+
+            <div id="spySecretList" class="list-content" style="padding: 15px; background:#0a0a0a;">
+                </div>
+        </div>
+    </div>
+
             <div id="scrWallet" class="scr-flex">
+
 
 
 
@@ -1360,14 +1431,15 @@ let pressTimer = null;
 let selEl = null;
 let currentQuote ="";
 function showScreen(showId) {
-    [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrSpace, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet"), $("scrContact"), $("scrSetFont"), $("scrCharPhone"), $("scrSpyDiary"), $("scrSpyZhihu")].forEach(s => { if(s) s.style.display = "none"; });
+    [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrSpace, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet"), $("scrContact"), $("scrSetFont"), $("scrCharPhone"), $("scrSpyDiary"), $("scrSpyZhihu"), $("scrSpySecret")].forEach(s => { if(s) s.style.display = "none"; });
     let target = $(showId);
     if(target) {
-        if(showId === "scrRoom" || showId === "scrList" || showId === "scrSetApi" || showId === "scrSetChat" || showId === "scrWb" || showId === "scrWbEdit" || showId === "scrMe" || showId === "scrCharSticker" || showId === "scrSpace" || showId === "scrLogList" || showId === "scrLogEdit" || showId === "scrFav" || showId === "scrWallet" || showId === "scrContact" || showId === "scrSetFont" || showId === "scrSpyDiary" || showId === "scrSpyZhihu") {
+        if(showId === "scrRoom" || showId === "scrList" || showId === "scrSetApi" || showId === "scrSetChat" || showId === "scrWb" || showId === "scrWbEdit" || showId === "scrMe" || showId === "scrCharSticker" || showId === "scrSpace" || showId === "scrLogList" || showId === "scrLogEdit" || showId === "scrFav" || showId === "scrWallet" || showId === "scrContact" || showId === "scrSetFont" || showId === "scrSpyDiary" || showId === "scrSpyZhihu" || showId === "scrSpySecret") {
             target.style.display = "flex";
         } else if (showId === "scrCharPhone") {
             target.style.display = "flex";
         } else { target.style.display = "block"; }
+
     }
 }
 
