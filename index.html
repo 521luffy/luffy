@@ -5309,18 +5309,38 @@ function renderSpySecret() {
             renderSpySecret();
         };
         
-        let btnConfront = card.querySelector(`.btn-confront`);
+                let btnConfront = card.querySelector(`.btn-confront`);
         if(btnConfront) {
             btnConfront.onclick = (e) => {
                 e.stopPropagation();
-                showScreen(`scrRoom`);
-                let ipt = document.getElementById(`chatInput`);
-                if(ipt) ipt.value = `我刚才看了你的手机，在你的极密空间里发现了这样一段话：\n【${item.content}】\n请你立刻给我解释一下这是什么意思？`;
+                if($(`customConfirmText`)) $(`customConfirmText`).innerText = `【去对峙】功能说明：\n\n点击确定后，系统将带你瞬间传送回与TA的聊天室，并将这条极密记录自动粘贴在你的输入框中。\n\n你可以亲自发给TA，看看TA被抓包后的反应！是否立刻去对峙？`;
+                if($(`customConfirmModal`)) $(`customConfirmModal`).style.display = `flex`;
+                
+                if($(`btnCustomConfirmOk`)) $(`btnCustomConfirmOk`).onclick = () => {
+                    if($(`customConfirmModal`)) $(`customConfirmModal`).style.display = `none`;
+                    
+                    if(typeof currentChatId !== `undefined`) currentChatId = lastSpyCharId;
+                    ls.setItem(`currentChatId`, lastSpyCharId);
+                    if(typeof loadRoom === `function`) loadRoom();
+                    showScreen(`scrRoom`);
+                    
+                    setTimeout(() => {
+                        let ipt = document.getElementById(`msgInput`) || document.getElementById(`chatInput`) || document.querySelector(`textarea`);
+                        if(ipt) {
+                            ipt.value = `【隐私空间记录】：\n${item.content}\n\n`;
+                            ipt.dispatchEvent(new Event(`input`, { bubbles: true }));
+                        }
+                    }, 200);
+                };
+                if($(`btnCustomConfirmCancel`)) $(`btnCustomConfirmCancel`).onclick = () => {
+                    if($(`customConfirmModal`)) $(`customConfirmModal`).style.display = `none`;
+                };
             };
         }
         container.appendChild(card);
     });
 }
+
 
 if($(`btnEditSpySecret`)) $(`btnEditSpySecret`).onclick = () => {
     isSpySecEditMode = !isSpySecEditMode;
@@ -5359,8 +5379,8 @@ if($(`btnDelSpySecret`)) $(`btnDelSpySecret`).onclick = () => {
 };
 
 if($(`btnGenSpySecret`)) $(`btnGenSpySecret`).onclick = async () => {
-    if(currentSecTab !== `draft`) {
-        if(typeof showCustomText === `function`) showCustomText(`当前只开通了【草稿残骸】的深度挖掘功能，其余暗网通道建设中！`);
+    if(currentSecTab !== `draft` && currentSecTab !== `search`) {
+        if(typeof showCustomText === `function`) showCustomText(`当前版块暗网通道建设中，稍后开放！`);
         return;
     }
 
@@ -5368,27 +5388,20 @@ if($(`btnGenSpySecret`)) $(`btnGenSpySecret`).onclick = async () => {
     if(!pxy || !key || !mod) return;
     
     let charId = lastSpyCharId;
-    let cName = originalGetItem.call(ls, `cN_` + charId) || `对方`;
-    let cPrompt = originalGetItem.call(ls, `cAP_` + charId) || ``;
-    let myN = $(`cfgMyName`).value || `我`;
+    let baseSys = getSpyBasePrompt(charId);
     
-    let rawHist = originalGetItem.call(ls, `chatHistory_` + charId);
-    let hist = rawHist ? JSON.parse(rawHist) : [];
-    if(charId === currentChatId) hist = history;
-    let recentChat = hist.slice(-20).map(m => (m.role === `user` ? myN : cName) + `：` + m.content).join(`\n`);
+    let tabDesc = ``;
+    if(currentSecTab === `draft`) {
+        tabDesc = `【当前任务：挖掘草稿残骸】\n生成5条你在聊天框里对我打了又删，最终没发出去的极度私密草稿。\n必须体现你心底最深层的情绪（疯狂、卑微、暴躁、极度吃醋或阴暗面），不用顾忌礼貌。`;
+    } else if(currentSecTab === `search`) {
+        tabDesc = `【当前任务：挖掘深夜无痕搜索记录】\n生成5条你在凌晨两三点独自一人时，偷偷在浏览器无痕模式下搜索的词条记录。\n必须符合你的隐藏XP、特殊癖好、或者是面对当前关系时极度焦虑纠结的阴暗问题。尺度要大，直白露骨。`;
+    }
 
-    let sys = `你现在的身份是：${cName}。
-你的性格设定是：${cPrompt}。
-任务：根据近期聊天记录，生成5条你在聊天框里对我（${myN}）打了又删，最终没发出去的【草稿残骸】。
-严禁自行脑补恋爱关系！严格依据设定刻画关系状态。
-绝不OOC。必须体现你心底最深层的情绪（如疯狂、卑微、暴躁、极度吃醋或阴暗面），不用顾忌礼貌。
-严格禁止使用任何形式的引号符号！
+    let sys = baseSys + `${tabDesc}
+
 必须严格按以下格式输出（条目之间用 --- 分隔）：
 时间：(如 凌晨3:15 或 昨天深夜)
-内容：(极度私密的草稿内容)
-
-【近期聊天记录】：
-${recentChat || '(暂无记录)'}`;
+内容：(具体的草稿内容 或 搜索的关键词条)`;
 
     let origText = $(`btnGenSpySecret`).innerText;
     $(`btnGenSpySecret`).innerText = `深渊挖掘中...`;
@@ -5419,10 +5432,11 @@ ${recentChat || '(暂无记录)'}`;
             });
             
             if(newRecords.length > 0) {
-                spySecretData.draft = spySecretData.draft.concat(newRecords);
+                if(!spySecretData[currentSecTab]) spySecretData[currentSecTab] = [];
+                spySecretData[currentSecTab] = spySecretData[currentSecTab].concat(newRecords);
                 ls.setItem(`spySecret_` + charId, JSON.stringify(spySecretData));
                 renderSpySecret();
-                if(typeof showCustomText === `function`) showCustomText(`成功挖掘到 ${newRecords.length} 条心声残骸！`);
+                if(typeof showCustomText === `function`) showCustomText(`成功挖掘到 ${newRecords.length} 条深渊数据！`);
             } else {
                 if(typeof showCustomText === `function`) showCustomText(`挖掘失败，大模型没有按格式返回。`);
             }
@@ -5432,6 +5446,7 @@ ${recentChat || '(暂无记录)'}`;
     $(`btnGenSpySecret`).innerText = origText;
     $(`btnGenSpySecret`).style.pointerEvents = `auto`;
 };
+
 </script>
 
 
