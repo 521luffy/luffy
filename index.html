@@ -4707,13 +4707,42 @@ if($(`btnSaveWalletPwd`)) $(`btnSaveWalletPwd`).onclick = () =>{
     }
     myWallet.password = pwd;
     ls.setItem(`myWallet`, JSON.stringify(myWallet));
-    alert(`支付密码设置成功！`);
+        alert(`支付密码设置成功！`);
     $(`walletPwdModal`).style.display = `none`;
 };
+
+// ====== 查手机：全局防崩坏指令加载器 ======
+function getSpyBasePrompt(charId) {
+    let cName = originalGetItem.call(ls, `cN_` + charId) || `对方`;
+    let cPrompt = originalGetItem.call(ls, `cAP_` + charId) || ``;
+    let myN = $(`cfgMyName`).value || `我`;
+
+    let rawHist = originalGetItem.call(ls, `chatHistory_` + charId);
+    let hist = rawHist ? JSON.parse(rawHist) : [];
+    if(charId === currentChatId) hist = history;
+    let recentChat = hist.slice(-20).map(m => (m.role === `user` ? myN : cName) + `：` + m.content).join(`\n`);
+
+    return `你现在的身份是：${cName}。
+你的底层性格与背景设定是：${cPrompt}。
+请根据以上设定，以及最近你和${myN}的聊天记录来完成后续的生成任务。
+
+【全局极度重要规则（必须严格遵守）】：
+1. 严禁自行脑补恋爱关系！必须严格依据你的背景设定来刻画你们当前的关系（例如：如果设定是单相思、死对头、普通朋友或正在冷战，内容必须绝对符合这些设定，绝不能默认是情侣）。
+2. 必须完全符合你的性格，绝不OOC。
+3. 严格禁止使用任何形式的引号符号！
+
+【近期聊天记录】：
+${recentChat || '（暂无聊天记录，请严格根据人物设定自由发挥）'}
+
+---
+接下来是你的具体生成任务：
+`;
+}
 
 // ====== 查手机：私密日记系统代码 ======
 let spyDiaryData = [];
 let isSpyDiaryEditMode = false;
+
 let selSpyDiaryItems = new Set();
 
 if($(`btnSpyDiary`)) $(`btnSpyDiary`).onclick = () => {
@@ -4817,33 +4846,20 @@ if($(`btnGenSpyDiary`)) $(`btnGenSpyDiary`).onclick = async () => {
     if(!pxy || !key || !mod) { alert(`请先在主设置中配置好API网络哦！`); return; }
     
     let charId = lastSpyCharId;
-    let cName = originalGetItem.call(ls, `cN_` + charId) || `对方`;
-    let cPrompt = originalGetItem.call(ls, `cAP_` + charId) || ``;
-    let myN = $(`cfgMyName`).value || `我`;
-    
-    let rawHist = originalGetItem.call(ls, `chatHistory_` + charId);
-    let hist = rawHist ? JSON.parse(rawHist) : [];
-    if(charId === currentChatId) hist = history;
-    let recentChat = hist.slice(-20).map(m => (m.role === `user` ? myN : cName) + `：` + m.content).join(`\n`);
     
     let dateStr = updTime().toLocaleString().split(` `)[0];
     if($(`cfgCustomTime`).checked) {
         dateStr = $(`ctYear`).value + `年` + $(`ctMonth`).value + `月` + $(`ctDay`).value + `日`;
     }
     
-    let sys = `你现在的身份是：${cName}。这是你的私密日记本，绝不会给${myN}看到。
-你的底层性格是：${cPrompt}。
-请根据以下最近你和${myN}的聊天记录，写一篇私密日记。
-【极度重要规则】：
-1. 必须完全符合你的性格，不要OOC。面对私密日记时，你应该卸下伪装，袒露最真实的内心或是对${myN}的真实感情。
+    let baseSys = getSpyBasePrompt(charId);
+    let sys = baseSys + `【当前任务：生成私密日记】
+1. 这是你的私密日记本，写下你当前最真实的心理活动，卸下伪装。
 2. 字数严格控制在200-400字左右。
-3. 第一行必须是日期和天气或心情（格式如：${dateStr} 晴 / 阴雨 / 心情烦躁）。从第二行开始写日记正文。
-4. 严格禁止使用任何形式的引号符号！
-    
-【近期聊天记录】：
-${recentChat || '（暂无聊天记录，请根据人设自由发挥）'}`;
+3. 格式要求：第一行必须是日期和天气或心情（格式如：${dateStr} 晴 / 阴雨 / 心情烦躁）。从第二行开始写日记正文。`;
 
     let origText = $(`btnGenSpyDiary`).innerText;
+
     $(`btnGenSpyDiary`).innerText = `TA正在提笔写日记...`;
     $(`btnGenSpyDiary`).style.pointerEvents = `none`;
 
@@ -5025,47 +5041,38 @@ if($(`btnGenSpyZhihu`)) $(`btnGenSpyZhihu`).onclick = async () => {
     if(!pxy || !key || !mod) { alert(`请先在主设置中配置好API网络哦！`); return; }
     
     let targetTab = currentZhTab; 
-    
     let charId = lastSpyCharId;
-    let cName = originalGetItem.call(ls, `cN_` + charId) || `对方`;
-    let cPrompt = originalGetItem.call(ls, `cAP_` + charId) || ``;
-    let myN = $(`cfgMyName`).value || `我`;
     
-    let rawHist = originalGetItem.call(ls, `chatHistory_` + charId);
-    let hist = rawHist ? JSON.parse(rawHist) : [];
-    if(charId === currentChatId) hist = history;
-    let recentChat = hist.slice(-20).map(m => (m.role === `user` ? myN : cName) + `：` + m.content).join(`\n`);
+    // 调用刚刚写好的全局防崩坏基础指令
+    let baseSys = getSpyBasePrompt(charId);
+    
+    // 仅仅获取需要的名字用于匿名生成
+    let cName = originalGetItem.call(ls, `cN_` + charId) || `对方`;
+    let anonName = cName.substring(0, 1) + `某人`;
     
     let tabDesc = ``;
-    let anonName = cName.substring(0, 1) + `某人`;
     if(targetTab === `search`) {
-        tabDesc = `当前版块：【搜索历史】\n任务：根据近期聊天记录，推测你会搜索什么问题。并生成随机网友针对该问题的回答。\n核心要求：回答的网友绝对不知道你们的私事和真实经历！他们只能针对搜索词本身进行客观或主观的回答！`;
+        tabDesc = `【当前任务：生成知乎搜索历史】\n根据上述设定，推测你会搜索什么问题。并生成随机网友针对该问题的回答。\n核心要求：回答的网友绝对不知道你们的私事和真实经历！他们只能针对搜索词本身进行客观或主观的回答！`;
     } else if(targetTab === `fav`) {
-        tabDesc = `当前版块：【收藏夹】\n任务：根据近期聊天记录，推测什么样的别人提的问题和别人的回答会让你产生共鸣并点击收藏。\n核心要求：提问者必须是随机网友！回答者也是随机网友！这是你在看别人的故事，只是内容恰好切中了你的痛点。`;
+        tabDesc = `【当前任务：生成知乎收藏夹记录】\n根据上述设定，推测什么样的别人提的问题和别人的回答会让你产生共鸣并点击收藏。\n核心要求：提问者必须是随机网友！回答者也是随机网友！这是你在看别人的故事，只是内容恰好切中了你的痛点。`;
     } else if(targetTab === `ask`) {
-        tabDesc = `当前版块：【匿名提问】\n任务：根据近期聊天记录，写出你在极度纠结时，匿名发布的极度私密、羞耻或难以启齿的求助问题。\n核心要求：提问者必须是你的匿名ID：${anonName}。网友只能根据你的提问字面意思来出主意或吐槽，网友没有上帝视角！`;
+        tabDesc = `【当前任务：生成知乎匿名提问】\n根据上述设定，写出你在极度纠结时，匿名发布的极度私密、羞耻或难以启齿的求助问题。\n核心要求：提问者必须是你的匿名ID：${anonName}。网友只能根据你的提问字面意思来出主意或吐槽，网友没有上帝视角！`;
     }
 
-    let sys = `你现在的身份是：${cName}。这是你的知乎浏览记录生成任务。
-你的底层性格是：${cPrompt}。
-请根据以下最近你和${myN}的聊天记录，生成10条内容。
-${tabDesc}
+    let sys = baseSys + `${tabDesc}
 
-【极度重要规则】：
+【格式与输出严格要求】：
 1. 必须生成10条记录！每条记录之间必须用 --- 分隔。
 2. 网友没有上帝视角！网友的回答绝对不可以照抄或点明聊天记录里的具体细节，只能基于标题的内容给出符合常理的回答。
 3. 网友的语气必须丰富多样，展现真实的互联网生态（必须混合这几种风格：00后网络流行语玩梗、理中客长篇大论分析、中老年人生导师说教、暴躁老哥直接开骂吐槽、温柔女孩子暖心安慰等）。不要千篇一律的严肃。
-4. 严格禁止使用任何形式的引号符号！
-5. 必须严格按照以下四行格式输出，不要增加任何多余字段：
+4. 必须严格按照以下四行格式输出，不要增加任何多余字段：
 标题：(具体问题或搜索词)
 提问者：(如果是搜索历史，固定写 主动搜索 ；如果是收藏夹，写随机网友昵称；如果是匿名提问，固定写 ${anonName})
 回答者：(随机网友昵称)
-回答：(网友的具体回答，展现多样化风格)
-    
-【近期聊天记录】：
-${recentChat || '（暂无聊天记录，请根据人设自由发挥）'}`;
+回答：(网友的具体回答，展现多样化风格)`;
 
     let origText = $(`btnGenSpyZhihu`).innerText;
+
     $(`btnGenSpyZhihu`).innerText = `正在为你偷取数据...`;
     $(`btnGenSpyZhihu`).style.pointerEvents = `none`;
 
