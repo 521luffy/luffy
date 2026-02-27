@@ -237,7 +237,13 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 .icon-zhihu { background: linear-gradient(135deg, #00c6ff, #0072ff); color: white; font-weight: bold; font-family: serif; }
 .icon-wallet { background: linear-gradient(135deg, #f6d365, #fda085); color: white; }
 .icon-secret { background: linear-gradient(135deg, #434343, #000000); color: white; }
+.icon-call { background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; }
+.icon-memo { background: linear-gradient(135deg, #f7cd46, #f4a21e); color: white; }
+.icon-diary { background: linear-gradient(135deg, #ff9a9e, #fecfef); color: white; }
+.icon-footprint { background: linear-gradient(135deg, #a18cd1, #fbc2eb); color: white; }
+.icon-settings { background: linear-gradient(135deg, #e0eafc, #cfdef3); color: #333; }
 </style>
+
 
 
 
@@ -960,29 +966,36 @@ class=back-btn>＜</span>
     </div>
 </div>
 
-    <div id="scrCharPhone" class="scr-char-phone" style="background-image: url('https://api.dujin.org/bing/1920.php');">
+        <div id="scrCharPhone" class="scr-char-phone" style="background-color: #ffffff; background-image: none;">
         <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.2);backdrop-filter:blur(2px);z-index:1;"></div>
         
-        <div class="char-phone-header">
-            <span id="btnCharPhoneExit" style="cursor:pointer; font-size:18px;">返回</span>
+        <div class="char-phone-header" style="color:#333; text-shadow:none;">
+            <span id="btnCharPhoneExit" style="cursor:pointer; font-size:18px; font-weight:bold;">＜ 返回</span>
             <div class="char-phone-status-bar">
-                <div class="catch-switch-wrapper">
+                <div class="catch-switch-wrapper" style="background:rgba(0,0,0,0.05); color:#333;">
                     <label for="catchSwitch">被抓包</label>
-                    <input type="checkbox" id="catchSwitch" class="catch-switch">
+                    <input type="checkbox" id="catchSwitch" class="catch-switch" style="background:rgba(0,0,0,0.2);">
+                    <span id="btnCatchHelp" style="font-size:12px;width:14px;height:14px;border-radius:50%;background:rgba(0,0,0,0.2);color:white;display:flex;justify-content:center;align-items:center;cursor:pointer;font-weight:bold;margin-left:2px;">?</span>
                 </div>
                 <span>📶</span><span>🔋 85%</span>
             </div>
         </div>
         
         <div class="char-phone-desktop">
+            <div class="char-app-item" id="btnSpyCall"><div class="char-app-icon icon-call" style="font-size:26px;">📞</div><div class="char-app-name">通话记录</div></div>
             <div class="char-app-item" id="btnSpyWechat"><div class="char-app-icon icon-wechat">💬</div><div class="char-app-name">微信</div></div>
             <div class="char-app-item" id="btnSpyAlbum"><div class="char-app-icon icon-album">🖼️</div><div class="char-app-name">相册</div></div>
+            <div class="char-app-item" id="btnSpyMemo"><div class="char-app-icon icon-memo" style="font-size:26px;">📝</div><div class="char-app-name">备忘录</div></div>
+            <div class="char-app-item" id="btnSpyDiary"><div class="char-app-icon icon-diary" style="font-size:26px;">📖</div><div class="char-app-name">日记</div></div>
             <div class="char-app-item" id="btnSpyMusic"><div class="char-app-icon icon-music">🎵</div><div class="char-app-name">网易云</div></div>
             <div class="char-app-item" id="btnSpyZhihu"><div class="char-app-icon icon-zhihu">知</div><div class="char-app-name">知乎</div></div>
+            <div class="char-app-item" id="btnSpyFootprint"><div class="char-app-icon icon-footprint" style="font-size:26px;">📍</div><div class="char-app-name">足迹</div></div>
             <div class="char-app-item" id="btnSpyWallet"><div class="char-app-icon icon-wallet">¥</div><div class="char-app-name">钱包</div></div>
+            <div class="char-app-item" id="btnSpySettings"><div class="char-app-icon icon-settings" style="font-size:26px;">⚙️</div><div class="char-app-name">设置</div></div>
             <div class="char-app-item" id="btnSpySecret"><div class="char-app-icon icon-secret">🔒</div><div class="char-app-name">隐私空间</div></div>
         </div>
     </div>
+
 
             <div id="scrWallet" class="scr-flex">
 
@@ -1568,8 +1581,9 @@ if($(`btnCancelFont`)) $(`btnCancelFont`).onclick = () => showScreen(`scrHome`);
 
 if($("btnHomeSpy")) $("btnHomeSpy").onclick = () => showScreen("scrCharPhone");
 if($("btnCharPhoneExit")) $("btnCharPhoneExit").onclick = () => showScreen("scrHome");
-
+if($("btnCatchHelp")) $("btnCatchHelp").onclick = () => showCustomText("【被抓包功能说明】\n\n开启此开关后，当你退出对方的手机界面时，系统会百分百强制触发对方发来一条抓包质问消息。\n\n满足你的特殊恶趣味体验！");
 if($(`fontSizeSlider`)) {
+
     $(`fontSizeSlider`).oninput = function() { $(`fontSizeVal`).innerText = this.value; };
 
 }
