@@ -5339,22 +5339,23 @@ function renderSpySecret() {
                         showScreen(`scrRoom`);
                     }
                     
-                                        setTimeout(() => {
-                        // 使用 HTML 内联样式，直接渲染出一个暗黑风的极密卡片气泡
-                        let msgText = `<div style="background:#1a1a1a; border-radius:8px; padding:12px; border-left:3px solid #ef4444; box-shadow: 0 4px 10px rgba(0,0,0,0.3); text-align:left; line-height:1.5; min-width: 180px; margin: 5px 0;"><div style="font-size:12px; color:#ef4444; font-weight:bold; margin-bottom:8px; letter-spacing:1px; border-bottom:1px solid #333; padding-bottom:6px;">⚠️ 极密空间截获记录</div><div style="font-size:13px; color:#e5e5e5; white-space:pre-wrap; word-break:break-all;">${item.content}</div></div>`;
+                                                            setTimeout(() => {
+                        // 回退为高亮排版的纯文本格式，避免被聊天框的安全机制转译成乱码代码
+                        let msgText = `🚨 【极密空间截获记录】 🚨\n━━━━━━━━━━━━━━\n${item.content}\n━━━━━━━━━━━━━━`;
                         
                         // 直接强行生成聊天气泡并存入历史记录
-                        if (typeof mkBub === 'function') mkBub(msgText, 'r');
+                        if (typeof mkBub === 'function') mkBub(msgText, `r`);
                         if (typeof history !== 'undefined') {
-                            history.push({role: 'user', content: msgText});
+                            history.push({role: `user`, content: msgText});
                             ls.setItem(`chatHistory`, JSON.stringify(history));
                             if(typeof updateListPreview === 'function') updateListPreview();
                         }
-                        let msgContainer = document.getElementById('msgs');
+                        let msgContainer = document.getElementById(`msgs`);
                         if (msgContainer) msgContainer.scrollTop = msgContainer.scrollHeight;
                     }, 350);
                 };
                 if($(`btnCustomConfirmCancel`)) $(`btnCustomConfirmCancel`).onclick = () => {
+
 
                     if($(`customConfirmModal`)) $(`customConfirmModal`).style.display = `none`;
                 };
