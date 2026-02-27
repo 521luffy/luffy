@@ -5205,9 +5205,20 @@ if($(`btnGenSpyZhihu`)) $(`btnGenSpyZhihu`).onclick = async () => {
     $(`btnGenSpyZhihu`).style.pointerEvents = `auto`;
 };
 
-// ====== 查手机：隐私空间系统与草稿残骸功能 ======
+// ====== 查手机：终极隐形披风与隐私系统 ======
+if(!window.spyHacked) {
+    window.spyHacked = true;
+    if(typeof mkBub === 'function') {
+        let oldMkBub = mkBub;
+        window.mkBub = function(t, r) {
+            if(t && typeof t === 'string') t = t.split('%%%')[0];
+            return oldMkBub(t, r);
+        };
+    }
+}
 let spySecretData = { draft: [], search: [], black: [], movie: [] };
 let currentSecTab = `draft`;
+
 let isSpySecEditMode = false;
 let selSpySecItems = new Set();
 
@@ -5357,15 +5368,12 @@ function renderSpySecret() {
                         showScreen(`scrRoom`);
                     }
                     
-                                                                                setTimeout(() => {
-                        // 视觉上只显示干净的证据卡片
+                                                                                                    setTimeout(() => {
                         let visualText = `🚨 【极密空间截获记录】 🚨\n━━━━━━━━━━━━━━\n${item.content}\n━━━━━━━━━━━━━━`;
-                        // 潜意识里强行塞入性格表现指令
-                        let historyText = visualText + `\n（系统动作与提示：我刚才偷偷查了你的手机，把这条你隐藏在最深处的记录翻出来了！我现在把这个证据砸在你脸上质问你！请你严格根据你的人设性格做出被抓包后的反应。如果你性格高冷淡定，就冷静化解或者满不在乎；如果心虚傲娇，就恼羞成怒。完全遵循你原本的人设行事，不要千篇一律地道歉或反击！）`;
+                        // 加入 %%% 作为隐形分割线，大模型能看见，但屏幕渲染时会被隐形披风抹除
+                        let historyText = visualText + `\n\n%%%（系统动作与提示：我刚才偷偷查了你的手机，把这条你隐藏在极密空间的记录翻出来了，并当面质问你！请你严格根据你的人设性格做出被抓包后的反应。完全遵循你原本的人设行事，不要千篇一律地道歉或反击！）`;
                         
-                        // 生成视觉气泡
-                        if (typeof mkBub === 'function') mkBub(visualText, `r`);
-                        // 存入记忆的则是带有隐形指令的文本
+                        if (typeof mkBub === 'function') mkBub(visualText, `r`); 
                         if (typeof history !== 'undefined') {
                             history.push({role: `user`, content: historyText});
                             ls.setItem(`chatHistory`, JSON.stringify(history));
@@ -5374,6 +5382,7 @@ function renderSpySecret() {
                         let msgContainer = document.getElementById(`msgs`);
                         if (msgContainer) msgContainer.scrollTop = msgContainer.scrollHeight;
                     }, 350);
+
 
                 };
                 if($(`btnCustomConfirmCancel`)) $(`btnCustomConfirmCancel`).onclick = () => {
@@ -5495,6 +5504,43 @@ if($(`btnGenSpySecret`)) $(`btnGenSpySecret`).onclick = async () => {
     $(`btnGenSpySecret`).innerText = origText;
     $(`btnGenSpySecret`).style.pointerEvents = `auto`;
 };
+// ====== 查手机：终极隐形披风附加防线（清理列表与刷新遗留） ======
+if(!window.domObserverHacked) {
+    window.domObserverHacked = true;
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.addedNodes) {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.nodeType === 3 && node.nodeValue.includes('%%%')) {
+                        node.nodeValue = node.nodeValue.split('%%%')[0];
+                    } 
+                    else if (node.nodeType === 1) {
+                        if (node.innerText && node.innerText.includes('%%%')) {
+                            let walk = document.createTreeWalker(node, NodeFilter.SHOW_TEXT, null, false);
+                            let n;
+                            while(n = walk.nextNode()) {
+                                if(n.nodeValue.includes('%%%')) {
+                                    n.nodeValue = n.nodeValue.split('%%%')[0];
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    
+    setTimeout(() => {
+        let walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+        let n;
+        while(n = walk.nextNode()) {
+            if(n.nodeValue.includes('%%%')) {
+                n.nodeValue = n.nodeValue.split('%%%')[0];
+            }
+        }
+    }, 500);
+}
 
 </script>
 
