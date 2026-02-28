@@ -2214,11 +2214,20 @@ async function runMemorySummary(isAuto = false) {
     if(history.length < 2) { if(!isAuto) alert(`聊天记录太少，还不够写总结哦。`); return; }
     
     let pmt = $(`cfgMemPmt`).value;
-    let charName = $(`cfgName`).value || `对方`;
+        let charName = $(`cfgName`).value || `对方`;
     let myName = $(`cfgMyName`).value || `我`;
     pmt = pmt.replace(/\[对方\]/g, charName).replace(/\[我\]/g, myName);
+
+    let npcData = originalGetItem.call(ls, `npcList_` + currentChatId);
+    let npcs = npcData ? JSON.parse(npcData) : [];
+    let npcCtx = npcs.length > 0 ? `\n【关联人物档案】\n` : ``;
+    npcs.forEach(n => {
+        if(n.name) npcCtx += `姓名：${n.name}\n详情：${n.desc || '暂无'}\n`;
+    });
+    if(npcCtx !== `\n【关联人物档案】\n`) pmt += npcCtx;
     
     let sys = `任务：极简总结聊天记录。\n规则：${pmt}\n\n近期对话：\n`;
+
     let trig = parseInt($(`cfgMemTrig`).value) || 20;
     let recent = history.slice(-trig);
     recent.forEach(m => {
@@ -3118,9 +3127,19 @@ $(`btnLemon`).onclick = async () =>{
     if(wbText) sys += wbText + `\n`;
     if($(`cfgName`).value) sys += `你的名字：` + $(`cfgName`).value + `\n`;
     if($(`cfgAiP`).value) sys += `你的设定：` + $(`cfgAiP`).value + `\n`;
-    if($(`cfgMyName`).value) sys += `我的名字：` + $(`cfgMyName`).value + `\n`;
-    if($(`cfgMyP`).value) sys += `我的设定：` + $(`cfgMyP`).value + `\n`;
-                        if($(`cfgCustomTime`).checked) {
+        if($(`cfgMyName`).value) sys += `我的名字：` + $(`cfgMyName`).value + `\n`;
+    if($(`cfgMyP`).value) sys += `我的设定：` + $(`cfgMyP`).value + `\n`; 
+
+    let npcData = originalGetItem.call(ls, `npcList_` + currentChatId);
+    let npcs = npcData ? JSON.parse(npcData) : [];
+    let npcCtx = npcs.length > 0 ? `\n【关联人物档案】\n` : ``;
+    npcs.forEach(n => {
+        if(n.name) npcCtx += `姓名：${n.name}\n详情：${n.desc || '暂无'}\n`;
+    });
+    if(npcCtx !== `\n【关联人物档案】\n`) sys += npcCtx;
+
+    if($(`cfgCustomTime`).checked) { 
+
                 let cy = $(`ctYear`).value, cm = $(`ctMonth`).value, cd = $(`ctDay`).value, ch = $(`ctHour`).value, cmin = $(`ctMinute`).value, cw = $(`ctWeekday`).innerText;
                 sys += `当前设定的时间：` + cy + `年` + cm + `月` + cd + `日 ` + ch + `:` + cmin + ` ` + cw + `，请保持感知。\n`;
             } else if($(`cfgTime`).checked) {
