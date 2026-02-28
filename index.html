@@ -657,18 +657,20 @@ class=back-btn>＜</span>
                     <textarea id=cfgBubbleCss class=textarea-field rows=6 placeholder="请在这里输入正确的气泡css" style="color:black;"></textarea>
                 </div>
             </div>
-                        <div class=section-card>
+                                    <div class=section-card>
                 <div class=flex-row style="justify-content:center;">
                      <div id=btnBlock class=clear-btn style="max-width:200px;">拉黑好友</div>
-
                     <div id=btnDelFriend class=clear-btn style="display:none;">删除好友</div>
                 </div>
                                 <div id=btnClearChat class=clear-btn style=margin-top:10px;>清空当前聊天记录</div>
             </div>
-            <button id=btnSaveChat class=save-btn style="background:#a29bfe;box-shadow:0 4px 10px rgba(162, 155, 254, 0.3);">💾 保存核心配置</button>
+            <div class=flex-row style="margin-top:10px; gap:10px;">
+                <button id=btnCancelChat class=clear-btn style="margin-top:0; padding:15px; font-size:15px; border-radius:12px; background:#f0f2f5; color:#333; border:none;">✖ 取消修改</button>
+                <button id=btnSaveChat class=save-btn style="margin-top:0; flex:2; background:#a29bfe; box-shadow:0 4px 10px rgba(162, 155, 254, 0.3);">💾 保存核心配置</button>
+            </div>
         </div>
-
     </div>
+
     
     <div id=memModal class=modal-base>
         <div class=modal-ctx>
@@ -2405,6 +2407,42 @@ $(`btnCloseMem`).onclick = () =>{ $(`memModal`).style.display = `none`; };
 
 $(`btnGenMem`).onclick = () =>{ runMemorySummary(false); };
 
+window.loadChatSettings = function() {
+    if(ls.getItem(`cN`)) $(`cfgName`).value = ls.getItem(`cN`); else $(`cfgName`).value = '';
+    if(ls.getItem(`cR`)) $(`cfgRem`).value = ls.getItem(`cR`); else $(`cfgRem`).value = '';
+    if(ls.getItem(`cMyN`)) $(`cfgMyName`).value = ls.getItem(`cMyN`); else $(`cfgMyName`).value = '';
+    if(ls.getItem(`cAP`)) $(`cfgAiP`).value = ls.getItem(`cAP`); else $(`cfgAiP`).value = '';
+    if(ls.getItem(`cMP`)) $(`cfgMyP`).value = ls.getItem(`cMP`); else $(`cfgMyP`).value = '';
+    if($(`cfgBubbleCss`)) {
+        if(ls.getItem(`cBubbleCss`)) $(`cfgBubbleCss`).value = ls.getItem(`cBubbleCss`); 
+        else $(`cfgBubbleCss`).value = '';
+    }
+    if(ls.getItem(`cCtx`)) $(`cfgCtx`).value = ls.getItem(`cCtx`); else $(`cfgCtx`).value = 100;
+    
+    $(`cfgTime`).checked = ls.getItem(`cT`) !== `false`;
+    
+    if(ls.getItem(`cCTon`) === `true`) {
+        $(`cfgCustomTime`).checked = true;
+        if($(`customTimePanel`)) $(`customTimePanel`).style.display = `flex`;
+        $(`cfgTime`).checked = false;
+    } else {
+        $(`cfgCustomTime`).checked = false;
+        if($(`customTimePanel`)) $(`customTimePanel`).style.display = `none`;
+    }
+    
+    if(ls.getItem(`cCTy`)) $(`ctYear`).value = ls.getItem(`cCTy`);
+    if(ls.getItem(`cCTm`)) $(`ctMonth`).value = ls.getItem(`cCTm`);
+    if(ls.getItem(`cCTd`)) $(`ctDay`).value = ls.getItem(`cCTd`);
+    if(ls.getItem(`cCTh`)) $(`ctHour`).value = ls.getItem(`cCTh`);
+    if(ls.getItem(`cCTmin`)) $(`ctMinute`).value = ls.getItem(`cCTmin`);
+    if(typeof updateWeekday === 'function') updateWeekday();
+
+    $(`cfgAutoMem`).checked = ls.getItem(`cAMem`) === `true`;
+    if(ls.getItem(`cMemT`)) $(`cfgMemTrig`).value = ls.getItem(`cMemT`); else $(`cfgMemTrig`).value = 10;
+    if(ls.getItem(`cMemP`)) $(`cfgMemPmt`).value = ls.getItem(`cMemP`); 
+    else $(`cfgMemPmt`).value = `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。必须准确写出当前实际参与对话的【具体人物姓名】（包括我、主角色或任何出场的NPC）。`;
+};
+
 $(`btnSaveChat`).onclick = () =>{
     ls.setItem(`cN`, $(`cfgName`).value); ls.setItem(`cR`, $(`cfgRem`).value);
     ls.setItem(`cMyN`, $(`cfgMyName`).value);
@@ -2422,7 +2460,14 @@ $(`btnSaveChat`).onclick = () =>{
     applyVis(); alert(`配置已保存！`); showScreen(`scrRoom`);
 };
 
+if($(`btnCancelChat`)) {
+    $(`btnCancelChat`).onclick = () => {
+        showScreen(`scrRoom`);
+    };
+}
+
 // ==========================================
+
 // ====== 机密图鉴 (NPC社交圈) 底层逻辑 ======
 // ==========================================
 function escapeHtml(str) {
@@ -2582,9 +2627,13 @@ let originalShowScreen_npc = window.showScreen;
 if (originalShowScreen_npc) {
     window.showScreen = function(showId) {
         originalShowScreen_npc(showId);
-        if(showId === `scrSetChat`) renderNpcList();
+        if(showId === `scrSetChat`) {
+            if(typeof loadChatSettings === 'function') loadChatSettings();
+            if(typeof renderNpcList === 'function') renderNpcList();
+        }
     };
 }
+
 
 
 
