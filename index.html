@@ -6124,107 +6124,87 @@ function renderSpyWechat() {
             avatarHtml = `<img src="${matchedNpc.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">`;
         }
         
-        // 核心修复2：如果已读，红点消失
         let badgeHtml = item.isRead ? `` : `<div class="spy-wc-badge">1</div>`;
+        
+        // 兼容新版双向对话和老版单向文本
+        let chatMsgs = item.msgs || [{role: `npc`, content: item.msg}];
+        let lastMsg = chatMsgs[chatMsgs.length - 1].content;
         
         div.innerHTML = `
             <div class="spy-wc-ava">${avatarHtml}${badgeHtml}</div>
             <div class="spy-wc-info">
                 <div class="spy-wc-hdr"><span class="spy-wc-name">${escapeHtml(item.name)}</span><span class="spy-wc-time">${escapeHtml(item.time)}</span></div>
-                <div class="spy-wc-msg">${escapeHtml(item.msg)}</div>
+                <div class="spy-wc-msg">${escapeHtml(lastMsg)}</div>
             </div>
         `;
         
         div.onclick = () => {
-            // 核心修复3：点击后标记已读并保存
             item.isRead = true;
             saveSpyData();
-            
             if(typeof showScreen === 'function') showScreen(`scrSpyWechatDetail`);
             else { $(`scrSpyWechat`).style.display = `none`; $(`scrSpyWechatDetail`).style.display = `flex`; }
-            
             $(`spyWcDetailTitle`).innerText = item.name;
-            $(`spyWcDetailContent`).innerHTML = `
-                <div style="text-align:center;font-size:12px;color:#bbb;margin-bottom:15px;">${escapeHtml(item.time)}</div>
-                <div style="display:flex;margin-bottom:20px;align-items:flex-start;">
-                    <div style="width:40px;height:40px;border-radius:8px;background:#e0e0e0;margin-right:12px;display:flex;justify-content:center;align-items:center;font-size:20px;overflow:hidden;flex-shrink:0;">
-                        ${avatarHtml}
-                    </div>
-                    <div style="background:#fff;padding:12px;border-radius:8px;max-width:70%;color:#111;font-size:15px;line-height:1.5;box-shadow:0 1px 3px rgba(0,0,0,0.05);position:relative;word-wrap:break-word;">
-                        ${escapeHtml(item.msg)}
-                        <div style="position:absolute;left:-6px;top:12px;width:0;height:0;border-top:6px solid transparent;border-bottom:6px solid transparent;border-right:6px solid #fff;"></div>
-                    </div>
-                </div>
-            `;
+            
+            // 构建有来有回的聊天气泡
+            let bubblesHtml = `<div style="text-align:center;font-size:12px;color:#bbb;margin-bottom:15px;">${escapeHtml(item.time)}</div>`;
+            
+            chatMsgs.forEach(m => {
+                if(m.role === `npc`) {
+                    bubblesHtml += `
+                    <div style="display:flex;margin-bottom:20px;align-items:flex-start;">
+                        <div style="width:40px;height:40px;border-radius:8px;background:#e0e0e0;margin-right:12px;display:flex;justify-content:center;align-items:center;font-size:20px;overflow:hidden;flex-shrink:0;">${avatarHtml}</div>
+                        <div style="background:#fff;padding:12px;border-radius:8px;max-width:70%;color:#111;font-size:15px;line-height:1.5;box-shadow:0 1px 3px rgba(0,0,0,0.05);position:relative;word-wrap:break-word;">
+                            ${escapeHtml(m.content)}
+                            <div style="position:absolute;left:-6px;top:12px;width:0;height:0;border-top:6px solid transparent;border-bottom:6px solid transparent;border-right:6px solid #fff;"></div>
+                        </div>
+                    </div>`;
+                } else {
+                    // 主角色视角气泡，绿色且居右
+                    let myAvatarBg = $(`spyCharAvatar`) ? $(`spyCharAvatar`).style.backgroundImage : `none`;
+                    let myAvatarHtml = `👤`;
+                    if(myAvatarBg !== `none` && myAvatarBg !== ``) {
+                        let cleanUrl = myAvatarBg.replace(/^url\(["']?/, '').replace(/["']?\)$/, '');
+                        myAvatarHtml = `<img src="${cleanUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">`;
+                    }
+                    bubblesHtml += `
+                    <div style="display:flex;margin-bottom:20px;align-items:flex-start;justify-content:flex-end;">
+                        <div style="background:#95ec69;padding:12px;border-radius:8px;max-width:70%;color:#111;font-size:15px;line-height:1.5;box-shadow:0 1px 3px rgba(0,0,0,0.05);position:relative;word-wrap:break-word;margin-left:12px;">
+                            ${escapeHtml(m.content)}
+                            <div style="position:absolute;right:-6px;top:12px;width:0;height:0;border-top:6px solid transparent;border-bottom:6px solid transparent;border-left:6px solid #95ec69;"></div>
+                        </div>
+                        <div style="width:40px;height:40px;border-radius:8px;background:#e0e0e0;display:flex;justify-content:center;align-items:center;font-size:20px;overflow:hidden;flex-shrink:0;">${myAvatarHtml}</div>
+                    </div>`;
+                }
+            });
+            
+            $(`spyWcDetailContent`).innerHTML = bubblesHtml;
+            // 点击后自动滚动到最新的一条消息
+            setTimeout(() => { $(`spyWcDetailContent`).scrollTop = $(`spyWcDetailContent`).scrollHeight; }, 50);
         };
         list.appendChild(div);
     });
     $(`spyWcCount`).innerText = unreadCount > 0 ? `(${unreadCount})` : ``;
 }
-async function generateSpyWechat(isAdvance) {
-    let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value;
-    if(!pxy || !key || !mod) { alert(`请先在网络配置里填写API信息哦！`); return; }
 
-    let list = $(`spyWechatList`);
-    list.innerHTML = `<div style="text-align:center; padding:30px; color:#576b95; font-size:14px; animation: pulse 1.5s infinite;">正在破解并提取聊天记录...</div>`;
-    
-    let charN = $(`cfgName`).value || `对方`;
-    let myN = $(`cfgMyName`).value || `我`;
-    let vTime = getVirtualTime();
-    
-    let pmt = `【绝密任务：生成伪造的第三方视角微信列表】\n注意：我正在【偷看】主角色（${charN}）的手机微信！\n请你扮演手机系统，生成5条【其他人】发给【${charN}】的最新未读消息。\n绝对不能是${charN}发出去的，也绝对不能是发给我的！必须是配角发给${charN}的！\n当前时间：${vTime}。\n`;
-    
-    if(isAdvance && spyWechatData.length > 0) {
-        pmt += `要求：请【推进】时间线！结合我们的最新剧情，顺延生成后续回复。上一次别人发给${charN}的消息参考：\n`;
-        spyWechatData.forEach(d => pmt += `${d.name}发送：${d.msg}\n`);
-    } else {
-        pmt += `要求：请【刷新】剧情！结合${charN}的设定与当前剧情，重新捏造5条别人发给${charN}的消息。\n`;
-    }
-
-    let npcData = originalGetItem.call(ls, `npcList_` + currentChatId);
-    let npcs = npcData ? JSON.parse(npcData) : [];
-    if(npcs.length > 0) {
-        pmt += `\n【核心社交圈】（优先从以下人物中挑选发送者，不足则捏造）：\n`;
-        npcs.forEach(n => { if(n.name) pmt += `姓名：${n.name}，详情：${n.desc || '暂无'}\n`; });
-    } else {
-        pmt += `\n请根据${charN}的身份自行捏造5个合理的相关人物。\n`;
-    }
-
-    pmt += `\n严禁废话！必须且只能输出纯JSON数组，格式如下：\n[{"name":"名字","time":"时间","msg":"聊天内容"}]`;
-
-    let specHistStr = originalGetItem.call(ls, `chatHistory_` + currentChatId) || `[]`;
-    let specHist = JSON.parse(specHistStr);
-    if(currentChatId === `default` && typeof history !== 'undefined') specHist = history;
-    let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
-    if(recentChat) pmt = `【近期我与${charN}的真实聊天记录参考】：\n${recentChat}\n\n` + pmt;
-
-    try {
-        let url = pxy.includes(`chat/completions`) ? pxy : pxy.replace(/\/$/, ``) + `/chat/completions`;
-        let res = await fetch(url, {
-            method: `POST`, headers: {Authorization: `Bearer ` + key, "Content-Type": `application/json`},
-            body: JSON.stringify({model: mod, messages: [{role: `user`, content: pmt}], temperature: 0.8})
-        });
-        let dat = await res.json();
-        if(dat.choices && dat.choices.length > 0) {
-            let reply = dat.choices[0].message.content.trim();
-            let cleanRes = reply.replace(/```json/g, '').replace(/```/g, '').trim();
-            try {
-                let parsed = JSON.parse(cleanRes);
-                if(Array.isArray(parsed)) {
-                    spyWechatData = parsed.map(i => ({...i, isRead: false})); 
-                    saveSpyData(); 
-                }
-            } catch(e) {
-                console.error(e);
-                alert(`解析失败，请重试！`);
+// 自动在顶部导航栏注入清空按钮
+setTimeout(() => {
+    let wcHeaderDiv = document.querySelector(`#scrSpyWechat .room-header div`);
+    if(wcHeaderDiv && !document.getElementById(`btnSpyWechatClear`)) {
+        let clearBtn = document.createElement(`span`);
+        clearBtn.id = `btnSpyWechatClear`;
+        clearBtn.style.cssText = `cursor:pointer; color:#ff4d4f; margin-left:10px;`;
+        clearBtn.title = `清空当前角色的所有微信记录`;
+        clearBtn.innerText = `清空`;
+        clearBtn.onclick = () => {
+            if(confirm(`确定要彻底清空当前的微信聊天记录吗？`)) {
+                spyWechatData = [];
+                saveSpyData();
+                renderSpyWechat();
             }
-        }
-    } catch (e) {
-        alert(`请求失败：` + e.message);
+        };
+        wcHeaderDiv.appendChild(clearBtn);
     }
-    renderSpyWechat();
-}
-
+}, 1000);
 
 async function generateSpyWechat(isAdvance) {
     let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value;
@@ -6237,32 +6217,30 @@ async function generateSpyWechat(isAdvance) {
     let myN = $(`cfgMyName`).value || `我`;
     let vTime = getVirtualTime();
     
-    // 核心修改：严防死守第三人称视角
-    let pmt = `【绝密任务：生成伪造的第三方视角微信列表】\n注意：我正在【偷看】主角色（${charN}）的手机微信！\n请你扮演系统，生成5条【其他人】发给【${charN}】的最新未读消息。\n绝对不能是你发给我的！也不能是${charN}发出去的！必须是配角发给${charN}的！\n当前时间：${vTime}。\n`;
+    let pmt = `【绝密任务：生成伪造的第三方视角微信列表】\n注意：我正在偷看主角色（${charN}）的手机微信！\n请扮演手机系统，生成5个联系人与【${charN}】的双向互动聊天记录。\n绝对不能是${charN}和我（${myN}）的聊天！必须是其他配角和${charN}的对话！每段对话要有来有回，最后一条消息必须是配角发给${charN}的（作为未读消息）。\n当前虚拟时间：${vTime}。\n`;
     
     if(isAdvance && spyWechatData.length > 0) {
-        pmt += `要求：请【推进】时间线！结合我们的最新剧情，顺延生成后续回复。上一次别人发给${charN}的消息参考：\n`;
-        spyWechatData.forEach(d => pmt += `${d.name}发送：${d.msg}\n`);
+        pmt += `【核心要求：推进时间线】结合我们的最新剧情往下续写！\n仔细阅读以下已有的聊天记录，并在它们的末尾续写全新的对话内容。\n已有记录：${JSON.stringify(spyWechatData)}\n注意：输出时必须包含原有记录，再把新对话追加在 msgs 数组末尾！\n`;
     } else {
-        pmt += `要求：请【刷新】剧情！结合${charN}的设定与当前剧情，重新捏造5条别人发给${charN}的消息。\n`;
+        pmt += `【核心要求：彻底刷新剧情】结合${charN}的设定与当前剧情，重新捏造5个联系人，并为每个人生成3条左右的双向聊天内容。\n`;
     }
 
     let npcData = originalGetItem.call(ls, `npcList_` + currentChatId);
     let npcs = npcData ? JSON.parse(npcData) : [];
     if(npcs.length > 0) {
-        pmt += `\n【核心社交圈】（优先从以下人物中挑选发送者，不足则捏造）：\n`;
+        pmt += `\n【核心社交圈】（优先从以下人物中挑选联系人，不足则自行捏造。除设定好的NPC外，绝不要随意脑补前任或特定的童年玩伴名字）：\n`;
         npcs.forEach(n => { if(n.name) pmt += `姓名：${n.name}，详情：${n.desc || '暂无'}\n`; });
     } else {
         pmt += `\n请根据${charN}的身份自行捏造5个合理的相关人物。\n`;
     }
 
-    pmt += `\n严禁废话！必须且只能输出纯JSON数组，格式如下：\n[{"name":"名字","time":"时间","msg":"聊天内容"}]`;
+    pmt += `\n严禁废话！必须且只能输出纯JSON数组，格式必须严格如下（msgs数组里的role只能是char代表手机主人，npc代表联系人）：\n[{"name":"联系人名字","time":"最新时间","msgs":[{"role":"char","content":"内容"},{"role":"npc","content":"内容"}]}]`;
 
     let specHistStr = originalGetItem.call(ls, `chatHistory_` + currentChatId) || `[]`;
     let specHist = JSON.parse(specHistStr);
     if(currentChatId === `default` && typeof history !== 'undefined') specHist = history;
     let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
-    if(recentChat) pmt = `【近期我与${charN}的真实聊天记录参考】：\n${recentChat}\n\n` + pmt;
+    if(recentChat) pmt = `【近期我与${charN}的真实聊天记录参考（用于了解${charN}的处境，但微信内绝对不能出现我）】：\n${recentChat}\n\n` + pmt;
 
     try {
         let url = pxy.includes(`chat/completions`) ? pxy : pxy.replace(/\/$/, ``) + `/chat/completions`;
@@ -6277,7 +6255,17 @@ async function generateSpyWechat(isAdvance) {
             try {
                 let parsed = JSON.parse(cleanRes);
                 if(Array.isArray(parsed)) {
-                    spyWechatData = parsed;
+                    spyWechatData = parsed.map(i => {
+                        let msgsArr = i.msgs;
+                        if(!msgsArr) msgsArr = [{role: 'npc', content: i.msg || '暂无消息'}];
+                        return {
+                            name: i.name,
+                            time: i.time,
+                            msgs: msgsArr,
+                            isRead: false
+                        };
+                    });
+                    saveSpyData(); 
                 } else {
                     alert(`生成的格式有误，请再试一次！`);
                 }
@@ -6294,5 +6282,4 @@ async function generateSpyWechat(isAdvance) {
 </script>
 </body>
 </html>
-
 
