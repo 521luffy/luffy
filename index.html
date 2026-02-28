@@ -584,23 +584,62 @@ class=back-btn>＜</span>
 
                         <select id=ctDay class=input-field style="flex:1;padding:6px;font-size:12px;"></select><span style="font-size:12px;color:#666;">日</span>
                     </div>
-                    <div style="display:flex;gap:5px;align-items:center;margin-top:5px;">
+                                        <div style="display:flex;gap:5px;align-items:center;margin-top:5px;">
                         <select id=ctHour class=input-field style="flex:1;padding:6px;font-size:12px;"></select><span style="font-size:12px;color:#666;">时</span>
                         <select id=ctMinute class=input-field style="flex:1;padding:6px;font-size:12px;"></select><span style="font-size:12px;color:#666;">分</span>
                         <span id=ctWeekday style="font-size:12px;color:#fd79a8;font-weight:bold;margin-left:10px;min-width:40px;">星期几</span>
                     </div>
                 </div>
             </div>
+
+            <style>
+            .npc-capsule { display:flex; flex-direction:column; background:#111; border-radius:24px; transition:0.3s; position:relative; overflow:hidden; }
+            .npc-cap-header { display:flex; align-items:center; padding:4px 12px 4px 4px; cursor:pointer; }
+            .npc-cap-avatar { width:26px; height:26px; border-radius:50%; background:#e0e0e0; display:flex; justify-content:center; align-items:center; font-size:16px; margin-right:8px; filter: grayscale(100%) contrast(150%); }
+            .npc-cap-name { font-size:12px; font-weight:bold; color:#fff; white-space:nowrap; }
+            .npc-glow-red { box-shadow: 0 0 12px rgba(239, 68, 68, 0.4); border: 1px solid rgba(239, 68, 68, 0.6); }
+            .npc-glow-blue { box-shadow: 0 0 12px rgba(59, 130, 246, 0.4); border: 1px solid rgba(59, 130, 246, 0.6); }
+            .npc-glow-purple { box-shadow: 0 0 12px rgba(168, 85, 247, 0.4); border: 1px solid rgba(168, 85, 247, 0.6); }
+            .npc-cap-drawer { display:none; background:#1a1a1a; padding:10px; border-top:1px dashed #333; flex-direction:column; gap:8px; }
+            .npc-drawer-input { background:#000; border:1px solid #333; color:#ccc; font-size:12px; padding:6px; border-radius:6px; outline:none; resize:none; }
+            .npc-drawer-btn { font-size:11px; padding:6px; border-radius:6px; font-weight:bold; cursor:pointer; border:none; text-align:center; flex:1; }
+            </style>
+
+            <div class=section-card>
+                <div class=section-title style="color:#fd79a8;display:flex;justify-content:space-between;align-items:center;">
+                    <span>🕸️ 专属社交圈 (机密图鉴)</span>
+                </div>
+                <div style="font-size:11px;color:#888;margin-bottom:5px;">记录主角色的关联配角。点击下方胶囊可像拉开抽屉一样直接修改设定。</div>
+                <div id=npcList style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px;padding-top:5px;">
+                    </div>
+                <div style="background:#f8f9fa;padding:12px;border-radius:12px;border:1px dashed #ddd;display:flex;flex-direction:column;gap:8px;">
+                    <div class=input-group><label>新增机密对象</label><input type=text id=newNpcName class=input-field placeholder="填写NPC姓名或身份" style="padding:8px;"></div>
+                    <div class=input-group>
+                        <label style="display:flex;align-items:center;gap:5px;">
+                            关系底色 
+                            <span onclick="showCustomText('【胶囊微光颜色说明】\n\n🔴 深红色 (高危)：\n代表情敌、死对头、极度危险或具有攻击性的人物。\n\n🔵 幽蓝色 (安全)：\n代表好兄弟、闺蜜、吃瓜群众等安全区角色。\n\n🟣 暗紫色 (羁绊/修罗场)：\n代表前任、青梅竹马、白月光等极易引发修罗场的特殊羁绊。')" style="background:#bbb;color:#fff;width:14px;height:14px;display:flex;justify-content:center;align-items:center;border-radius:50%;font-size:11px;cursor:pointer;font-weight:bold;">?</span>
+                        </label>
+                        <select id=newNpcColor class=input-field style="padding:8px;">
+                            <option value="red">🔴 深红微光 (情敌/死对头/高危)</option>
+                            <option value="blue">🔵 幽蓝微光 (好友/吃瓜群众/安全)</option>
+                            <option value="purple">🟣 暗紫微光 (前任/青梅竹马/羁绊)</option>
+                        </select>
+                    </div>
+                    <button id=btnAddNpc class=save-btn style="margin-top:5px;padding:10px;font-size:13px;background:#333;box-shadow:0 4px 10px rgba(0,0,0,0.2);">➕ 录入机密图鉴</button>
+                </div>
+            </div>
             
             <div class=section-card>
                 <div class=section-title style="color:#fd79a8;">⏳ 长期记忆日记库</div>
+
 
                 <div class=flex-row><label style=font-size:12px;color:#888;font-weight:bold;>开启自动总结</label><input type=checkbox id=cfgAutoMem style=width:20px;height:20px;></div>
                 
                 <div class=input-group><label>触发条数 (对话多少条后自动触发)</label><input type=number id=cfgMemTrig class=input-field value=10 min=5 max=100></div>
                                 <div class=input-group>
                     <label>私人日记极简提示词 (防多耗Token)</label>
-                    <textarea id=cfgMemPmt class=textarea-field rows=4>请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。请使用双方名字（[对方]与[我]）。</textarea>
+                    <textarea id=cfgMemPmt class=textarea-field rows=4>请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。必须准确写出当前实际参与对话的【具体人物姓名】（包括我、主角色或任何出场的NPC）。</textarea>
+
                 </div>
 
                 <div class=flex-row>
@@ -1891,8 +1930,9 @@ function renderContacts() {
             if(aMemVal !== null) $(`cfgAutoMem`).checked = aMemVal === `true`; else $(`cfgAutoMem`).checked = originalGetItem.call(ls, `cAMem`) === `true`;
             let memTVal = originalGetItem.call(ls, `cMemT_` + c.id);
             if(memTVal) $(`cfgMemTrig`).value = memTVal; else $(`cfgMemTrig`).value = originalGetItem.call(ls, `cMemT`) || 10;
-                        let memPVal = originalGetItem.call(ls, `cMemP_` + c.id);
-            if(memPVal) $(`cfgMemPmt`).value = memPVal; else $(`cfgMemPmt`).value = originalGetItem.call(ls, `cMemP`) || `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。请使用双方名字（[对方]与[我]）。`;
+                                    let memPVal = originalGetItem.call(ls, `cMemP_` + c.id);
+            if(memPVal) $(`cfgMemPmt`).value = memPVal; else $(`cfgMemPmt`).value = originalGetItem.call(ls, `cMemP`) || `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。必须准确写出当前实际参与对话的【具体人物姓名】（包括我、主角色或任何出场的NPC）。`;
+
 
 
             history = ls.getItem(`chatHistory`) ? JSON.parse(ls.getItem(`chatHistory`)) : [];
@@ -1934,7 +1974,8 @@ $(`btnListToRoom`).onclick = () => {
     $(`cfgTime`).checked = ls.getItem(`cT`) !== `false`;
     $(`cfgAutoMem`).checked = ls.getItem(`cAMem`) === `true`;
     if(ls.getItem(`cMemT`)) $(`cfgMemTrig`).value = ls.getItem(`cMemT`); else $(`cfgMemTrig`).value = 10;
-        if(ls.getItem(`cMemP`)) $(`cfgMemPmt`).value = ls.getItem(`cMemP`); else $(`cfgMemPmt`).value = `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。请使用双方名字（[对方]与[我]）。`;
+            if(ls.getItem(`cMemP`)) $(`cfgMemPmt`).value = ls.getItem(`cMemP`); else $(`cfgMemPmt`).value = `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。必须准确写出当前实际参与对话的【具体人物姓名】（包括我、主角色或任何出场的NPC）。`;
+
 
 
     history = ls.getItem(`chatHistory`) ? JSON.parse(ls.getItem(`chatHistory`)) : [];
