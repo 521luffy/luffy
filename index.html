@@ -6213,34 +6213,45 @@ async function generateSpyWechat(isAdvance) {
     let list = $(`spyWechatList`);
     list.innerHTML = `<div style="text-align:center; padding:30px; color:#576b95; font-size:14px; animation: pulse 1.5s infinite;">正在破解并提取聊天记录...</div>`;
     
-    let charN = $(`cfgName`).value || `对方`;
+    // 治本核心1：极其严格地抓取当前选中角色的真实姓名，绝不留空
+    let charN = `对方`;
+    let contacts = ls.getItem(`myContacts`) ? JSON.parse(ls.getItem(`myContacts`)) : [];
+    let c = contacts.find(x => String(x.id) === String(currentChatId));
+    if(c) charN = originalGetItem.call(ls, `cN_` + c.id) || c.name;
+    if(currentChatId === `default` && !c) charN = $(`cfgName`).value || `对方`;
+    
+    // 治本核心2：把该角色的专属人设档案直接提取出来
+    let charP = originalGetItem.call(ls, `cP_` + currentChatId) || ``; 
     let myN = $(`cfgMyName`).value || `我`;
     let vTime = getVirtualTime();
     
     let pmt = `【绝密任务：生成伪造的第三方视角微信列表】\n注意：我正在偷看主角色（${charN}）的手机微信！\n请扮演手机系统，生成5个联系人与【${charN}】的双向互动聊天记录。\n绝对不能是${charN}和我（${myN}）的聊天！必须是其他配角和${charN}的对话！每段对话要有来有回，最后一条消息必须是配角发给${charN}的（作为未读消息）。\n当前虚拟时间：${vTime}。\n`;
     
+    if(charP) pmt += `【${charN}的专属人设档案】：${charP}\n`; 
+    
     if(isAdvance && spyWechatData.length > 0) {
         pmt += `【核心要求：推进时间线】结合我们的最新剧情往下续写！\n仔细阅读以下已有的聊天记录，并在它们的末尾续写全新的对话内容。\n已有记录：${JSON.stringify(spyWechatData)}\n注意：输出时必须包含原有记录，再把新对话追加在 msgs 数组末尾！\n`;
     } else {
-        pmt += `【核心要求：彻底刷新剧情】结合${charN}的设定与当前剧情，重新捏造5个联系人，并为每个人生成3条左右的双向聊天内容。\n`;
+        pmt += `【核心要求：彻底刷新剧情】严格依据上述【${charN}的专属人设档案】与当前剧情，重新捏造5个联系人，并为每个人生成3条左右的双向聊天内容。\n`;
     }
 
     let npcData = originalGetItem.call(ls, `npcList_` + currentChatId);
     let npcs = npcData ? JSON.parse(npcData) : [];
     if(npcs.length > 0) {
-        pmt += `\n【核心社交圈】（优先从以下人物中挑选联系人，不足则自行捏造。除设定好的NPC外，绝不要随意脑补前任或特定的童年玩伴名字）：\n`;
+        pmt += `\n【核心社交圈】（优先从以下人物中挑选联系人，不足则自行捏造。必须严格符合${charN}的人物关系）：\n`;
         npcs.forEach(n => { if(n.name) pmt += `姓名：${n.name}，详情：${n.desc || '暂无'}\n`; });
     } else {
-        pmt += `\n请根据${charN}的身份自行捏造5个合理的相关人物。\n`;
+        pmt += `\n请严格根据${charN}的身份自行捏造5个合理的相关人物。\n`;
     }
 
-    pmt += `\n严禁废话！必须且只能输出纯JSON数组，格式必须严格如下（msgs数组里的role只能是char代表手机主人，npc代表联系人）：\n[{"name":"联系人名字","time":"最新时间","msgs":[{"role":"char","content":"内容"},{"role":"npc","content":"内容"}]}]`;
+    pmt += `\n严禁废话！必须且只能输出纯JSON数组，格式必须严格如下（msgs数组里的role只能是char代表手机主人${charN}，npc代表联系人）：\n[{"name":"联系人名字","time":"最新时间","msgs":[{"role":"char","content":"内容"},{"role":"npc","content":"内容"}]}]`;
 
-    let specHistStr = originalGetItem.call(ls, `chatHistory_` + currentChatId) || `[]`;
+
+        let specHistStr = originalGetItem.call(ls, `chatHistory_` + currentChatId) || `[]`;
     let specHist = JSON.parse(specHistStr);
     if(currentChatId === `default` && typeof history !== 'undefined') specHist = history;
     let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
-    if(recentChat) pmt = `【近期我与${charN}的真实聊天记录参考（用于了解${charN}的处境，但微信内绝对不能出现我）】：\n${recentChat}\n\n` + pmt;
+    if(recentChat) pmt = `【近期我与${charN}的真实聊天记录参考（用于了解${charN}的当前处境，但生成的微信内绝对不能出现我（${myN}））：\n${recentChat}\n\n` + pmt;
 
     try {
         let url = pxy.includes(`chat/completions`) ? pxy : pxy.replace(/\/$/, ``) + `/chat/completions`;
@@ -6257,7 +6268,7 @@ async function generateSpyWechat(isAdvance) {
                 if(Array.isArray(parsed)) {
                     spyWechatData = parsed.map(i => {
                         let msgsArr = i.msgs;
-                        if(!msgsArr) msgsArr = [{role: 'npc', content: i.msg || '暂无消息'}];
+                        if(!msgsArr) msgsArr = [{role: `npc`, content: i.msg || `暂无消息`}];
                         return {
                             name: i.name,
                             time: i.time,
@@ -6279,6 +6290,7 @@ async function generateSpyWechat(isAdvance) {
     }
     renderSpyWechat();
 }
+
 </script>
 </body>
 </html>
