@@ -146,7 +146,7 @@ display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 30px
 .sticker-header .title { color: #333; font-weight: bold; font-size: 15px; margin: 0 5px; }
 .sticker-actions { display: flex; gap: 8px; flex-wrap: nowrap; }
 .sticker-search { padding: 8px 15px; background: #f5f6f8; flex-shrink: 0; }
-.sticker-search input { width: 100%; padding: 8px 15px; border: none; border-radius: 20px; background: #fff; outline: none; font-size: 13px; box-sizing: border-box; }
+.sticker-searchinput { width: 100%; padding: 8px 15px; border: none; border-radius: 20px; background: #fff; outline: none; font-size: 13px; box-sizing: border-box; }
 .sticker-grid { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding: 10px; align-content: start; }
 .sticker-item { background: #fff; border-radius: 10px; padding: 6px; display: flex; flex-direction: column; align-items: center; cursor: pointer; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.02); min-width: 0; }
 
@@ -198,7 +198,7 @@ display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 30px
 .log-tab { flex: 1; text-align: center; padding: 10px; border-radius: 12px; font-size: 14px; font-weight: bold; color: #888; cursor: pointer; transition: 0.3s; background: #f0f2f5; }
 .log-tab-active { background: #6c5ce7; color: white; }
 .log-card { background: white; padding: 20px; border-radius: 16px; margin: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 10px; }
-.log-card-time { font-size: 12px; color: #999; }
+.log-card-time { font-size:12px; color: #999; }
 .log-card-content { font-size: 14px; color: #333; line-height: 1.6; }
 .log-placeholder-img { width: 100%; height: 150px; background: #e0e0e0; border-radius: 12px; display: flex; justify-content: center; align-items: center; color: #888; font-size: 13px; border: 1px dashed #ccc; margin-bottom: 10px; }
 .log-real-img { width: 100%; max-height: 200px; object-fit: cover; border-radius: 12px; margin-bottom: 10px; }
@@ -226,7 +226,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 .catch-switch-wrapper label { font-size: 11px; font-weight: bold; cursor: pointer; }
 .catch-switch { appearance: none; width: 26px; height: 14px; background: rgba(255,255,255,0.4); border-radius: 14px; position: relative; cursor: pointer; outline: none; transition: 0.3s; }
 .catch-switch:checked { background: #ff9a9e; }
-.catch-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 10px; height: 10px; background: white; border-radius: 50%; transition: 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+.catch-switch::after { content:''; position: absolute; top: 2px; left: 2px; width: 10px; height: 10px; background: white; border-radius: 50%; transition: 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
 .catch-switch:checked::after { transform: translateX(12px); }
 .char-phone-desktop { flex: 1; padding: 20px 15px; display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: max-content; gap: 20px 15px; z-index: 2; align-content: start; }
 .char-app-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: 0.2s; }
@@ -257,7 +257,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 .spy-diary-content { font-size: 14px; color: #444; line-height: 1.8; text-align: justify; white-space: pre-wrap; }
 .spy-diary-check { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #ccc; display: flex; justify-content: center; align-items: center; margin-right: 15px; flex-shrink: 0; transition: 0.2s; }
 .spy-diary-check.checked { border-color: #ff9a9e; }
-.spy-diary-check.checked::after { content: ''; width: 12px; height: 12px; border-radius: 50%; background: #ff9a9e; }
+.spy-diary-check.checked::after { content:''; width: 12px; height: 12px; border-radius: 50%; background: #ff9a9e; }
 
 /* 查手机-知乎专属样式 */
 .spy-zhihu-tab-container { display: flex; background: #fff; padding: 10px 15px; gap: 10px; border-bottom: 1px solid #eee; flex-shrink: 0; }
@@ -270,7 +270,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 .spy-zh-content { font-size: 13px; color: #334155; line-height: 1.6; text-align: justify; word-break: break-all; white-space: pre-wrap; }
 .spy-zh-check { width: 22px; height: 22px; border-radius: 4px; border: 2px solid #ccc; display: flex; justify-content: center; align-items: center; margin-right: 15px; flex-shrink: 0; transition: 0.2s; }
 .spy-zh-check.checked { border-color: #0066ff; background: #0066ff; }
-.spy-zh-check.checked::after { content: '✓'; color: white; font-size: 14px; font-weight: bold; }
+.spy-zh-check.checked::after { content:'✓'; color: white; font-size: 14px; font-weight: bold; }
 
 /* 查手机-隐私空间专属样式 */
 .spy-secret-bg { background: #111; color: #eee; }
@@ -1424,7 +1424,7 @@ window.showCustomText = function(text) {
     if($(`customTextContent`)) $(`customTextContent`).innerText = text;
     if($(`customTextModal`)) $(`customTextModal`).style.display = `flex`;
 };
-if($(`btnCustomTextClose`)) $(`btnCustomTextClose`).onclick = () => $(`customTextModal`).style.display = `none`;
+if($(`btnCustomTextClose`)) $(`btnCustomTextClose`).onclick = () =>$(`customTextModal`).style.display = `none`;
 
 let lock=$("scrLock"), home=$("scrHome"), list=$("scrList"), room=$("scrRoom"), setApi=$("scrSetApi"), setChat=$("scrSetChat"), scrWb=$("scrWb"), scrWbEdit=$("scrWbEdit"), scrMe=$("scrMe"), scrCharSticker=$("scrCharSticker"), scrSpace=$("scrSpace"), scrLogList=$("scrLogList"), scrLogEdit=$("scrLogEdit");
 let iptMsg=$("iptMsg"), msgs=$("msgs"), modal=$("modal");
@@ -1432,7 +1432,7 @@ let stW=$("stW"), stC=$("stC"), stA=$("stA"), stT=$("stT");
 let ls = localStorage;
 let currentChatId ="default";
 let originalSetItem = ls.setItem;
-let isolatedKeys = ["chatHistory","aiStatus","bgI","aiI","cMP","cN","cR","cAP","cCtx","cT","cAMem","cMemT","cMemP","linkedWb","lastMemCount","memories", "cStatusTxt", "cStatusColor", "cSign", "cBubbleCss"];
+let isolatedKeys = ["chatHistory","aiStatus","bgI","aiI","cMP","cN","cR","cAP","cCtx","cT","cAMem","cMemT","cMemP","linkedWb","lastMemCount","memories","cStatusTxt","cStatusColor","cSign","cBubbleCss"];
 
 ls.setItem = function(key, value) {
     // 全局拦截：只要是存表情包和日志，统统强制扔进大仓库，保护老内存！
@@ -1799,8 +1799,8 @@ if($(`btnHomeFont`)) {
         showScreen(`scrSetFont`);
     };
 }
-if($(`btnSetFontBack`)) $(`btnSetFontBack`).onclick = () => showScreen(`scrHome`);
-if($(`btnCancelFont`)) $(`btnCancelFont`).onclick = () => showScreen(`scrHome`);
+if($(`btnSetFontBack`)) $(`btnSetFontBack`).onclick = () =>showScreen(`scrHome`);
+if($(`btnCancelFont`)) $(`btnCancelFont`).onclick = () =>showScreen(`scrHome`);
 
 let lastSpyCharId = ls.getItem(`lastSpyCharId`) || ``;
 function renderSpyPhone() {
@@ -1858,8 +1858,8 @@ if($("btnHomeSpy")) $("btnHomeSpy").onclick = () => {
     showScreen("scrCharPhone"); renderSpyPhone();
     if(lastSpyCharId) { $("spyCharSelect").value = lastSpyCharId; updateSpyPhoneUI(lastSpyCharId); } else { updateSpyPhoneUI(""); }
 };
-if($("btnCharPhoneExit")) $("btnCharPhoneExit").onclick = () => showScreen("scrHome");
-if($("btnCatchHelp")) $("btnCatchHelp").onclick = () => showCustomText("【被抓包功能说明】\n\n开启此开关后，当你退出对方的手机界面时，系统会百分百强制触发对方发来一条抓包质问消息。\n\n满足你的特殊恶趣味体验！");
+if($("btnCharPhoneExit")) $("btnCharPhoneExit").onclick = () =>showScreen("scrHome");
+if($("btnCatchHelp")) $("btnCatchHelp").onclick = () =>showCustomText("【被抓包功能说明】\n\n开启此开关后，当你退出对方的手机界面时，系统会百分百强制触发对方发来一条抓包质问消息。\n\n满足你的特殊恶趣味体验！");
 if($(`fontSizeSlider`)) {
 
 
@@ -1988,7 +1988,7 @@ $(`btnListToRoom`).onclick = () => {
 };
 if($(`btnAddContact`)) $(`btnAddContact`).onclick = () =>{ $(`addFriendModal`).style.display=`flex`; };
 $(`btnCancelAddFriend`).onclick = () =>{ $(`addFriendModal`).style.display=`none`; $(`newFriendName`).value=``; $(`newFriendPrompt`).value=``; };
-if($(`btnRoleHelp`)) $(`btnRoleHelp`).onclick = () => { showCustomText(`【个性签名规则说明】\n\n1. 新建联系人初始状态是没有个性签名的。\n2. 你需要在聊天室主动对TA提出要求（例如：「你改个个性签名吧」），TA才会生成第一条专属签名。\n3. 在后续的聊天过程中，当TA的情绪、想法或剧情发生明显变化时，TA拥有主动权，会自动为你更新头顶的状态和个性签名！`); };
+if($(`btnRoleHelp`)) $(`btnRoleHelp`).onclick = () =>{ showCustomText(`【个性签名规则说明】\n\n1. 新建联系人初始状态是没有个性签名的。\n2. 你需要在聊天室主动对TA提出要求（例如：「你改个个性签名吧」），TA才会生成第一条专属签名。\n3. 在后续的聊天过程中，当TA的情绪、想法或剧情发生明显变化时，TA拥有主动权，会自动为你更新头顶的状态和个性签名！`); };
 
 $(`btnConfirmAddFriend`).onclick = () =>{
     let n = $(`newFriendName`).value.trim();
@@ -2568,7 +2568,7 @@ window.saveNpc = function(index, e) {
     }
 };
 
-if($(`btnAddNpc`)) $(`btnAddNpc`).onclick = () => {
+if($(`btnAddNpc`)) $(`btnAddNpc`).onclick = () =>{
     let name = $(`newNpcName`).value.trim();
     let color = $(`newNpcColor`).value;
     
@@ -2617,7 +2617,7 @@ window.saveNpc = function(index, e) {
     }
 };
 
-if($(`btnAddNpc`)) $(`btnAddNpc`).onclick = () => {
+if($(`btnAddNpc`)) $(`btnAddNpc`).onclick = () =>{
     let name = $(`newNpcName`).value.trim();
     let color = $(`newNpcColor`).value;
     
@@ -3150,7 +3150,7 @@ let resStickers = await localforage.getItem(`charStickers`);
         localforage.setItem(`charStickers`, ls.getItem(`charStickers`));
     }
 
-if(charStickers.length > 0) {
+if(charStickers.length>0) {
         let names = charStickers.map(x => x.name).join(`、`);
 
         sys += `\n【你的专属表情包库】如果你想发表情配合情绪，请务必在【回复】中插入代码“[发送表情：表情名称]”。当前你拥有的表情名称有：` + names + `。警告：绝对不要捏造列表外的表情！不要发多余的链接！`;
@@ -5168,7 +5168,7 @@ function getSpyBasePrompt(charId) {
 3. 严格禁止使用任何形式的引号符号！
 
 【近期聊天记录】：
-${recentChat || '（暂无聊天记录，请严格根据人物设定自由发挥）'}
+${recentChat ||'（暂无聊天记录，请严格根据人物设定自由发挥）'}
 
 ---
 接下来是你的具体生成任务：
@@ -5181,13 +5181,13 @@ let isSpyDiaryEditMode = false;
 
 let selSpyDiaryItems = new Set();
 
-if($(`btnSpyDiary`)) $(`btnSpyDiary`).onclick = () => {
+if($(`btnSpyDiary`)) $(`btnSpyDiary`).onclick = () =>{
     if(!lastSpyCharId) { alert(`请先在查手机桌面右上角选择要查看的角色哦！`); return; }
     showScreen(`scrSpyDiary`);
     loadSpyDiary();
 };
 
-if($(`btnSpyDiaryBack`)) $(`btnSpyDiaryBack`).onclick = () => {
+if($(`btnSpyDiaryBack`)) $(`btnSpyDiaryBack`).onclick = () =>{
     isSpyDiaryEditMode = false;
     if($(`btnEditSpyDiary`)) $(`btnEditSpyDiary`).innerText = `管理`;
     if($(`spyDiaryActions`)) $(`spyDiaryActions`).style.display = `none`;
@@ -5253,7 +5253,7 @@ function renderSpyDiary() {
     });
 }
 
-if($(`btnEditSpyDiary`)) $(`btnEditSpyDiary`).onclick = () => {
+if($(`btnEditSpyDiary`)) $(`btnEditSpyDiary`).onclick = () =>{
     isSpyDiaryEditMode = !isSpyDiaryEditMode;
     $(`btnEditSpyDiary`).innerText = isSpyDiaryEditMode ? `完成` : `管理`;
     $(`spyDiaryActions`).style.display = isSpyDiaryEditMode ? `flex` : `none`;
@@ -5261,13 +5261,13 @@ if($(`btnEditSpyDiary`)) $(`btnEditSpyDiary`).onclick = () => {
     renderSpyDiary();
 };
 
-if($(`btnSelAllSpyDiary`)) $(`btnSelAllSpyDiary`).onclick = () => {
+if($(`btnSelAllSpyDiary`)) $(`btnSelAllSpyDiary`).onclick = () =>{
     if(selSpyDiaryItems.size === spyDiaryData.length) selSpyDiaryItems.clear();
     else spyDiaryData.forEach((_, i) => selSpyDiaryItems.add(i));
     renderSpyDiary();
 };
 
-if($(`btnDelSpyDiary`)) $(`btnDelSpyDiary`).onclick = () => {
+if($(`btnDelSpyDiary`)) $(`btnDelSpyDiary`).onclick = () =>{
     if(selSpyDiaryItems.size === 0) { alert(`请先选中要撕掉的日记哦！`); return; }
     if(confirm(`确定撕掉这 ` + selSpyDiaryItems.size + ` 页日记吗？（撕掉就找不回来了）`)) {
         spyDiaryData = spyDiaryData.filter((_, i) => !selSpyDiaryItems.has(i));
@@ -5277,7 +5277,7 @@ if($(`btnDelSpyDiary`)) $(`btnDelSpyDiary`).onclick = () => {
     }
 };
 
-if($(`btnGenSpyDiary`)) $(`btnGenSpyDiary`).onclick = async () => {
+if($(`btnGenSpyDiary`)) $(`btnGenSpyDiary`).onclick = async () =>{
     let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value;
     if(!pxy || !key || !mod) { alert(`请先在主设置中配置好API网络哦！`); return; }
     
@@ -5334,13 +5334,13 @@ let currentZhTab = `search`;
 let isSpyZhEditMode = false;
 let selSpyZhItems = new Set();
 
-if($(`btnSpyZhihu`)) $(`btnSpyZhihu`).onclick = () => {
+if($(`btnSpyZhihu`)) $(`btnSpyZhihu`).onclick = () =>{
     if(!lastSpyCharId) { alert(`请先在查手机桌面右上角选择要查看的角色哦！`); return; }
     showScreen(`scrSpyZhihu`);
     loadSpyZhihu();
 };
 
-if($(`btnSpyZhihuBack`)) $(`btnSpyZhihuBack`).onclick = () => {
+if($(`btnSpyZhihuBack`)) $(`btnSpyZhihuBack`).onclick = () =>{
     isSpyZhEditMode = false;
     if($(`btnEditSpyZhihu`)) $(`btnEditSpyZhihu`).innerText = `管理`;
     if($(`spyZhihuActions`)) $(`spyZhihuActions`).style.display = `none`;
@@ -5348,9 +5348,9 @@ if($(`btnSpyZhihuBack`)) $(`btnSpyZhihuBack`).onclick = () => {
     showScreen(`scrCharPhone`);
 };
 
-if($(`tabZhSearch`)) $(`tabZhSearch`).onclick = () => switchZhTab(`search`);
-if($(`tabZhFav`)) $(`tabZhFav`).onclick = () => switchZhTab(`fav`);
-if($(`tabZhAsk`)) $(`tabZhAsk`).onclick = () => switchZhTab(`ask`);
+if($(`tabZhSearch`)) $(`tabZhSearch`).onclick = () =>switchZhTab(`search`);
+if($(`tabZhFav`)) $(`tabZhFav`).onclick = () =>switchZhTab(`fav`);
+if($(`tabZhAsk`)) $(`tabZhAsk`).onclick = () =>switchZhTab(`ask`);
 
 function switchZhTab(tab) {
     currentZhTab = tab;
@@ -5446,7 +5446,7 @@ function renderSpyZhihu() {
 }
 
 
-if($(`btnEditSpyZhihu`)) $(`btnEditSpyZhihu`).onclick = () => {
+if($(`btnEditSpyZhihu`)) $(`btnEditSpyZhihu`).onclick = () =>{
     isSpyZhEditMode = !isSpyZhEditMode;
     $(`btnEditSpyZhihu`).innerText = isSpyZhEditMode ? `完成` : `管理`;
     $(`spyZhihuActions`).style.display = isSpyZhEditMode ? `flex` : `none`;
@@ -5454,14 +5454,14 @@ if($(`btnEditSpyZhihu`)) $(`btnEditSpyZhihu`).onclick = () => {
     renderSpyZhihu();
 };
 
-if($(`btnSelAllSpyZhihu`)) $(`btnSelAllSpyZhihu`).onclick = () => {
+if($(`btnSelAllSpyZhihu`)) $(`btnSelAllSpyZhihu`).onclick = () =>{
     let currentData = spyZhihuData[currentZhTab] || [];
     if(selSpyZhItems.size === currentData.length) selSpyZhItems.clear();
     else currentData.forEach((_, i) => selSpyZhItems.add(i));
     renderSpyZhihu();
 };
 
-if($(`btnDelSpyZhihu`)) $(`btnDelSpyZhihu`).onclick = () => {
+if($(`btnDelSpyZhihu`)) $(`btnDelSpyZhihu`).onclick = () =>{
     if(selSpyZhItems.size === 0) { alert(`请先选中要删除的内容哦！`); return; }
     if(confirm(`确定删除这 ` + selSpyZhItems.size + ` 条记录吗？`)) {
         let currentData = spyZhihuData[currentZhTab] || [];
@@ -5472,7 +5472,7 @@ if($(`btnDelSpyZhihu`)) $(`btnDelSpyZhihu`).onclick = () => {
     }
 };
 
-if($(`btnGenSpyZhihu`)) $(`btnGenSpyZhihu`).onclick = async () => {
+if($(`btnGenSpyZhihu`)) $(`btnGenSpyZhihu`).onclick = async () =>{
     let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value;
     if(!pxy || !key || !mod) { alert(`请先在主设置中配置好API网络哦！`); return; }
     
@@ -5586,7 +5586,7 @@ let currentSecTab = `draft`;
 let isSpySecEditMode = false;
 let selSpySecItems = new Set();
 
-if($(`btnSpySecret`)) $(`btnSpySecret`).onclick = () => {
+if($(`btnSpySecret`)) $(`btnSpySecret`).onclick = () =>{
     if(!lastSpyCharId) { 
         if(typeof showCustomText === `function`) showCustomText(`请先在右上角选择要查看的角色哦！`);
         return; 
@@ -5607,13 +5607,13 @@ if($(`btnSpySecret`)) $(`btnSpySecret`).onclick = () => {
     };
 };
 
-if($(`btnSpySecretExitLock`)) $(`btnSpySecretExitLock`).onclick = () => { showScreen(`scrCharPhone`); };
-if($(`btnSpySecretBack`)) $(`btnSpySecretBack`).onclick = () => { showScreen(`scrCharPhone`); };
+if($(`btnSpySecretExitLock`)) $(`btnSpySecretExitLock`).onclick = () =>{ showScreen(`scrCharPhone`); };
+if($(`btnSpySecretBack`)) $(`btnSpySecretBack`).onclick = () =>{ showScreen(`scrCharPhone`); };
 
-if($(`tabSecDraft`)) $(`tabSecDraft`).onclick = () => switchSecTab(`draft`);
-if($(`tabSecSearch`)) $(`tabSecSearch`).onclick = () => switchSecTab(`search`);
-if($(`tabSecBlack`)) $(`tabSecBlack`).onclick = () => switchSecTab(`black`);
-if($(`tabSecMovie`)) $(`tabSecMovie`).onclick = () => switchSecTab(`movie`);
+if($(`tabSecDraft`)) $(`tabSecDraft`).onclick = () =>switchSecTab(`draft`);
+if($(`tabSecSearch`)) $(`tabSecSearch`).onclick = () =>switchSecTab(`search`);
+if($(`tabSecBlack`)) $(`tabSecBlack`).onclick = () =>switchSecTab(`black`);
+if($(`tabSecMovie`)) $(`tabSecMovie`).onclick = () =>switchSecTab(`movie`);
 
 function switchSecTab(tab) {
     currentSecTab = tab;
@@ -5764,7 +5764,7 @@ function renderSpySecret() {
 
 
 
-if($(`btnEditSpySecret`)) $(`btnEditSpySecret`).onclick = () => {
+if($(`btnEditSpySecret`)) $(`btnEditSpySecret`).onclick = () =>{
     isSpySecEditMode = !isSpySecEditMode;
     $(`btnEditSpySecret`).innerText = isSpySecEditMode ? `完成` : `管理`;
     $(`spySecretActions`).style.display = isSpySecEditMode ? `flex` : `none`;
@@ -5772,14 +5772,14 @@ if($(`btnEditSpySecret`)) $(`btnEditSpySecret`).onclick = () => {
     renderSpySecret();
 };
 
-if($(`btnSelAllSpySecret`)) $(`btnSelAllSpySecret`).onclick = () => {
+if($(`btnSelAllSpySecret`)) $(`btnSelAllSpySecret`).onclick = () =>{
     let currentData = spySecretData[currentSecTab] || [];
     if(selSpySecItems.size === currentData.length) selSpySecItems.clear();
     else currentData.forEach((_, i) => selSpySecItems.add(i));
     renderSpySecret();
 };
 
-if($(`btnDelSpySecret`)) $(`btnDelSpySecret`).onclick = () => {
+if($(`btnDelSpySecret`)) $(`btnDelSpySecret`).onclick = () =>{
     if(selSpySecItems.size === 0) { 
         if(typeof showCustomText === `function`) showCustomText(`请先选中要销毁的内容！`);
         return; 
@@ -5867,7 +5867,7 @@ async function fetchSpySecretData(targetTab) {
 }
 
 // 按钮1：追加挖掘当前版块
-if($(`btnGenSpySecret`)) $(`btnGenSpySecret`).onclick = async () => {
+if($(`btnGenSpySecret`)) $(`btnGenSpySecret`).onclick = async () =>{
     let origText = $(`btnGenSpySecret`).innerText;
     $(`btnGenSpySecret`).innerText = `🔥 正在深度挖掘...`;
     $(`btnGenSpySecret`).style.pointerEvents = `none`;
@@ -5886,7 +5886,7 @@ if($(`btnGenSpySecret`)) $(`btnGenSpySecret`).onclick = async () => {
 };
 
 // 按钮2：刷新重置当前版块
-if($(`btnRegenSpySecret`)) $(`btnRegenSpySecret`).onclick = async () => {
+if($(`btnRegenSpySecret`)) $(`btnRegenSpySecret`).onclick = async () =>{
     let origText = $(`btnRegenSpySecret`).innerText;
     $(`btnRegenSpySecret`).innerText = `✨ 正在刷新...`;
     $(`btnRegenSpySecret`).style.pointerEvents = `none`;
@@ -5910,7 +5910,7 @@ if($(`btnRegenSpySecret`)) $(`btnRegenSpySecret`).onclick = async () => {
 };
 
 // 按钮3：一键重置四大版块
-if($(`btnGenAllSpySecret`)) $(`btnGenAllSpySecret`).onclick = async () => {
+if($(`btnGenAllSpySecret`)) $(`btnGenAllSpySecret`).onclick = async () =>{
     if($(`customConfirmText`)) $(`customConfirmText`).innerText = `【一键重置警告】\n此操作将彻底清空当前所有四大隐私版块的历史数据，并让系统在后台重新生成一套全新的深渊记录。\n\n由于需同时处理大量数据，大概需要几十秒时间，请耐心等待。确认执行吗？`;
     if($(`customConfirmModal`)) $(`customConfirmModal`).style.display = `flex`;
     
