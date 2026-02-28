@@ -576,10 +576,11 @@ class=back-btn>＜</span>
                 <div class=flex-row><label style=font-size:12px;color:#888;font-weight:bold;>开启真实时间感知</label><input type=checkbox id=cfgTime checked style=width:20px;height:20px;></div>
                 
                 <div class=flex-row style="margin-top:5px;"><label style=font-size:12px;color:#888;font-weight:bold;>使用自定义时间</label><input type=checkbox id=cfgCustomTime style=width:20px;height:20px;></div>
-                <div id=customTimePanel style="display:none;flex-direction:column;gap:8px;margin-top:10px;background:#fcfcfc;padding:12px;border-radius:10px;border:1px solid #eee;">
+                                <div id=customTimePanel style="display:none;flex-direction:column;gap:8px;margin-top:10px;background:#fcfcfc;padding:12px;border-radius:10px;border:1px solid #eee;">
                     <div style="display:flex;gap:5px;align-items:center;">
-                        <input type="number" id="ctYear" class="input-field" style="flex:1;padding:6px;font-size:12px;text-align:center;"><span style="font-size:12px;color:#666;">年</span>
+                        <input type="number" id="ctYear" class="input-field" style="width:60px;flex-shrink:0;padding:6px;font-size:12px;text-align:center;"><span style="font-size:12px;color:#666;">年</span>
                         <select id=ctMonth class=input-field style="flex:1;padding:6px;font-size:12px;"></select><span style="font-size:12px;color:#666;">月</span>
+
 
                         <select id=ctDay class=input-field style="flex:1;padding:6px;font-size:12px;"></select><span style="font-size:12px;color:#666;">日</span>
                     </div>
@@ -2197,7 +2198,9 @@ async function runMemorySummary(isAuto = false) {
 }
 
 let isMemEditMode = false;
+let isMemInlineEditMode = false;
 let selMems = new Set();
+
 function renderMemList() {
     let list = $(`memList`);
     list.innerHTML = ``;
@@ -2213,57 +2216,49 @@ function renderMemList() {
         let d = m.date.split(` `)[0]; 
         if(!grouped[d]) grouped[d] = [];
         let cleanTxt = m.content.replace(/^[\s\S]*?(：|:)/, ``).replace(/^[0-9]+[、. *]+/, ``).replace(/\*/g, ``).trim();
-        grouped[d].push({txt: cleanTxt, originalIndex: idx});
+        grouped[d].push({txt: cleanTxt, rawContent: m.content, originalIndex: idx});
     });
     
-    if (!isMemEditMode) {
-        list.innerHTML += `<div style="text-align:center;color:#888;font-size:12px;margin-bottom:10px;">💡 点击任意记忆片段，即可亲自修改内容</div>`;
+    if (isMemInlineEditMode) {
+        list.innerHTML += `<div style="text-align:center;color:#10ac84;font-size:12px;margin-bottom:10px;font-weight:bold;">✍️ 正在原地编辑模式，直接修改下方文本框，点击右上角【保存】即可</div>`;
+    } else if (!isMemEditMode) {
+        list.innerHTML += `<div style="text-align:center;color:#888;font-size:12px;margin-bottom:10px;">💡 点击右上角【编辑】即可修改记忆</div>`;
     }
     
     Object.keys(grouped).reverse().forEach(d => {
         let html = `<div class=stat-card><div class=stat-tag style=background:#6c5ce7;color:white;>${d}</div><div class=stat-txt style=display:flex;flex-direction:column;gap:8px;>`;
         grouped[d].forEach((item, idx) => {
-            let border = (isMemEditMode && selMems.has(item.originalIndex)) ? `border-left:3px solid #ff4d4f;padding-left:5px;` : ``;
-            let clickAction = isMemEditMode ? `toggleMemSel(${item.originalIndex})` : `editMemText(${item.originalIndex})`;
-            html += `<div style="${border}cursor:pointer;padding:4px 0;transition:0.2s;" onclick="${clickAction}"><span style=color:#6c5ce7;font-weight:bold;margin-right:5px;>` + (idx+1) + `.</span>${item.txt}</div>`;
+            if (isMemInlineEditMode) {
+                // 原地变为可编辑的文本框
+                html += `<div style="display:flex;align-items:flex-start;"><span style="color:#6c5ce7;font-weight:bold;margin-right:5px;margin-top:8px;">` + (idx+1) + `.</span><textarea id="inlineMemEdit_${item.originalIndex}" class="textarea-field" style="flex:1;height:70px;font-size:13px;padding:8px;border-color:#ffeaa7;resize:none;">${item.rawContent}</textarea></div>`;
+            } else {
+                let border = (isMemEditMode && selMems.has(item.originalIndex)) ? `border-left:3px solid #ff4d4f;padding-left:5px;` : ``;
+                let clickAction = isMemEditMode ? `toggleMemSel(${item.originalIndex})` : ``;
+                let pointer = isMemEditMode ? `cursor:pointer;` : ``;
+                html += `<div style="${border}${pointer}padding:4px 0;transition:0.2s;" onclick="${clickAction}"><span style=color:#6c5ce7;font-weight:bold;margin-right:5px;>` + (idx+1) + `.</span>${item.txt}</div>`;
+            }
         });
         html += `</div></div>`;
         list.innerHTML += html;
     });
 }
+
 window.toggleMemSel = idx =>{
     if(!isMemEditMode) return;
     if(selMems.has(idx)) selMems.delete(idx); else selMems.add(idx);
     renderMemList();
 };
-window.editMemText = function(idx) {
-    if(isMemEditMode) return;
-    let mems = ls.getItem(`memories`) ? JSON.parse(ls.getItem(`memories`)) : [];
-    if(!mems[idx]) return;
-    
-    let overlay = document.createElement(`div`);
-    overlay.className = `modal-base`;
-    overlay.style.display = `flex`;
-    overlay.style.zIndex = `300`;
-    overlay.innerHTML = `<div class=modal-ctx><div class=modal-hdr><span>亲自剪辑记忆</span></div><div class=modal-bdy style=padding:15px;><textarea id=tmpEditMemText class=textarea-field style=height:150px;width:100%;box-sizing:border-box;></textarea><div class=flex-row style=margin-top:15px;><button id=tmpCancelEditMem class=clear-btn style=background:#f0f2f5;color:#333;border:none;>取消</button><button id=tmpSaveEditMem class=save-btn style=margin-top:0;flex:1;margin-left:10px;>保存修改</button></div></div></div>`;
-    document.body.appendChild(overlay);
-    
-    document.getElementById(`tmpEditMemText`).value = mems[idx].content;
-    document.getElementById(`tmpCancelEditMem`).onclick = () => overlay.remove();
-    document.getElementById(`tmpSaveEditMem`).onclick = () => {
-        let n = document.getElementById(`tmpEditMemText`).value.trim();
-        if(n) {
-            mems[idx].content = n;
-            ls.setItem(`memories`, JSON.stringify(mems));
-            renderMemList();
-        }
-        overlay.remove();
-    };
-};
 
 $(`btnViewMem`).onclick = () =>{
     if(!$(`memActions`)) {
         let hdr = $(`memModal`).querySelector(`.modal-hdr`);
+        
+        let inlineBtn = document.createElement(`span`);
+        inlineBtn.id = `btnInlineEditMem`;
+        inlineBtn.innerText = `编辑`;
+        inlineBtn.style.cssText = `cursor:pointer;font-size:14px;color:#ff9f43;margin-right:15px;`;
+        hdr.insertBefore(inlineBtn, $(`btnCloseMem`));
+
         let editBtn = document.createElement(`span`);
         editBtn.id = `btnEditMem`;
         editBtn.innerText = `管理`;
@@ -2276,18 +2271,54 @@ $(`btnViewMem`).onclick = () =>{
         actions.innerHTML = `<span id=btnSelAllMem style="color:#333;font-size:13px;cursor:pointer;font-weight:bold;">全选</span><span id=btnDelMem style="color:#ff7675;font-size:13px;font-weight:bold;cursor:pointer;">删除选中</span>`;
         $(`memModal`).querySelector(`.modal-ctx`).insertBefore(actions, $(`memList`));
         
+        // 全新的丝滑“原地打字”保存逻辑
+        $(`btnInlineEditMem`).onclick = () => {
+            if (isMemEditMode) {
+                isMemEditMode = false;
+                $(`btnEditMem`).innerText = `管理`;
+                $(`memActions`).style.display = `none`;
+                selMems.clear();
+            }
+            if (!isMemInlineEditMode) {
+                isMemInlineEditMode = true;
+                $(`btnInlineEditMem`).innerText = `保存`;
+                $(`btnInlineEditMem`).style.color = `#10ac84`; // 变绿色提示保存
+                renderMemList();
+            } else {
+                let mems = ls.getItem(`memories`) ? JSON.parse(ls.getItem(`memories`)) : [];
+                mems.forEach((m, i) => {
+                    let ta = document.getElementById(`inlineMemEdit_${i}`);
+                    if(ta) {
+                        m.content = ta.value.trim() || m.content;
+                    }
+                });
+                ls.setItem(`memories`, JSON.stringify(mems));
+                isMemInlineEditMode = false;
+                $(`btnInlineEditMem`).innerText = `编辑`;
+                $(`btnInlineEditMem`).style.color = `#ff9f43`; // 变回橘色
+                renderMemList();
+            }
+        };
+        
         $(`btnEditMem`).onclick = () => {
+            if (isMemInlineEditMode) {
+                isMemInlineEditMode = false;
+                $(`btnInlineEditMem`).innerText = `编辑`;
+                $(`btnInlineEditMem`).style.color = `#ff9f43`;
+            }
             isMemEditMode = !isMemEditMode;
             $(`btnEditMem`).innerText = isMemEditMode ? `完成` : `管理`;
             if(!isMemEditMode) selMems.clear();
             renderMemList();
         };
+        
         $(`btnSelAllMem`).onclick = () => {
             let mems = ls.getItem(`memories`) ? JSON.parse(ls.getItem(`memories`)) : [];
             if(selMems.size === mems.length) selMems.clear();
             else mems.forEach((_, i) => selMems.add(i));
             renderMemList();
         };
+        
         $(`btnDelMem`).onclick = () => {
             if(selMems.size === 0) { alert(`请先选中要删除的记忆！`); return; }
             if(confirm(`确定删除这 ` + selMems.size + ` 条记忆吗？`)) {
@@ -2300,12 +2331,18 @@ $(`btnViewMem`).onclick = () =>{
         };
     }
     isMemEditMode = false;
+    isMemInlineEditMode = false;
     if($(`btnEditMem`)) $(`btnEditMem`).innerText = `管理`;
+    if($(`btnInlineEditMem`)) {
+        $(`btnInlineEditMem`).innerText = `编辑`;
+        $(`btnInlineEditMem`).style.color = `#ff9f43`;
+    }
     selMems.clear();
     renderMemList();
     $(`memModal`).style.display = `flex`;
 };
 $(`btnCloseMem`).onclick = () =>{ $(`memModal`).style.display = `none`; };
+
 
 $(`btnGenMem`).onclick = () =>{ runMemorySummary(false); };
 
