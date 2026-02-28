@@ -1850,24 +1850,46 @@ function renderSpyPhone() {
         let name = originalGetItem.call(ls, `cN_` + c.id) || c.name;
         sel.add(new Option(name, c.id));
     });
+    
+    // 核心改造1：下拉框选中后直接切换角色，并且同步大脑ID
+    sel.onchange = function() {
+        let charId = this.value;
+        if(charId) {
+            ls.setItem(`lastSpyCharId`, charId);
+            lastSpyCharId = charId;
+            currentChatId = charId; // 就是这句！彻底解决串戏和旧数据阴魂不散的Bug
+            updateSpyPhoneUI(charId);
+        } else {
+            updateSpyPhoneUI("");
+        }
+    };
 }
 function updateSpyPhoneUI(charId) {
     if(!charId) {
-        if($("spyCharAvatar")) { $("spyCharAvatar").style.backgroundImage = "none"; $("spyCharAvatar").innerHTML = `<div style="filter:grayscale(100%); width:100%; height:100%; display:flex; justify-content:center; align-items:center; font-size:35px; border-radius:50%; background:#f0f2f5;">👤</div>`; }
-        if($("spyCharName")) { $("spyCharName").innerText = "未选择角色"; $("spyCharName").style.color = "#999"; }
+        if($("spyCharAvatar")) { $("spyCharAvatar").style.backgroundImage = "none";
+        $("spyCharAvatar").innerHTML = `<div style="filter:grayscale(100%); width:100%; height:100%; display:flex; justify-content:center; align-items:center; font-size:35px; border-radius:50%; background:#f0f2f5;">👤</div>`;
+        }
+        if($("spyCharName")) { $("spyCharName").innerText = "未选择角色"; $("spyCharName").style.color = "#999";
+        }
     } else {
         let charName = "未知角色";
         let contacts = ls.getItem(`myContacts`) ? JSON.parse(ls.getItem(`myContacts`)) : [];
         let c = contacts.find(x => String(x.id) === String(charId));
         if(c) charName = originalGetItem.call(ls, `cN_` + c.id) || c.name;
+
         let isoAiA = originalGetItem.call(ls, `aiI_` + charId);
         if($("spyCharAvatar")) {
-            if(isoAiA) { $("spyCharAvatar").style.backgroundImage = `url(${isoAiA})`; $("spyCharAvatar").innerText = ""; }
-            else { $("spyCharAvatar").style.backgroundImage = "none"; $("spyCharAvatar").innerHTML = `<div style="width:100%; height:100%; display:flex; justify-content:center; align-items:center; font-size:35px;">👤</div>`; }
+            if(isoAiA) { $("spyCharAvatar").style.backgroundImage = `url(${isoAiA})`;
+            $("spyCharAvatar").innerText = ""; }
+            else { $("spyCharAvatar").style.backgroundImage = "none";
+            $("spyCharAvatar").innerHTML = `<div style="width:100%; height:100%; display:flex; justify-content:center; align-items:center; font-size:35px;">👤</div>`; }
         }
-        if($("spyCharName")) { $("spyCharName").innerText = charName; $("spyCharName").style.color = "#333"; }
+        if($("spyCharName")) { $("spyCharName").innerText = charName;
+        $("spyCharName").style.color = "#333"; }
     }
 }
+
+// 核心改造2：右上角刷新按钮变为一键清空重置键
 if($("btnSpyRefresh")) $("btnSpyRefresh").onclick = function(e) {
     e.stopPropagation();
     let charId = $("spyCharSelect").value;
@@ -1878,14 +1900,16 @@ if($("btnSpyRefresh")) $("btnSpyRefresh").onclick = function(e) {
     let c = contacts.find(x => String(x.id) === String(charId));
     if(c) charName = originalGetItem.call(ls, `cN_` + c.id) || c.name;
 
-    $("customConfirmText").innerText = `确定要为（${charName}）重新生成手机里所有内容吗？`;
+    $("customConfirmText").innerText = `确定要清空并重置（${charName}）的手机记录吗？\n此操作将彻底删除该角色的所有查手机隐私数据！`;
     $("customConfirmModal").style.display = "flex";
     
     $("btnCustomConfirmOk").onclick = () => {
         $("customConfirmModal").style.display = "none";
-        ls.setItem(`lastSpyCharId`, charId); lastSpyCharId = charId;
-        updateSpyPhoneUI(charId); 
-        alert("数据已刷新并生成！");
+        
+        // 执行清空操作
+        originalRemoveItem.call(ls, `spyWc_` + charId);
+        
+        alert("该角色的所有查手机记录已彻底清空！你可以重新生成盲盒了。");
     };
     $("btnCustomConfirmCancel").onclick = () => {
         $("customConfirmModal").style.display = "none";
@@ -1894,8 +1918,13 @@ if($("btnSpyRefresh")) $("btnSpyRefresh").onclick = function(e) {
 
 if($("btnHomeSpy")) $("btnHomeSpy").onclick = () => { 
     showScreen("scrCharPhone"); renderSpyPhone();
-    if(lastSpyCharId) { $("spyCharSelect").value = lastSpyCharId; updateSpyPhoneUI(lastSpyCharId); } else { updateSpyPhoneUI(""); }
+    if(lastSpyCharId) { 
+        $("spyCharSelect").value = lastSpyCharId; 
+        currentChatId = lastSpyCharId; // 进入时也要同步一次大脑ID
+        updateSpyPhoneUI(lastSpyCharId);
+    } else { updateSpyPhoneUI(""); }
 };
+
 if($("btnCharPhoneExit")) $("btnCharPhoneExit").onclick = () => showScreen("scrHome");
 if($("btnCatchHelp")) $("btnCatchHelp").onclick = () => showCustomText("【被抓包功能说明】\n\n开启此开关后，当你退出对方的手机界面时，系统会百分百强制触发对方发来一条抓包质问消息。\n\n满足你的特殊恶趣味体验！");
 if($(`fontSizeSlider`)) {
