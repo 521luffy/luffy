@@ -2452,7 +2452,6 @@ function renderNpcList() {
         let avatarContent = npc.avatar ? `<img src="${npc.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : `👤`;
         let avatarStyle = npc.avatar ? `background:transparent; filter:none; border:1px solid rgba(255,255,255,0.2);` : ``;
         
-        // 过滤危险字符并限制名字显示长度，防止胶囊撑爆
         let safeName = escapeHtml(npc.name || ``);
         let displayCapName = safeName.length > 8 ? safeName.substring(0, 8) + `...` : safeName;
         
@@ -2482,7 +2481,7 @@ function renderNpcList() {
 }
 // 全新的更换头像逻辑 (带自动画质压缩，防止撑爆本地存储)
 window.uploadNpcAvatar = function(index, e) {
-    if(e) e.stopPropagation(); // 绝对拦截，防止点击头像时触发抽屉展开
+    if(e) e.stopPropagation(); 
     let input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
@@ -2493,10 +2492,9 @@ window.uploadNpcAvatar = function(index, e) {
             reader.onload = res => {
                 let img = new Image();
                 img.onload = () => {
-                    // 创建 Canvas 进行等比例缩放压缩
                     let canvas = document.createElement('canvas');
                     let ctx = canvas.getContext('2d');
-                    let maxSize = 150; // 头像不需要太大，150px足够高清且极其省空间
+                    let maxSize = 150; 
                     let width = img.width;
                     let height = img.height;
                     
@@ -2515,7 +2513,6 @@ window.uploadNpcAvatar = function(index, e) {
                     canvas.height = height;
                     ctx.drawImage(img, 0, 0, width, height);
                     
-                    // 压缩为带白底的jpeg格式（质量0.8），极大降低体积
                     let compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
                     
                     let npcData = originalGetItem.call(ls, `npcList_` + currentChatId);
@@ -2554,7 +2551,7 @@ window.delNpc = function(index, e) {
 window.saveNpc = function(index, e) {
     if(e) e.stopPropagation();
     let newName = $(`editNpcName_${index}`).value.trim();
-    let newDesc = $(`editNpcDesc_${index}`).value.trim(); // 获取分离的长设定
+    let newDesc = $(`editNpcDesc_${index}`).value.trim(); 
     
     if(!newName) {
         if(typeof showCustomText === `function`) showCustomText(`机密代号/姓名不能为空哦！`);
@@ -2564,7 +2561,7 @@ window.saveNpc = function(index, e) {
     let npcs = npcData ? JSON.parse(npcData) : [];
     if(npcs[index]) {
         npcs[index].name = newName;
-        npcs[index].desc = newDesc; // 单独保存长设定
+        npcs[index].desc = newDesc; 
         originalSetItem.call(ls, `npcList_` + currentChatId, JSON.stringify(npcs));
         renderNpcList();
         if(typeof showCustomText === `function`) showCustomText(`机密对象【${newName}】的情报已更新并收起！`);
@@ -2583,7 +2580,6 @@ if($(`btnAddNpc`)) $(`btnAddNpc`).onclick = () => {
     let npcData = originalGetItem.call(ls, `npcList_` + currentChatId);
     let npcs = npcData ? JSON.parse(npcData) : [];
     
-    // desc 字段初始化为空
     npcs.push({ name: name, desc: ``, color: color }); 
     originalSetItem.call(ls, `npcList_` + currentChatId, JSON.stringify(npcs));
     
@@ -2599,6 +2595,7 @@ if (originalShowScreen_npc) {
         if(showId === `scrSetChat`) renderNpcList();
     };
 }
+
 
 
 // 全新的更换头像逻辑
