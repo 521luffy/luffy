@@ -146,7 +146,7 @@ display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 30px
 .sticker-header .title { color: #333; font-weight: bold; font-size: 15px; margin: 0 5px; }
 .sticker-actions { display: flex; gap: 8px; flex-wrap: nowrap; }
 .sticker-search { padding: 8px 15px; background: #f5f6f8; flex-shrink: 0; }
-.sticker-searchinput { width: 100%; padding: 8px 15px; border: none; border-radius: 20px; background: #fff; outline: none; font-size: 13px; box-sizing: border-box; }
+.sticker-search input { width: 100%; padding: 8px 15px; border: none; border-radius: 20px; background: #fff; outline: none; font-size: 13px; box-sizing: border-box; }
 .sticker-grid { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding: 10px; align-content: start; }
 .sticker-item { background: #fff; border-radius: 10px; padding: 6px; display: flex; flex-direction: column; align-items: center; cursor: pointer; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.02); min-width: 0; }
 
@@ -198,7 +198,7 @@ display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 30px
 .log-tab { flex: 1; text-align: center; padding: 10px; border-radius: 12px; font-size: 14px; font-weight: bold; color: #888; cursor: pointer; transition: 0.3s; background: #f0f2f5; }
 .log-tab-active { background: #6c5ce7; color: white; }
 .log-card { background: white; padding: 20px; border-radius: 16px; margin: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 10px; }
-.log-card-time { font-size:12px; color: #999; }
+.log-card-time { font-size: 12px; color: #999; }
 .log-card-content { font-size: 14px; color: #333; line-height: 1.6; }
 .log-placeholder-img { width: 100%; height: 150px; background: #e0e0e0; border-radius: 12px; display: flex; justify-content: center; align-items: center; color: #888; font-size: 13px; border: 1px dashed #ccc; margin-bottom: 10px; }
 .log-real-img { width: 100%; max-height: 200px; object-fit: cover; border-radius: 12px; margin-bottom: 10px; }
@@ -226,7 +226,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 .catch-switch-wrapper label { font-size: 11px; font-weight: bold; cursor: pointer; }
 .catch-switch { appearance: none; width: 26px; height: 14px; background: rgba(255,255,255,0.4); border-radius: 14px; position: relative; cursor: pointer; outline: none; transition: 0.3s; }
 .catch-switch:checked { background: #ff9a9e; }
-.catch-switch::after { content:''; position: absolute; top: 2px; left: 2px; width: 10px; height: 10px; background: white; border-radius: 50%; transition: 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+.catch-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 10px; height: 10px; background: white; border-radius: 50%; transition: 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
 .catch-switch:checked::after { transform: translateX(12px); }
 .char-phone-desktop { flex: 1; padding: 20px 15px; display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: max-content; gap: 20px 15px; z-index: 2; align-content: start; }
 .char-app-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: 0.2s; }
@@ -257,7 +257,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 .spy-diary-content { font-size: 14px; color: #444; line-height: 1.8; text-align: justify; white-space: pre-wrap; }
 .spy-diary-check { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #ccc; display: flex; justify-content: center; align-items: center; margin-right: 15px; flex-shrink: 0; transition: 0.2s; }
 .spy-diary-check.checked { border-color: #ff9a9e; }
-.spy-diary-check.checked::after { content:''; width: 12px; height: 12px; border-radius: 50%; background: #ff9a9e; }
+.spy-diary-check.checked::after { content: ''; width: 12px; height: 12px; border-radius: 50%; background: #ff9a9e; }
 
 /* 查手机-知乎专属样式 */
 .spy-zhihu-tab-container { display: flex; background: #fff; padding: 10px 15px; gap: 10px; border-bottom: 1px solid #eee; flex-shrink: 0; }
@@ -270,7 +270,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 .spy-zh-content { font-size: 13px; color: #334155; line-height: 1.6; text-align: justify; word-break: break-all; white-space: pre-wrap; }
 .spy-zh-check { width: 22px; height: 22px; border-radius: 4px; border: 2px solid #ccc; display: flex; justify-content: center; align-items: center; margin-right: 15px; flex-shrink: 0; transition: 0.2s; }
 .spy-zh-check.checked { border-color: #0066ff; background: #0066ff; }
-.spy-zh-check.checked::after { content:'✓'; color: white; font-size: 14px; font-weight: bold; }
+.spy-zh-check.checked::after { content: '✓'; color: white; font-size: 14px; font-weight: bold; }
 
 /* 查手机-隐私空间专属样式 */
 .spy-secret-bg { background: #111; color: #eee; }
@@ -584,54 +584,16 @@ class=back-btn>＜</span>
 
                         <select id=ctDay class=input-field style="flex:1;padding:6px;font-size:12px;"></select><span style="font-size:12px;color:#666;">日</span>
                     </div>
-                                        <div style="display:flex;gap:5px;align-items:center;margin-top:5px;">
+                    <div style="display:flex;gap:5px;align-items:center;margin-top:5px;">
                         <select id=ctHour class=input-field style="flex:1;padding:6px;font-size:12px;"></select><span style="font-size:12px;color:#666;">时</span>
                         <select id=ctMinute class=input-field style="flex:1;padding:6px;font-size:12px;"></select><span style="font-size:12px;color:#666;">分</span>
                         <span id=ctWeekday style="font-size:12px;color:#fd79a8;font-weight:bold;margin-left:10px;min-width:40px;">星期几</span>
                     </div>
                 </div>
             </div>
-
-            <style>
-            .npc-capsule { display:flex; flex-direction:column; background:#111; border-radius:24px; transition:0.3s; position:relative; overflow:hidden; }
-            .npc-cap-header { display:flex; align-items:center; padding:4px 12px 4px 4px; cursor:pointer; }
-            .npc-cap-avatar { width:26px; height:26px; border-radius:50%; background:#e0e0e0; display:flex; justify-content:center; align-items:center; font-size:16px; margin-right:8px; filter: grayscale(100%) contrast(150%); }
-            .npc-cap-name { font-size:12px; font-weight:bold; color:#fff; white-space:nowrap; }
-            .npc-glow-red { box-shadow: 0 0 12px rgba(239, 68, 68, 0.4); border: 1px solid rgba(239, 68, 68, 0.6); }
-            .npc-glow-blue { box-shadow: 0 0 12px rgba(59, 130, 246, 0.4); border: 1px solid rgba(59, 130, 246, 0.6); }
-            .npc-glow-purple { box-shadow: 0 0 12px rgba(168, 85, 247, 0.4); border: 1px solid rgba(168, 85, 247, 0.6); }
-            .npc-cap-drawer { display:none; background:#1a1a1a; padding:10px; border-top:1px dashed #333; flex-direction:column; gap:8px; }
-            .npc-drawer-input { background:#000; border:1px solid #333; color:#ccc; font-size:12px; padding:6px; border-radius:6px; outline:none; resize:none; }
-            .npc-drawer-btn { font-size:11px; padding:6px; border-radius:6px; font-weight:bold; cursor:pointer; border:none; text-align:center; flex:1; }
-            </style>
-
-            <div class=section-card>
-                <div class=section-title style="color:#fd79a8;display:flex;justify-content:space-between;align-items:center;">
-                    <span>🕸️ 专属社交圈 (机密图鉴)</span>
-                </div>
-                <div style="font-size:11px;color:#888;margin-bottom:5px;">记录主角色的关联配角。点击下方胶囊可像拉开抽屉一样直接修改设定。</div>
-                <div id=npcList style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px;padding-top:5px;">
-                    </div>
-                <div style="background:#f8f9fa;padding:12px;border-radius:12px;border:1px dashed #ddd;display:flex;flex-direction:column;gap:8px;">
-                    <div class=input-group><label>新增机密对象</label><input type=text id=newNpcName class=input-field placeholder="填写NPC姓名或身份" style="padding:8px;"></div>
-                    <div class=input-group>
-                        <label style="display:flex;align-items:center;gap:5px;">
-                            关系底色 
-                            <span onclick="showCustomText('【胶囊微光颜色说明】\n\n🔴 深红色 (高危)：\n代表情敌、死对头、极度危险或具有攻击性的人物。\n\n🔵 幽蓝色 (安全)：\n代表好兄弟、闺蜜、吃瓜群众等安全区角色。\n\n🟣 暗紫色 (羁绊/修罗场)：\n代表前任、青梅竹马、白月光等极易引发修罗场的特殊羁绊。')" style="background:#bbb;color:#fff;width:14px;height:14px;display:flex;justify-content:center;align-items:center;border-radius:50%;font-size:11px;cursor:pointer;font-weight:bold;">?</span>
-                        </label>
-                        <select id=newNpcColor class=input-field style="padding:8px;">
-                            <option value="red">🔴 深红微光 (情敌/死对头/高危)</option>
-                            <option value="blue">🔵 幽蓝微光 (好友/吃瓜群众/安全)</option>
-                            <option value="purple">🟣 暗紫微光 (前任/青梅竹马/羁绊)</option>
-                        </select>
-                    </div>
-                    <button id=btnAddNpc class=save-btn style="margin-top:5px;padding:10px;font-size:13px;background:#333;box-shadow:0 4px 10px rgba(0,0,0,0.2);">➕ 录入机密图鉴</button>
-                </div>
-            </div>
             
             <div class=section-card>
                 <div class=section-title style="color:#fd79a8;">⏳ 长期记忆日记库</div>
-
 
                 <div class=flex-row><label style=font-size:12px;color:#888;font-weight:bold;>开启自动总结</label><input type=checkbox id=cfgAutoMem style=width:20px;height:20px;></div>
                 
@@ -1424,7 +1386,7 @@ window.showCustomText = function(text) {
     if($(`customTextContent`)) $(`customTextContent`).innerText = text;
     if($(`customTextModal`)) $(`customTextModal`).style.display = `flex`;
 };
-if($(`btnCustomTextClose`)) $(`btnCustomTextClose`).onclick = () =>$(`customTextModal`).style.display = `none`;
+if($(`btnCustomTextClose`)) $(`btnCustomTextClose`).onclick = () => $(`customTextModal`).style.display = `none`;
 
 let lock=$("scrLock"), home=$("scrHome"), list=$("scrList"), room=$("scrRoom"), setApi=$("scrSetApi"), setChat=$("scrSetChat"), scrWb=$("scrWb"), scrWbEdit=$("scrWbEdit"), scrMe=$("scrMe"), scrCharSticker=$("scrCharSticker"), scrSpace=$("scrSpace"), scrLogList=$("scrLogList"), scrLogEdit=$("scrLogEdit");
 let iptMsg=$("iptMsg"), msgs=$("msgs"), modal=$("modal");
@@ -1432,7 +1394,7 @@ let stW=$("stW"), stC=$("stC"), stA=$("stA"), stT=$("stT");
 let ls = localStorage;
 let currentChatId ="default";
 let originalSetItem = ls.setItem;
-let isolatedKeys = ["chatHistory","aiStatus","bgI","aiI","cMP","cN","cR","cAP","cCtx","cT","cAMem","cMemT","cMemP","linkedWb","lastMemCount","memories","cStatusTxt","cStatusColor","cSign","cBubbleCss"];
+let isolatedKeys = ["chatHistory","aiStatus","bgI","aiI","cMP","cN","cR","cAP","cCtx","cT","cAMem","cMemT","cMemP","linkedWb","lastMemCount","memories", "cStatusTxt", "cStatusColor", "cSign", "cBubbleCss"];
 
 ls.setItem = function(key, value) {
     // 全局拦截：只要是存表情包和日志，统统强制扔进大仓库，保护老内存！
@@ -1799,8 +1761,8 @@ if($(`btnHomeFont`)) {
         showScreen(`scrSetFont`);
     };
 }
-if($(`btnSetFontBack`)) $(`btnSetFontBack`).onclick = () =>showScreen(`scrHome`);
-if($(`btnCancelFont`)) $(`btnCancelFont`).onclick = () =>showScreen(`scrHome`);
+if($(`btnSetFontBack`)) $(`btnSetFontBack`).onclick = () => showScreen(`scrHome`);
+if($(`btnCancelFont`)) $(`btnCancelFont`).onclick = () => showScreen(`scrHome`);
 
 let lastSpyCharId = ls.getItem(`lastSpyCharId`) || ``;
 function renderSpyPhone() {
@@ -1858,8 +1820,8 @@ if($("btnHomeSpy")) $("btnHomeSpy").onclick = () => {
     showScreen("scrCharPhone"); renderSpyPhone();
     if(lastSpyCharId) { $("spyCharSelect").value = lastSpyCharId; updateSpyPhoneUI(lastSpyCharId); } else { updateSpyPhoneUI(""); }
 };
-if($("btnCharPhoneExit")) $("btnCharPhoneExit").onclick = () =>showScreen("scrHome");
-if($("btnCatchHelp")) $("btnCatchHelp").onclick = () =>showCustomText("【被抓包功能说明】\n\n开启此开关后，当你退出对方的手机界面时，系统会百分百强制触发对方发来一条抓包质问消息。\n\n满足你的特殊恶趣味体验！");
+if($("btnCharPhoneExit")) $("btnCharPhoneExit").onclick = () => showScreen("scrHome");
+if($("btnCatchHelp")) $("btnCatchHelp").onclick = () => showCustomText("【被抓包功能说明】\n\n开启此开关后，当你退出对方的手机界面时，系统会百分百强制触发对方发来一条抓包质问消息。\n\n满足你的特殊恶趣味体验！");
 if($(`fontSizeSlider`)) {
 
 
@@ -1988,7 +1950,7 @@ $(`btnListToRoom`).onclick = () => {
 };
 if($(`btnAddContact`)) $(`btnAddContact`).onclick = () =>{ $(`addFriendModal`).style.display=`flex`; };
 $(`btnCancelAddFriend`).onclick = () =>{ $(`addFriendModal`).style.display=`none`; $(`newFriendName`).value=``; $(`newFriendPrompt`).value=``; };
-if($(`btnRoleHelp`)) $(`btnRoleHelp`).onclick = () =>{ showCustomText(`【个性签名规则说明】\n\n1. 新建联系人初始状态是没有个性签名的。\n2. 你需要在聊天室主动对TA提出要求（例如：「你改个个性签名吧」），TA才会生成第一条专属签名。\n3. 在后续的聊天过程中，当TA的情绪、想法或剧情发生明显变化时，TA拥有主动权，会自动为你更新头顶的状态和个性签名！`); };
+if($(`btnRoleHelp`)) $(`btnRoleHelp`).onclick = () => { showCustomText(`【个性签名规则说明】\n\n1. 新建联系人初始状态是没有个性签名的。\n2. 你需要在聊天室主动对TA提出要求（例如：「你改个个性签名吧」），TA才会生成第一条专属签名。\n3. 在后续的聊天过程中，当TA的情绪、想法或剧情发生明显变化时，TA拥有主动权，会自动为你更新头顶的状态和个性签名！`); };
 
 $(`btnConfirmAddFriend`).onclick = () =>{
     let n = $(`newFriendName`).value.trim();
@@ -2408,9 +2370,10 @@ $(`btnGenMem`).onclick = () =>{ runMemorySummary(false); };
 $(`btnSaveChat`).onclick = () =>{
     ls.setItem(`cN`, $(`cfgName`).value); ls.setItem(`cR`, $(`cfgRem`).value);
     ls.setItem(`cMyN`, $(`cfgMyName`).value);
-    ls.setItem(`cAP`, $(`cfgAiP`).value); ls.setItem(`cMP`, $(`cfgMyP`).value);
+        ls.setItem(`cAP`, $(`cfgAiP`).value); ls.setItem(`cMP`, $(`cfgMyP`).value);
     if($(`cfgBubbleCss`)) ls.setItem(`cBubbleCss`, $(`cfgBubbleCss`).value);
     ls.setItem(`cCtx`, $(`cfgCtx`).value);
+
     ls.setItem(`cT`, $(`cfgTime`).checked);
     ls.setItem(`cCTon`, $(`cfgCustomTime`).checked);
     ls.setItem(`cCTy`, $(`ctYear`).value);
@@ -2421,231 +2384,6 @@ $(`btnSaveChat`).onclick = () =>{
     ls.setItem(`cAMem`, $(`cfgAutoMem`).checked); ls.setItem(`cMemT`, $(`cfgMemTrig`).value); ls.setItem(`cMemP`, $(`cfgMemPmt`).value);
     applyVis(); alert(`配置已保存！`); showScreen(`scrRoom`);
 };
-
-// ==========================================
-// ====== 机密图鉴 (NPC社交圈) 底层逻辑 ======
-// ==========================================
-function escapeHtml(str) {
-    if(!str) return ``;
-    return str.replace(/&/g, `&amp;`).replace(/</g, `&lt;`).replace(/>/g, `&gt;`).replace(/"/g, `&quot;`).replace(/'/g, `&#039;`);
-}
-
-function renderNpcList() {
-    let list = $(`npcList`);
-    if(!list) return;
-    list.innerHTML = ``;
-    let npcData = originalGetItem.call(ls, `npcList_` + currentChatId);
-    let npcs = npcData ? JSON.parse(npcData) : [];
-    
-    if(npcs.length === 0) {
-        list.innerHTML = `<div style="font-size:12px;color:#999;width:100%;text-align:center;padding:10px 0;">该角色目前还没有关联的机密对象。</div>`;
-        return;
-    }
-    
-    npcs.forEach((npc, index) => {
-        let cap = document.createElement(`div`);
-        cap.className = `npc-capsule npc-glow-` + npc.color;
-        
-        let hdr = document.createElement(`div`);
-        hdr.className = `npc-cap-header`;
-        
-        let avatarContent = npc.avatar ? `<img src="${npc.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : `👤`;
-        let avatarStyle = npc.avatar ? `background:transparent; filter:none; border:1px solid rgba(255,255,255,0.2);` : ``;
-        
-        let safeName = escapeHtml(npc.name || ``);
-        let displayCapName = safeName.length > 8 ? safeName.substring(0, 8) + `...` : safeName;
-        
-        hdr.innerHTML = `<div class="npc-cap-avatar" style="${avatarStyle}" title="点击更换NPC专属头像" onclick="uploadNpcAvatar(${index}, event)">${avatarContent}</div><div class="npc-cap-name" style="max-width:80px;overflow:hidden;text-overflow:ellipsis;">${displayCapName}</div>`;
-        
-        let drawer = document.createElement(`div`);
-        drawer.className = `npc-cap-drawer`;
-        drawer.innerHTML = `
-            <input type="text" id="editNpcName_${index}" class="npc-drawer-input" value="${safeName}" placeholder="机密代号/姓名" style="margin-bottom:5px;">
-            <textarea id="editNpcDesc_${index}" class="npc-drawer-input" rows="2" placeholder="填写详细身份设定与机密情报">${escapeHtml(npc.desc || ``)}</textarea>
-            <div style="display:flex;gap:5px;margin-top:5px;">
-                <button class="npc-drawer-btn" style="background:#333;color:#ccc;" onclick="delNpc(${index}, event)">销毁</button>
-                <button class="npc-drawer-btn" style="background:#fff;color:#000;" onclick="saveNpc(${index}, event)">保存情报</button>
-            </div>
-        `;
-        
-        hdr.onclick = () => {
-            let isExpanded = drawer.style.display === `flex`;
-            document.querySelectorAll(`.npc-cap-drawer`).forEach(d => d.style.display = `none`);
-            drawer.style.display = isExpanded ? `none` : `flex`;
-        };
-        
-        cap.appendChild(hdr);
-        cap.appendChild(drawer);
-        list.appendChild(cap);
-    });
-}
-// 全新的更换头像逻辑 (带自动画质压缩，防止撑爆本地存储)
-window.uploadNpcAvatar = function(index, e) {
-    if(e) e.stopPropagation(); 
-    let input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.onchange = ev => {
-        let file = ev.target.files[0];
-        if(file) {
-            let reader = new FileReader();
-            reader.onload = res => {
-                let img = new Image();
-                img.onload = () => {
-                    let canvas = document.createElement('canvas');
-                    let ctx = canvas.getContext('2d');
-                    let maxSize = 150; 
-                    let width = img.width;
-                    let height = img.height;
-                    
-                    if (width > height) {
-                        if (width > maxSize) {
-                            height = Math.round(height *= maxSize / width);
-                            width = maxSize;
-                        }
-                    } else {
-                        if (height > maxSize) {
-                            width = Math.round(width *= maxSize / height);
-                            height = maxSize;
-                        }
-                    }
-                    canvas.width = width;
-                    canvas.height = height;
-                    ctx.drawImage(img, 0, 0, width, height);
-                    
-                    let compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
-                    
-                    let npcData = originalGetItem.call(ls, `npcList_` + currentChatId);
-                    let npcs = npcData ? JSON.parse(npcData) : [];
-                    if(npcs[index]) {
-                        npcs[index].avatar = compressedBase64;
-                        originalSetItem.call(ls, `npcList_` + currentChatId, JSON.stringify(npcs));
-                        renderNpcList();
-                    }
-                };
-                img.src = res.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-    input.click();
-};
-
-window.delNpc = function(index, e) {
-    if(e) e.stopPropagation();
-    if($(`customConfirmModal`)) {
-        $(`customConfirmText`).innerText = `确定要从机密图鉴中永久销毁这个对象吗？`;
-        $(`customConfirmModal`).style.display = `flex`;
-        $(`btnCustomConfirmOk`).onclick = () => {
-            $(`customConfirmModal`).style.display = `none`;
-            let npcData = originalGetItem.call(ls, `npcList_` + currentChatId);
-            let npcs = npcData ? JSON.parse(npcData) : [];
-            npcs.splice(index, 1);
-            originalSetItem.call(ls, `npcList_` + currentChatId, JSON.stringify(npcs));
-            renderNpcList();
-        };
-        $(`btnCustomConfirmCancel`).onclick = () => $(`customConfirmModal`).style.display = `none`;
-    }
-};
-
-window.saveNpc = function(index, e) {
-    if(e) e.stopPropagation();
-    let newName = $(`editNpcName_${index}`).value.trim();
-    let newDesc = $(`editNpcDesc_${index}`).value.trim(); 
-    
-    if(!newName) {
-        if(typeof showCustomText === `function`) showCustomText(`机密代号/姓名不能为空哦！`);
-        return;
-    }
-    let npcData = originalGetItem.call(ls, `npcList_` + currentChatId);
-    let npcs = npcData ? JSON.parse(npcData) : [];
-    if(npcs[index]) {
-        npcs[index].name = newName;
-        npcs[index].desc = newDesc; 
-        originalSetItem.call(ls, `npcList_` + currentChatId, JSON.stringify(npcs));
-        renderNpcList();
-        if(typeof showCustomText === `function`) showCustomText(`机密对象【${newName}】的情报已更新并收起！`);
-    }
-};
-
-if($(`btnAddNpc`)) $(`btnAddNpc`).onclick = () =>{
-    let name = $(`newNpcName`).value.trim();
-    let color = $(`newNpcColor`).value;
-    
-    if(!name) {
-        if(typeof showCustomText === `function`) showCustomText(`请先填写机密对象的姓名或身份！`);
-        return;
-    }
-    
-    let npcData = originalGetItem.call(ls, `npcList_` + currentChatId);
-    let npcs = npcData ? JSON.parse(npcData) : [];
-    
-    npcs.push({ name: name, desc: ``, color: color }); 
-    originalSetItem.call(ls, `npcList_` + currentChatId, JSON.stringify(npcs));
-    
-    $(`newNpcName`).value = ``;
-    renderNpcList();
-};
-
-// 拦截原生页面切换函数，确保每次进入设置页时自动渲染图鉴
-let originalShowScreen_npc = window.showScreen;
-if (originalShowScreen_npc) {
-    window.showScreen = function(showId) {
-        originalShowScreen_npc(showId);
-        if(showId === `scrSetChat`) renderNpcList();
-    };
-}
-
-
-
-
-
-window.saveNpc = function(index, e) {
-    if(e) e.stopPropagation();
-    let newVal = $(`editNpcName_${index}`).value.trim();
-    if(!newVal) {
-        if(typeof showCustomText === `function`) showCustomText(`名字或身份不能为空哦！`);
-        return;
-    }
-    let npcData = originalGetItem.call(ls, `npcList_` + currentChatId);
-    let npcs = npcData ? JSON.parse(npcData) : [];
-    if(npcs[index]) {
-        npcs[index].name = newVal;
-        originalSetItem.call(ls, `npcList_` + currentChatId, JSON.stringify(npcs));
-        renderNpcList();
-        if(typeof showCustomText === `function`) showCustomText(`机密对象【${newVal}】的设定已更新并收起！`);
-    }
-};
-
-if($(`btnAddNpc`)) $(`btnAddNpc`).onclick = () =>{
-    let name = $(`newNpcName`).value.trim();
-    let color = $(`newNpcColor`).value;
-    
-    if(!name) {
-        if(typeof showCustomText === `function`) showCustomText(`请先填写机密对象的姓名或身份！`);
-        return;
-    }
-    
-    let npcData = originalGetItem.call(ls, `npcList_` + currentChatId);
-    let npcs = npcData ? JSON.parse(npcData) : [];
-    
-    npcs.push({ name: name, color: color }); // avatar 字段默认为空，保留机密感
-    originalSetItem.call(ls, `npcList_` + currentChatId, JSON.stringify(npcs));
-    
-    $(`newNpcName`).value = ``;
-    renderNpcList();
-};
-
-// 拦截原生页面切换函数，确保每次进入设置页时自动渲染图鉴
-let originalShowScreen_npc = window.showScreen;
-if (originalShowScreen_npc) {
-    window.showScreen = function(showId) {
-        originalShowScreen_npc(showId);
-        if(showId === `scrSetChat`) renderNpcList();
-    };
-}
-
-
 
 
 $(`btnSaveApi`).onclick = () =>{
@@ -3150,7 +2888,7 @@ let resStickers = await localforage.getItem(`charStickers`);
         localforage.setItem(`charStickers`, ls.getItem(`charStickers`));
     }
 
-if(charStickers.length>0) {
+if(charStickers.length > 0) {
         let names = charStickers.map(x => x.name).join(`、`);
 
         sys += `\n【你的专属表情包库】如果你想发表情配合情绪，请务必在【回复】中插入代码“[发送表情：表情名称]”。当前你拥有的表情名称有：` + names + `。警告：绝对不要捏造列表外的表情！不要发多余的链接！`;
@@ -5168,7 +4906,7 @@ function getSpyBasePrompt(charId) {
 3. 严格禁止使用任何形式的引号符号！
 
 【近期聊天记录】：
-${recentChat ||'（暂无聊天记录，请严格根据人物设定自由发挥）'}
+${recentChat || '（暂无聊天记录，请严格根据人物设定自由发挥）'}
 
 ---
 接下来是你的具体生成任务：
@@ -5181,13 +4919,13 @@ let isSpyDiaryEditMode = false;
 
 let selSpyDiaryItems = new Set();
 
-if($(`btnSpyDiary`)) $(`btnSpyDiary`).onclick = () =>{
+if($(`btnSpyDiary`)) $(`btnSpyDiary`).onclick = () => {
     if(!lastSpyCharId) { alert(`请先在查手机桌面右上角选择要查看的角色哦！`); return; }
     showScreen(`scrSpyDiary`);
     loadSpyDiary();
 };
 
-if($(`btnSpyDiaryBack`)) $(`btnSpyDiaryBack`).onclick = () =>{
+if($(`btnSpyDiaryBack`)) $(`btnSpyDiaryBack`).onclick = () => {
     isSpyDiaryEditMode = false;
     if($(`btnEditSpyDiary`)) $(`btnEditSpyDiary`).innerText = `管理`;
     if($(`spyDiaryActions`)) $(`spyDiaryActions`).style.display = `none`;
@@ -5253,7 +4991,7 @@ function renderSpyDiary() {
     });
 }
 
-if($(`btnEditSpyDiary`)) $(`btnEditSpyDiary`).onclick = () =>{
+if($(`btnEditSpyDiary`)) $(`btnEditSpyDiary`).onclick = () => {
     isSpyDiaryEditMode = !isSpyDiaryEditMode;
     $(`btnEditSpyDiary`).innerText = isSpyDiaryEditMode ? `完成` : `管理`;
     $(`spyDiaryActions`).style.display = isSpyDiaryEditMode ? `flex` : `none`;
@@ -5261,13 +4999,13 @@ if($(`btnEditSpyDiary`)) $(`btnEditSpyDiary`).onclick = () =>{
     renderSpyDiary();
 };
 
-if($(`btnSelAllSpyDiary`)) $(`btnSelAllSpyDiary`).onclick = () =>{
+if($(`btnSelAllSpyDiary`)) $(`btnSelAllSpyDiary`).onclick = () => {
     if(selSpyDiaryItems.size === spyDiaryData.length) selSpyDiaryItems.clear();
     else spyDiaryData.forEach((_, i) => selSpyDiaryItems.add(i));
     renderSpyDiary();
 };
 
-if($(`btnDelSpyDiary`)) $(`btnDelSpyDiary`).onclick = () =>{
+if($(`btnDelSpyDiary`)) $(`btnDelSpyDiary`).onclick = () => {
     if(selSpyDiaryItems.size === 0) { alert(`请先选中要撕掉的日记哦！`); return; }
     if(confirm(`确定撕掉这 ` + selSpyDiaryItems.size + ` 页日记吗？（撕掉就找不回来了）`)) {
         spyDiaryData = spyDiaryData.filter((_, i) => !selSpyDiaryItems.has(i));
@@ -5277,7 +5015,7 @@ if($(`btnDelSpyDiary`)) $(`btnDelSpyDiary`).onclick = () =>{
     }
 };
 
-if($(`btnGenSpyDiary`)) $(`btnGenSpyDiary`).onclick = async () =>{
+if($(`btnGenSpyDiary`)) $(`btnGenSpyDiary`).onclick = async () => {
     let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value;
     if(!pxy || !key || !mod) { alert(`请先在主设置中配置好API网络哦！`); return; }
     
@@ -5334,13 +5072,13 @@ let currentZhTab = `search`;
 let isSpyZhEditMode = false;
 let selSpyZhItems = new Set();
 
-if($(`btnSpyZhihu`)) $(`btnSpyZhihu`).onclick = () =>{
+if($(`btnSpyZhihu`)) $(`btnSpyZhihu`).onclick = () => {
     if(!lastSpyCharId) { alert(`请先在查手机桌面右上角选择要查看的角色哦！`); return; }
     showScreen(`scrSpyZhihu`);
     loadSpyZhihu();
 };
 
-if($(`btnSpyZhihuBack`)) $(`btnSpyZhihuBack`).onclick = () =>{
+if($(`btnSpyZhihuBack`)) $(`btnSpyZhihuBack`).onclick = () => {
     isSpyZhEditMode = false;
     if($(`btnEditSpyZhihu`)) $(`btnEditSpyZhihu`).innerText = `管理`;
     if($(`spyZhihuActions`)) $(`spyZhihuActions`).style.display = `none`;
@@ -5348,9 +5086,9 @@ if($(`btnSpyZhihuBack`)) $(`btnSpyZhihuBack`).onclick = () =>{
     showScreen(`scrCharPhone`);
 };
 
-if($(`tabZhSearch`)) $(`tabZhSearch`).onclick = () =>switchZhTab(`search`);
-if($(`tabZhFav`)) $(`tabZhFav`).onclick = () =>switchZhTab(`fav`);
-if($(`tabZhAsk`)) $(`tabZhAsk`).onclick = () =>switchZhTab(`ask`);
+if($(`tabZhSearch`)) $(`tabZhSearch`).onclick = () => switchZhTab(`search`);
+if($(`tabZhFav`)) $(`tabZhFav`).onclick = () => switchZhTab(`fav`);
+if($(`tabZhAsk`)) $(`tabZhAsk`).onclick = () => switchZhTab(`ask`);
 
 function switchZhTab(tab) {
     currentZhTab = tab;
@@ -5446,7 +5184,7 @@ function renderSpyZhihu() {
 }
 
 
-if($(`btnEditSpyZhihu`)) $(`btnEditSpyZhihu`).onclick = () =>{
+if($(`btnEditSpyZhihu`)) $(`btnEditSpyZhihu`).onclick = () => {
     isSpyZhEditMode = !isSpyZhEditMode;
     $(`btnEditSpyZhihu`).innerText = isSpyZhEditMode ? `完成` : `管理`;
     $(`spyZhihuActions`).style.display = isSpyZhEditMode ? `flex` : `none`;
@@ -5454,14 +5192,14 @@ if($(`btnEditSpyZhihu`)) $(`btnEditSpyZhihu`).onclick = () =>{
     renderSpyZhihu();
 };
 
-if($(`btnSelAllSpyZhihu`)) $(`btnSelAllSpyZhihu`).onclick = () =>{
+if($(`btnSelAllSpyZhihu`)) $(`btnSelAllSpyZhihu`).onclick = () => {
     let currentData = spyZhihuData[currentZhTab] || [];
     if(selSpyZhItems.size === currentData.length) selSpyZhItems.clear();
     else currentData.forEach((_, i) => selSpyZhItems.add(i));
     renderSpyZhihu();
 };
 
-if($(`btnDelSpyZhihu`)) $(`btnDelSpyZhihu`).onclick = () =>{
+if($(`btnDelSpyZhihu`)) $(`btnDelSpyZhihu`).onclick = () => {
     if(selSpyZhItems.size === 0) { alert(`请先选中要删除的内容哦！`); return; }
     if(confirm(`确定删除这 ` + selSpyZhItems.size + ` 条记录吗？`)) {
         let currentData = spyZhihuData[currentZhTab] || [];
@@ -5472,7 +5210,7 @@ if($(`btnDelSpyZhihu`)) $(`btnDelSpyZhihu`).onclick = () =>{
     }
 };
 
-if($(`btnGenSpyZhihu`)) $(`btnGenSpyZhihu`).onclick = async () =>{
+if($(`btnGenSpyZhihu`)) $(`btnGenSpyZhihu`).onclick = async () => {
     let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value;
     if(!pxy || !key || !mod) { alert(`请先在主设置中配置好API网络哦！`); return; }
     
@@ -5586,7 +5324,7 @@ let currentSecTab = `draft`;
 let isSpySecEditMode = false;
 let selSpySecItems = new Set();
 
-if($(`btnSpySecret`)) $(`btnSpySecret`).onclick = () =>{
+if($(`btnSpySecret`)) $(`btnSpySecret`).onclick = () => {
     if(!lastSpyCharId) { 
         if(typeof showCustomText === `function`) showCustomText(`请先在右上角选择要查看的角色哦！`);
         return; 
@@ -5607,13 +5345,13 @@ if($(`btnSpySecret`)) $(`btnSpySecret`).onclick = () =>{
     };
 };
 
-if($(`btnSpySecretExitLock`)) $(`btnSpySecretExitLock`).onclick = () =>{ showScreen(`scrCharPhone`); };
-if($(`btnSpySecretBack`)) $(`btnSpySecretBack`).onclick = () =>{ showScreen(`scrCharPhone`); };
+if($(`btnSpySecretExitLock`)) $(`btnSpySecretExitLock`).onclick = () => { showScreen(`scrCharPhone`); };
+if($(`btnSpySecretBack`)) $(`btnSpySecretBack`).onclick = () => { showScreen(`scrCharPhone`); };
 
-if($(`tabSecDraft`)) $(`tabSecDraft`).onclick = () =>switchSecTab(`draft`);
-if($(`tabSecSearch`)) $(`tabSecSearch`).onclick = () =>switchSecTab(`search`);
-if($(`tabSecBlack`)) $(`tabSecBlack`).onclick = () =>switchSecTab(`black`);
-if($(`tabSecMovie`)) $(`tabSecMovie`).onclick = () =>switchSecTab(`movie`);
+if($(`tabSecDraft`)) $(`tabSecDraft`).onclick = () => switchSecTab(`draft`);
+if($(`tabSecSearch`)) $(`tabSecSearch`).onclick = () => switchSecTab(`search`);
+if($(`tabSecBlack`)) $(`tabSecBlack`).onclick = () => switchSecTab(`black`);
+if($(`tabSecMovie`)) $(`tabSecMovie`).onclick = () => switchSecTab(`movie`);
 
 function switchSecTab(tab) {
     currentSecTab = tab;
@@ -5764,7 +5502,7 @@ function renderSpySecret() {
 
 
 
-if($(`btnEditSpySecret`)) $(`btnEditSpySecret`).onclick = () =>{
+if($(`btnEditSpySecret`)) $(`btnEditSpySecret`).onclick = () => {
     isSpySecEditMode = !isSpySecEditMode;
     $(`btnEditSpySecret`).innerText = isSpySecEditMode ? `完成` : `管理`;
     $(`spySecretActions`).style.display = isSpySecEditMode ? `flex` : `none`;
@@ -5772,14 +5510,14 @@ if($(`btnEditSpySecret`)) $(`btnEditSpySecret`).onclick = () =>{
     renderSpySecret();
 };
 
-if($(`btnSelAllSpySecret`)) $(`btnSelAllSpySecret`).onclick = () =>{
+if($(`btnSelAllSpySecret`)) $(`btnSelAllSpySecret`).onclick = () => {
     let currentData = spySecretData[currentSecTab] || [];
     if(selSpySecItems.size === currentData.length) selSpySecItems.clear();
     else currentData.forEach((_, i) => selSpySecItems.add(i));
     renderSpySecret();
 };
 
-if($(`btnDelSpySecret`)) $(`btnDelSpySecret`).onclick = () =>{
+if($(`btnDelSpySecret`)) $(`btnDelSpySecret`).onclick = () => {
     if(selSpySecItems.size === 0) { 
         if(typeof showCustomText === `function`) showCustomText(`请先选中要销毁的内容！`);
         return; 
@@ -5867,7 +5605,7 @@ async function fetchSpySecretData(targetTab) {
 }
 
 // 按钮1：追加挖掘当前版块
-if($(`btnGenSpySecret`)) $(`btnGenSpySecret`).onclick = async () =>{
+if($(`btnGenSpySecret`)) $(`btnGenSpySecret`).onclick = async () => {
     let origText = $(`btnGenSpySecret`).innerText;
     $(`btnGenSpySecret`).innerText = `🔥 正在深度挖掘...`;
     $(`btnGenSpySecret`).style.pointerEvents = `none`;
@@ -5886,7 +5624,7 @@ if($(`btnGenSpySecret`)) $(`btnGenSpySecret`).onclick = async () =>{
 };
 
 // 按钮2：刷新重置当前版块
-if($(`btnRegenSpySecret`)) $(`btnRegenSpySecret`).onclick = async () =>{
+if($(`btnRegenSpySecret`)) $(`btnRegenSpySecret`).onclick = async () => {
     let origText = $(`btnRegenSpySecret`).innerText;
     $(`btnRegenSpySecret`).innerText = `✨ 正在刷新...`;
     $(`btnRegenSpySecret`).style.pointerEvents = `none`;
@@ -5910,7 +5648,7 @@ if($(`btnRegenSpySecret`)) $(`btnRegenSpySecret`).onclick = async () =>{
 };
 
 // 按钮3：一键重置四大版块
-if($(`btnGenAllSpySecret`)) $(`btnGenAllSpySecret`).onclick = async () =>{
+if($(`btnGenAllSpySecret`)) $(`btnGenAllSpySecret`).onclick = async () => {
     if($(`customConfirmText`)) $(`customConfirmText`).innerText = `【一键重置警告】\n此操作将彻底清空当前所有四大隐私版块的历史数据，并让系统在后台重新生成一套全新的深渊记录。\n\n由于需同时处理大量数据，大概需要几十秒时间，请耐心等待。确认执行吗？`;
     if($(`customConfirmModal`)) $(`customConfirmModal`).style.display = `flex`;
     
