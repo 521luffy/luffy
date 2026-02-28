@@ -584,16 +584,54 @@ class=back-btn>＜</span>
 
                         <select id=ctDay class=input-field style="flex:1;padding:6px;font-size:12px;"></select><span style="font-size:12px;color:#666;">日</span>
                     </div>
-                    <div style="display:flex;gap:5px;align-items:center;margin-top:5px;">
+                                        <div style="display:flex;gap:5px;align-items:center;margin-top:5px;">
                         <select id=ctHour class=input-field style="flex:1;padding:6px;font-size:12px;"></select><span style="font-size:12px;color:#666;">时</span>
                         <select id=ctMinute class=input-field style="flex:1;padding:6px;font-size:12px;"></select><span style="font-size:12px;color:#666;">分</span>
                         <span id=ctWeekday style="font-size:12px;color:#fd79a8;font-weight:bold;margin-left:10px;min-width:40px;">星期几</span>
                     </div>
                 </div>
             </div>
+
+            <style>
+            .npc-capsule { display:flex; flex-direction:column; background:#111; border-radius:24px; transition:0.3s; position:relative; overflow:hidden; }
+            .npc-cap-header { display:flex; align-items:center; padding:4px 12px 4px 4px; cursor:pointer; }
+            .npc-cap-avatar { width:26px; height:26px; border-radius:50%; background:#e0e0e0; display:flex; justify-content:center; align-items:center; font-size:16px; margin-right:8px; filter: grayscale(100%) contrast(150%); }
+            .npc-cap-name { font-size:12px; font-weight:bold; color:#fff; white-space:nowrap; }
+            .npc-glow-red { box-shadow: 0 0 12px rgba(239, 68, 68, 0.4); border: 1px solid rgba(239, 68, 68, 0.6); }
+            .npc-glow-blue { box-shadow: 0 0 12px rgba(59, 130, 246, 0.4); border: 1px solid rgba(59, 130, 246, 0.6); }
+            .npc-glow-purple { box-shadow: 0 0 12px rgba(168, 85, 247, 0.4); border: 1px solid rgba(168, 85, 247, 0.6); }
+            .npc-cap-drawer { display:none; background:#1a1a1a; padding:10px; border-top:1px dashed #333; flex-direction:column; gap:8px; }
+            .npc-drawer-input { background:#000; border:1px solid #333; color:#ccc; font-size:12px; padding:6px; border-radius:6px; outline:none; resize:none; }
+            .npc-drawer-btn { font-size:11px; padding:6px; border-radius:6px; font-weight:bold; cursor:pointer; border:none; text-align:center; flex:1; }
+            </style>
+
+            <div class=section-card>
+                <div class=section-title style="color:#fd79a8;display:flex;justify-content:space-between;align-items:center;">
+                    <span>🕸️ 专属社交圈 (机密图鉴)</span>
+                </div>
+                <div style="font-size:11px;color:#888;margin-bottom:5px;">记录主角色的关联配角。点击下方胶囊可像拉开抽屉一样直接修改设定。</div>
+                <div id=npcList style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px;padding-top:5px;">
+                    </div>
+                <div style="background:#f8f9fa;padding:12px;border-radius:12px;border:1px dashed #ddd;display:flex;flex-direction:column;gap:8px;">
+                    <div class=input-group><label>新增机密对象</label><input type=text id=newNpcName class=input-field placeholder="填写NPC姓名或身份" style="padding:8px;"></div>
+                    <div class=input-group>
+                        <label style="display:flex;align-items:center;gap:5px;">
+                            关系底色 
+                            <span onclick="showCustomText('【胶囊微光颜色说明】\n\n🔴 深红色 (高危)：\n代表情敌、死对头、极度危险或具有攻击性的人物。\n\n🔵 幽蓝色 (安全)：\n代表好兄弟、闺蜜、吃瓜群众等安全区角色。\n\n🟣 暗紫色 (羁绊/修罗场)：\n代表前任、青梅竹马、白月光等极易引发修罗场的特殊羁绊。')" style="background:#bbb;color:#fff;width:14px;height:14px;display:flex;justify-content:center;align-items:center;border-radius:50%;font-size:11px;cursor:pointer;font-weight:bold;">?</span>
+                        </label>
+                        <select id=newNpcColor class=input-field style="padding:8px;">
+                            <option value="red">🔴 深红微光 (情敌/死对头/高危)</option>
+                            <option value="blue">🔵 幽蓝微光 (好友/吃瓜群众/安全)</option>
+                            <option value="purple">🟣 暗紫微光 (前任/青梅竹马/羁绊)</option>
+                        </select>
+                    </div>
+                    <button id=btnAddNpc class=save-btn style="margin-top:5px;padding:10px;font-size:13px;background:#333;box-shadow:0 4px 10px rgba(0,0,0,0.2);">➕ 录入机密图鉴</button>
+                </div>
+            </div>
             
             <div class=section-card>
                 <div class=section-title style="color:#fd79a8;">⏳ 长期记忆日记库</div>
+
 
                 <div class=flex-row><label style=font-size:12px;color:#888;font-weight:bold;>开启自动总结</label><input type=checkbox id=cfgAutoMem style=width:20px;height:20px;></div>
                 
@@ -2370,10 +2408,9 @@ $(`btnGenMem`).onclick = () =>{ runMemorySummary(false); };
 $(`btnSaveChat`).onclick = () =>{
     ls.setItem(`cN`, $(`cfgName`).value); ls.setItem(`cR`, $(`cfgRem`).value);
     ls.setItem(`cMyN`, $(`cfgMyName`).value);
-        ls.setItem(`cAP`, $(`cfgAiP`).value); ls.setItem(`cMP`, $(`cfgMyP`).value);
+    ls.setItem(`cAP`, $(`cfgAiP`).value); ls.setItem(`cMP`, $(`cfgMyP`).value);
     if($(`cfgBubbleCss`)) ls.setItem(`cBubbleCss`, $(`cfgBubbleCss`).value);
     ls.setItem(`cCtx`, $(`cfgCtx`).value);
-
     ls.setItem(`cT`, $(`cfgTime`).checked);
     ls.setItem(`cCTon`, $(`cfgCustomTime`).checked);
     ls.setItem(`cCTy`, $(`ctYear`).value);
@@ -2384,6 +2421,172 @@ $(`btnSaveChat`).onclick = () =>{
     ls.setItem(`cAMem`, $(`cfgAutoMem`).checked); ls.setItem(`cMemT`, $(`cfgMemTrig`).value); ls.setItem(`cMemP`, $(`cfgMemPmt`).value);
     applyVis(); alert(`配置已保存！`); showScreen(`scrRoom`);
 };
+
+// ==========================================
+// ====== 机密图鉴 (NPC社交圈) 底层逻辑 ======
+// ==========================================
+function escapeHtml(str) {
+    if(!str) return ``;
+    return str.replace(/&/g, `&amp;`).replace(/</g, `&lt;`).replace(/>/g, `&gt;`).replace(/"/g, `&quot;`).replace(/'/g, `&#039;`);
+}
+
+function renderNpcList() {
+    let list = $(`npcList`);
+    if(!list) return;
+    list.innerHTML = ``;
+    let npcData = originalGetItem.call(ls, `npcList_` + currentChatId);
+    let npcs = npcData ? JSON.parse(npcData) : [];
+    
+    if(npcs.length === 0) {
+        list.innerHTML = `<div style="font-size:12px;color:#999;width:100%;text-align:center;padding:10px 0;">该角色目前还没有关联的机密对象。</div>`;
+        return;
+    }
+    
+    npcs.forEach((npc, index) => {
+        let cap = document.createElement(`div`);
+        cap.className = `npc-capsule npc-glow-` + npc.color;
+        
+        let hdr = document.createElement(`div`);
+        hdr.className = `npc-cap-header`;
+        
+        let avatarContent = npc.avatar ? `<img src="${npc.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : `👤`;
+        let avatarStyle = npc.avatar ? `background:transparent; filter:none; border:1px solid rgba(255,255,255,0.2);` : ``;
+        
+        let safeName = escapeHtml(npc.name || ``);
+        let displayCapName = safeName.length > 8 ? safeName.substring(0, 8) + `...` : safeName;
+        
+        hdr.innerHTML = `<div class="npc-cap-avatar" style="${avatarStyle}" title="点击更换NPC专属头像" onclick="uploadNpcAvatar(${index}, event)">${avatarContent}</div><div class="npc-cap-name" style="max-width:80px;overflow:hidden;text-overflow:ellipsis;">${displayCapName}</div>`;
+        
+        let drawer = document.createElement(`div`);
+        drawer.className = `npc-cap-drawer`;
+        drawer.innerHTML = `
+            <input type="text" id="editNpcName_${index}" class="npc-drawer-input" value="${safeName}" placeholder="机密代号/姓名" style="margin-bottom:5px;">
+            <textarea id="editNpcDesc_${index}" class="npc-drawer-input" rows="2" placeholder="填写详细身份设定与机密情报">${escapeHtml(npc.desc || ``)}</textarea>
+            <div style="display:flex;gap:5px;margin-top:5px;">
+                <button class="npc-drawer-btn" style="background:#333;color:#ccc;" onclick="delNpc(${index}, event)">销毁</button>
+                <button class="npc-drawer-btn" style="background:#fff;color:#000;" onclick="saveNpc(${index}, event)">保存情报</button>
+            </div>
+        `;
+        
+        hdr.onclick = () => {
+            let isExpanded = drawer.style.display === `flex`;
+            document.querySelectorAll(`.npc-cap-drawer`).forEach(d => d.style.display = `none`);
+            drawer.style.display = isExpanded ? `none` : `flex`;
+        };
+        
+        cap.appendChild(hdr);
+        cap.appendChild(drawer);
+        list.appendChild(cap);
+    });
+}
+// 全新的更换头像逻辑 (带自动画质压缩，防止撑爆本地存储)
+window.uploadNpcAvatar = function(index, e) {
+    if(e) e.stopPropagation(); 
+    let input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = ev => {
+        let file = ev.target.files[0];
+        if(file) {
+            let reader = new FileReader();
+            reader.onload = res => {
+                let img = new Image();
+                img.onload = () => {
+                    let canvas = document.createElement('canvas');
+                    let ctx = canvas.getContext('2d');
+                    let maxSize = 150; 
+                    let width = img.width;
+                    let height = img.height;
+                    if (width > height) {
+                        if (width > maxSize) {
+                            height = Math.round(height *= maxSize / width);
+                            width = maxSize;
+                        }
+                    } else {
+                        if (height > maxSize) {
+                            width = Math.round(width *= maxSize / height);
+                            height = maxSize;
+                        }
+                    }
+                    canvas.width = width; canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+                    let compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+                    let npcData = originalGetItem.call(ls, `npcList_` + currentChatId);
+                    let npcs = npcData ? JSON.parse(npcData) : [];
+                    if(npcs[index]) {
+                        npcs[index].avatar = compressedBase64;
+                        originalSetItem.call(ls, `npcList_` + currentChatId, JSON.stringify(npcs));
+                        renderNpcList();
+                    }
+                };
+                img.src = res.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+    input.click();
+};
+
+window.delNpc = function(index, e) {
+    if(e) e.stopPropagation();
+    if($(`customConfirmModal`)) {
+        $(`customConfirmText`).innerText = `确定要从机密图鉴中永久销毁这个对象吗？`;
+        $(`customConfirmModal`).style.display = `flex`;
+        $(`btnCustomConfirmOk`).onclick = () => {
+            $(`customConfirmModal`).style.display = `none`;
+            let npcData = originalGetItem.call(ls, `npcList_` + currentChatId);
+            let npcs = npcData ? JSON.parse(npcData) : [];
+            npcs.splice(index, 1);
+            originalSetItem.call(ls, `npcList_` + currentChatId, JSON.stringify(npcs));
+            renderNpcList();
+        };
+        $(`btnCustomConfirmCancel`).onclick = () => $(`customConfirmModal`).style.display = `none`;
+    }
+};
+
+window.saveNpc = function(index, e) {
+    if(e) e.stopPropagation();
+    let newName = $(`editNpcName_${index}`).value.trim();
+    let newDesc = $(`editNpcDesc_${index}`).value.trim(); 
+    if(!newName) {
+        if(typeof showCustomText === `function`) showCustomText(`机密代号/姓名不能为空哦！`);
+        return;
+    }
+    let npcData = originalGetItem.call(ls, `npcList_` + currentChatId);
+    let npcs = npcData ? JSON.parse(npcData) : [];
+    if(npcs[index]) {
+        npcs[index].name = newName;
+        npcs[index].desc = newDesc; 
+        originalSetItem.call(ls, `npcList_` + currentChatId, JSON.stringify(npcs));
+        renderNpcList();
+        if(typeof showCustomText === `function`) showCustomText(`机密对象【${newName}】的情报已更新并收起！`);
+    }
+};
+
+if($(`btnAddNpc`)) $(`btnAddNpc`).onclick = () => {
+    let name = $(`newNpcName`).value.trim();
+    let color = $(`newNpcColor`).value;
+    if(!name) {
+        if(typeof showCustomText === `function`) showCustomText(`请先填写机密对象的姓名或身份！`);
+        return;
+    }
+    let npcData = originalGetItem.call(ls, `npcList_` + currentChatId);
+    let npcs = npcData ? JSON.parse(npcData) : [];
+    npcs.push({ name: name, desc: ``, color: color }); 
+    originalSetItem.call(ls, `npcList_` + currentChatId, JSON.stringify(npcs));
+    $(`newNpcName`).value = ``;
+    renderNpcList();
+};
+
+let originalShowScreen_npc = window.showScreen;
+if (originalShowScreen_npc) {
+    window.showScreen = function(showId) {
+        originalShowScreen_npc(showId);
+        if(showId === `scrSetChat`) renderNpcList();
+    };
+}
+
+
 
 
 $(`btnSaveApi`).onclick = () =>{
