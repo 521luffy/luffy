@@ -1131,7 +1131,7 @@ background-image: none;">
     .spy-wc-time { font-size:12px; color:#b2b2b2; }
     .spy-wc-msg { font-size:14px; color:#b2b2b2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     </style>
-    <div id="scrSpyWechat" class="scr-flex" style="z-index: 160; background: #ededed;">
+        <div id="scrSpyWechat" class="scr-flex" style="z-index: 160; background: #ededed; display: none;">
         <div class="room-header" style="background: #ededed; border-bottom: none; color: #111;">
             <span id="btnSpyWechatBack" class="back-btn" style="color: #111;">＜</span>
             <span class="header-center" style="font-weight: bold;">微信<span id="spyWcCount"></span></span>
@@ -1142,6 +1142,14 @@ background-image: none;">
         </div>
         <div id="spyWechatList" class="list-content" style="background:#fff; padding-bottom:30px;"></div>
     </div>
+    <div id="scrSpyWechatDetail" class="scr-flex" style="z-index: 170; background: #ededed; display: none; flex-direction: column;">
+        <div class="room-header" style="background: #ededed; border-bottom: 1px solid #e0e0e0; color: #111;">
+            <span id="btnSpyWcDetailBack" class="back-btn" style="color: #111;">＜</span>
+            <span id="spyWcDetailTitle" class="header-center" style="font-weight: bold;">聊天详情</span>
+        </div>
+        <div id="spyWcDetailContent" class="list-content" style="padding: 20px; background: #f5f5f5; flex: 1; overflow-y: auto;"></div>
+    </div>
+
 
 
     <div id="scrSpyDiary" class="scr-flex" style="z-index: 160; background: #fdfafb;">
@@ -6048,7 +6056,14 @@ function getVirtualTime() {
 }
 
 if($(`btnSpyWechat`)) $(`btnSpyWechat`).onclick = () => { showScreen(`scrSpyWechat`); renderSpyWechat(); };
-if($(`btnSpyWechatBack`)) $(`btnSpyWechatBack`).onclick = () => { showScreen(`scrDesktop`); };
+if($(`btnSpyWechatBack`)) $(`btnSpyWechatBack`).onclick = () => { 
+    if(typeof showScreen === 'function') showScreen(`scrSetChat`); 
+    $(`scrSpyWechat`).style.display = `none`; 
+};
+if($(`btnSpyWcDetailBack`)) $(`btnSpyWcDetailBack`).onclick = () => { 
+    if(typeof showScreen === 'function') showScreen(`scrSpyWechat`); 
+    $(`scrSpyWechatDetail`).style.display = `none`;
+};
 if($(`btnSpyWechatRefresh`)) $(`btnSpyWechatRefresh`).onclick = () => { generateSpyWechat(false); };
 if($(`btnSpyWechatAdvance`)) $(`btnSpyWechatAdvance`).onclick = () => { generateSpyWechat(true); };
 
@@ -6077,6 +6092,27 @@ function renderSpyWechat() {
                 <div class="spy-wc-msg">${escapeHtml(item.msg)}</div>
             </div>
         `;
+        
+        // 核心修改：点击进入详情页
+        div.onclick = () => {
+            if(typeof showScreen === 'function') showScreen(`scrSpyWechatDetail`);
+            else { $(`scrSpyWechat`).style.display = `none`; $(`scrSpyWechatDetail`).style.display = `flex`; }
+            
+            $(`spyWcDetailTitle`).innerText = item.name;
+            $(`spyWcDetailContent`).innerHTML = `
+                <div style="text-align:center;font-size:12px;color:#bbb;margin-bottom:15px;">${escapeHtml(item.time)}</div>
+                <div style="display:flex;margin-bottom:20px;align-items:flex-start;">
+                    <div style="width:40px;height:40px;border-radius:8px;background:#e0e0e0;margin-right:12px;display:flex;justify-content:center;align-items:center;font-size:20px;overflow:hidden;flex-shrink:0;">
+                        ${avatarHtml}
+                    </div>
+                    <div style="background:#fff;padding:12px;border-radius:8px;max-width:70%;color:#111;font-size:15px;line-height:1.5;box-shadow:0 1px 3px rgba(0,0,0,0.05);position:relative;word-wrap:break-word;">
+                        ${escapeHtml(item.msg)}
+                        <div style="position:absolute;left:-6px;top:12px;width:0;height:0;border-top:6px solid transparent;border-bottom:6px solid transparent;border-right:6px solid #fff;"></div>
+                    </div>
+                </div>
+            `;
+        };
+        
         list.appendChild(div);
     });
     $(`spyWcCount`).innerText = `(${spyWechatData.length})`;
@@ -6089,34 +6125,36 @@ async function generateSpyWechat(isAdvance) {
     let list = $(`spyWechatList`);
     list.innerHTML = `<div style="text-align:center; padding:30px; color:#576b95; font-size:14px; animation: pulse 1.5s infinite;">正在破解并提取聊天记录...</div>`;
     
+    let charN = $(`cfgName`).value || `对方`;
+    let myN = $(`cfgMyName`).value || `我`;
     let vTime = getVirtualTime();
-    let pmt = `任务：生成5条主角色（微信主人）的微信最新未读消息。当前时间：${vTime}。\n`;
+    
+    // 核心修改：严防死守第三人称视角
+    let pmt = `【绝密任务：生成伪造的第三方视角微信列表】\n注意：我正在【偷看】主角色（${charN}）的手机微信！\n请你扮演系统，生成5条【其他人】发给【${charN}】的最新未读消息。\n绝对不能是你发给我的！也不能是${charN}发出去的！必须是配角发给${charN}的！\n当前时间：${vTime}。\n`;
     
     if(isAdvance && spyWechatData.length > 0) {
-        pmt += `要求：请【推进】时间线！结合主线剧情的最新进展，顺延上一次的聊天记录生成后续回复。上一次记录参考：\n`;
-        spyWechatData.forEach(d => pmt += `${d.name}说：${d.msg}\n`);
+        pmt += `要求：请【推进】时间线！结合我们的最新剧情，顺延生成后续回复。上一次别人发给${charN}的消息参考：\n`;
+        spyWechatData.forEach(d => pmt += `${d.name}发送：${d.msg}\n`);
     } else {
-        pmt += `要求：请【刷新】剧情，结合主角色的设定与当前世界观，重新捏造5条最符合逻辑的未读消息。\n`;
+        pmt += `要求：请【刷新】剧情！结合${charN}的设定与当前剧情，重新捏造5条别人发给${charN}的消息。\n`;
     }
 
     let npcData = originalGetItem.call(ls, `npcList_` + currentChatId);
     let npcs = npcData ? JSON.parse(npcData) : [];
     if(npcs.length > 0) {
-        pmt += `\n核心人脉网（优先从以下人物中挑选发送者，不足5人则自行捏造）：\n`;
+        pmt += `\n【核心社交圈】（优先从以下人物中挑选发送者，不足则捏造）：\n`;
         npcs.forEach(n => { if(n.name) pmt += `姓名：${n.name}，详情：${n.desc || '暂无'}\n`; });
     } else {
-        pmt += `\n核心人脉网：暂无。请根据主角身份自行捏造5个合理人物。\n`;
+        pmt += `\n请根据${charN}的身份自行捏造5个合理的相关人物。\n`;
     }
 
-    pmt += `\n请务必严格使用JSON数组格式输出，不要有任何多余的废话和markdown标记，格式必须如下：\n[{"name":"名字","time":"时间","msg":"聊天内容"}]`;
+    pmt += `\n严禁废话！必须且只能输出纯JSON数组，格式如下：\n[{"name":"名字","time":"时间","msg":"聊天内容"}]`;
 
-    let myN = $(`cfgMyName`).value || `我`;
-    let charN = $(`cfgName`).value || `对方`;
     let specHistStr = originalGetItem.call(ls, `chatHistory_` + currentChatId) || `[]`;
     let specHist = JSON.parse(specHistStr);
     if(currentChatId === `default` && typeof history !== 'undefined') specHist = history;
     let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
-    if(recentChat) pmt = `近期你们的聊天记录参考：\n${recentChat}\n\n` + pmt;
+    if(recentChat) pmt = `【近期我与${charN}的真实聊天记录参考】：\n${recentChat}\n\n` + pmt;
 
     try {
         let url = pxy.includes(`chat/completions`) ? pxy : pxy.replace(/\/$/, ``) + `/chat/completions`;
@@ -6148,4 +6186,5 @@ async function generateSpyWechat(isAdvance) {
 </script>
 </body>
 </html>
+
 
