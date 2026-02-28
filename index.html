@@ -2598,47 +2598,7 @@ if (originalShowScreen_npc) {
 
 
 
-// 全新的更换头像逻辑
-window.uploadNpcAvatar = function(index, e) {
-    if(e) e.stopPropagation(); // 绝对拦截，防止点击头像时触发抽屉展开
-    let input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.onchange = ev => {
-        let file = ev.target.files[0];
-        if(file) {
-            let reader = new FileReader();
-            reader.onload = res => {
-                let npcData = originalGetItem.call(ls, `npcList_` + currentChatId);
-                let npcs = npcData ? JSON.parse(npcData) : [];
-                if(npcs[index]) {
-                    npcs[index].avatar = res.target.result; // 将图片转为base64永久保存
-                    originalSetItem.call(ls, `npcList_` + currentChatId, JSON.stringify(npcs));
-                    renderNpcList();
-                }
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-    input.click();
-};
 
-window.delNpc = function(index, e) {
-    if(e) e.stopPropagation();
-    if($(`customConfirmModal`)) {
-        $(`customConfirmText`).innerText = `确定要从机密图鉴中永久销毁这个对象吗？`;
-        $(`customConfirmModal`).style.display = `flex`;
-        $(`btnCustomConfirmOk`).onclick = () => {
-            $(`customConfirmModal`).style.display = `none`;
-            let npcData = originalGetItem.call(ls, `npcList_` + currentChatId);
-            let npcs = npcData ? JSON.parse(npcData) : [];
-            npcs.splice(index, 1);
-            originalSetItem.call(ls, `npcList_` + currentChatId, JSON.stringify(npcs));
-            renderNpcList();
-        };
-        $(`btnCustomConfirmCancel`).onclick = () => $(`customConfirmModal`).style.display = `none`;
-    }
-};
 
 window.saveNpc = function(index, e) {
     if(e) e.stopPropagation();
