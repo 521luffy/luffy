@@ -598,10 +598,11 @@ class=back-btn>＜</span>
                 <div class=flex-row><label style=font-size:12px;color:#888;font-weight:bold;>开启自动总结</label><input type=checkbox id=cfgAutoMem style=width:20px;height:20px;></div>
                 
                 <div class=input-group><label>触发条数 (对话多少条后自动触发)</label><input type=number id=cfgMemTrig class=input-field value=10 min=5 max=100></div>
-                <div class=input-group>
+                                <div class=input-group>
                     <label>私人日记极简提示词 (防多耗Token)</label>
-                    <textarea id=cfgMemPmt class=textarea-field rows=4>请用第三人称视角，用一句话极其简练地概括刚才发生的核心剧情。绝对禁止包含日期或符号！直接输出剧情结果。请使用双方名字（[对方]与[我]）。</textarea>
+                    <textarea id=cfgMemPmt class=textarea-field rows=4>请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。请使用双方名字（[对方]与[我]）。</textarea>
                 </div>
+
                 <div class=flex-row>
                     <div id=btnViewMem class=tool-btn style="margin-right:5px;color:#fd79a8;border-color:#fd79a8;">📖 查看记忆库</div>
                     <div id=btnGenMem class=tool-btn style="margin-left:5px;background:#fff0f5;color:#fd79a8;border-color:#fd79a8;">✨ 手动总结记忆</div>
@@ -1890,8 +1891,9 @@ function renderContacts() {
             if(aMemVal !== null) $(`cfgAutoMem`).checked = aMemVal === `true`; else $(`cfgAutoMem`).checked = originalGetItem.call(ls, `cAMem`) === `true`;
             let memTVal = originalGetItem.call(ls, `cMemT_` + c.id);
             if(memTVal) $(`cfgMemTrig`).value = memTVal; else $(`cfgMemTrig`).value = originalGetItem.call(ls, `cMemT`) || 10;
-            let memPVal = originalGetItem.call(ls, `cMemP_` + c.id);
-            if(memPVal) $(`cfgMemPmt`).value = memPVal; else $(`cfgMemPmt`).value = originalGetItem.call(ls, `cMemP`) || `请用第三人称视角，用一句话极其简练地概括刚才发生的核心剧情。绝对禁止包含日期或符号！直接输出剧情结果。请使用双方名字（[对方]与[我]）。`;
+                        let memPVal = originalGetItem.call(ls, `cMemP_` + c.id);
+            if(memPVal) $(`cfgMemPmt`).value = memPVal; else $(`cfgMemPmt`).value = originalGetItem.call(ls, `cMemP`) || `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。请使用双方名字（[对方]与[我]）。`;
+
 
             history = ls.getItem(`chatHistory`) ? JSON.parse(ls.getItem(`chatHistory`)) : [];
             aiStatus = ls.getItem(`aiStatus`) ? JSON.parse(ls.getItem(`aiStatus`)) : {weather:"等待连接...",clothing:"等待连接...",action:"等待连接...",thought:"等待连接..."};
@@ -1932,7 +1934,8 @@ $(`btnListToRoom`).onclick = () => {
     $(`cfgTime`).checked = ls.getItem(`cT`) !== `false`;
     $(`cfgAutoMem`).checked = ls.getItem(`cAMem`) === `true`;
     if(ls.getItem(`cMemT`)) $(`cfgMemTrig`).value = ls.getItem(`cMemT`); else $(`cfgMemTrig`).value = 10;
-    if(ls.getItem(`cMemP`)) $(`cfgMemPmt`).value = ls.getItem(`cMemP`); else $(`cfgMemPmt`).value = `请用第三人称视角，用一句话极其简练地概括刚才发生的核心剧情。绝对禁止包含日期或符号！直接输出剧情结果。请使用双方名字（[对方]与[我]）。`;
+        if(ls.getItem(`cMemP`)) $(`cfgMemPmt`).value = ls.getItem(`cMemP`); else $(`cfgMemPmt`).value = `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。请使用双方名字（[对方]与[我]）。`;
+
 
     history = ls.getItem(`chatHistory`) ? JSON.parse(ls.getItem(`chatHistory`)) : [];
 
