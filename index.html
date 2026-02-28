@@ -592,7 +592,7 @@ class=back-btn>＜</span>
                 </div>
             </div>
 
-            <style>
+                        <style>
             .npc-capsule { display:flex; flex-direction:column; background:#111; border-radius:24px; transition:0.3s; position:relative; overflow:hidden; }
             .npc-cap-header { display:flex; align-items:center; padding:4px 12px 4px 4px; cursor:pointer; }
             .npc-cap-avatar { width:26px; height:26px; border-radius:50%; background:#e0e0e0; display:flex; justify-content:center; align-items:center; font-size:16px; margin-right:8px; filter: grayscale(100%) contrast(150%); }
@@ -600,10 +600,12 @@ class=back-btn>＜</span>
             .npc-glow-red { box-shadow: 0 0 12px rgba(239, 68, 68, 0.4); border: 1px solid rgba(239, 68, 68, 0.6); }
             .npc-glow-blue { box-shadow: 0 0 12px rgba(59, 130, 246, 0.4); border: 1px solid rgba(59, 130, 246, 0.6); }
             .npc-glow-purple { box-shadow: 0 0 12px rgba(168, 85, 247, 0.4); border: 1px solid rgba(168, 85, 247, 0.6); }
+            .npc-glow-green { box-shadow: 0 0 12px rgba(16, 185, 129, 0.4); border: 1px solid rgba(16, 185, 129, 0.6); }
             .npc-cap-drawer { display:none; background:#1a1a1a; padding:10px; border-top:1px dashed #333; flex-direction:column; gap:8px; }
             .npc-drawer-input { background:#000; border:1px solid #333; color:#ccc; font-size:12px; padding:6px; border-radius:6px; outline:none; resize:none; }
             .npc-drawer-btn { font-size:11px; padding:6px; border-radius:6px; font-weight:bold; cursor:pointer; border:none; text-align:center; flex:1; }
             </style>
+
 
             <div class=section-card>
                 <div class=section-title style="color:#fd79a8;display:flex;justify-content:space-between;align-items:center;">
@@ -614,17 +616,19 @@ class=back-btn>＜</span>
                     </div>
                 <div style="background:#f8f9fa;padding:12px;border-radius:12px;border:1px dashed #ddd;display:flex;flex-direction:column;gap:8px;">
                     <div class=input-group><label>新增机密对象</label><input type=text id=newNpcName class=input-field placeholder="填写NPC姓名或身份" style="padding:8px;"></div>
-                    <div class=input-group>
+                                        <div class=input-group>
                         <label style="display:flex;align-items:center;gap:5px;">
                             关系底色 
-                            <span onclick="showCustomText('【胶囊微光颜色说明】\n\n🔴 深红色 (高危)：\n代表情敌、死对头、极度危险或具有攻击性的人物。\n\n🔵 幽蓝色 (安全)：\n代表好兄弟、闺蜜、吃瓜群众等安全区角色。\n\n🟣 暗紫色 (羁绊/修罗场)：\n代表前任、青梅竹马、白月光等极易引发修罗场的特殊羁绊。')" style="background:#bbb;color:#fff;width:14px;height:14px;display:flex;justify-content:center;align-items:center;border-radius:50%;font-size:11px;cursor:pointer;font-weight:bold;">?</span>
+                            <span onclick="showCustomText('【胶囊微光颜色说明】\n\n🔴 深红色 (高危)：\n代表情敌、死对头、极度危险或具有攻击性的人物。\n\n🔵 幽蓝色 (安全)：\n代表好兄弟、闺蜜、吃瓜群众等安全区角色。\n\n🟣 暗紫色 (羁绊/修罗场)：\n代表前任、青梅竹马、白月光等极易引发修罗场的特殊羁绊。\n\n🌲 墨绿色 (权威/现实)：\n代表长辈、上下级、金主等带有社会阶级或现实压制关系的人物。')" style="background:#bbb;color:#fff;width:14px;height:14px;display:flex;justify-content:center;align-items:center;border-radius:50%;font-size:11px;cursor:pointer;font-weight:bold;">?</span>
                         </label>
                         <select id=newNpcColor class=input-field style="padding:8px;">
                             <option value="red">🔴 深红微光 (情敌/死对头/高危)</option>
                             <option value="blue">🔵 幽蓝微光 (好友/吃瓜群众/安全)</option>
                             <option value="purple">🟣 暗紫微光 (前任/青梅竹马/羁绊)</option>
+                            <option value="green">🌲 墨绿微光 (长辈/上下级/现实羁绊)</option>
                         </select>
                     </div>
+
                     <button id=btnAddNpc class=save-btn style="margin-top:5px;padding:10px;font-size:13px;background:#333;box-shadow:0 4px 10px rgba(0,0,0,0.2);">➕ 录入机密图鉴</button>
                 </div>
             </div>
