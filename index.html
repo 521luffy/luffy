@@ -1906,8 +1906,20 @@ if($("btnSpyRefresh")) $("btnSpyRefresh").onclick = function(e) {
     $("btnCustomConfirmOk").onclick = () => {
         $("customConfirmModal").style.display = "none";
         
-        // 执行清空操作
-        originalRemoveItem.call(ls, `spyWc_` + charId);
+        // 终极追踪清空：自动遍历本地缓存，只要是该角色的查手机数据（不管是现在还是未来开发的板块），全部抹杀！
+        let keysToRemove = [];
+        for(let i=0; i<ls.length; i++) {
+            let k = ls.key(i);
+            // 只要是以 spy 开头并且以该角色ID结尾的键值，全部加入死亡名单
+            if(k && k.startsWith(`spy`) && k.endsWith(`_` + charId)) {
+                keysToRemove.push(k);
+            }
+        }
+        keysToRemove.forEach(k => originalRemoveItem.call(ls, k));
+        
+        // 顺手把当前内存里的微信列表也抽空，防止界面残留旧数据
+        spyWechatData = [];
+        if(typeof renderSpyWechat === 'function') renderSpyWechat();
         
         alert("该角色的所有查手机记录已彻底清空！你可以重新生成盲盒了。");
     };
@@ -1915,6 +1927,7 @@ if($("btnSpyRefresh")) $("btnSpyRefresh").onclick = function(e) {
         $("customConfirmModal").style.display = "none";
     };
 };
+
 
 if($("btnHomeSpy")) $("btnHomeSpy").onclick = () => { 
     showScreen("scrCharPhone"); renderSpyPhone();
