@@ -2188,17 +2188,32 @@ async function runMemorySummary(isAuto = false) {
             method: `POST`, headers: {Authorization:`Bearer ${key}`, [`Content-Type`]:`application/json`},
             body: JSON.stringify({model:mod, messages:[{role:`user`, content:sys}], temperature:0.5})
         });
-        let dat = await res.json();
+                let dat = await res.json();
         if(dat.choices && dat.choices.length > 0) {
             let diary = dat.choices[0].message.content;
             let mems = ls.getItem(`memories`) ? JSON.parse(ls.getItem(`memories`)) : [];
-            mems.push({ date: updTime().toLocaleString(), content: diary });
+            
+            // 全新的时间戳智能盖章逻辑
+            let finalDateStr = ``;
+            if($(`cfgCustomTime`) && $(`cfgCustomTime`).checked) {
+                let cy = $(`ctYear`).value || 2024;
+                let cm = $(`ctMonth`).value || 1;
+                let cd = $(`ctDay`).value || 1;
+                let ch = $(`ctHour`).value || 0;
+                let cmin = $(`ctMinute`).value || 0;
+                finalDateStr = cy + `/` + cm + `/` + cd + ` ` + ch + `:` + cmin + `:00`;
+            } else {
+                finalDateStr = updTime().toLocaleString();
+            }
+            
+            mems.push({ date: finalDateStr, content: diary });
             ls.setItem(`memories`, JSON.stringify(mems));
             if(!isAuto) alert(`总结完成！已存入专属记忆库。`);
         }
     } catch(e) { if(!isAuto) alert(`生成失败：${e.message}`); }
     if(!isAuto) $(`btnGenMem`).innerText = `✨ 立即手动总结`;
 }
+
 
 let isMemEditMode = false;
 let isMemInlineEditMode = false;
