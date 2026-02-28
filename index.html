@@ -2441,10 +2441,15 @@ function renderNpcList() {
         let cap = document.createElement(`div`);
         cap.className = `npc-capsule npc-glow-` + npc.color;
         
-        // 头部胶囊展示
+        // 头部胶囊展示（加入自定义头像逻辑）
         let hdr = document.createElement(`div`);
         hdr.className = `npc-cap-header`;
-        hdr.innerHTML = `<div class="npc-cap-avatar">👤</div><div class="npc-cap-name">${npc.name}</div>`;
+        
+        let avatarContent = npc.avatar ? `<img src="${npc.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : `👤`;
+        // 如果有自定义头像，就取消黑白滤镜和背景色，展现全彩图片
+        let avatarStyle = npc.avatar ? `background:transparent; filter:none; border:1px solid rgba(255,255,255,0.2);` : ``;
+        
+        hdr.innerHTML = `<div class="npc-cap-avatar" style="${avatarStyle}" title="点击更换NPC专属头像" onclick="uploadNpcAvatar(${index}, event)">${avatarContent}</div><div class="npc-cap-name">${npc.name}</div>`;
         
         // 抽屉编辑区
         let drawer = document.createElement(`div`);
@@ -2468,6 +2473,31 @@ function renderNpcList() {
         list.appendChild(cap);
     });
 }
+
+// 全新的更换头像逻辑
+window.uploadNpcAvatar = function(index, e) {
+    if(e) e.stopPropagation(); // 绝对拦截，防止点击头像时触发抽屉展开
+    let input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = ev => {
+        let file = ev.target.files[0];
+        if(file) {
+            let reader = new FileReader();
+            reader.onload = res => {
+                let npcData = originalGetItem.call(ls, `npcList_` + currentChatId);
+                let npcs = npcData ? JSON.parse(npcData) : [];
+                if(npcs[index]) {
+                    npcs[index].avatar = res.target.result; // 将图片转为base64永久保存
+                    originalSetItem.call(ls, `npcList_` + currentChatId, JSON.stringify(npcs));
+                    renderNpcList();
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+    input.click();
+};
 
 window.delNpc = function(index, e) {
     if(e) e.stopPropagation();
@@ -2515,7 +2545,7 @@ if($(`btnAddNpc`)) $(`btnAddNpc`).onclick = () => {
     let npcData = originalGetItem.call(ls, `npcList_` + currentChatId);
     let npcs = npcData ? JSON.parse(npcData) : [];
     
-    npcs.push({ name: name, color: color });
+    npcs.push({ name: name, color: color }); // avatar 字段默认为空，保留机密感
     originalSetItem.call(ls, `npcList_` + currentChatId, JSON.stringify(npcs));
     
     $(`newNpcName`).value = ``;
@@ -2530,6 +2560,7 @@ if (originalShowScreen_npc) {
         if(showId === `scrSetChat`) renderNpcList();
     };
 }
+
 
 
 
