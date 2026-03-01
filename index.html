@@ -7904,11 +7904,12 @@ if($(`spyThemeUploader`)) {
         reader.onload = function(event) {
             let img = new Image();
             img.onload = function() {
-                let canvas = document.createElement('canvas');
-                let ctx = canvas.getContext('2d');
+                let canvas = document.createElement(`canvas`);
+                let ctx = canvas.getContext(`2d`);
                 
-                                let MAX_WIDTH = currentEditingThemeKey === 'bg' ? 1440 : 256;
-                let MAX_HEIGHT = currentEditingThemeKey === 'bg' ? 3200 : 256;
+                // 极致高清：把分辨率上限直接拉满
+                let MAX_WIDTH = currentEditingThemeKey === `bg` ? 1440 : 256;
+                let MAX_HEIGHT = currentEditingThemeKey === `bg` ? 3200 : 256;
                 let width = img.width;
                 let height = img.height;
                 
@@ -7922,21 +7923,22 @@ if($(`spyThemeUploader`)) {
                 canvas.height = height;
                 ctx.drawImage(img, 0, 0, width, height);
                 
-                let compressedDataUrl = canvas.toDataURL('image/jpeg', 0.92);
-
+                // 核心修复：改用支持透明底色的 webp 格式，防止图标变黑，同时保留极高画质
+                let compressedDataUrl = canvas.toDataURL(`image/webp`, 0.92);
                 
-                if(currentEditingThemeKey === 'bg') spyThemeData.bg = compressedDataUrl;
+                if(currentEditingThemeKey === `bg`) spyThemeData.bg = compressedDataUrl;
                 else spyThemeData.icons[currentEditingThemeKey] = compressedDataUrl;
                 
                 saveSpyThemeData();
                 renderSpySettings();
-                $(`spyThemeUploader`).value = ''; 
+                $(`spyThemeUploader`).value = ``; 
             };
             img.src = event.target.result;
         };
         reader.readAsDataURL(file);
     };
 }
+
 
 // 核心修复：移除会误杀图片的霸道属性，改用精确属性替换
 function applySpyTheme() {
