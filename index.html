@@ -7825,7 +7825,7 @@ async function generateSpyIqiyi() {
 }
 
 // ==========================================
-// ====== 个性化装扮底层逻辑 (终极防隐身完美版) ======
+// ====== 个性化装扮底层逻辑 (大仓库无损高清版) ======
 // ==========================================
 let spyThemeData = { bg: '', icons: {} };
 let currentEditingThemeKey = '';
@@ -7843,14 +7843,27 @@ function getThemeItems() {
     return items;
 }
 
-function loadSpyThemeData() {
-    let d = originalGetItem.call(ls, `spyTheme_` + currentChatId);
-    spyThemeData = d ? JSON.parse(d) : { bg: '', icons: {} };
+// 核心修复1：将读写逻辑全面接入无上限的 localforage (大仓库)
+async function loadSpyThemeData() {
+    try {
+        let d = await localforage.getItem(`spyTheme_` + currentChatId);
+        spyThemeData = d ? JSON.parse(d) : { bg: '', icons: {} };
+    } catch(e) {
+        spyThemeData = { bg: '', icons: {} };
+    }
+    applySpyTheme();
+    // 如果设置面板开着，同步刷新里面的预览图
+    if(document.getElementById('scrSpySettings') && document.getElementById('scrSpySettings').style.display !== 'none') {
+        renderSpySettings();
+    }
 }
 
 function saveSpyThemeData() {
-    originalSetItem.call(ls, `spyTheme_` + currentChatId, JSON.stringify(spyThemeData));
-    applySpyTheme();
+    localforage.setItem(`spyTheme_` + currentChatId, JSON.stringify(spyThemeData)).then(() => {
+        applySpyTheme();
+    }).catch(e => {
+        alert("大仓库写入失败，是不是图片真的太大了？：" + e);
+    });
 }
 
 if($(`btnSpySettings`)) $(`btnSpySettings`).onclick = () => { loadSpyThemeData(); showScreen(`scrSpySettings`); renderSpySettings(); };
@@ -7885,7 +7898,11 @@ function renderSpySettings() {
 
 window.triggerThemeUpload = function(key) {
     currentEditingThemeKey = key;
-    if($(`spyThemeUploader`)) $(`spyThemeUploader`).click();
+    if($(`spyThemeUploader`)) {
+        // 核心修复2：每次点击强制清空残留，解决选同一张图没反应的问题
+        $(`spyThemeUploader`).value = ''; 
+        $(`spyThemeUploader`).click();
+    }
 };
 
 window.resetThemeItem = function(key) {
@@ -7907,7 +7924,7 @@ if($(`spyThemeUploader`)) {
                 let canvas = document.createElement(`canvas`);
                 let ctx = canvas.getContext(`2d`);
                 
-                // 极致高清：把分辨率上限直接拉满
+                // 彻底放飞自我：壁纸直奔市面主流 1440 极清画质！图标给到 256
                 let MAX_WIDTH = currentEditingThemeKey === `bg` ? 1440 : 256;
                 let MAX_HEIGHT = currentEditingThemeKey === `bg` ? 3200 : 256;
                 let width = img.width;
@@ -7923,15 +7940,14 @@ if($(`spyThemeUploader`)) {
                 canvas.height = height;
                 ctx.drawImage(img, 0, 0, width, height);
                 
-                // 核心修复：改用支持透明底色的 webp 格式，防止图标变黑，同时保留极高画质
-                let compressedDataUrl = canvas.toDataURL(`image/webp`, 0.92);
+                // 使用 webp 格式并保留高达 95% 的惊人画质
+                let compressedDataUrl = canvas.toDataURL(`image/webp`, 0.95);
                 
                 if(currentEditingThemeKey === `bg`) spyThemeData.bg = compressedDataUrl;
                 else spyThemeData.icons[currentEditingThemeKey] = compressedDataUrl;
                 
                 saveSpyThemeData();
                 renderSpySettings();
-                $(`spyThemeUploader`).value = ``; 
             };
             img.src = event.target.result;
         };
@@ -7939,8 +7955,6 @@ if($(`spyThemeUploader`)) {
     };
 }
 
-
-// 核心修复：移除会误杀图片的霸道属性，改用精确属性替换
 function applySpyTheme() {
     let phoneScreen = $(`scrCharPhone`);
     if(phoneScreen) {
@@ -7962,22 +7976,17 @@ function applySpyTheme() {
             let iconEl = appEl.querySelector('.char-app-icon') || appEl;
             let customImg = spyThemeData.icons[item.key];
             
-            // 仅仅备份内部的 Emoji
             if(typeof iconEl.dataset.ogHtml === 'undefined') {
                 iconEl.dataset.ogHtml = iconEl.innerHTML;
             }
 
             if(customImg) {
-                // 精准贴上图片
                 iconEl.style.backgroundImage = `url('${customImg}')`;
                 iconEl.style.backgroundSize = `cover`;
                 iconEl.style.backgroundPosition = `center`;
-                // 只让原本的白色底色变透明，绝不误杀图片
                 iconEl.style.backgroundColor = `transparent`;
-                // 清空内部表情，完美单层
                 iconEl.innerHTML = ``; 
             } else {
-                // 原汁原味地恢复
                 iconEl.style.backgroundImage = ``;
                 iconEl.style.backgroundColor = ``;
                 iconEl.innerHTML = iconEl.dataset.ogHtml;
@@ -7992,13 +8001,13 @@ setInterval(() => {
     if (phoneScreen && phoneScreen.style.display !== 'none') {
         if (lastThemeChatId !== currentChatId) {
             lastThemeChatId = currentChatId;
-            loadSpyThemeData();
-            applySpyTheme();
+            loadSpyThemeData(); 
         }
     } else {
         lastThemeChatId = null;
     }
 }, 300);
+
 
 
 
