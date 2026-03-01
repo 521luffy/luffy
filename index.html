@@ -1255,13 +1255,40 @@ background-image: none;">
         <div id="spyMusicProfile" style="flex:1; overflow-y:auto;"></div>
     </div>
 
-    <div id="scrSpyMusicList" class="scr-flex spy-music-bg" style="z-index: 170; display: none; flex-direction: column;">
+        <div id="scrSpyMusicList" class="scr-flex spy-music-bg" style="z-index: 170; display: none; flex-direction: column;">
         <div class="room-header" style="background: #121212; border-bottom: 1px solid #222; color: #fff;">
             <span id="btnSpyMusicListBack" class="back-btn" style="color: #fff;">＜</span>
             <span class="header-center" style="font-weight:bold;">我喜欢的音乐</span>
         </div>
         <div id="spyMusicSongs" style="flex: 1; overflow-y: auto;"></div>
     </div>
+
+    <style>
+    .spy-mt-bg { background: #f5f5f5; color: #333; }
+    .spy-mt-header { background: #ffc800; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 16px; color: #333; flex-shrink: 0; }
+    .spy-mt-card { background: #fff; border-radius: 12px; margin: 15px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+    .spy-mt-shop { display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 15px; margin-bottom: 12px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+    .spy-mt-shop-icon { width: 24px; height: 24px; border-radius: 4px; background: #eee; display: flex; justify-content: center; align-items: center; font-size: 14px; }
+    .spy-mt-status { margin-left: auto; font-size: 13px; color: #666; font-weight: normal; }
+    .spy-mt-status-active { color: #ff9900; font-weight: bold; }
+    .spy-mt-items { font-size: 14px; color: #555; line-height: 1.6; margin-bottom: 10px; }
+    .spy-mt-price { font-size: 15px; font-weight: bold; color: #111; text-align: right; margin-bottom: 10px; }
+    .spy-mt-note { background: #fff9e6; color: #d35400; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: bold; margin-bottom: 10px; border-left: 3px solid #ffc800; }
+    .spy-mt-addr { font-size: 12px; color: #888; display: flex; align-items: flex-start; gap: 5px; }
+    </style>
+
+    <div id="scrSpyMeituan" class="scr-flex spy-mt-bg" style="z-index: 160; display: none; flex-direction: column;">
+        <div class="spy-mt-header">
+            <span id="btnSpyMeituanBack" class="back-btn" style="color: #333;">＜</span>
+            <span class="header-center">外卖订单</span>
+            <div style="display:flex; gap:15px; font-size:14px;">
+                <span id="btnSpyMeituanRefresh" style="cursor:pointer; color:#333;">刷新</span>
+                <span id="btnSpyMeituanClear" style="cursor:pointer; color:#ff4d4f;">清空</span>
+            </div>
+        </div>
+        <div id="spyMeituanList" style="flex: 1; overflow-y: auto;"></div>
+    </div>
+
 
 
 
@@ -6880,15 +6907,126 @@ async function generateSpyMusic() {
                 }
             } catch(e) { console.error(e); }
         }
-    } catch (e) {
+        } catch (e) {
         alert(`请求失败：` + e.message);
     }
     renderSpyMusicProfile();
 }
 
+// ==========================================
+// ====== 美团外卖底层逻辑 ======
+// ==========================================
+let spyMeituanData = [];
+
+function loadSpyMeituanData() {
+    let d = originalGetItem.call(ls, `spyMeituan_` + currentChatId);
+    spyMeituanData = d ? JSON.parse(d) : [];
+}
+
+function saveSpyMeituanData() {
+    originalSetItem.call(ls, `spyMeituan_` + currentChatId, JSON.stringify(spyMeituanData));
+}
+
+if($(`btnSpyMeituan`)) $(`btnSpyMeituan`).onclick = () => { loadSpyMeituanData(); showScreen(`scrSpyMeituan`); renderSpyMeituan(); };
+if($(`btnSpyMeituanBack`)) $(`btnSpyMeituanBack`).onclick = () => { showScreen(`scrCharPhone`); $(`scrSpyMeituan`).style.display = `none`; };
+if($(`btnSpyMeituanRefresh`)) $(`btnSpyMeituanRefresh`).onclick = () => { generateSpyMeituan(); };
+if($(`btnSpyMeituanClear`)) $(`btnSpyMeituanClear`).onclick = () => {
+    if(confirm(`确定要清空当前角色的美团数据吗？`)) {
+        spyMeituanData = [];
+        saveSpyMeituanData();
+        renderSpyMeituan();
+    }
+};
+
+function renderSpyMeituan() {
+    let list = $(`spyMeituanList`);
+    list.innerHTML = ``;
+    if(spyMeituanData.length === 0) {
+        list.innerHTML = `<div style="text-align:center; padding:30px; color:#999; font-size:14px;">暂无订单记录，请点击右上角刷新生成。</div>`;
+        return;
+    }
+
+    spyMeituanData.forEach(item => {
+        let div = document.createElement(`div`);
+        div.className = `spy-mt-card`;
+        let statusClass = item.status.includes(`送达`) || item.status.includes(`完成`) ? `spy-mt-status` : `spy-mt-status spy-mt-status-active`;
+        let noteHtml = item.note ? `<div class="spy-mt-note">备注：${escapeHtml(item.note)}</div>` : ``;
+
+        div.innerHTML = `
+            <div class="spy-mt-shop">
+                <div class="spy-mt-shop-icon">🏪</div>
+                <div>${escapeHtml(item.shop)}</div>
+                <div class="${statusClass}">${escapeHtml(item.status)}</div>
+            </div>
+            <div class="spy-mt-items">${item.items.map(i => escapeHtml(i)).join(`<br>`)}</div>
+            <div class="spy-mt-price">￥${escapeHtml(item.price)}</div>
+            ${noteHtml}
+            <div class="spy-mt-addr">📍 ${escapeHtml(item.address)}<br>🕒 ${escapeHtml(item.time)}</div>
+        `;
+        list.appendChild(div);
+    });
+}
+
+async function generateSpyMeituan() {
+    let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value;
+    if(!pxy || !key || !mod) { alert(`请先在网络配置里填写API信息哦！`); return; }
+
+    let list = $(`spyMeituanList`);
+    list.innerHTML = `<div style="text-align:center; padding:30px; color:#ff9900; font-size:14px; animation: pulse 1.5s infinite;">正在破解外卖平台数据...</div>`;
+
+    let charN = `对方`;
+    let contacts = ls.getItem(`myContacts`) ? JSON.parse(ls.getItem(`myContacts`)) : [];
+    let c = contacts.find(x => String(x.id) === String(currentChatId));
+    if(c) charN = originalGetItem.call(ls, `cN_` + c.id) || c.name;
+    if(currentChatId === `default` && !c) charN = $(`cfgName`).value || `对方`;
+
+    let charP = originalGetItem.call(ls, `cP_` + currentChatId) || ``; 
+    let myN = $(`cfgMyName`).value || `我`;
+    let vTime = getVirtualTime();
+
+    let pmt = `【绝密任务：生成伪造的外卖订单记录】\n注意：我正在偷看主角色（${charN}）的外卖APP！\n请扮演系统，为【${charN}】生成5条近期的外卖、跑腿或买药订单。当前虚拟时间：${vTime}。\n`;
+    if(charP) pmt += `【${charN}的专属人设档案】：${charP}\n`; 
+
+    let specHistStr = originalGetItem.call(ls, `chatHistory_` + currentChatId) || `[]`;
+    let specHist = JSON.parse(specHistStr);
+    if(currentChatId === `default` && typeof history !== 'undefined') specHist = history;
+    let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
+    if(recentChat) pmt += `\n【近期聊天剧情参考（重点用于推测近期的特殊订单，如买药、买酒、买花等）】：\n${recentChat}\n`;
+
+    pmt += `\n要求：\n1. 订单类型必须多样化：不能全是吃饭！结合剧情穿插大药房买药、深夜便利店买酒、鲜花预定等。\n`;
+    pmt += `2. 备注(note)是灵魂：可以体现隐藏的关心或秘密（如：别放香菜她不吃、放门口别敲门等），部分订单可以无备注。\n`;
+    pmt += `3. 强力纠错指令：收货地址(address)必须先从上方专属人设档案中提取${charN}所在的城市或常驻地！绝对禁止出现设定在A市却把外卖送到B市的错误！地址只需写到小区或大楼名称，如：XX市XX小区。\n`;
+    pmt += `4. 状态(status)：大部分为已送达，可以有1条是骑手正送往某地。\n`;
+
+    pmt += `\n严禁废话！必须且只能输出纯JSON数组，格式如下：\n[{"shop":"店铺名称","status":"已送达 或 配送中","items":["物品1 x1","物品2 x2"],"price":"58.50","note":"备注内容或空字符串","address":"XX市XX小区","time":"如 昨天 19:30"}]`;
+
+    try {
+        let url = pxy.includes(`chat/completions`) ? pxy : pxy.replace(/\/$/, ``) + `/chat/completions`;
+        let res = await fetch(url, {
+            method: `POST`, headers: {Authorization: `Bearer ` + key, "Content-Type": `application/json`},
+            body: JSON.stringify({model: mod, messages: [{role: `user`, content: pmt}], temperature: 0.8})
+        });
+        let dat = await res.json();
+        if(dat.choices && dat.choices.length > 0) {
+            let reply = dat.choices[0].message.content.trim();
+            let cleanRes = reply.replace(/```json/g, '').replace(/```/g, '').trim();
+            try {
+                let parsed = JSON.parse(cleanRes);
+                if(Array.isArray(parsed)) {
+                    spyMeituanData = parsed;
+                    saveSpyMeituanData(); 
+                }
+            } catch(e) { console.error(e); }
+        }
+    } catch (e) {
+        alert(`请求失败：` + e.message);
+    }
+    renderSpyMeituan();
+}
 </script>
 </body>
 </html>
+
 
 
 
