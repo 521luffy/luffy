@@ -7825,24 +7825,23 @@ async function generateSpyIqiyi() {
 }
 
 // ==========================================
-// ====== 个性化装扮底层逻辑 (本地极速压缩版) ======
+// ====== 个性化装扮底层逻辑 (动态捕捉无重叠版) ======
 // ==========================================
 let spyThemeData = { bg: '', icons: {} };
 let currentEditingThemeKey = '';
 
-// 配置可自定义的图标和背景列表
-const themeItems = [
-    { key: 'bg', name: '手机壁纸' },
-    { key: 'btnSpyMeituan', name: '美团外卖图标' },
-    { key: 'btnSpyFootprint', name: '实时定位图标' },
-    { key: 'btnSpyWallet', name: '钱包账单图标' },
-    { key: 'btnSpyCart', name: '购物平台图标' },
-    { key: 'btnSpyIqiyi', name: '爱奇艺视频图标' },
-    { key: 'btnSpyDiary', name: '私密日记图标' },
-    { key: 'btnSpyZhihu', name: '知乎浏览图标' },
-    { key: 'btnSpySecret', name: '隐私空间图标' },
-    { key: 'btnSpySettings', name: '设置图标' }
-];
+// 核心修复：自动雷达扫描，只要在屏幕上的APP统统一网打尽，无需再手动添加
+function getThemeItems() {
+    let items = [ { key: 'bg', name: '手机壁纸' } ];
+    let apps = document.querySelectorAll('#scrCharPhone .char-app-item');
+    apps.forEach(app => {
+        if(!app.id) return;
+        let nameEl = app.querySelector('.char-app-name');
+        let appName = nameEl ? nameEl.innerText : '应用';
+        items.push({ key: app.id, name: appName + '图标' });
+    });
+    return items;
+}
 
 function loadSpyThemeData() {
     let d = originalGetItem.call(ls, `spyTheme_` + currentChatId);
@@ -7854,7 +7853,6 @@ function saveSpyThemeData() {
     applySpyTheme();
 }
 
-// 绑定主界面的设置图标（确保你的设置图标ID是 btnSpySettings）
 if($(`btnSpySettings`)) $(`btnSpySettings`).onclick = () => { loadSpyThemeData(); showScreen(`scrSpySettings`); renderSpySettings(); };
 if($(`btnSpySettingsBack`)) $(`btnSpySettingsBack`).onclick = () => { showScreen(`scrCharPhone`); $(`scrSpySettings`).style.display = `none`; };
 
@@ -7862,10 +7860,8 @@ function renderSpySettings() {
     let list = $(`spySetList`);
     list.innerHTML = ``;
     
-    themeItems.forEach(item => {
-        // 如果页面里连这个APP的入口都没有，就不在设置里显示它
-        if(item.key !== 'bg' && !$((item.key))) return;
-
+    let items = getThemeItems();
+    items.forEach(item => {
         let div = document.createElement(`div`);
         div.className = `spy-set-item`;
         
@@ -7887,13 +7883,11 @@ function renderSpySettings() {
     });
 }
 
-// 唤起本地相册
 window.triggerThemeUpload = function(key) {
     currentEditingThemeKey = key;
     if($(`spyThemeUploader`)) $(`spyThemeUploader`).click();
 };
 
-// 一键恢复默认状态
 window.resetThemeItem = function(key) {
     if(key === 'bg') spyThemeData.bg = '';
     else delete spyThemeData.icons[key];
@@ -7901,7 +7895,6 @@ window.resetThemeItem = function(key) {
     renderSpySettings();
 };
 
-// 核心硬核科技：图片自动极速压缩
 if($(`spyThemeUploader`)) {
     $(`spyThemeUploader`).onchange = function(e) {
         let file = e.target.files[0];
@@ -7914,7 +7907,6 @@ if($(`spyThemeUploader`)) {
                 let canvas = document.createElement('canvas');
                 let ctx = canvas.getContext('2d');
                 
-                // 背景图保留更高画质，图标疯狂压缩以节省内存
                 let MAX_WIDTH = currentEditingThemeKey === 'bg' ? 800 : 150;
                 let MAX_HEIGHT = currentEditingThemeKey === 'bg' ? 1600 : 150;
                 let width = img.width;
@@ -7930,7 +7922,6 @@ if($(`spyThemeUploader`)) {
                 canvas.height = height;
                 ctx.drawImage(img, 0, 0, width, height);
                 
-                // 将图片直接压缩成 80% 质量的 JPG 数据流
                 let compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
                 
                 if(currentEditingThemeKey === 'bg') spyThemeData.bg = compressedDataUrl;
@@ -7938,7 +7929,7 @@ if($(`spyThemeUploader`)) {
                 
                 saveSpyThemeData();
                 renderSpySettings();
-                $(`spyThemeUploader`).value = ''; // 清空选择，允许重复传同一张图
+                $(`spyThemeUploader`).value = ''; 
             };
             img.src = event.target.result;
         };
@@ -7946,7 +7937,7 @@ if($(`spyThemeUploader`)) {
     };
 }
 
-// 智能无缝应用主题到当前界面
+// 核心修复：精准打击内部图案，彻底解决重叠显示
 function applySpyTheme() {
     let phoneScreen = $(`scrCharPhone`);
     if(phoneScreen) {
@@ -7960,25 +7951,41 @@ function applySpyTheme() {
         }
     }
     
-    themeItems.forEach(item => {
+    let items = getThemeItems();
+    items.forEach(item => {
         if(item.key === 'bg') return;
-        let iconEl = $(item.key);
-        if(iconEl) {
+        let appEl = $(item.key);
+        if(appEl) {
+            // 找到真正承载图标和底色的内部方块
+            let iconEl = appEl.querySelector('.char-app-icon') || appEl;
             let customImg = spyThemeData.icons[item.key];
+            
+            // 备份原有的内容和颜色，以便随时恢复
+            if(typeof iconEl.dataset.ogHtml === 'undefined') {
+                iconEl.dataset.ogHtml = iconEl.innerHTML;
+            }
+            if(typeof iconEl.dataset.ogBg === 'undefined') {
+                iconEl.dataset.ogBg = iconEl.style.background || iconEl.style.backgroundColor || '';
+            }
+
             if(customImg) {
                 iconEl.style.backgroundImage = `url('${customImg}')`;
                 iconEl.style.backgroundSize = `cover`;
                 iconEl.style.backgroundPosition = `center`;
-                iconEl.style.color = `transparent`; // 换上图片后自动把原有的文字或Emoji隐身
+                // 强制把底色变透明，并清空内部的所有表情包，绝不重叠
+                iconEl.style.backgroundColor = `transparent`;
+                iconEl.style.background = `transparent`;
+                iconEl.innerHTML = ``; 
             } else {
+                // 原汁原味地恢复
                 iconEl.style.backgroundImage = `none`;
-                iconEl.style.color = ``; // 恢复默认
+                iconEl.style.background = iconEl.dataset.ogBg;
+                iconEl.innerHTML = iconEl.dataset.ogHtml;
             }
         }
     });
 }
 
-// 挂载自动嗅探器：只要进入查手机页面，0.1秒内自动换上当前角色的专属皮肤
 let lastThemeChatId = null;
 setInterval(() => {
     let phoneScreen = $(`scrCharPhone`);
@@ -7992,6 +7999,7 @@ setInterval(() => {
         lastThemeChatId = null;
     }
 }, 300);
+
 
 </script>
 </body>
