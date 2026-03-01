@@ -7913,46 +7913,24 @@ window.resetThemeItem = function(key) {
 };
 
 if($(`spyThemeUploader`)) {
-    $(`spyThemeUploader`).onchange = function(e) {
-        let file = e.target.files[0];
-        if(!file) return;
-        
-        let reader = new FileReader();
-        reader.onload = function(event) {
-            let img = new Image();
-            img.onload = function() {
-                let canvas = document.createElement(`canvas`);
-                let ctx = canvas.getContext(`2d`);
-                
-                // 彻底放飞自我：壁纸直奔市面主流 1440 极清画质！图标给到 256
-                let MAX_WIDTH = currentEditingThemeKey === `bg` ? 1440 : 256;
-                let MAX_HEIGHT = currentEditingThemeKey === `bg` ? 3200 : 256;
-                let width = img.width;
-                let height = img.height;
-                
-                if (width > height) {
-                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-                } else {
-                    if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
-                }
-                
-                canvas.width = width;
-                canvas.height = height;
-                ctx.drawImage(img, 0, 0, width, height);
-                
-                // 使用 webp 格式并保留高达 95% 的惊人画质
-                let compressedDataUrl = canvas.toDataURL(`image/webp`, 0.95);
-                
-                if(currentEditingThemeKey === `bg`) spyThemeData.bg = compressedDataUrl;
-                else spyThemeData.icons[currentEditingThemeKey] = compressedDataUrl;
-                
-                saveSpyThemeData();
-                renderSpySettings();
-            };
-            img.src = event.target.result;
-        };
-        reader.readAsDataURL(file);
+    $(`spyThemeUploader`).onchange = function(event) {
+    let file = event.target.files[0];
+    if(!file) return;
+    let reader = new FileReader();
+    reader.onload = function(e) {
+        // 直接使用原图数据，不经过任何 Canvas 压缩或裁剪，绝对无损高清
+        let originalDataUrl = e.target.result;
+        if(currentEditingThemeKey === `bg`) {
+            spyThemeData.bg = originalDataUrl;
+        } else {
+            spyThemeData.icons[currentEditingThemeKey] = originalDataUrl;
+        }
+        saveSpyThemeData();
+        renderSpySettings();
     };
+    reader.readAsDataURL(file);
+};
+
 }
 
 function applySpyTheme() {
