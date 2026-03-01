@@ -1353,11 +1353,62 @@ background-image: none;">
             <div class="spy-wallet-balance"><span>¥</span><div id="spyWalletBalanceTxt">0.00</div></div>
         </div>
         <div style="padding: 15px 20px 5px 20px; font-size: 14px; font-weight: bold; color: #ff9eaf; border-bottom: 1px dashed #ffeeee;">账单明细</div>
-        <div id="spyWalletList" class="spy-wallet-list-container"></div>
+                <div id="spyWalletList" class="spy-wallet-list-container"></div>
+    </div>
+
+    <style>
+    .spy-shop-bg { background: #fffcf8; color: #333; }
+    .spy-shop-header { background: #ffb380; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; color: #fff; flex-shrink: 0; border-bottom: none; }
+    .spy-shop-tabs { display: flex; background: #fffcf8; border-bottom: 1px solid #ffeedd; padding: 0 20px; flex-shrink: 0; }
+    .spy-shop-tab { flex: 1; text-align: center; padding: 12px 0; font-size: 15px; color: #999; cursor: pointer; transition: 0.3s; position: relative; }
+    .spy-shop-tab.active { color: #ff8c42; font-weight: bold; }
+    .spy-shop-tab.active::after { content: ''; position: absolute; bottom: 0; left: 30%; right: 30%; height: 3px; background: #ff8c42; border-radius: 3px 3px 0 0; }
+    .spy-shop-list { flex: 1; padding: 15px 20px; overflow-y: auto; background: #fffcf8; display: flex; flex-direction: column; gap: 15px; }
+    .spy-shop-item { display: flex; align-items: stretch; background: #fff; border-radius: 12px; padding: 12px; box-shadow: 0 2px 8px rgba(255, 140, 66, 0.08); position: relative; border: 1px solid #ffeeee; cursor: pointer; }
+    .spy-shop-item.is-user { border-left: 4px solid #ff8c42; background: #fffaf5; }
+    .spy-shop-img-box { width: 70px; height: 70px; background: #ffeedd; border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 28px; margin-right: 12px; flex-shrink: 0; }
+    .spy-shop-info { flex: 1; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; }
+    .spy-shop-title { font-size: 14px; font-weight: bold; color: #444; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+    .spy-shop-bot { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 5px; }
+    .spy-shop-price { font-size: 16px; font-weight: bold; color: #ff6b35; }
+    .spy-shop-status { font-size: 12px; color: #888; background: #f0f0f0; padding: 2px 8px; border-radius: 10px; }
+    .spy-shop-heart { position: absolute; top: 10px; right: 10px; font-size: 14px; color: #ff8c42; animation: pulse 1.5s infinite; }
+    
+    .spy-shop-popup { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 200; display: none; justify-content: center; align-items: flex-end; }
+    .spy-shop-popup-box { background: #fffcf8; width: 100%; padding: 25px 20px 35px 20px; border-radius: 20px 20px 0 0; box-shadow: 0 -5px 15px rgba(255,140,66,0.15); transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; flex-direction: column; align-items: center; }
+    .spy-shop-popup.show .spy-shop-popup-box { transform: translateY(0); }
+    .spy-shop-popup-title { font-size: 13px; color: #ff8c42; font-weight: bold; margin-bottom: 15px; display: flex; align-items: center; gap: 5px; }
+    .spy-shop-popup-content { font-size: 15px; color: #555; line-height: 1.6; text-align: center; font-style: italic; background: #fff5eb; padding: 15px; border-radius: 12px; width: 100%; box-sizing: border-box; }
+    .spy-shop-popup-close { margin-top: 20px; width: 40px; height: 4px; background: #ddd; border-radius: 2px; }
+    </style>
+
+    <div id="scrSpyShop" class="scr-flex spy-shop-bg" style="z-index: 160; display: none; flex-direction: column;">
+        <div class="spy-shop-header">
+            <span id="btnSpyShopBack" class="back-btn" style="color: #fff;">＜</span>
+            <span class="header-center" style="font-size:16px;">购物</span>
+            <div style="display:flex; gap:15px; font-size:14px;">
+                <span id="btnSpyShopRefresh" style="cursor:pointer;">刷新</span>
+                <span id="btnSpyShopClear" style="cursor:pointer; color:#ffeeee;">清空</span>
+            </div>
+        </div>
+        <div class="spy-shop-tabs">
+            <div class="spy-shop-tab active" id="tabSpyShopCart">购物车</div>
+            <div class="spy-shop-tab" id="tabSpyShopOrder">我的订单</div>
+        </div>
+        <div id="spyShopList" class="spy-shop-list"></div>
+        
+        <div id="spyShopPopup" class="spy-shop-popup" onclick="closeSpyShopPopup()">
+            <div class="spy-shop-popup-box" onclick="event.stopPropagation()">
+                <div class="spy-shop-popup-title"><span>💖</span> 碎碎念 <span>💖</span></div>
+                <div id="spyShopPopupContent" class="spy-shop-popup-content"></div>
+                <div class="spy-shop-popup-close" onclick="closeSpyShopPopup()"></div>
+            </div>
+        </div>
     </div>
 
     <div id="scrSpyDiary" class="scr-flex" style="z-index: 160; background: #fdfafb;">
         <div class="room-header" style="background: #fff; border-bottom: 1px solid #eee; color: #333;">
+
 
             <span id="btnSpyDiaryBack" class="back-btn" style="color: #333;">＜</span>
             <span class="header-center">私密日记</span>
@@ -7383,6 +7434,170 @@ async function generateSpyWallet() {
         alert(`请求失败：` + e.message);
     }
     renderSpyWallet();
+}
+
+// ==========================================
+// ====== 购物与碎碎念底层逻辑 ======
+// ==========================================
+let spyShopData = { cart: [], orders: [] };
+let currentShopTab = `cart`; // 默认显示购物车
+
+function loadSpyShopData() {
+    let d = originalGetItem.call(ls, `spyShop_` + currentChatId);
+    spyShopData = d ? JSON.parse(d) : { cart: [], orders: [] };
+}
+
+function saveSpyShopData() {
+    originalSetItem.call(ls, `spyShop_` + currentChatId, JSON.stringify(spyShopData));
+}
+
+// 绑定主界面的入口图标（如果你在桌面加了购物车图标的话）
+if($(`btnSpyShop`)) $(`btnSpyShop`).onclick = () => { loadSpyShopData(); showScreen(`scrSpyShop`); renderSpyShop(); };
+if($(`btnSpyShopBack`)) $(`btnSpyShopBack`).onclick = () => { showScreen(`scrCharPhone`); $(`scrSpyShop`).style.display = `none`; closeSpyShopPopup(); };
+if($(`btnSpyShopRefresh`)) $(`btnSpyShopRefresh`).onclick = () => { generateSpyShop(); };
+if($(`btnSpyShopClear`)) $(`btnSpyShopClear`).onclick = () => {
+    if(confirm(`确定要清空TA的购物车和订单记录吗？`)) {
+        spyShopData = { cart: [], orders: [] };
+        saveSpyShopData();
+        renderSpyShop();
+    }
+};
+
+// 双栏切换逻辑
+if($(`tabSpyShopCart`)) $(`tabSpyShopCart`).onclick = () => { 
+    currentShopTab = `cart`; 
+    $(`tabSpyShopCart`).classList.add(`active`);
+    $(`tabSpyShopOrder`).classList.remove(`active`);
+    renderSpyShop(); 
+};
+if($(`tabSpyShopOrder`)) $(`tabSpyShopOrder`).onclick = () => { 
+    currentShopTab = `order`; 
+    $(`tabSpyShopOrder`).classList.add(`active`);
+    $(`tabSpyShopCart`).classList.remove(`active`);
+    renderSpyShop(); 
+};
+
+function closeSpyShopPopup() {
+    let pop = $(`spyShopPopup`);
+    if(pop) {
+        pop.classList.remove(`show`);
+        setTimeout(() => { pop.style.display = `none`; }, 300);
+    }
+}
+
+function showSpyShopThought(thoughtTxt) {
+    let pop = $(`spyShopPopup`);
+    let content = $(`spyShopPopupContent`);
+    if(pop && content) {
+        content.innerText = thoughtTxt;
+        pop.style.display = `flex`;
+        // 留出一点时间让display生效后再加动画类
+        setTimeout(() => { pop.classList.add(`show`); }, 10);
+    }
+}
+
+function renderSpyShop() {
+    let list = $(`spyShopList`);
+    list.innerHTML = ``;
+    
+    let renderData = currentShopTab === `cart` ? spyShopData.cart : spyShopData.orders;
+
+    if(!renderData || renderData.length === 0) {
+        let emptyTxt = currentShopTab === `cart` ? `购物车空空如也，连个心愿单都没有。` : `最近没有任何购物订单。`;
+        list.innerHTML = `<div style="text-align:center; padding:40px 20px; color:#aaa; font-size:14px;">${emptyTxt}<br><br><span style="font-size:12px; color:#ffb380;">点击右上角刷新破解最新数据</span></div>`;
+        return;
+    }
+
+    renderData.forEach(item => {
+        let div = document.createElement(`div`);
+        // 如果是给檬檬买的，加上专属样式和点击事件
+        div.className = `spy-shop-item` + (item.isUser ? ` is-user` : ``);
+        if(item.isUser && item.thought) {
+            div.onclick = () => showSpyShopThought(item.thought);
+        }
+
+        let statusHtml = ``;
+        if(currentShopTab === `order`) {
+            let sColor = item.status.includes(`签收`) ? `#888` : `#ff8c42`;
+            let sBg = item.status.includes(`签收`) ? `#f0f0f0` : `#fff0e5`;
+            statusHtml = `<div class="spy-shop-status" style="color:${sColor}; background:${sBg};">${escapeHtml(item.status)}</div>`;
+        }
+
+        let heartHtml = item.isUser ? `<div class="spy-shop-heart">💝</div>` : ``;
+
+        div.innerHTML = `
+            ${heartHtml}
+            <div class="spy-shop-img-box">${item.img || `🛍️`}</div>
+            <div class="spy-shop-info">
+                <div class="spy-shop-title">${escapeHtml(item.title)}</div>
+                <div class="spy-shop-bot">
+                    <div class="spy-shop-price">¥${parseFloat(item.price).toFixed(2)}</div>
+                    ${statusHtml}
+                </div>
+            </div>
+        `;
+        list.appendChild(div);
+    });
+}
+
+async function generateSpyShop() {
+    let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value;
+    if(!pxy || !key || !mod) { alert(`请先在网络配置里填写API信息哦！`); return; }
+
+    let list = $(`spyShopList`);
+    list.innerHTML = `<div style="text-align:center; padding:40px; color:#ff8c42; font-size:14px; animation: pulse 1.5s infinite;">正在破解购物平台账号数据...</div>`;
+
+    let charN = `对方`;
+    let contacts = ls.getItem(`myContacts`) ? JSON.parse(ls.getItem(`myContacts`)) : [];
+    let c = contacts.find(x => String(x.id) === String(currentChatId));
+    if(c) charN = originalGetItem.call(ls, `cN_` + c.id) || c.name;
+    if(currentChatId === `default` && !c) charN = $(`cfgName`).value || `对方`;
+
+    let charP = originalGetItem.call(ls, `cAP_` + currentChatId) || originalGetItem.call(ls, `cAP`) || ``; 
+    let myN = $(`cfgMyName`).value || `檬檬`;
+
+    let pmt = `【最高优先级绝密任务：生成伪造的购物软件记录】\n注意：我正在偷看主角色（${charN}）的购物车和订单记录！我的名字是${myN}。\n`;
+    if(charP) pmt += `【${charN}的专属人设档案（务必逐字阅读并严格遵守消费水平）】：${charP}\n`; 
+
+    let specHistStr = originalGetItem.call(ls, `chatHistory_` + currentChatId) || `[]`;
+    let specHist = JSON.parse(specHistStr);
+    if(currentChatId === `default` && typeof history !== 'undefined') specHist = history;
+    let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
+    if(recentChat) pmt += `\n【近期聊天剧情参考（最高优先级：用于推测TA近期想买什么）：\n${recentChat}\n`;
+
+    pmt += `\n要求：\n1. 阶层隔离防OOC：购买的物品必须严格符合身份和经济实力！普通学生只能买零食、文具、便宜的衣服周边；霸道总裁则购买高定、珠宝、昂贵礼品或房车。绝不允许跨越阶层消费！\n`;
+    pmt += `2. 强制互动抓取（生死线）：必须仔细分析上述聊天记录！如果${myN}在聊天里提到了生病、冷、饿了、喜欢什么东西，必须立刻在购物车或已付款订单里生成对应的物品！\n`;
+    pmt += `3. 专属碎碎念机制（灵魂核心）：你需要生成两组数据（购物车和订单）。其中至少要有一半的物品是准备给${myN}买的！凡是给${myN}买的物品，必须将 isUser 设为 true，并且在 thought 字段里写下${charN}买这件东西时的心理活动（碎碎念）！\n`;
+    pmt += `  - 购物车里的 thought 主打纠结和规划：比如 纠结买哪个颜色她更喜欢，或者 攒够钱就立刻清空给她个惊喜。\n`;
+    pmt += `  - 订单里的 thought 主打期待和暗喜：比如 每天看好几次物流，想象她收到礼物开心的样子。\n`;
+    pmt += `  - 如果是自己用的普通物品，isUser 设为 false，thought 留空。\n`;
+    pmt += `4. 状态要求：订单的状态只能是 已签收、运输中、待发货。购物车无状态。\n`;
+
+    pmt += `\n严禁废话！必须且只能输出纯JSON对象，包含 cart 和 orders 两个数组，格式如下：\n{"cart": [{"title":"物品名称","price":"58.00","img":"🎁","isUser":true,"thought":"心理活动内容"}], "orders": [{"title":"物品名称","price":"1299.00","img":"👗","status":"运输中","isUser":true,"thought":"心理活动内容"}]}`;
+
+    try {
+        let url = pxy.includes(`chat/completions`) ? pxy : pxy.replace(/\/$/, ``) + `/chat/completions`;
+        let res = await fetch(url, {
+            method: `POST`, headers: {Authorization: `Bearer ` + key, "Content-Type": `application/json`},
+            body: JSON.stringify({model: mod, messages: [{role: `user`, content: pmt}], temperature: 0.8})
+        });
+        let dat = await res.json();
+        if(dat.choices && dat.choices.length > 0) {
+            let reply = dat.choices[0].message.content.trim();
+            let cleanRes = reply.replace(/```json/g, '').replace(/```/g, '').trim();
+            try {
+                let parsed = JSON.parse(cleanRes);
+                if(parsed.cart || parsed.orders) {
+                    spyShopData.cart = Array.isArray(parsed.cart) ? parsed.cart : [];
+                    spyShopData.orders = Array.isArray(parsed.orders) ? parsed.orders : [];
+                    saveSpyShopData(); 
+                }
+            } catch(e) { console.error(e); }
+        }
+    } catch (e) {
+        alert(`请求失败：` + e.message);
+    }
+    renderSpyShop();
 }
 
 </script>
