@@ -7082,28 +7082,28 @@ if($(`btnSpyFootprintClear`)) $(`btnSpyFootprintClear`).onclick = () => {
     }
 };
 
+// 提取当前界面的精准日期（直接抓取你的设置面板，所见即所得）
+function getFootprintDateStr() {
+    let isCustom = $(`cfgCustomTime`) && $(`cfgCustomTime`).checked;
+    if(isCustom) {
+        let cy = $(`ctYear`) ? $(`ctYear`).value : new Date().getFullYear();
+        let cm = $(`ctMonth`) ? $(`ctMonth`).value : (new Date().getMonth() + 1);
+        let cd = $(`ctDay`) ? $(`ctDay`).value : new Date().getDate();
+        let wd = $(`ctWeekday`) ? $(`ctWeekday`).innerText : ``;
+        return cy + `年` + cm + `月` + cd + `日 ` + wd;
+    } else {
+        let d = new Date();
+        let days = [`日`,`一`,`二`,`三`,`四`,`五`,`六`];
+        return d.getFullYear() + `年` + (d.getMonth()+1) + `月` + d.getDate() + `日 星期` + days[d.getDay()];
+    }
+}
+
 function renderSpyFootprint() {
     let list = $(`spyFootprintList`);
     list.innerHTML = ``;
     
-    // 核心修复：彻底抛弃全局缓存，直达底层精准提取当前角色的私有时间
-    let cy = originalGetItem.call(ls, `cCTy_` + currentChatId) || originalGetItem.call(ls, `cCTy`) || new Date().getFullYear();
-    let cm = originalGetItem.call(ls, `cCTm_` + currentChatId) || originalGetItem.call(ls, `cCTm`) || (new Date().getMonth() + 1);
-    let cd = originalGetItem.call(ls, `cCTd_` + currentChatId) || originalGetItem.call(ls, `cCTd`) || new Date().getDate();
-    let isCustomOn = originalGetItem.call(ls, `cCTon_` + currentChatId) === `true` || (currentChatId === `default` && originalGetItem.call(ls, `cCTon`) === `true`);
-    
-    let vTime = ``;
-    if(isCustomOn) {
-        let dObj = new Date();
-        dObj.setFullYear(cy, cm - 1, cd);
-        let days = [`星期日`,`星期一`,`星期二`,`星期三`,`星期四`,`星期五`,`星期六`];
-        vTime = cy + `年` + cm + `月` + cd + `日 ` + days[dObj.getDay()];
-    } else {
-        let d = new Date();
-        let days = [`日`,`一`,`二`,`三`,`四`,`五`,`六`];
-        vTime = d.getFullYear() + `年` + (d.getMonth()+1) + `月` + d.getDate() + `日 星期` + days[d.getDay()];
-    }
-    if($(`spyFootprintDate`)) $(`spyFootprintDate`).innerText = vTime;
+    // 渲染时更新顶部日期
+    if($(`spyFootprintDate`)) $(`spyFootprintDate`).innerText = getFootprintDateStr();
 
     if(spyFootprintData.length === 0) {
         list.innerHTML = `<div style="text-align:center; padding:30px; color:#999; font-size:14px;">暂无今日足迹，请点击右上角刷新生成。</div>`;
@@ -7127,6 +7127,7 @@ function renderSpyFootprint() {
     });
 }
 
+
 async function generateSpyFootprint() {
     let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value;
     if(!pxy || !key || !mod) { alert(`请先在网络配置里填写API信息哦！`); return; }
@@ -7142,12 +7143,13 @@ async function generateSpyFootprint() {
 
     let charP = originalGetItem.call(ls, `cAP_` + currentChatId) || originalGetItem.call(ls, `cAP`) || ``; 
     let myN = $(`cfgMyName`).value || `我`;
-    let vTime = $(`spyFootprintDate`) ? $(`spyFootprintDate`).innerText : `今天`;
+    
+    // 调用第一部分写好的抓取函数获取最新时间
+    let vTime = getFootprintDateStr();
 
     let pmt = `【最高优先级绝密任务：生成伪造的手机定位足迹记录】\n注意：我正在偷看主角色（${charN}）的手机足迹！\n请扮演定位系统，为【${charN}】生成当天的行程轨迹（5到7个节点）。当前日期：${vTime}。\n`;
     if(charP) pmt += `【${charN}的专属人设档案（务必逐字仔细阅读并严格遵守）】：${charP}\n`; 
 
-    // 新增：自动抓取世界书记忆，防止背景设定丢失
     let wbStr = originalGetItem.call(ls, `linkedWb_` + currentChatId) || originalGetItem.call(ls, `linkedWb`) || `[]`;
     let curWb = JSON.parse(wbStr);
     let wbData = ls.getItem(`wbData`) ? JSON.parse(ls.getItem(`wbData`)) : [];
@@ -7159,14 +7161,14 @@ async function generateSpyFootprint() {
     let specHist = JSON.parse(specHistStr);
     if(currentChatId === `default` && typeof history !== 'undefined') specHist = history;
     let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
-    if(recentChat) pmt += `\n【近期聊天剧情参考（重点用于推断当前正在发生的事情和位置）：\n${recentChat}\n`;
+    if(recentChat) pmt += `\n【近期聊天剧情参考（重点用于推断当前正在发生的事情和最终位置）：\n${recentChat}\n`;
 
     pmt += `\n要求：\n1. 必须形成时间闭环：从早晨出门，到白天活动，最后到当前位置，按时间顺序严格排列。\n`;
-    pmt += `2. 强制最新剧情对接：足迹的最后一个时间节点，必须且只能是最新聊天记录里${charN}当前所处的具体位置！如果聊天记录里${charN}在你（${myN}）家拉扯，那最后一个地点必须明确写出所在区或商圈加${myN}的住处；如果在路上，就是具体的路名。前面节点必须根据最终位置和聊天内容倒推。\n`;
-    pmt += `3. 尊重原生设定（拒绝一刀切换名）：必须扫描档案和世界书设定！如果档案里写了具体学校名称或地点（如：三中、某某公司），绝对禁止替换成二中或其他通用名字！必须原样照搬设定里的名字！\n`;
-    pmt += `4. 动态作息与性格匹配逻辑（最高优先级）：取消所有死板的作息限制！必须根据${charN}的档案性格来安排行程。如果档案明确写了是坏学生、不良少年或者有特定娱乐设定，哪怕是学生也完全可以去酒吧、网吧、逃课或进行符合身份的活动；只有档案明确是乖巧普通学生的，才安排正常的学校作息。\n`;
+    pmt += `2. 强制最新剧情对接：足迹的最后一个时间节点，必须且只能是最新聊天记录里${charN}当前所处的具体位置！如果聊天记录里${charN}在你（${myN}）家拉扯，那最后一个地点必须明确写出所在区或商圈加${myN}的住处；如果在路上，就是具体的路名。前面节点必须根据最终位置倒推。\n`;
+    pmt += `3. 尊重原生设定（拒绝偷懒和换名）：必须扫描档案和世界书设定！如果档案里写了具体学校名称（如三中）或特定地点，绝对禁止自动替换成二中或其他通用名字！必须原样照搬设定里的名字！\n`;
+    pmt += `4. 中国式作息与性格匹配（最高优先级）：必须根据${charN}的档案性格来安排行程！如果是乖巧普通的中国高中生，下午绝对不可能三四点出去玩，必须安排晚自习到晚上九点或十点才放学！但如果档案明确写了是坏学生、不良少年或者有特定娱乐设定，完全可以不受限制地去酒吧、网吧、逃课等。\n`;
     pmt += `5. 强效地理围栏：必须提取档案里的常驻城市！写了青岛就必须在青岛市内，绝对禁止跨省瞬移！\n`;
-    pmt += `6. 地点固定命名法则：为了避免居住地频繁乱跳，所有涉及家或住处的地点，必须强制使用所在区或商圈加${charN}的住处、或者所在区或商圈加${myN}的住处的固定格式来命名。\n`;
+    pmt += `6. 地点固定命名法则：所有涉及家或住处的地点，必须强制使用所在区或商圈加${charN}的住处、或者所在区或商圈加${myN}的住处的固定格式来命名。\n`;
     pmt += `7. 交通工具匹配：普通人只能步行、骑行或公交地铁。除非档案明确写了家境富裕，否则禁止出现司机接送或专车。\n`;
 
     pmt += `\n严禁废话！必须且只能输出纯JSON数组，格式如下：\n[{"time":"08:30","location":"具体地点名称","duration":"2小时 或 10分钟","transport":"步行 或 司机接送 或 航班MU5103"}]`;
@@ -7192,8 +7194,10 @@ async function generateSpyFootprint() {
     } catch (e) {
         alert(`请求失败：` + e.message);
     }
+    // 生成完成后调用渲染函数，即可同步刷新顶部的显示日期
     renderSpyFootprint();
 }
+
 
 
 
@@ -7201,3 +7205,10 @@ async function generateSpyFootprint() {
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
