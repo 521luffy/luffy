@@ -7907,8 +7907,8 @@ if($(`spyThemeUploader`)) {
                 let canvas = document.createElement('canvas');
                 let ctx = canvas.getContext('2d');
                 
-                let MAX_WIDTH = currentEditingThemeKey === 'bg' ? 800 : 150;
-                let MAX_HEIGHT = currentEditingThemeKey === 'bg' ? 1600 : 150;
+                                let MAX_WIDTH = currentEditingThemeKey === 'bg' ? 1440 : 256;
+                let MAX_HEIGHT = currentEditingThemeKey === 'bg' ? 3200 : 256;
                 let width = img.width;
                 let height = img.height;
                 
@@ -7922,7 +7922,8 @@ if($(`spyThemeUploader`)) {
                 canvas.height = height;
                 ctx.drawImage(img, 0, 0, width, height);
                 
-                let compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                let compressedDataUrl = canvas.toDataURL('image/jpeg', 0.92);
+
                 
                 if(currentEditingThemeKey === 'bg') spyThemeData.bg = compressedDataUrl;
                 else spyThemeData.icons[currentEditingThemeKey] = compressedDataUrl;
