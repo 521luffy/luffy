@@ -1159,7 +1159,7 @@ background-image: none;">
     .spy-call-right { text-align:right; font-size:12px; color:#999; display:flex; flex-direction:column; gap:4px; }
     .spy-call-missed { color:#ff4d4f !important; }
     </style>
-    <div id="scrSpyCall" class="scr-flex" style="z-index: 160; background: #fdfafb; display: none;">
+        <div id="scrSpyCall" class="scr-flex" style="z-index: 160; background: #fdfafb; display: none;">
         <div class="room-header" style="background: #fff; border-bottom: 1px solid #eee; color: #333;">
             <span id="btnSpyCallBack" class="back-btn" style="color: #333;">＜</span>
             <span class="header-center" style="font-weight:bold;">通话记录</span>
@@ -1167,6 +1167,38 @@ background-image: none;">
         </div>
         <div id="spyCallList" class="list-content" style="background:#fff;"></div>
     </div>
+
+    <style>
+    .spy-album-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; padding: 2px; background: #fff; align-content: start; }
+    .spy-album-item { aspect-ratio: 1 / 1; background-color: #ffd1dc; cursor: pointer; display:flex; justify-content:center; align-items:center; font-size:24px; color:#fff; transition: opacity 0.2s; }
+    .spy-album-item:active { opacity: 0.7; }
+    .spy-polaroid-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 200; justify-content: center; align-items: center; flex-direction: column; padding: 20px; box-sizing: border-box; }
+    .spy-polaroid-card { background: #fff; padding: 15px 15px 30px 15px; border-radius: 4px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); width: 85%; max-width: 320px; text-align: center; }
+    .spy-polaroid-img { width: 100%; aspect-ratio: 1/1; background-color: #ffd1dc; margin-bottom: 15px; display:flex; justify-content:center; align-items:center; color:#fff; font-size:50px; }
+    .spy-polaroid-time { font-size: 12px; color: #999; margin-bottom: 12px; font-family: monospace; }
+    .spy-polaroid-desc { font-size: 15px; color: #333; line-height: 1.6; text-align: left; word-wrap: break-word; }
+    </style>
+    
+    <div id="scrSpyAlbum" class="scr-flex" style="z-index: 160; background: #fff; display: none;">
+        <div class="room-header" style="background: #fff; border-bottom: 1px solid #eee; color: #333;">
+            <span id="btnSpyAlbumBack" class="back-btn" style="color: #333;">＜</span>
+            <span class="header-center" style="font-weight:bold;">相册</span>
+            <div style="display:flex; gap:15px; font-size:14px; font-weight:bold;">
+                <span id="btnSpyAlbumRefresh" style="color:#0088cc;cursor:pointer;">刷新</span>
+                <span id="btnSpyAlbumClear" style="color:#ff4d4f;cursor:pointer;">清空</span>
+            </div>
+        </div>
+        <div id="spyAlbumList" class="spy-album-grid list-content"></div>
+    </div>
+
+    <div id="spyAlbumModal" class="spy-polaroid-modal" onclick="this.style.display='none'">
+        <div class="spy-polaroid-card" onclick="event.stopPropagation()">
+            <div class="spy-polaroid-img">📷</div>
+            <div class="spy-polaroid-time" id="spyPolaroidTime"></div>
+            <div class="spy-polaroid-desc" id="spyPolaroidDesc"></div>
+        </div>
+    </div>
+
 
 
 
@@ -6422,13 +6454,115 @@ async function generateSpyCall() {
                 }
             } catch(e) { console.error(e); }
         }
-    } catch (e) {
+        } catch (e) {
         alert(`请求失败：` + e.message);
     }
     renderSpyCall();
 }
+
+// ==========================================
+// ====== 相册底层逻辑 ======
+// ==========================================
+let spyAlbumData = [];
+
+function loadSpyAlbumData() {
+    let d = originalGetItem.call(ls, `spyAlbum_` + currentChatId);
+    spyAlbumData = d ? JSON.parse(d) : [];
+}
+
+function saveSpyAlbumData() {
+    originalSetItem.call(ls, `spyAlbum_` + currentChatId, JSON.stringify(spyAlbumData));
+}
+
+if($(`btnSpyAlbum`)) $(`btnSpyAlbum`).onclick = () => { loadSpyAlbumData(); showScreen(`scrSpyAlbum`); renderSpyAlbum(); };
+if($(`btnSpyAlbumBack`)) $(`btnSpyAlbumBack`).onclick = () => { showScreen(`scrCharPhone`); $(`scrSpyAlbum`).style.display = `none`; };
+if($(`btnSpyAlbumRefresh`)) $(`btnSpyAlbumRefresh`).onclick = () => { generateSpyAlbum(); };
+if($(`btnSpyAlbumClear`)) $(`btnSpyAlbumClear`).onclick = () => {
+    if(confirm(`确定要清空当前角色的相册记录吗？`)) {
+        spyAlbumData = [];
+        saveSpyAlbumData();
+        renderSpyAlbum();
+    }
+};
+
+function renderSpyAlbum() {
+    let list = $(`spyAlbumList`);
+    list.innerHTML = ``;
+    if(spyAlbumData.length === 0) {
+        list.innerHTML = `<div style="text-align:center; padding:30px; color:#999; font-size:14px; grid-column: 1 / -1;">暂无照片，请点击右上角刷新生成。</div>`;
+        return;
+    }
+    
+    spyAlbumData.forEach(item => {
+        let div = document.createElement(`div`);
+        div.className = `spy-album-item`;
+        div.innerHTML = `📷`;
+        div.onclick = () => {
+            $(`spyPolaroidTime`).innerText = item.time;
+            $(`spyPolaroidDesc`).innerText = item.desc;
+            $(`spyAlbumModal`).style.display = `flex`;
+        };
+        list.appendChild(div);
+    });
+}
+
+async function generateSpyAlbum() {
+    let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value;
+    if(!pxy || !key || !mod) { alert(`请先在网络配置里填写API信息哦！`); return; }
+
+    let list = $(`spyAlbumList`);
+    list.innerHTML = `<div style="text-align:center; padding:30px; color:#576b95; font-size:14px; grid-column: 1 / -1; animation: pulse 1.5s infinite;">正在破解云端相册数据...</div>`;
+    
+    let charN = `对方`;
+    let contacts = ls.getItem(`myContacts`) ? JSON.parse(ls.getItem(`myContacts`)) : [];
+    let c = contacts.find(x => String(x.id) === String(currentChatId));
+    if(c) charN = originalGetItem.call(ls, `cN_` + c.id) || c.name;
+    if(currentChatId === `default` && !c) charN = $(`cfgName`).value || `对方`;
+    
+    let charP = originalGetItem.call(ls, `cP_` + currentChatId) || ``; 
+    
+    let pmt = `【绝密任务：生成伪造的手机相册记录】\n注意：我正在偷看主角色（${charN}）的手机相册！\n请扮演系统，为【${charN}】生成8张极具故事感的照片描述。\n`;
+    if(charP) pmt += `【${charN}的专属人设档案】：${charP}\n`; 
+    
+    pmt += `\n要求：\n1. 请生成正好8条数据，代表8张照片。\n`;
+    pmt += `2. 时间跨度分布：2张是童年时期的回忆，2张是学生时代或特定过去阶段的留影，剩下4张严格贴合近期的生活状态或主线剧情抓拍。\n`;
+    pmt += `3. 文字描述要充满画面感，能反映出${charN}在不同时期的心境、经历或周围的人事物。\n`;
+    
+    let specHistStr = originalGetItem.call(ls, `chatHistory_` + currentChatId) || `[]`;
+    let specHist = JSON.parse(specHistStr);
+    let myN = $(`cfgMyName`).value || `我`;
+    if(currentChatId === `default` && typeof history !== 'undefined') specHist = history;
+    let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
+    if(recentChat) pmt += `\n【近期聊天记录参考（用于构思近期的4张照片）】：\n${recentChat}\n`;
+
+    pmt += `\n严禁废话！必须且只能输出纯JSON数组，格式如下：\n[{"time":"如 2008年夏 / 昨天下午","desc":"一段走心且具体的照片画面描述"}]`;
+
+    try {
+        let url = pxy.includes(`chat/completions`) ? pxy : pxy.replace(/\/$/, ``) + `/chat/completions`;
+        let res = await fetch(url, {
+            method: `POST`, headers: {Authorization: `Bearer ` + key, "Content-Type": `application/json`},
+            body: JSON.stringify({model: mod, messages: [{role: `user`, content: pmt}], temperature: 0.8})
+        });
+        let dat = await res.json();
+        if(dat.choices && dat.choices.length > 0) {
+            let reply = dat.choices[0].message.content.trim();
+            let cleanRes = reply.replace(/```json/g, '').replace(/```/g, '').trim();
+            try {
+                let parsed = JSON.parse(cleanRes);
+                if(Array.isArray(parsed)) {
+                    spyAlbumData = parsed;
+                    saveSpyAlbumData(); 
+                }
+            } catch(e) { console.error(e); }
+        }
+    } catch (e) {
+        alert(`请求失败：` + e.message);
+    }
+    renderSpyAlbum();
+}
 </script>
 </body>
 </html>
+
 
 
