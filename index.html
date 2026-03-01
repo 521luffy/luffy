@@ -1304,10 +1304,13 @@ background-image: none;">
     .spy-fp-transport { font-size: 12px; color: #0bc15f; background: #dcf5e6; padding: 4px 10px; border-radius: 12px; display: inline-block; font-weight: bold; }
     </style>
 
-    <div id="scrSpyFootprint" class="scr-flex spy-fp-bg" style="z-index: 160; display: none; flex-direction: column;">
+        <div id="scrSpyFootprint" class="scr-flex spy-fp-bg" style="z-index: 160; display: none; flex-direction: column;">
         <div class="spy-fp-header">
             <span id="btnSpyFootprintBack" class="back-btn" style="color: #333;">＜</span>
-            <span class="header-center" style="font-size:16px;">今日足迹</span>
+            <div style="display:flex; flex-direction:column; align-items:center;">
+                <span style="font-size:16px; font-weight:bold;">今日足迹</span>
+                <span id="spyFootprintDate" style="font-size:11px; color:#888; font-weight:normal; margin-top:2px;"></span>
+            </div>
             <div style="display:flex; gap:15px; font-size:14px;">
                 <span id="btnSpyFootprintRefresh" style="cursor:pointer; color:#0bc15f;">刷新</span>
                 <span id="btnSpyFootprintClear" style="cursor:pointer; color:#ff4d4f;">清空</span>
@@ -1315,6 +1318,7 @@ background-image: none;">
         </div>
         <div id="spyFootprintList" class="spy-fp-container"></div>
     </div>
+
 
 
 
@@ -7081,6 +7085,20 @@ if($(`btnSpyFootprintClear`)) $(`btnSpyFootprintClear`).onclick = () => {
 function renderSpyFootprint() {
     let list = $(`spyFootprintList`);
     list.innerHTML = ``;
+    
+    // 智能获取时间，优先读取自定义时间
+    let vTime = ``;
+    if($(`cfgCustomTime`) && $(`cfgCustomTime`).checked) {
+        let cy = $(`ctYear`).value || 2026, cm = $(`ctMonth`).value || 1, cd = $(`ctDay`).value || 1;
+        let wd = $(`ctWeekday`) ? $(`ctWeekday`).innerText : ``;
+        vTime = cy + `年` + cm + `月` + cd + `日 ` + wd;
+    } else {
+        let d = new Date();
+        let days = [`日`,`一`,`二`,`三`,`四`,`五`,`六`];
+        vTime = d.getFullYear() + `年` + (d.getMonth()+1) + `月` + d.getDate() + `日 星期` + days[d.getDay()];
+    }
+    if($(`spyFootprintDate`)) $(`spyFootprintDate`).innerText = vTime;
+
     if(spyFootprintData.length === 0) {
         list.innerHTML = `<div style="text-align:center; padding:30px; color:#999; font-size:14px;">暂无今日足迹，请点击右上角刷新生成。</div>`;
         return;
@@ -7118,20 +7136,21 @@ async function generateSpyFootprint() {
 
     let charP = originalGetItem.call(ls, `cP_` + currentChatId) || ``; 
     let myN = $(`cfgMyName`).value || `我`;
-    let vTime = getVirtualTime();
+    let vTime = $(`spyFootprintDate`) ? $(`spyFootprintDate`).innerText : `今天`;
 
-    let pmt = `【绝密任务：生成伪造的手机定位足迹记录】\n注意：我正在偷看主角色（${charN}）的手机足迹！\n请扮演定位系统，为【${charN}】生成当天的行程轨迹（5到7个节点）。当前虚拟时间：${vTime}。\n`;
+    let pmt = `【绝密任务：生成伪造的手机定位足迹记录】\n注意：我正在偷看主角色（${charN}）的手机足迹！\n请扮演定位系统，为【${charN}】生成当天的行程轨迹（5到7个节点）。当前日期：${vTime}。\n`;
     if(charP) pmt += `【${charN}的专属人设档案】：${charP}\n`; 
 
     let specHistStr = originalGetItem.call(ls, `chatHistory_` + currentChatId) || `[]`;
     let specHist = JSON.parse(specHistStr);
     if(currentChatId === `default` && typeof history !== 'undefined') specHist = history;
     let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
-    if(recentChat) pmt += `\n【近期聊天剧情参考（用于推测TA今天去了哪里）：\n${recentChat}\n`;
+    if(recentChat) pmt += `\n【近期聊天剧情参考（重点用于推断当前的最终位置）：\n${recentChat}\n`;
 
-    pmt += `\n要求：\n1. 必须形成时间闭环：从早晨出门，到白天活动，再到晚上回住处，按时间顺序排列。\n`;
-    pmt += `2. 极度严格的防OOC身份与性格核验（生死线）：必须先仔细阅读档案！\n- 交通工具：除非档案明确写了家境富裕、总裁等设定，普通人一律按步行、骑行、公交或地铁处理！\n- 活动场所：必须严格符合角色的性格标签和行为习惯！如果是乖巧的普通学生，白天必须在学校、教室或图书馆；如果档案里明确写了是离经叛道、不良少年等设定，才可以出现酒吧、网吧、夜店等场所！绝对禁止给没有相关设定的普通学生盲目安排金融中心、高档酒店或酒吧的行程！\n`;
-    pmt += `3. 强制核验地点真实性：禁止出现模糊虚构地点，必须结合档案所在的真实城市写出真实三次元地标或剧情设定的具体建筑。\n`;
+    pmt += `\n要求：\n1. 必须形成时间闭环：从早晨出门，到白天活动，最后到当前位置，按时间顺序严格排列。\n`;
+    pmt += `2. 强制最新剧情对接（最高优先级死命令）：【足迹的最后一个时间节点，必须且只能是最新聊天记录里${charN}当前所处的具体位置！】。如果聊天记录里${charN}在你（${myN}）家拉扯，那最后一个地点必须明确写出“${myN}的住处”；如果在路上，就是具体的路名。前面节点必须根据最终位置倒推（比如上一个节点是在去找你的路上）。\n`;
+    pmt += `3. 强效地理围栏与学段隔离（生死线）：必须提取档案里的常驻城市！写了青岛就必须在青岛市内，绝对禁止跨省瞬移！如果设定是高中生，绝对禁止出现任何大学的名字，只能写某某中学、图书馆或符合性格的场所！\n`;
+    pmt += `4. 防OOC身份与性格核验：普通学生只能步行、骑行或公交地铁！除非档案明确写了家境富裕，否则禁止出现司机接送或专车。\n`;
 
     pmt += `\n严禁废话！必须且只能输出纯JSON数组，格式如下：\n[{"time":"08:30","location":"具体地点名称","duration":"2小时 或 10分钟","transport":"步行 或 司机接送 或 航班MU5103"}]`;
 
@@ -7158,6 +7177,7 @@ async function generateSpyFootprint() {
     }
     renderSpyFootprint();
 }
+
 
 </script>
 </body>
