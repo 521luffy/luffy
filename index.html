@@ -7086,17 +7086,8 @@ function renderSpyFootprint() {
     let list = $(`spyFootprintList`);
     list.innerHTML = ``;
     
-    // 智能获取时间，优先读取自定义时间
-    let vTime = ``;
-    if($(`cfgCustomTime`) && $(`cfgCustomTime`).checked) {
-        let cy = $(`ctYear`).value || 2026, cm = $(`ctMonth`).value || 1, cd = $(`ctDay`).value || 1;
-        let wd = $(`ctWeekday`) ? $(`ctWeekday`).innerText : ``;
-        vTime = cy + `年` + cm + `月` + cd + `日 ` + wd;
-    } else {
-        let d = new Date();
-        let days = [`日`,`一`,`二`,`三`,`四`,`五`,`六`];
-        vTime = d.getFullYear() + `年` + (d.getMonth()+1) + `月` + d.getDate() + `日 星期` + days[d.getDay()];
-    }
+    // 核心修复：直接调用原生时间函数，精准匹配当前角色的专属自定义时间
+    let vTime = typeof getVirtualTime === 'function' ? getVirtualTime() : '今天';
     if($(`spyFootprintDate`)) $(`spyFootprintDate`).innerText = vTime;
 
     if(spyFootprintData.length === 0) {
@@ -7136,7 +7127,9 @@ async function generateSpyFootprint() {
 
     let charP = originalGetItem.call(ls, `cP_` + currentChatId) || ``; 
     let myN = $(`cfgMyName`).value || `我`;
-    let vTime = $(`spyFootprintDate`) ? $(`spyFootprintDate`).innerText : `今天`;
+    
+    // 同样调用原生函数，让大模型知道当前角色的专属日子
+    let vTime = typeof getVirtualTime === 'function' ? getVirtualTime() : '今天';
 
     let pmt = `【绝密任务：生成伪造的手机定位足迹记录】\n注意：我正在偷看主角色（${charN}）的手机足迹！\n请扮演定位系统，为【${charN}】生成当天的行程轨迹（5到7个节点）。当前日期：${vTime}。\n`;
     if(charP) pmt += `【${charN}的专属人设档案】：${charP}\n`; 
@@ -7148,9 +7141,10 @@ async function generateSpyFootprint() {
     if(recentChat) pmt += `\n【近期聊天剧情参考（重点用于推断当前的最终位置）：\n${recentChat}\n`;
 
     pmt += `\n要求：\n1. 必须形成时间闭环：从早晨出门，到白天活动，最后到当前位置，按时间顺序严格排列。\n`;
-    pmt += `2. 强制最新剧情对接（最高优先级死命令）：【足迹的最后一个时间节点，必须且只能是最新聊天记录里${charN}当前所处的具体位置！】。如果聊天记录里${charN}在你（${myN}）家拉扯，那最后一个地点必须明确写出“${myN}的住处”；如果在路上，就是具体的路名。前面节点必须根据最终位置倒推（比如上一个节点是在去找你的路上）。\n`;
-    pmt += `3. 强效地理围栏与学段隔离（生死线）：必须提取档案里的常驻城市！写了青岛就必须在青岛市内，绝对禁止跨省瞬移！如果设定是高中生，绝对禁止出现任何大学的名字，只能写某某中学、图书馆或符合性格的场所！\n`;
-    pmt += `4. 防OOC身份与性格核验：普通学生只能步行、骑行或公交地铁！除非档案明确写了家境富裕，否则禁止出现司机接送或专车。\n`;
+    pmt += `2. 强制最新剧情对接：【足迹的最后一个时间节点，必须且只能是最新聊天记录里${charN}当前所处的具体位置！】。如果聊天记录里${charN}在你（${myN}）家拉扯，那最后一个地点必须明确写出【所在区或商圈】加${myN}的住处；如果在路上，就是具体的路名。前面节点必须根据最终位置倒推。\n`;
+    pmt += `3. 地点固定命名法则（绝对命令）：为了避免居住地频繁乱跳，所有涉及家或住处的地点，必须强制使用【所在区或商圈】加${charN}的住处、或者【所在区或商圈】加${myN}的住处的固定格式来命名！例如：朝阳区${charN}的住处、市南区${myN}的住处。禁止直接写出虚构或模糊的小区名字！\n`;
+    pmt += `4. 强效地理围栏与学段隔离：必须提取档案里的常驻城市！写了青岛就必须在青岛市内，绝对禁止跨省瞬移！如果设定是高中生，绝对禁止出现任何大学的名字，只能写某某中学、图书馆或符合性格的场所！\n`;
+    pmt += `5. 防OOC身份与性格核验：普通学生只能步行、骑行或公交地铁！除非档案明确写了家境富裕，否则禁止出现司机接送或专车。\n`;
 
     pmt += `\n严禁废话！必须且只能输出纯JSON数组，格式如下：\n[{"time":"08:30","location":"具体地点名称","duration":"2小时 或 10分钟","transport":"步行 或 司机接送 或 航班MU5103"}]`;
 
@@ -7179,13 +7173,7 @@ async function generateSpyFootprint() {
 }
 
 
+
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
