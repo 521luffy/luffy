@@ -1142,13 +1142,32 @@ background-image: none;">
         </div>
         <div id="spyWechatList" class="list-content" style="background:#fff; padding-bottom:30px;"></div>
     </div>
-    <div id="scrSpyWechatDetail" class="scr-flex" style="z-index: 170; background: #ededed; display: none; flex-direction: column;">
+        <div id="scrSpyWechatDetail" class="scr-flex" style="z-index: 170; background: #ededed; display: none; flex-direction: column;">
         <div class="room-header" style="background: #ededed; border-bottom: 1px solid #e0e0e0; color: #111;">
             <span id="btnSpyWcDetailBack" class="back-btn" style="color: #111;">＜</span>
             <span id="spyWcDetailTitle" class="header-center" style="font-weight: bold;">聊天详情</span>
         </div>
         <div id="spyWcDetailContent" class="list-content" style="padding: 20px; background: #f5f5f5; flex: 1; overflow-y: auto;"></div>
     </div>
+    
+    <style>
+    .spy-call-item { display:flex; padding:15px; background:#fff; border-bottom:1px solid #f5f5f5; align-items:center; }
+    .spy-call-icon { width:40px; height:40px; border-radius:50%; background:#e0e0e0; margin-right:12px; display:flex; justify-content:center; align-items:center; font-size:20px; flex-shrink:0; background-size:cover; background-position:center; }
+    .spy-call-info { flex:1; overflow:hidden; display:flex; flex-direction:column; justify-content:center; }
+    .spy-call-name { font-size:16px; font-weight:bold; color:#111; margin-bottom:4px; display:flex; align-items:center; gap:5px; }
+    .spy-call-sub { font-size:12px; color:#999; }
+    .spy-call-right { text-align:right; font-size:12px; color:#999; display:flex; flex-direction:column; gap:4px; }
+    .spy-call-missed { color:#ff4d4f !important; }
+    </style>
+    <div id="scrSpyCall" class="scr-flex" style="z-index: 160; background: #fdfafb; display: none;">
+        <div class="room-header" style="background: #fff; border-bottom: 1px solid #eee; color: #333;">
+            <span id="btnSpyCallBack" class="back-btn" style="color: #333;">＜</span>
+            <span class="header-center" style="font-weight:bold;">通话记录</span>
+            <span id="btnSpyCallRefresh" style="font-size: 14px; color: #0088cc; font-weight: bold; cursor: pointer;">刷新</span>
+        </div>
+        <div id="spyCallList" class="list-content" style="background:#fff;"></div>
+    </div>
+
 
 
 
@@ -6298,13 +6317,118 @@ async function generateSpyWechat(isAdvance) {
                 alert(`解析失败，大模型可能没按格式输出，请重试！`);
             }
         }
-    } catch (e) {
+        } catch (e) {
         alert(`请求失败：` + e.message);
     }
     renderSpyWechat();
 }
 
+// ==========================================
+// ====== 通话记录底层逻辑 ======
+// ==========================================
+let spyCallData = [];
+
+function loadSpyCallData() {
+    let d = originalGetItem.call(ls, `spyCall_` + currentChatId);
+    spyCallData = d ? JSON.parse(d) : [];
+}
+
+function saveSpyCallData() {
+    originalSetItem.call(ls, `spyCall_` + currentChatId, JSON.stringify(spyCallData));
+}
+
+if($(`btnSpyCall`)) $(`btnSpyCall`).onclick = () => { loadSpyCallData(); showScreen(`scrSpyCall`); renderSpyCall(); };
+if($(`btnSpyCallBack`)) $(`btnSpyCallBack`).onclick = () => { showScreen(`scrCharPhone`); $(`scrSpyCall`).style.display = `none`; };
+if($(`btnSpyCallRefresh`)) $(`btnSpyCallRefresh`).onclick = () => { generateSpyCall(); };
+
+function renderSpyCall() {
+    let list = $(`spyCallList`);
+    list.innerHTML = ``;
+    if(spyCallData.length === 0) {
+        list.innerHTML = `<div style="text-align:center; padding:30px; color:#999; font-size:14px;">暂无通话记录，请点击右上角刷新生成。</div>`;
+        return;
+    }
+    
+    spyCallData.forEach(item => {
+        let div = document.createElement(`div`);
+        div.className = `spy-call-item`;
+        
+        let initial = item.name ? item.name.charAt(0) : `?`;
+        let iconHtml = `<div class="spy-call-icon">${initial}</div>`;
+        
+        let isMissed = item.type === `missed`;
+        let nameClass = isMissed ? `spy-call-name spy-call-missed` : `spy-call-name`;
+        let typeStr = isMissed ? `未接来电` : (item.type === `incoming` ? `↙️ 呼入` : `↗️ 呼出`);
+        let countStr = item.count > 1 ? `<span style="color:#ff4d4f;">(${item.count})</span>` : ``;
+        let durStr = isMissed ? `` : escapeHtml(item.duration);
+        
+        div.innerHTML = `
+            ${iconHtml}
+            <div class="spy-call-info">
+                <div class="${nameClass}">${escapeHtml(item.name)} ${countStr}</div>
+                <div class="spy-call-sub">${escapeHtml(item.location)}</div>
+            </div>
+            <div class="spy-call-right">
+                <div style="color:#333;margin-bottom:4px;">${escapeHtml(item.time)}</div>
+                <div class="spy-call-sub">${typeStr} ${durStr}</div>
+            </div>
+        `;
+        list.appendChild(div);
+    });
+}
+
+async function generateSpyCall() {
+    let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value;
+    if(!pxy || !key || !mod) { alert(`请先在网络配置里填写API信息哦！`); return; }
+
+    let list = $(`spyCallList`);
+    list.innerHTML = `<div style="text-align:center; padding:30px; color:#576b95; font-size:14px; animation: pulse 1.5s infinite;">正在破解通信运营商数据...</div>`;
+    
+    let charN = `对方`;
+    let contacts = ls.getItem(`myContacts`) ? JSON.parse(ls.getItem(`myContacts`)) : [];
+    let c = contacts.find(x => String(x.id) === String(currentChatId));
+    if(c) charN = originalGetItem.call(ls, `cN_` + c.id) || c.name;
+    if(currentChatId === `default` && !c) charN = $(`cfgName`).value || `对方`;
+    
+    let charP = originalGetItem.call(ls, `cP_` + currentChatId) || ``; 
+    let vTime = getVirtualTime();
+    
+    let pmt = `【绝密任务：生成伪造的通话记录列表】\n注意：我正在偷看主角色（${charN}）的手机通话记录！\n请扮演通信运营商系统，生成8条属于【${charN}】的近期通话记录。\n当前虚拟时间：${vTime}。\n`;
+    if(charP) pmt += `【${charN}的专属人设档案】：${charP}\n`; 
+    
+    let npcData = originalGetItem.call(ls, `npcList_` + currentChatId);
+    let npcs = npcData ? JSON.parse(npcData) : [];
+    pmt += `\n要求：\n1. 结合人物设定，生成合理来电人员。可以从以下核心社交圈挑选，严禁出现方煜这个名字：\n`;
+    npcs.forEach(n => { if(n.name) pmt += `姓名：${n.name}，详情：${n.desc || '暂无'}\n`; });
+    pmt += `2. 必须穿插至少1到2个骚扰电话（如房产中介、保险理财）或生活服务电话（如外卖快递、10086）。\n`;
+    pmt += `3. 类型必须严格为：incoming（呼入）、outgoing（呼出）、missed（未接）。如果有夺命连环Call，请把count设置为大于1的数字。\n`;
+    pmt += `\n严禁废话！必须且只能输出纯JSON数组，格式如下：\n[{"name":"名字","location":"号码归属地或类型描述","type":"incoming/outgoing/missed","time":"如 昨天 14:30","duration":"如 12分钟 或 空白","count":1}]`;
+
+    try {
+        let url = pxy.includes(`chat/completions`) ? pxy : pxy.replace(/\/$/, ``) + `/chat/completions`;
+        let res = await fetch(url, {
+            method: `POST`, headers: {Authorization: `Bearer ` + key, "Content-Type": `application/json`},
+            body: JSON.stringify({model: mod, messages: [{role: `user`, content: pmt}], temperature: 0.8})
+        });
+        let dat = await res.json();
+        if(dat.choices && dat.choices.length > 0) {
+            let reply = dat.choices[0].message.content.trim();
+            let cleanRes = reply.replace(/```json/g, '').replace(/```/g, '').trim();
+            try {
+                let parsed = JSON.parse(cleanRes);
+                if(Array.isArray(parsed)) {
+                    spyCallData = parsed;
+                    saveSpyCallData(); 
+                }
+            } catch(e) { console.error(e); }
+        }
+    } catch (e) {
+        alert(`请求失败：` + e.message);
+    }
+    renderSpyCall();
+}
 </script>
 </body>
 </html>
+
 
