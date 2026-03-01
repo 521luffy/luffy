@@ -1647,9 +1647,9 @@ let stW=$("stW"), stC=$("stC"), stA=$("stA"), stT=$("stT");
 let ls = localStorage;
 let currentChatId ="default";
 let originalSetItem = ls.setItem;
-let isolatedKeys = ["chatHistory","aiStatus","bgI","aiI","cMP","cN","cR","cAP","cCtx","cT","cAMem","cMemT","cMemP","linkedWb","lastMemCount","memories", "cStatusTxt", "cStatusColor", "cSign", "cBubbleCss"];
-
+let isolatedKeys = ["chatHistory","aiStatus","bgI","aiI","cMP","cN","cR","cAP","cCtx","cT","cAMem","cMemT","cMemP","linkedWb","lastMemCount","memories", "cStatusTxt", "cStatusColor", "cSign", "cBubbleCss", "cCTon", "cCTy", "cCTm", "cCTd", "cCTh", "cCTmin"];
 ls.setItem = function(key, value) {
+
     // 全局拦截：只要是存表情包和日志，统统强制扔进大仓库，保护老内存！
 
     if (key === "myPhoneStickers" || key === "charStickers" || key === "myLogs") {
@@ -7082,14 +7082,22 @@ if($(`btnSpyFootprintClear`)) $(`btnSpyFootprintClear`).onclick = () => {
     }
 };
 
-// 提取当前界面的精准日期（直接抓取你的设置面板，所见即所得）
+// 提取当前界面的精准日期
 function getFootprintDateStr() {
-    let isCustom = $(`cfgCustomTime`) && $(`cfgCustomTime`).checked;
+    // 改为直接从本地缓存读取当前角色的独立设置，不再依赖隐藏的DOM节点
+    let isCustom = ls.getItem(`cCTon`) === `true`;
+    
     if(isCustom) {
-        let cy = $(`ctYear`) ? $(`ctYear`).value : new Date().getFullYear();
-        let cm = $(`ctMonth`) ? $(`ctMonth`).value : (new Date().getMonth() + 1);
-        let cd = $(`ctDay`) ? $(`ctDay`).value : new Date().getDate();
-        let wd = $(`ctWeekday`) ? $(`ctWeekday`).innerText : ``;
+        let cy = ls.getItem(`cCTy`) || new Date().getFullYear();
+        let cm = ls.getItem(`cCTm`) || (new Date().getMonth() + 1);
+        let cd = ls.getItem(`cCTd`) || new Date().getDate();
+        
+        // 使用独立数据重新计算星期几
+        let dateObj = new Date();
+        dateObj.setFullYear(parseInt(cy), parseInt(cm) - 1, parseInt(cd));
+        let days = [`星期日`,`星期一`,`星期二`,`星期三`,`星期四`,`星期五`,`星期六`];
+        let wd = days[dateObj.getDay()];
+        
         return cy + `年` + cm + `月` + cd + `日 ` + wd;
     } else {
         let d = new Date();
@@ -7097,6 +7105,7 @@ function getFootprintDateStr() {
         return d.getFullYear() + `年` + (d.getMonth()+1) + `月` + d.getDate() + `日 星期` + days[d.getDay()];
     }
 }
+
 
 function renderSpyFootprint() {
     let list = $(`spyFootprintList`);
