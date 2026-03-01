@@ -1406,22 +1406,25 @@ background-image: none;">
         </div>
     </div>
 
-    <style>
+        <style>
     .spy-iqiyi-bg { background: #111; color: #eee; }
     .spy-iqiyi-tabs { display: flex; background: #111; border-bottom: 1px solid #333; padding: 0 10px; flex-shrink: 0; overflow-x: auto; }
     .spy-iqiyi-tab { flex: 1; text-align: center; padding: 12px 5px; font-size: 14px; color: #888; cursor: pointer; transition: 0.3s; position: relative; white-space: nowrap; font-weight: bold; }
     .spy-iqiyi-tab.active { color: #00c957; font-weight: bold; }
     .spy-iqiyi-tab.active::after { content: ''; position: absolute; bottom: 0; left: 20%; right: 20%; height: 3px; background: #00c957; border-radius: 3px 3px 0 0; }
-    .spy-iqiyi-list { flex: 1; padding: 15px; overflow-y: auto; background: #111; display: flex; flex-direction: column; gap: 15px; }
+    /* 增加了 padding-bottom 解决滑不下去的问题 */
+    .spy-iqiyi-list { flex: 1; padding: 15px; padding-bottom: 80px; overflow-y: auto; background: #111; display: flex; flex-direction: column; gap: 15px; }
     .spy-iqiyi-item { display: flex; background: #1a1a1a; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.5); border: 1px solid #222; }
-    .spy-iqiyi-cover { width: 110px; height: 75px; background: linear-gradient(135deg, #2a2a2a, #111); display: flex; justify-content: center; align-items: center; font-size: 24px; position: relative; flex-shrink: 0; }
+    /* 把固定高度改成了 min-height 和自适应拉伸，防止底部文字被裁切 */
+    .spy-iqiyi-cover { width: 110px; min-height: 95px; background: linear-gradient(135deg, #2a2a2a, #111); display: flex; justify-content: center; align-items: center; font-size: 24px; position: relative; flex-shrink: 0; align-self: stretch; }
     .spy-iqiyi-tag { position: absolute; top: 4px; right: 4px; background: rgba(0,201,87,0.9); color: #fff; font-size: 10px; padding: 2px 4px; border-radius: 4px; font-weight: bold; }
-    .spy-iqiyi-info { flex: 1; padding: 10px; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; }
+    .spy-iqiyi-info { flex: 1; padding: 10px; display: flex; flex-direction: column; justify-content: space-between; overflow: visible; }
     .spy-iqiyi-title { font-size: 14px; font-weight: bold; color: #eee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 5px; }
     .spy-iqiyi-desc { font-size: 12px; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .spy-iqiyi-progress-bar { width: 100%; height: 3px; background: #333; border-radius: 2px; margin-top: 8px; overflow: hidden; display: flex; }
     .spy-iqiyi-progress { height: 100%; background: #00c957; border-radius: 2px; }
     </style>
+
 
     <div id="scrSpyIqiyi" class="scr-flex spy-iqiyi-bg" style="z-index: 160; display: none; flex-direction: column;">
         <div class="room-header" style="background: #111; border-bottom: 1px solid #333; color: #eee;">
