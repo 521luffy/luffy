@@ -7825,12 +7825,12 @@ async function generateSpyIqiyi() {
 }
 
 // ==========================================
-// ====== 个性化装扮底层逻辑 (动态捕捉无重叠版) ======
+// ====== 个性化装扮底层逻辑 (终极防隐身完美版) ======
 // ==========================================
 let spyThemeData = { bg: '', icons: {} };
 let currentEditingThemeKey = '';
 
-// 核心修复：自动雷达扫描，只要在屏幕上的APP统统一网打尽，无需再手动添加
+// 自动雷达扫描屏幕上的所有APP
 function getThemeItems() {
     let items = [ { key: 'bg', name: '手机壁纸' } ];
     let apps = document.querySelectorAll('#scrCharPhone .char-app-item');
@@ -7937,7 +7937,7 @@ if($(`spyThemeUploader`)) {
     };
 }
 
-// 核心修复：精准打击内部图案，彻底解决重叠显示
+// 核心修复：移除会误杀图片的霸道属性，改用精确属性替换
 function applySpyTheme() {
     let phoneScreen = $(`scrCharPhone`);
     if(phoneScreen) {
@@ -7947,7 +7947,7 @@ function applySpyTheme() {
             phoneScreen.style.backgroundPosition = `center`;
         } else {
             phoneScreen.style.backgroundImage = `none`;
-            phoneScreen.style.backgroundColor = `#f5f6fa`; 
+            phoneScreen.style.backgroundColor = `#fdfafb`; 
         }
     }
     
@@ -7956,30 +7956,27 @@ function applySpyTheme() {
         if(item.key === 'bg') return;
         let appEl = $(item.key);
         if(appEl) {
-            // 找到真正承载图标和底色的内部方块
             let iconEl = appEl.querySelector('.char-app-icon') || appEl;
             let customImg = spyThemeData.icons[item.key];
             
-            // 备份原有的内容和颜色，以便随时恢复
+            // 仅仅备份内部的 Emoji
             if(typeof iconEl.dataset.ogHtml === 'undefined') {
                 iconEl.dataset.ogHtml = iconEl.innerHTML;
             }
-            if(typeof iconEl.dataset.ogBg === 'undefined') {
-                iconEl.dataset.ogBg = iconEl.style.background || iconEl.style.backgroundColor || '';
-            }
 
             if(customImg) {
+                // 精准贴上图片
                 iconEl.style.backgroundImage = `url('${customImg}')`;
                 iconEl.style.backgroundSize = `cover`;
                 iconEl.style.backgroundPosition = `center`;
-                // 强制把底色变透明，并清空内部的所有表情包，绝不重叠
+                // 只让原本的白色底色变透明，绝不误杀图片
                 iconEl.style.backgroundColor = `transparent`;
-                iconEl.style.background = `transparent`;
+                // 清空内部表情，完美单层
                 iconEl.innerHTML = ``; 
             } else {
                 // 原汁原味地恢复
-                iconEl.style.backgroundImage = `none`;
-                iconEl.style.background = iconEl.dataset.ogBg;
+                iconEl.style.backgroundImage = ``;
+                iconEl.style.backgroundColor = ``;
                 iconEl.innerHTML = iconEl.dataset.ogHtml;
             }
         }
@@ -7999,6 +7996,7 @@ setInterval(() => {
         lastThemeChatId = null;
     }
 }, 300);
+
 
 
 </script>
