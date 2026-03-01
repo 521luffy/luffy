@@ -7243,6 +7243,154 @@ async function generateSpyFootprint() {
     }
     renderSpyFootprint();
 }
+// ==========================================
+// ====== 钱包账单底层逻辑 ======
+// ==========================================
+let spyWalletData = { balance: null, list: [] };
+
+function loadSpyWalletData() {
+    let d = originalGetItem.call(ls, `spyWallet_` + currentChatId);
+    spyWalletData = d ? JSON.parse(d) : { balance: null, list: [] };
+}
+
+function saveSpyWalletData() {
+    originalSetItem.call(ls, `spyWallet_` + currentChatId, JSON.stringify(spyWalletData));
+}
+
+if($(`btnSpyWallet`)) $(`btnSpyWallet`).onclick = () => { loadSpyWalletData(); showScreen(`scrSpyWallet`); renderSpyWallet(); };
+if($(`btnSpyWalletBack`)) $(`btnSpyWalletBack`).onclick = () => { showScreen(`scrCharPhone`); $(`scrSpyWallet`).style.display = `none`; };
+if($(`btnSpyWalletRefresh`)) $(`btnSpyWalletRefresh`).onclick = () => { generateSpyWallet(); };
+if($(`btnSpyWalletClear`)) $(`btnSpyWalletClear`).onclick = () => {
+    if(confirm(`确定要清空当前角色的钱包和余额数据吗？`)) {
+        spyWalletData = { balance: null, list: [] };
+        saveSpyWalletData();
+        renderSpyWallet();
+    }
+};
+
+function renderSpyWallet() {
+    let list = $(`spyWalletList`);
+    list.innerHTML = ``;
+    
+    $(`spyWalletBalanceTxt`).innerText = spyWalletData.balance !== null ? parseFloat(spyWalletData.balance).toLocaleString('zh-CN', {minimumFractionDigits: 2}) : `0.00`;
+
+    if(!spyWalletData.list || spyWalletData.list.length === 0) {
+        list.innerHTML = `<div style="text-align:center; padding:30px; color:#999; font-size:14px;">暂无账单明细，请点击右上角刷新生成。</div>`;
+        return;
+    }
+
+    spyWalletData.list.forEach(item => {
+        let div = document.createElement(`div`);
+        // 核心高亮逻辑：只要是带有你互动的账单，立刻赋予粉色专属样式
+        div.className = `spy-wallet-item` + (item.isUser ? ` spy-wallet-highlight` : ``);
+        
+        // 智能匹配账单图标
+        let icon = `💰`;
+        if(item.title.includes(`餐`) || item.title.includes(`外卖`) || item.title.includes(`吃`) || item.title.includes(`茶`)) icon = `🍔`;
+        else if(item.title.includes(`车`) || item.title.includes(`出行`) || item.title.includes(`交通`)) icon = `🚕`;
+        else if(item.title.includes(`转账`) || item.title.includes(`红包`)) icon = `🧧`;
+        else if(item.title.includes(`工资`) || item.title.includes(`收入`) || item.title.includes(`结款`)) icon = `💳`;
+        else if(item.title.includes(`游戏`) || item.title.includes(`充值`) || item.title.includes(`娱乐`)) icon = `🎮`;
+        else if(item.title.includes(`费`) || item.title.includes(`租`)) icon = `📄`;
+
+        let sign = item.type === `income` ? `+` : `-`;
+        let cName = item.type === `income` ? `income` : `expense`;
+
+        div.innerHTML = `
+            <div class="spy-wallet-icon">${icon}</div>
+            <div class="spy-wallet-info">
+                <div class="spy-wallet-title">${escapeHtml(item.title)}</div>
+                <div class="spy-wallet-time">${escapeHtml(item.time)}</div>
+            </div>
+            <div class="spy-wallet-amount ${cName}">${sign}${parseFloat(item.amount).toFixed(2)}</div>
+        `;
+        list.appendChild(div);
+    });
+}
+
+async function generateSpyWallet() {
+    let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value;
+    if(!pxy || !key || !mod) { alert(`请先在网络配置里填写API信息哦！`); return; }
+
+    let list = $(`spyWalletList`);
+    list.innerHTML = `<div style="text-align:center; padding:30px; color:#ffb6c1; font-size:14px; animation: pulse 1.5s infinite;">正在破解银行流水网络...</div>`;
+
+    let charN = `对方`;
+    let contacts = ls.getItem(`myContacts`) ? JSON.parse(ls.getItem(`myContacts`)) : [];
+    let c = contacts.find(x => String(x.id) === String(currentChatId));
+    if(c) charN = originalGetItem.call(ls, `cN_` + c.id) || c.name;
+    if(currentChatId === `default` && !c) charN = $(`cfgName`).value || `对方`;
+
+    let charP = originalGetItem.call(ls, `cAP_` + currentChatId) || originalGetItem.call(ls, `cAP`) || ``; 
+    let myN = $(`cfgMyName`).value || `檬檬`;
+    
+    // 提取全局时间
+    let vTime = typeof getFootprintDateStr === 'function' ? getFootprintDateStr() : '今天';
+
+    let pmt = `【最高优先级绝密任务：生成伪造的手机钱包流水记录】\n注意：我正在偷看主角色（${charN}）的钱包！我的名字是${myN}。当前日期：${vTime}。\n`;
+    if(charP) pmt += `【${charN}的专属人设档案（务必逐字仔细阅读并严格遵守）】：${charP}\n`; 
+
+    let specHistStr = originalGetItem.call(ls, `chatHistory_` + currentChatId) || `[]`;
+    let specHist = JSON.parse(specHistStr);
+    if(currentChatId === `default` && typeof history !== 'undefined') specHist = history;
+    let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
+    
+    let isFirstTime = spyWalletData.balance === null;
+
+    if(isFirstTime) {
+        pmt += `\n这是该角色首次生成账单。你需要做两件事：\n1. 仔细分析${charN}的身份和经济条件，估算一个极其符合人设的【初始总余额】（如普通高中生可能只有几百到几千；大学生可能有几千到一万多；社畜打工人几万到十几万；富二代或总裁则高达几百万甚至上千万）。\n2. 生成3到5条近期的收支账单流水。\n`;
+    } else {
+        pmt += `\n【当前已知余额为：${spyWalletData.balance}】。请直接生成今天的3到5条新增收支账单，系统会自动进行加减法计算最新余额，你只需要生成账单列表即可。\n`;
+    }
+
+    if(recentChat) pmt += `\n【近期聊天剧情参考（最高优先级寻找金钱互动）：\n${recentChat}\n`;
+
+    pmt += `\n要求：\n1. 双轨合并机制（生死线）：必须仔细检查上述聊天剧情中，${charN}与${myN}之间是否发生了发红包、转账、代付等金钱行为！如果有，必须将其转化为账单记录！例如：【转账给${myN}】（支出）或【收到${myN}的红包】（收入）。凡是涉及到${myN}的金钱互动，必须将 isUser 字段设为 true！如果没有此类剧情，则正常生成日常开销并将 isUser 设为 false。\n`;
+    pmt += `2. 阶层隔离防OOC：日常流水必须严格符合身份！普通学生只能有外卖、游戏、文具、父母转生活费；社畜要有工资卡代发、通勤打车；总裁必须是高定尾款、分红入账、助理代付等。绝对禁止给总裁安排几块钱的共享单车支出！\n`;
+
+    if(isFirstTime) {
+        pmt += `\n严禁废话！必须且只能输出纯JSON对象，格式如下：\n{"initBalance": "8500.50", "list": [{"title":"微信红包-收到${myN}的红包","time":"今天 10:30","amount":"520.00","type":"income","isUser":true}, {"title":"美团外卖","time":"昨天 19:00","amount":"35.50","type":"expense","isUser":false}]}`;
+    } else {
+        pmt += `\n严禁废话！必须且只能输出纯JSON数组，格式如下：\n[{"title":"微信转账-转给${myN}","time":"今天 10:30","amount":"520.00","type":"expense","isUser":true}, {"title":"打车代扣","time":"昨天 19:00","amount":"45.00","type":"expense","isUser":false}]`;
+    }
+
+    try {
+        let url = pxy.includes(`chat/completions`) ? pxy : pxy.replace(/\/$/, ``) + `/chat/completions`;
+        let res = await fetch(url, {
+            method: `POST`, headers: {Authorization: `Bearer ` + key, "Content-Type": `application/json`},
+            body: JSON.stringify({model: mod, messages: [{role: `user`, content: pmt}], temperature: 0.8})
+        });
+        let dat = await res.json();
+        if(dat.choices && dat.choices.length > 0) {
+            let reply = dat.choices[0].message.content.trim();
+            let cleanRes = reply.replace(/```json/g, '').replace(/```/g, '').trim();
+            try {
+                let parsed = JSON.parse(cleanRes);
+                
+                if(isFirstTime) {
+                    spyWalletData.balance = parseFloat(parsed.initBalance || 0).toFixed(2);
+                    spyWalletData.list = parsed.list || [];
+                } else {
+                    let base = parseFloat(spyWalletData.balance) || 0;
+                    let newList = Array.isArray(parsed) ? parsed : [];
+                    // 底层精准数学计算，避免大模型瞎算
+                    newList.forEach(item => {
+                        let amt = parseFloat(item.amount || 0);
+                        if(item.type === `income`) base += amt;
+                        else base -= amt;
+                    });
+                    spyWalletData.balance = base.toFixed(2);
+                    // 将新账单拼接到最前面，最多保留50条记录防止卡顿
+                    spyWalletData.list = newList.concat(spyWalletData.list).slice(0, 50);
+                }
+                saveSpyWalletData();
+            } catch(e) { console.error(e); }
+        }
+    } catch (e) {
+        alert(`请求失败：` + e.message);
+    }
+    renderSpyWallet();
+}
 
 </script>
 </body>
