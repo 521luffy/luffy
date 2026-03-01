@@ -6855,7 +6855,12 @@ async function generateSpyMusic() {
     let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
     if(recentChat) pmt += `\n【近期聊天剧情参考（重点用于推测近期的情绪歌单及批注）】：\n${recentChat}\n`;
 
-    pmt += `\n要求：\n1. profile包含：sign(个性签名，符合人设或近期剧情的一句话)、follows(关注数)、fans(粉丝数)、hours(听歌总时长数字)。\n2. songs包含10首红心歌曲，必须严格符合${charN}的审美和近期的心情(如分手就emo，开心就轻快等)。\n3. 每首歌包含：name(歌名)、art(歌手)、mood(当时听这首歌时偷偷写下的一两句隐秘心情批注，极具代入感)。\n\n严禁废话！必须且只能输出纯JSON对象，格式如下：\n{"profile":{"sign":"...","follows":12,"fans":34,"hours":2000},"songs":[{"name":"...","art":"...","mood":"..."}]}`;
+    pmt += `\n要求：\n1. profile包含：sign(个性签名，符合人设或近期剧情的一句话)、follows(关注数)、fans(粉丝数)、hours(听歌总时长数字)。\n`;
+    pmt += `注意：这三个数字绝对不能照抄后面的格式示例！必须根据${charN}的人设受关注程度随机生成真实的差异化数据（例如粉丝几十到几千不等，听歌时长几百到上万小时不等）。\n`;
+    pmt += `2. songs包含10首红心歌曲。必须严格符合${charN}在档案里的音乐品味和审美偏好！绝对不能全盘生成俗套的中文伤感情歌！如果TA喜欢摇滚、古典、说唱或独立音乐，请务必生成对应流派的曲目。可以是真实的曲目也可以是捏造的合理歌名。\n`;
+    pmt += `3. 每首歌包含：name(歌名)、art(歌手)、mood(当时听这首歌时偷偷写下的一两句隐秘心情批注，极具代入感)。\n`;
+    
+    pmt += `\n严禁废话！必须且只能输出纯JSON对象，格式如下（其中的数字仅为示例，必须替换为符合人设的随机数字）：\n{"profile":{"sign":"...","follows":12,"fans":34,"hours":2000},"songs":[{"name":"...","art":"...","mood":"..."}]}`;
 
     try {
         let url = pxy.includes(`chat/completions`) ? pxy : pxy.replace(/\/$/, ``) + `/chat/completions`;
@@ -6880,6 +6885,7 @@ async function generateSpyMusic() {
     }
     renderSpyMusicProfile();
 }
+
 </script>
 </body>
 </html>
