@@ -1769,16 +1769,17 @@ let pressTimer = null;
 let selEl = null;
 let currentQuote ="";
 function showScreen(showId) {
-    [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrSpace, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet"), $("scrContact"), $("scrSetFont"), $("scrCharPhone"), $("scrSpyDiary"), $("scrSpyZhihu"), $("scrSpySecret")].forEach(s => { if(s) s.style.display = "none"; });
+    [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrSpace, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet"), $("scrContact"), $("scrSetFont"), $("scrCharPhone"), $("scrSpyDiary"), $("scrSpyZhihu"), $("scrSpySecret"), $("scrSpyMeituan"), $("scrSpyFootprint"), $("scrSpyWallet"), $("scrSpyShop")].forEach(s => { if(s) s.style.display = "none"; });
     let target = $(showId);
     if(target) {
-        if(showId === "scrRoom" || showId === "scrList" || showId === "scrSetApi" || showId === "scrSetChat" || showId === "scrWb" || showId === "scrWbEdit" || showId === "scrMe" || showId === "scrCharSticker" || showId === "scrSpace" || showId === "scrLogList" || showId === "scrLogEdit" || showId === "scrFav" || showId === "scrWallet" || showId === "scrContact" || showId === "scrSetFont" || showId === "scrSpyDiary" || showId === "scrSpyZhihu" || showId === "scrSpySecret") {
+        if(showId === "scrRoom" || showId === "scrList" || showId === "scrSetApi" || showId === "scrSetChat" || showId === "scrWb" || showId === "scrWbEdit" || showId === "scrMe" || showId === "scrCharSticker" || showId === "scrSpace" || showId === "scrLogList" || showId === "scrLogEdit" || showId === "scrFav" || showId === "scrWallet" || showId === "scrContact" || showId === "scrSetFont" || showId === "scrSpyDiary" || showId === "scrSpyZhihu" || showId === "scrSpySecret" || showId === "scrSpyMeituan" || showId === "scrSpyFootprint" || showId === "scrSpyWallet" || showId === "scrSpyShop") {
             target.style.display = "flex";
         } else if (showId === "scrCharPhone") {
             target.style.display = "flex";
         } else { target.style.display = "block"; }
     }
 }
+
 
 
 
@@ -7451,8 +7452,9 @@ function saveSpyShopData() {
     originalSetItem.call(ls, `spyShop_` + currentChatId, JSON.stringify(spyShopData));
 }
 
-// 绑定主界面的入口图标（如果你在桌面加了购物车图标的话）
-if($(`btnSpyShop`)) $(`btnSpyShop`).onclick = () => { loadSpyShopData(); showScreen(`scrSpyShop`); renderSpyShop(); };
+// 绑定主界面的入口图标
+if($(`btnSpyCart`)) $(`btnSpyCart`).onclick = () => { loadSpyShopData(); showScreen(`scrSpyShop`); renderSpyShop(); };
+
 if($(`btnSpyShopBack`)) $(`btnSpyShopBack`).onclick = () => { showScreen(`scrCharPhone`); $(`scrSpyShop`).style.display = `none`; closeSpyShopPopup(); };
 if($(`btnSpyShopRefresh`)) $(`btnSpyShopRefresh`).onclick = () => { generateSpyShop(); };
 if($(`btnSpyShopClear`)) $(`btnSpyShopClear`).onclick = () => {
