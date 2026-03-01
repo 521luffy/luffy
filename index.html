@@ -1218,13 +1218,51 @@ background-image: none;">
         <div id="spyMemoList" class="list-content" style="background:#f0f9f4; flex:1; overflow-y:auto;"></div>
     </div>
 
-    <div id="scrSpyMemoDetail" class="scr-flex" style="z-index: 170; background: #f0f9f4; display: none; flex-direction: column;">
+        <div id="scrSpyMemoDetail" class="scr-flex" style="z-index: 170; background: #f0f9f4; display: none; flex-direction: column;">
         <div class="room-header" style="background: #f0f9f4; border-bottom: 1px solid #e2ece6; color: #333;">
             <span id="btnSpyMemoDetailBack" class="back-btn" style="color: #333;">＜</span>
             <span class="header-center" style="font-weight:bold; font-size:14px;" id="spyMemoDetailTime"></span>
         </div>
         <div id="spyMemoDetailContent" style="padding: 20px; font-size: 16px; color: #333; line-height: 1.8; flex: 1; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word;"></div>
     </div>
+
+    <style>
+    .spy-music-bg { background: linear-gradient(to bottom, #2b2b2b, #121212); color: #fff; }
+    .spy-music-header { display: flex; flex-direction: column; align-items: center; padding: 40px 20px 20px; position: relative; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .spy-music-ava { width: 85px; height: 85px; border-radius: 50%; background: #444; background-size: cover; background-position: center; border: 2px solid rgba(255,255,255,0.1); display:flex; justify-content:center; align-items:center; font-size:40px; }
+    .spy-music-name { font-size: 20px; font-weight: bold; margin-top: 15px; color: #fff; }
+    .spy-music-sign { font-size: 13px; color: #999; margin-top: 8px; text-align: center; padding: 0 20px; line-height: 1.4; }
+    .spy-music-stats { display: flex; gap: 25px; margin-top: 18px; font-size: 12px; color: #888; }
+    .spy-music-stats span strong { color: #fff; font-size: 15px; margin-right: 4px; font-family: monospace; }
+    .spy-music-card { background: rgba(255,255,255,0.06); border-radius: 15px; margin: 20px; padding: 18px; display: flex; align-items: center; cursor: pointer; transition: background 0.2s; }
+    .spy-music-card:active { background: rgba(255,255,255,0.1); }
+    .spy-music-card-cover { width: 55px; height: 55px; border-radius: 10px; background: rgba(255,58,58,0.2); display: flex; justify-content: center; align-items: center; font-size: 24px; margin-right: 15px; }
+    .spy-music-song-item { padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.03); cursor: pointer; }
+    .spy-music-song-idx { color: #666; font-size: 16px; margin-right: 15px; font-weight: bold; width: 20px; text-align: center; display: inline-block; }
+    .spy-music-song-name { font-size: 16px; color: #e0e0e0; display: inline-block; vertical-align: middle; }
+    .spy-music-song-art { font-size: 12px; color: #777; margin-top: 6px; padding-left: 39px; }
+    .spy-music-song-mood { margin-top: 12px; margin-left: 39px; font-size: 13px; color: #ff4d4f; background: rgba(255,77,79,0.1); padding: 12px; border-radius: 8px; display: none; line-height: 1.5; border-left: 3px solid #ff4d4f; }
+    </style>
+
+    <div id="scrSpyMusic" class="scr-flex spy-music-bg" style="z-index: 160; display: none; flex-direction: column;">
+        <div class="room-header" style="background: transparent; border: none; color: #fff;">
+            <span id="btnSpyMusicBack" class="back-btn" style="color: #fff;">＜</span>
+            <div style="display:flex; gap:15px; font-size:14px; font-weight:bold;">
+                <span id="btnSpyMusicRefresh" style="color:#ff4d4f;cursor:pointer;">刷新</span>
+                <span id="btnSpyMusicClear" style="color:#888;cursor:pointer;">清空</span>
+            </div>
+        </div>
+        <div id="spyMusicProfile" style="flex:1; overflow-y:auto;"></div>
+    </div>
+
+    <div id="scrSpyMusicList" class="scr-flex spy-music-bg" style="z-index: 170; display: none; flex-direction: column;">
+        <div class="room-header" style="background: #121212; border-bottom: 1px solid #222; color: #fff;">
+            <span id="btnSpyMusicListBack" class="back-btn" style="color: #fff;">＜</span>
+            <span class="header-center" style="font-weight:bold;">我喜欢的音乐</span>
+        </div>
+        <div id="spyMusicSongs" style="flex: 1; overflow-y: auto;"></div>
+    </div>
+
 
 
 
@@ -6690,14 +6728,162 @@ async function generateSpyMemo() {
                 }
             } catch(e) { console.error(e); }
         }
-    } catch (e) {
+        } catch (e) {
         alert(`请求失败：` + e.message);
     }
     renderSpyMemo();
 }
+
+// ==========================================
+// ====== 网易云音乐底层逻辑 ======
+// ==========================================
+let spyMusicData = { profile: null, songs: [] };
+
+function loadSpyMusicData() {
+    let d = originalGetItem.call(ls, `spyMusic_` + currentChatId);
+    if(d) spyMusicData = JSON.parse(d);
+    else spyMusicData = { profile: null, songs: [] };
+}
+
+function saveSpyMusicData() {
+    originalSetItem.call(ls, `spyMusic_` + currentChatId, JSON.stringify(spyMusicData));
+}
+
+if($(`btnSpyMusic`)) $(`btnSpyMusic`).onclick = () => { loadSpyMusicData(); showScreen(`scrSpyMusic`); renderSpyMusicProfile(); };
+if($(`btnSpyMusicBack`)) $(`btnSpyMusicBack`).onclick = () => { showScreen(`scrCharPhone`); $(`scrSpyMusic`).style.display = `none`; };
+if($(`btnSpyMusicListBack`)) $(`btnSpyMusicListBack`).onclick = () => { $(`scrSpyMusicList`).style.display = `none`; $(`scrSpyMusic`).style.display = `flex`; };
+if($(`btnSpyMusicRefresh`)) $(`btnSpyMusicRefresh`).onclick = () => { generateSpyMusic(); };
+if($(`btnSpyMusicClear`)) $(`btnSpyMusicClear`).onclick = () => {
+    if(confirm(`确定要清空当前角色的网易云数据吗？`)) {
+        spyMusicData = { profile: null, songs: [] };
+        saveSpyMusicData();
+        renderSpyMusicProfile();
+    }
+};
+
+function renderSpyMusicProfile() {
+    let container = $(`spyMusicProfile`);
+    if(!spyMusicData.profile || spyMusicData.songs.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding:50px 20px; color:#666; font-size:14px;">暂无音乐数据，请点击右上角刷新生成。</div>`;
+        return;
+    }
+
+    let charName = `未知`;
+    let isoAiA = originalGetItem.call(ls, `aiI_` + currentChatId);
+    let contacts = ls.getItem(`myContacts`) ? JSON.parse(ls.getItem(`myContacts`)) : [];
+    let c = contacts.find(x => String(x.id) === String(currentChatId));
+    if(c) charName = originalGetItem.call(ls, `cN_` + c.id) || c.name;
+    if(currentChatId === `default` && !c) charName = $(`cfgName`).value || `对方`;
+
+    let avatarHtml = isoAiA ? `<img src="${isoAiA}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : `<div style="color:#fff;font-size:30px;">${charName.charAt(0)}</div>`;
+
+    container.innerHTML = `
+        <div class="spy-music-header">
+            <div class="spy-music-ava">${avatarHtml}</div>
+            <div class="spy-music-name">${escapeHtml(charName)}</div>
+            <div class="spy-music-stats">
+                <span><strong>${spyMusicData.profile.follows}</strong> 关注</span>
+                <span><strong>${spyMusicData.profile.fans}</strong> 粉丝</span>
+            </div>
+            <div class="spy-music-sign">${escapeHtml(spyMusicData.profile.sign)}</div>
+            <div style="font-size:12px; color:#777; margin-top:15px; background:rgba(255,255,255,0.05); padding:5px 12px; border-radius:12px;">累计听歌 ${spyMusicData.profile.hours} 小时</div>
+        </div>
+        <div class="spy-music-card" onclick="$('scrSpyMusic').style.display='none'; $('scrSpyMusicList').style.display='flex'; renderSpyMusicList();">
+            <div class="spy-music-card-cover">❤️</div>
+            <div style="flex:1;">
+                <div style="font-size:16px; font-weight:bold; color:#fff; margin-bottom:6px;">我喜欢的音乐</div>
+                <div style="font-size:12px; color:#888;">${spyMusicData.songs.length}首</div>
+            </div>
+            <div style="color:#666; font-size:20px;">></div>
+        </div>
+    `;
+}
+
+function renderSpyMusicList() {
+    let list = $(`spyMusicSongs`);
+    list.innerHTML = ``;
+    spyMusicData.songs.forEach((item, idx) => {
+        let div = document.createElement(`div`);
+        div.className = `spy-music-song-item`;
+        div.innerHTML = `
+            <div style="display:flex; align-items:center;">
+                <span class="spy-music-song-idx">${idx + 1}</span>
+                <div style="flex:1; overflow:hidden;">
+                    <div class="spy-music-song-name">${escapeHtml(item.name)}</div>
+                    <div class="spy-music-song-art">${escapeHtml(item.art)}</div>
+                </div>
+                <div style="color:#666; font-size:12px;">•••</div>
+            </div>
+            <div class="spy-music-song-mood">${escapeHtml(item.mood)}</div>
+        `;
+        div.onclick = function() {
+            let moodDiv = this.querySelector('.spy-music-song-mood');
+            if(moodDiv.style.display === 'block') {
+                moodDiv.style.display = 'none';
+            } else {
+                let allMoods = document.querySelectorAll('.spy-music-song-mood');
+                for(let i=0; i<allMoods.length; i++) { allMoods[i].style.display = 'none'; }
+                moodDiv.style.display = 'block';
+            }
+        };
+        list.appendChild(div);
+    });
+}
+
+async function generateSpyMusic() {
+    let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value;
+    if(!pxy || !key || !mod) { alert(`请先在网络配置里填写API信息哦！`); return; }
+
+    let container = $(`spyMusicProfile`);
+    container.innerHTML = `<div style="text-align:center; padding:50px 20px; color:#ff4d4f; font-size:14px; animation: pulse 1.5s infinite;">正在破解网易云音乐数据...</div>`;
+
+    let charN = `对方`;
+    let contacts = ls.getItem(`myContacts`) ? JSON.parse(ls.getItem(`myContacts`)) : [];
+    let c = contacts.find(x => String(x.id) === String(currentChatId));
+    if(c) charN = originalGetItem.call(ls, `cN_` + c.id) || c.name;
+    if(currentChatId === `default` && !c) charN = $(`cfgName`).value || `对方`;
+
+    let charP = originalGetItem.call(ls, `cP_` + currentChatId) || ``; 
+    let myN = $(`cfgMyName`).value || `我`;
+
+    let pmt = `【绝密任务：生成伪造的网易云音乐主页及红心歌单】\n注意：我正在偷看主角色（${charN}）的网易云音乐！\n请扮演系统，为【${charN}】生成极其符合其人设和近期心境的音乐数据。\n`;
+    if(charP) pmt += `【${charN}的专属人设档案】：${charP}\n`; 
+
+    let specHistStr = originalGetItem.call(ls, `chatHistory_` + currentChatId) || `[]`;
+    let specHist = JSON.parse(specHistStr);
+    if(currentChatId === `default` && typeof history !== 'undefined') specHist = history;
+    let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
+    if(recentChat) pmt += `\n【近期聊天剧情参考（重点用于推测近期的情绪歌单及批注）】：\n${recentChat}\n`;
+
+    pmt += `\n要求：\n1. profile包含：sign(个性签名，符合人设或近期剧情的一句话)、follows(关注数)、fans(粉丝数)、hours(听歌总时长数字)。\n2. songs包含10首红心歌曲，必须严格符合${charN}的审美和近期的心情(如分手就emo，开心就轻快等)。\n3. 每首歌包含：name(歌名)、art(歌手)、mood(当时听这首歌时偷偷写下的一两句隐秘心情批注，极具代入感)。\n\n严禁废话！必须且只能输出纯JSON对象，格式如下：\n{"profile":{"sign":"...","follows":12,"fans":34,"hours":2000},"songs":[{"name":"...","art":"...","mood":"..."}]}`;
+
+    try {
+        let url = pxy.includes(`chat/completions`) ? pxy : pxy.replace(/\/$/, ``) + `/chat/completions`;
+        let res = await fetch(url, {
+            method: `POST`, headers: {Authorization: `Bearer ` + key, "Content-Type": `application/json`},
+            body: JSON.stringify({model: mod, messages: [{role: `user`, content: pmt}], temperature: 0.8})
+        });
+        let dat = await res.json();
+        if(dat.choices && dat.choices.length > 0) {
+            let reply = dat.choices[0].message.content.trim();
+            let cleanRes = reply.replace(/```json/g, '').replace(/```/g, '').trim();
+            try {
+                let parsed = JSON.parse(cleanRes);
+                if(parsed.profile && parsed.songs) {
+                    spyMusicData = parsed;
+                    saveSpyMusicData(); 
+                }
+            } catch(e) { console.error(e); }
+        }
+    } catch (e) {
+        alert(`请求失败：` + e.message);
+    }
+    renderSpyMusicProfile();
+}
 </script>
 </body>
 </html>
+
 
 
 
