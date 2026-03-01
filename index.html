@@ -1413,10 +1413,11 @@ background-image: none;">
     .spy-iqiyi-tab.active { color: #00c957; font-weight: bold; }
     .spy-iqiyi-tab.active::after { content: ''; position: absolute; bottom: 0; left: 20%; right: 20%; height: 3px; background: #00c957; border-radius: 3px 3px 0 0; }
     /* 增加了 padding-bottom 解决滑不下去的问题 */
-    .spy-iqiyi-list { flex: 1; padding: 15px; padding-bottom: 80px; overflow-y: auto; background: #111; display: flex; flex-direction: column; gap: 15px; }
-    .spy-iqiyi-item { display: flex; background: #1a1a1a; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.5); border: 1px solid #222; }
-    /* 把固定高度改成了 min-height 和自适应拉伸，防止底部文字被裁切 */
+        .spy-iqiyi-list { flex: 1; padding: 15px; padding-bottom: 80px; overflow-y: auto; background: #111; display: flex; flex-direction: column; gap: 15px; }
+    /* 核心修复：增加了禁止收缩的强制指令，彻底禁止卡片在数量多时被挤压变形 */
+    .spy-iqiyi-item { display: flex; background: #1a1a1a; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.5); border: 1px solid #222; flex-shrink: 0; }
     .spy-iqiyi-cover { width: 110px; min-height: 95px; background: linear-gradient(135deg, #2a2a2a, #111); display: flex; justify-content: center; align-items: center; font-size: 24px; position: relative; flex-shrink: 0; align-self: stretch; }
+
     .spy-iqiyi-tag { position: absolute; top: 4px; right: 4px; background: rgba(0,201,87,0.9); color: #fff; font-size: 10px; padding: 2px 4px; border-radius: 4px; font-weight: bold; }
     .spy-iqiyi-info { flex: 1; padding: 10px; display: flex; flex-direction: column; justify-content: space-between; overflow: visible; }
     .spy-iqiyi-title { font-size: 14px; font-weight: bold; color: #eee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 5px; }
@@ -7763,7 +7764,7 @@ async function generateSpyIqiyi() {
     pmt += `  - 如果是高冷老干部或大忙人，电影和电视剧可能只有寥寥几部高分经典，动漫和综艺直接为空数组！\n`;
     pmt += `  - 如果是二次元浓度高的人设，动漫栏目必须排满，而且必须是非常符合设定的日漫或国漫！\n`;
     pmt += `  - 绝对禁止给严肃硬汉生成甜宠偶像剧！绝对禁止乱拉郎配！完全不符合设定的栏目必须直接返回空数组。\n`;
-    pmt += `2. 数量限制：每个分类下最多只能生成 10 条记录！\n`;
+    pmt += `2. 数量限制：每个分类下最多只能生成 7 条记录！\n`;
     pmt += `3. 进度真实感：progress字段必须模拟真实的播放进度，例如：已看完、观看至第三集 45%、观看至 12%、仅看了3分钟 等。必须要带有明确的文字说明。\n`;
 
     pmt += `\n严禁废话！必须且只能输出纯JSON对象，包含 movie、tv、anime、variety 四个数组，格式如下：\n{"movie": [{"title":"电影名称","desc":"动作 / 科幻","progress":"已看完"}], "tv": [{"title":"电视剧名称","desc":"2023 / 悬疑","progress":"观看至第五集 30%"}], "anime": [], "variety": []}`;
@@ -7781,10 +7782,10 @@ async function generateSpyIqiyi() {
             try {
                 let parsed = JSON.parse(cleanRes);
                 if(parsed) {
-                    spyIqiyiData.movie = Array.isArray(parsed.movie) ? parsed.movie.slice(0, 10) : [];
-                    spyIqiyiData.tv = Array.isArray(parsed.tv) ? parsed.tv.slice(0, 10) : [];
-                    spyIqiyiData.anime = Array.isArray(parsed.anime) ? parsed.anime.slice(0, 10) : [];
-                    spyIqiyiData.variety = Array.isArray(parsed.variety) ? parsed.variety.slice(0, 10) : [];
+                    spyIqiyiData.movie = Array.isArray(parsed.movie) ? parsed.movie.slice(0, 7) : [];
+                    spyIqiyiData.tv = Array.isArray(parsed.tv) ? parsed.tv.slice(0, 7) : [];
+                    spyIqiyiData.anime = Array.isArray(parsed.anime) ? parsed.anime.slice(0, 7) : [];
+                    spyIqiyiData.variety = Array.isArray(parsed.variety) ? parsed.variety.slice(0, 7) : [];
                     saveSpyIqiyiData(); 
                 }
             } catch(e) { console.error(e); }
@@ -7794,6 +7795,7 @@ async function generateSpyIqiyi() {
     }
     renderSpyIqiyi();
 }
+
 
 </script>
 </body>
