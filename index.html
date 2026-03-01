@@ -1277,7 +1277,7 @@ background-image: none;">
     .spy-mt-addr { font-size: 12px; color: #888; display: flex; align-items: flex-start; gap: 5px; }
     </style>
 
-        <div id="scrSpyMeituan" class="scr-flex spy-mt-bg" style="z-index: 160; display: none; flex-direction: column;">
+            <div id="scrSpyMeituan" class="scr-flex spy-mt-bg" style="z-index: 160; display: none; flex-direction: column;">
         <div class="spy-mt-header">
             <span id="btnSpyMeituanBack" class="back-btn" style="color: #333;">＜</span>
             <span class="header-center">外卖订单</span>
@@ -1288,6 +1288,34 @@ background-image: none;">
         </div>
         <div id="spyMeituanList" style="flex: 1; overflow-y: auto; padding-bottom: 50px;"></div>
     </div>
+
+    <style>
+    .spy-fp-bg { background: #fdfdfd; color: #333; }
+    .spy-fp-header { background: #fff; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; border-bottom: 1px solid #eee; z-index: 2; color: #333; }
+    .spy-fp-container { padding: 25px 20px; position: relative; flex: 1; overflow-y: auto; }
+    .spy-fp-item { display: flex; margin-bottom: 30px; position: relative; }
+    .spy-fp-time { width: 50px; font-size: 14px; color: #888; text-align: right; padding-right: 15px; font-weight: bold; flex-shrink: 0; padding-top: 2px; }
+    .spy-fp-line { position: absolute; left: 70px; top: 20px; bottom: -30px; width: 2px; background: #e0e0e0; }
+    .spy-fp-item:last-child .spy-fp-line { display: none; }
+    .spy-fp-dot { width: 12px; height: 12px; border-radius: 50%; background: #0bc15f; position: absolute; left: 65px; top: 5px; box-shadow: 0 0 0 3px #dcf5e6; }
+    .spy-fp-content { flex: 1; padding-left: 35px; }
+    .spy-fp-location { font-size: 16px; font-weight: bold; color: #111; margin-bottom: 8px; }
+    .spy-fp-duration { font-size: 13px; color: #666; margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }
+    .spy-fp-transport { font-size: 12px; color: #0bc15f; background: #dcf5e6; padding: 4px 10px; border-radius: 12px; display: inline-block; font-weight: bold; }
+    </style>
+
+    <div id="scrSpyFootprint" class="scr-flex spy-fp-bg" style="z-index: 160; display: none; flex-direction: column;">
+        <div class="spy-fp-header">
+            <span id="btnSpyFootprintBack" class="back-btn" style="color: #333;">＜</span>
+            <span class="header-center" style="font-size:16px;">今日足迹</span>
+            <div style="display:flex; gap:15px; font-size:14px;">
+                <span id="btnSpyFootprintRefresh" style="cursor:pointer; color:#0bc15f;">刷新</span>
+                <span id="btnSpyFootprintClear" style="cursor:pointer; color:#ff4d4f;">清空</span>
+            </div>
+        </div>
+        <div id="spyFootprintList" class="spy-fp-container"></div>
+    </div>
+
 
 
 
@@ -7019,14 +7047,121 @@ async function generateSpyMeituan() {
                 }
             } catch(e) { console.error(e); }
         }
-    } catch (e) {
+        } catch (e) {
         alert(`请求失败：` + e.message);
     }
     renderSpyMeituan();
 }
+
+// ==========================================
+// ====== 足迹记录底层逻辑 ======
+// ==========================================
+let spyFootprintData = [];
+
+function loadSpyFootprintData() {
+    let d = originalGetItem.call(ls, `spyFootprint_` + currentChatId);
+    spyFootprintData = d ? JSON.parse(d) : [];
+}
+
+function saveSpyFootprintData() {
+    originalSetItem.call(ls, `spyFootprint_` + currentChatId, JSON.stringify(spyFootprintData));
+}
+
+if($(`btnSpyFootprint`)) $(`btnSpyFootprint`).onclick = () => { loadSpyFootprintData(); showScreen(`scrSpyFootprint`); renderSpyFootprint(); };
+if($(`btnSpyFootprintBack`)) $(`btnSpyFootprintBack`).onclick = () => { showScreen(`scrCharPhone`); $(`scrSpyFootprint`).style.display = `none`; };
+if($(`btnSpyFootprintRefresh`)) $(`btnSpyFootprintRefresh`).onclick = () => { generateSpyFootprint(); };
+if($(`btnSpyFootprintClear`)) $(`btnSpyFootprintClear`).onclick = () => {
+    if(confirm(`确定要清空当前角色的足迹数据吗？`)) {
+        spyFootprintData = [];
+        saveSpyFootprintData();
+        renderSpyFootprint();
+    }
+};
+
+function renderSpyFootprint() {
+    let list = $(`spyFootprintList`);
+    list.innerHTML = ``;
+    if(spyFootprintData.length === 0) {
+        list.innerHTML = `<div style="text-align:center; padding:30px; color:#999; font-size:14px;">暂无今日足迹，请点击右上角刷新生成。</div>`;
+        return;
+    }
+
+    spyFootprintData.forEach(item => {
+        let div = document.createElement(`div`);
+        div.className = `spy-fp-item`;
+        div.innerHTML = `
+            <div class="spy-fp-time">${escapeHtml(item.time)}</div>
+            <div class="spy-fp-dot"></div>
+            <div class="spy-fp-line"></div>
+            <div class="spy-fp-content">
+                <div class="spy-fp-location">${escapeHtml(item.location)}</div>
+                <div class="spy-fp-duration">停留：${escapeHtml(item.duration)}</div>
+                <div class="spy-fp-transport">${escapeHtml(item.transport)}</div>
+            </div>
+        `;
+        list.appendChild(div);
+    });
+}
+
+async function generateSpyFootprint() {
+    let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value;
+    if(!pxy || !key || !mod) { alert(`请先在网络配置里填写API信息哦！`); return; }
+
+    let list = $(`spyFootprintList`);
+    list.innerHTML = `<div style="text-align:center; padding:30px; color:#0bc15f; font-size:14px; animation: pulse 1.5s infinite;">正在破解卫星定位数据...</div>`;
+
+    let charN = `对方`;
+    let contacts = ls.getItem(`myContacts`) ? JSON.parse(ls.getItem(`myContacts`)) : [];
+    let c = contacts.find(x => String(x.id) === String(currentChatId));
+    if(c) charN = originalGetItem.call(ls, `cN_` + c.id) || c.name;
+    if(currentChatId === `default` && !c) charN = $(`cfgName`).value || `对方`;
+
+    let charP = originalGetItem.call(ls, `cP_` + currentChatId) || ``; 
+    let myN = $(`cfgMyName`).value || `我`;
+    let vTime = getVirtualTime();
+
+    let pmt = `【绝密任务：生成伪造的手机定位足迹记录】\n注意：我正在偷看主角色（${charN}）的手机足迹！\n请扮演定位系统，为【${charN}】生成当天的行程轨迹（5到7个节点）。当前虚拟时间：${vTime}。\n`;
+    if(charP) pmt += `【${charN}的专属人设档案】：${charP}\n`; 
+
+    let specHistStr = originalGetItem.call(ls, `chatHistory_` + currentChatId) || `[]`;
+    let specHist = JSON.parse(specHistStr);
+    if(currentChatId === `default` && typeof history !== 'undefined') specHist = history;
+    let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
+    if(recentChat) pmt += `\n【近期聊天剧情参考（用于推测TA今天去了哪里）：\n${recentChat}\n`;
+
+    pmt += `\n要求：\n1. 必须形成时间闭环：从早晨出门，到白天活动，再到晚上回住处，按时间顺序排列。\n`;
+    pmt += `2. 强制身份匹配交通方式：必须根据档案分析其经济实力与身份！普通学生只能是步行、骑行、公交、地铁；富二代可是自己开车或司机接送；霸总或跨国行程必须出现头等舱或私人飞机！绝对不能让总裁去挤公交，也不能让贫困生开超跑。\n`;
+    pmt += `3. 强制核验地点真实性：禁止出现某某市某某街这种模糊虚构地点！必须结合档案所在的真实城市，写出真实的三次元地标（如：三里屯太古里、浦东国际机场）或者剧情设定里的具体建筑（如：高二三班教室、XX集团总部大楼）。\n`;
+
+    pmt += `\n严禁废话！必须且只能输出纯JSON数组，格式如下：\n[{"time":"08:30","location":"具体地点名称","duration":"2小时 或 10分钟","transport":"步行 或 司机接送 或 航班MU5103"}]`;
+
+    try {
+        let url = pxy.includes(`chat/completions`) ? pxy : pxy.replace(/\/$/, ``) + `/chat/completions`;
+        let res = await fetch(url, {
+            method: `POST`, headers: {Authorization: `Bearer ` + key, "Content-Type": `application/json`},
+            body: JSON.stringify({model: mod, messages: [{role: `user`, content: pmt}], temperature: 0.8})
+        });
+        let dat = await res.json();
+        if(dat.choices && dat.choices.length > 0) {
+            let reply = dat.choices[0].message.content.trim();
+            let cleanRes = reply.replace(/```json/g, '').replace(/```/g, '').trim();
+            try {
+                let parsed = JSON.parse(cleanRes);
+                if(Array.isArray(parsed)) {
+                    spyFootprintData = parsed;
+                    saveSpyFootprintData(); 
+                }
+            } catch(e) { console.error(e); }
+        }
+    } catch (e) {
+        alert(`请求失败：` + e.message);
+    }
+    renderSpyFootprint();
+}
 </script>
 </body>
 </html>
+
 
 
 
