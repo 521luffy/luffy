@@ -1075,7 +1075,6 @@ class=back-btn>＜</span>
 
                 <div id="scrCharPhone" class="scr-char-phone" style="background-color: #ffffff;
 background-image: none;">
-        <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.2);backdrop-filter:blur(2px);z-index:1;"></div>
         
                         <div class="char-phone-header" style="color:#333; text-shadow:none;">
             <span id="btnCharPhoneExit" style="cursor:pointer; font-size:18px; font-weight:bold;">＜ 返回</span>
@@ -7918,7 +7917,6 @@ if($(`spyThemeUploader`)) {
     if(!file) return;
     let reader = new FileReader();
     reader.onload = function(e) {
-        // 直接使用原图数据，不经过任何 Canvas 压缩或裁剪，绝对无损高清
         let originalDataUrl = e.target.result;
         if(currentEditingThemeKey === `bg`) {
             spyThemeData.bg = originalDataUrl;
@@ -7931,7 +7929,6 @@ if($(`spyThemeUploader`)) {
     reader.readAsDataURL(file);
 };
 
-}
 
 function applySpyTheme() {
     let phoneScreen = $(`scrCharPhone`);
