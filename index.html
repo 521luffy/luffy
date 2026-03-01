@@ -1191,13 +1191,41 @@ background-image: none;">
         <div id="spyAlbumList" class="spy-album-grid list-content"></div>
     </div>
 
-    <div id="spyAlbumModal" class="spy-polaroid-modal" onclick="this.style.display='none'">
+        <div id="spyAlbumModal" class="spy-polaroid-modal" onclick="this.style.display='none'">
         <div class="spy-polaroid-card" onclick="event.stopPropagation()">
             <div class="spy-polaroid-img">📷</div>
             <div class="spy-polaroid-time" id="spyPolaroidTime"></div>
             <div class="spy-polaroid-desc" id="spyPolaroidDesc"></div>
         </div>
     </div>
+
+    <style>
+    .spy-memo-item { padding: 15px; border-bottom: 1px solid #e2ece6; cursor: pointer; display: flex; flex-direction: column; gap: 6px; }
+    .spy-memo-title { font-size: 16px; font-weight: bold; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .spy-memo-time { font-size: 12px; color: #888; }
+    .spy-memo-summary { font-size: 14px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    </style>
+    
+    <div id="scrSpyMemo" class="scr-flex" style="z-index: 160; background: #f0f9f4; display: none; flex-direction: column;">
+        <div class="room-header" style="background: #f0f9f4; border-bottom: 1px solid #e2ece6; color: #333;">
+            <span id="btnSpyMemoBack" class="back-btn" style="color: #333;">＜</span>
+            <span class="header-center" style="font-weight:bold;">备忘录</span>
+            <div style="display:flex; gap:15px; font-size:14px; font-weight:bold;">
+                <span id="btnSpyMemoRefresh" style="color:#0088cc;cursor:pointer;">刷新</span>
+                <span id="btnSpyMemoClear" style="color:#ff4d4f;cursor:pointer;">清空</span>
+            </div>
+        </div>
+        <div id="spyMemoList" class="list-content" style="background:#f0f9f4; flex:1; overflow-y:auto;"></div>
+    </div>
+
+    <div id="scrSpyMemoDetail" class="scr-flex" style="z-index: 170; background: #f0f9f4; display: none; flex-direction: column;">
+        <div class="room-header" style="background: #f0f9f4; border-bottom: 1px solid #e2ece6; color: #333;">
+            <span id="btnSpyMemoDetailBack" class="back-btn" style="color: #333;">＜</span>
+            <span class="header-center" style="font-weight:bold; font-size:14px;" id="spyMemoDetailTime"></span>
+        </div>
+        <div id="spyMemoDetailContent" style="padding: 20px; font-size: 16px; color: #333; line-height: 1.8; flex: 1; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word;"></div>
+    </div>
+
 
 
 
@@ -6555,14 +6583,122 @@ async function generateSpyAlbum() {
                 }
             } catch(e) { console.error(e); }
         }
-    } catch (e) {
+        } catch (e) {
         alert(`请求失败：` + e.message);
     }
     renderSpyAlbum();
 }
+
+// ==========================================
+// ====== 备忘录底层逻辑 ======
+// ==========================================
+let spyMemoData = [];
+
+function loadSpyMemoData() {
+    let d = originalGetItem.call(ls, `spyMemo_` + currentChatId);
+    spyMemoData = d ? JSON.parse(d) : [];
+}
+
+function saveSpyMemoData() {
+    originalSetItem.call(ls, `spyMemo_` + currentChatId, JSON.stringify(spyMemoData));
+}
+
+if($(`btnSpyMemo`)) $(`btnSpyMemo`).onclick = () => { loadSpyMemoData(); showScreen(`scrSpyMemo`); renderSpyMemo(); };
+if($(`btnSpyMemoBack`)) $(`btnSpyMemoBack`).onclick = () => { showScreen(`scrCharPhone`); $(`scrSpyMemo`).style.display = `none`; };
+if($(`btnSpyMemoDetailBack`)) $(`btnSpyMemoDetailBack`).onclick = () => { $(`scrSpyMemoDetail`).style.display = `none`; $(`scrSpyMemo`).style.display = `flex`; };
+if($(`btnSpyMemoRefresh`)) $(`btnSpyMemoRefresh`).onclick = () => { generateSpyMemo(); };
+if($(`btnSpyMemoClear`)) $(`btnSpyMemoClear`).onclick = () => {
+    if(confirm(`确定要清空当前角色的备忘录记录吗？`)) {
+        spyMemoData = [];
+        saveSpyMemoData();
+        renderSpyMemo();
+    }
+};
+
+function renderSpyMemo() {
+    let list = $(`spyMemoList`);
+    list.innerHTML = ``;
+    if(spyMemoData.length === 0) {
+        list.innerHTML = `<div style="text-align:center; padding:30px; color:#999; font-size:14px;">暂无备忘录，请点击右上角刷新生成。</div>`;
+        return;
+    }
+    
+    spyMemoData.forEach(item => {
+        let div = document.createElement(`div`);
+        div.className = `spy-memo-item`;
+        div.innerHTML = `
+            <div class="spy-memo-title">${escapeHtml(item.title)}</div>
+            <div class="spy-memo-time">${escapeHtml(item.time)}</div>
+            <div class="spy-memo-summary">${escapeHtml(item.summary)}</div>
+        `;
+        div.onclick = () => {
+            $(`spyMemoDetailTime`).innerText = item.time;
+            $(`spyMemoDetailContent`).innerText = item.content;
+            $(`scrSpyMemo`).style.display = `none`;
+            $(`scrSpyMemoDetail`).style.display = `flex`;
+        };
+        list.appendChild(div);
+    });
+}
+
+async function generateSpyMemo() {
+    let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value;
+    if(!pxy || !key || !mod) { alert(`请先在网络配置里填写API信息哦！`); return; }
+
+    let list = $(`spyMemoList`);
+    list.innerHTML = `<div style="text-align:center; padding:30px; color:#576b95; font-size:14px; animation: pulse 1.5s infinite;">正在破解本地备忘录数据...</div>`;
+    
+    let charN = `对方`;
+    let contacts = ls.getItem(`myContacts`) ? JSON.parse(ls.getItem(`myContacts`)) : [];
+    let c = contacts.find(x => String(x.id) === String(currentChatId));
+    if(c) charN = originalGetItem.call(ls, `cN_` + c.id) || c.name;
+    if(currentChatId === `default` && !c) charN = $(`cfgName`).value || `对方`;
+    
+    let charP = originalGetItem.call(ls, `cP_` + currentChatId) || ``; 
+    let vTime = getVirtualTime();
+    let myN = $(`cfgMyName`).value || `我`;
+    
+    let pmt = `【绝密任务：生成伪造的手机备忘录记录】\n注意：我正在偷看主角色（${charN}）的手机备忘录！\n请扮演系统，为【${charN}】生成6条符合其身份的碎片化生活备忘录。\n当前虚拟时间：${vTime}。\n`;
+    if(charP) pmt += `【${charN}的专属人设档案】：${charP}\n`; 
+    
+    let specHistStr = originalGetItem.call(ls, `chatHistory_` + currentChatId) || `[]`;
+    let specHist = JSON.parse(specHistStr);
+    if(currentChatId === `default` && typeof history !== 'undefined') specHist = history;
+    let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
+    if(recentChat) pmt += `\n【近期聊天记录参考（重点用于构思未发送的草稿或待办事项）】：\n${recentChat}\n`;
+    
+    pmt += `\n要求：\n1. 内容必须生活化且碎片化，强制包含以下类型：待办事项列表（购物、工作安排等）、未发送的聊天草稿（想发却没敢发的纠结话语）、隐秘的账号密码备忘（如某网站缩写加数字）、瞬间的情绪或灵感随笔。\n`;
+    pmt += `2. 时间线合理分布在近期。\n`;
+    
+    pmt += `\n严禁废话！必须且只能输出纯JSON数组，格式如下：\n[{"title":"提取内容第一句话作为粗体标题","time":"如 2026年2月25日 14:30","summary":"一段灰色的简短摘要说明","content":"备忘录的完整详细文本内容，可包含换行符"}]`;
+
+    try {
+        let url = pxy.includes(`chat/completions`) ? pxy : pxy.replace(/\/$/, ``) + `/chat/completions`;
+        let res = await fetch(url, {
+            method: `POST`, headers: {Authorization: `Bearer ` + key, "Content-Type": `application/json`},
+            body: JSON.stringify({model: mod, messages: [{role: `user`, content: pmt}], temperature: 0.8})
+        });
+        let dat = await res.json();
+        if(dat.choices && dat.choices.length > 0) {
+            let reply = dat.choices[0].message.content.trim();
+            let cleanRes = reply.replace(/```json/g, '').replace(/```/g, '').trim();
+            try {
+                let parsed = JSON.parse(cleanRes);
+                if(Array.isArray(parsed)) {
+                    spyMemoData = parsed;
+                    saveSpyMemoData(); 
+                }
+            } catch(e) { console.error(e); }
+        }
+    } catch (e) {
+        alert(`请求失败：` + e.message);
+    }
+    renderSpyMemo();
+}
 </script>
 </body>
 </html>
+
 
 
 
