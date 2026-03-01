@@ -7231,21 +7231,14 @@ async function generateSpyFootprint() {
     } catch (e) {
         alert(`请求失败：` + e.message);
     }
-    // 生成完成后调用渲染函数，即可同步刷新顶部的显示日期
+        // 生成完成后调用渲染函数，即可同步刷新顶部的显示日期
     renderSpyFootprint();
 }
 
-
-
-
-    } catch (e) {
-        alert(`请求失败：` + e.message);
-    }
-    renderSpyFootprint();
-}
 // ==========================================
 // ====== 钱包账单底层逻辑 ======
 // ==========================================
+
 let spyWalletData = { balance: null, list: [] };
 
 function loadSpyWalletData() {
