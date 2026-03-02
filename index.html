@@ -2856,7 +2856,7 @@ window.loadChatSettings = function() {
     else $(`cfgMemPmt`).value = `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。必须准确写出当前实际参与对话的【具体人物姓名】（包括我、主角色或任何出场的NPC）。`;
 };
 
-    $(`btnSaveChat`).onclick = () =>{ 
+        $(`btnSaveChat`).onclick = async () =>{ 
         ls.setItem(`cN`, $(`cfgName`).value); 
         ls.setItem(`cR`, $(`cfgRem`).value); ls.setItem(`cMyN`, $(`cfgMyName`).value); 
         ls.setItem(`cAP`, $(`cfgAiP`).value); ls.setItem(`cMP`, $(`cfgMyP`).value);
@@ -2868,24 +2868,25 @@ window.loadChatSettings = function() {
         ls.setItem(`cAMem`, $(`cfgAutoMem`).checked); ls.setItem(`cMemT`, $(`cfgMemTrig`).value);
         ls.setItem(`cMemP`, $(`cfgMemPmt`).value);
         
-        let checkAndSave = (preId, key) => {
+        let checkAndSave = async (preId, key) => {
             let el = $(preId);
             if (el && el.style.backgroundImage && el.style.backgroundImage !== 'none') {
-                let url = el.style.backgroundImage.slice(5, -2);
+                let url = el.style.backgroundImage.replace(/^url\(["']?|["']?\)$/g, '');
                 if (url.startsWith('data:')) {
                     let k = isolatedKeys.includes(key) ? key + "_" + currentChatId : key;
-                    localforage.setItem(k, url);
+                    await localforage.setItem(k, url);
                 }
             }
         };
-        checkAndSave('bgPreview', 'bgI');
-        checkAndSave('aiPreview', 'aiI');
-        checkAndSave('myPreview', 'myI');
+        await checkAndSave('bgPreview', 'bgI');
+        await checkAndSave('aiPreview', 'aiI');
+        await checkAndSave('myPreview', 'myI');
 
         applyVis(); 
         alert(`配置已保存！`); 
         showScreen(`scrRoom`); 
     };
+
 
 
 // ==========================================
