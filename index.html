@@ -2002,69 +2002,68 @@ function applyVis() {
     if($(`roomStatus`)) $(`roomStatus`).innerHTML = `<div class="status-dot ` + curStatusCol + `"></div>` + curStatusTxt;
     if($(`roomSignature`)) $(`roomSignature`).innerText = curSign;
 
-    let defName = originalGetItem.call(ls, `cR_default`) || originalGetItem.call(ls, `cN_default`) || originalGetItem.call(ls, `cR`) || originalGetItem.call(ls, `cN`) || `专属恋人`;
+        let defName = originalGetItem.call(ls, `cR_default`) || originalGetItem.call(ls, `cN_default`) || originalGetItem.call(ls, `cR`) || originalGetItem.call(ls, `cN`) || `专属恋人`;
     if (currentChatId === `default`) defName = dn;
-
     $(`listName`).innerText = defName;
     if($(`contactName`)) $(`contactName`).innerText = defName;
     
-    let bg = ls.getItem(`bgI`);
-    if(bg) { 
-        room.style.backgroundImage = `url(${bg})`; 
-        if($(`bgPreview`)) { $(`bgPreview`).style.backgroundImage = `url(${bg})`;
-$(`bgPreview`).innerText = ``; }
-    } else { 
-        room.style.backgroundImage = `none`;
-if($(`bgPreview`)) { $(`bgPreview`).style.backgroundImage = `none`; $(`bgPreview`).innerText = `🖼️ 点击选择背景`; }
-    }
-    
-    let defAiA = originalGetItem.call(ls, `aiI_default`) ||
-originalGetItem.call(ls, `aiI`);
-    if (currentChatId === `default`) defAiA = ls.getItem(`aiI`);
-    if(defAiA) { 
-        $(`listAva`).style.backgroundImage = `url(${defAiA})`; $(`listAva`).innerText = ``;
-        if($(`contactAva`)) { $(`contactAva`).style.backgroundImage = `url(${defAiA})`; $(`contactAva`).innerText = ``; }
-    }
-    else { 
-        $(`listAva`).style.backgroundImage = `none`; $(`listAva`).innerText = `👤`;
-        if($(`contactAva`)) { $(`contactAva`).style.backgroundImage = `none`; $(`contactAva`).innerText = `👤`; }
-    }
-    
-            let curAiA = ls.getItem(`aiI`);
-        if(curAiA) {
-            if($(`aiPreview`)) { $(`aiPreview`).style.backgroundImage = `url(${curAiA})`; $(`aiPreview`).innerText = ``;
+    (async function applyImagesAsync() {
+        let getImg = async (k) => {
+            let actualKey = isolatedKeys.includes(k) ? k + "_" + currentChatId : k;
+            if (currentChatId === "default" && isolatedKeys.includes(k)) {
+                let v = await localforage.getItem(actualKey);
+                if(!v) v = await localforage.getItem(k);
+                if(!v) v = originalGetItem.call(ls, actualKey) || originalGetItem.call(ls, k);
+                return v;
             }
-                        if($(`spyCharAvatar`)) { $(`spyCharAvatar`).style.backgroundImage = `url(${curAiA})`; $(`spyCharAvatar`).innerText = ``; }
+            let val = await localforage.getItem(actualKey);
+            if(!val) val = originalGetItem.call(ls, actualKey);
+            return val;
+        };
+
+        let bg = await getImg('bgI');
+        if(bg) { 
+            room.style.backgroundImage = `url(${bg})`; 
+            if($(`bgPreview`)) { $(`bgPreview`).style.backgroundImage = `url(${bg})`; $(`bgPreview`).innerText = ``; }
+        } else { 
+            room.style.backgroundImage = `none`;
+            if($(`bgPreview`)) { $(`bgPreview`).style.backgroundImage = `none`; $(`bgPreview`).innerText = `🖼️ 点击选择背景`; }
+        }
+        
+        let defAiA = await localforage.getItem('aiI_default') || originalGetItem.call(ls, 'aiI_default');
+        if(!defAiA) defAiA = await localforage.getItem('aiI') || originalGetItem.call(ls, 'aiI');
+        if (currentChatId === `default`) defAiA = await getImg('aiI');
+        
+        if(defAiA) { 
+            if($(`listAva`)) { $(`listAva`).style.backgroundImage = `url(${defAiA})`; $(`listAva`).innerText = ``; }
+            if($(`contactAva`)) { $(`contactAva`).style.backgroundImage = `url(${defAiA})`; $(`contactAva`).innerText = ``; }
+        } else { 
+            if($(`listAva`)) { $(`listAva`).style.backgroundImage = `none`; $(`listAva`).innerText = `👤`; }
+            if($(`contactAva`)) { $(`contactAva`).style.backgroundImage = `none`; $(`contactAva`).innerText = `👤`; }
+        }
+        
+        let curAiA = await getImg('aiI');
+        if(curAiA) {
+            if($(`aiPreview`)) { $(`aiPreview`).style.backgroundImage = `url(${curAiA})`; $(`aiPreview`).innerText = ``; }
+            if($(`spyCharAvatar`)) { $(`spyCharAvatar`).style.backgroundImage = `url(${curAiA})`; $(`spyCharAvatar`).innerText = ``; }
         } else {
             if($(`aiPreview`)) { $(`aiPreview`).style.backgroundImage = `none`; $(`aiPreview`).innerText = `👤`; }
         }
-
-        
-        let myN = $(`cfgMyName`).value ||
-
-`你的名字`;
-    if($(`meName`)) $(`meName`).innerText = myN;
-    let myBio = ls.getItem(`myBio`) || `请添加你的个性签名吧！`;
-    if($(`meBio`)) $(`meBio`).innerText = myBio;
+            
+        let myA = await getImg('myI');
+        if(myA) { 
+            if($(`meAvatar`)) { $(`meAvatar`).style.backgroundImage = `url(${myA})`; $(`meAvatar`).innerHTML = ``; }
+            if($(`spaceAvatar`)) { $(`spaceAvatar`).style.backgroundImage = `url(${myA})`; $(`spaceAvatar`).innerHTML = ``; }
+            if($(`myPreview`)) { $(`myPreview`).style.backgroundImage = `url(${myA})`; $(`myPreview`).innerText = ``; }
+        } else { 
+            if($(`meAvatar`)) { $(`meAvatar`).style.backgroundImage = `none`; $(`meAvatar`).innerHTML = `<div style="width:100%;height:100%;display:flex;justify-content:center;align-items:center;font-size:35px;color:#999;">👤</div>`; }
+            if($(`spaceAvatar`)) { $(`spaceAvatar`).style.backgroundImage = `none`; $(`spaceAvatar`).innerHTML = `<div style="width:100%;height:100%;display:flex;justify-content:center;align-items:center;font-size:35px;color:#999;">👤</div>`; }
+            if($(`myPreview`)) { $(`myPreview`).style.backgroundImage = `none`; $(`myPreview`).innerText = `👤`; }
+        }
+    })();
     
-    let myA = ls.getItem(`myI`);
-if(myA) { 
-        if($(`meAvatar`)) { $(`meAvatar`).style.backgroundImage = `url(${myA})`; $(`meAvatar`).innerHTML = ``;
-}
-        if($(`spaceAvatar`)) { $(`spaceAvatar`).style.backgroundImage = `url(${myA})`; $(`spaceAvatar`).innerHTML = ``;
-}
-        if($(`myPreview`)) { $(`myPreview`).style.backgroundImage = `url(${myA})`; $(`myPreview`).innerText = ``;
-}
-    } else { 
-        if($(`meAvatar`)) { $(`meAvatar`).style.backgroundImage = `none`;
-$(`meAvatar`).innerHTML = `<div style=width:100%;height:100%;display:flex;justify-content:center;align-items:center;font-size:35px;color:#999;>👤</div>`; }
-        if($(`spaceAvatar`)) { $(`spaceAvatar`).style.backgroundImage = `none`;
-$(`spaceAvatar`).innerHTML = `<div style=width:100%;height:100%;display:flex;justify-content:center;align-items:center;font-size:35px;color:#999;>👤</div>`; }
-        if($(`myPreview`)) { $(`myPreview`).style.backgroundImage = `none`; $(`myPreview`).innerText = `👤`;
-}
-    }
-    
-            if($(`spaceName`)) $(`spaceName`).innerText = myN;
+    if($(`spaceName`)) $(`spaceName`).innerText = myN;
+
                 if($(`spaceBio`)) $(`spaceBio`).innerText = myBio;
         linkedWb = ls.getItem(`linkedWb`) ? JSON.parse(ls.getItem(`linkedWb`)) : [];
         
@@ -2118,26 +2117,29 @@ function cmp(id, key) {
         r.onload = ev => {
             let img = new Image();
             img.onload = () => {
-                                let cvs = document.createElement(`canvas`), ctx = cvs.getContext(`2d`);
-                let maxW = (key === 'bgI') ? 800 : 300; 
-                let maxH = (key === 'bgI') ? 1400 : 300;
+                let cvs = document.createElement(`canvas`), ctx = cvs.getContext(`2d`);
+                let maxW = (key === 'bgI') ? 1440 : 400; 
+                let maxH = (key === 'bgI') ? 3200 : 400;
                 let w = img.width, h = img.height;
-                if(w>h && w>maxW) { h*=maxW/w; w=maxW; } else if(h>maxH) { w*=maxH/h; h=maxH;
-                }
-                cvs.width = w;
-                cvs.height = h; ctx.drawImage(img, 0, 0, w, h);
-                try {
-                    ls.setItem(key, cvs.toDataURL(`image/webp`, 0.8));
-
-                    applyVis(); alert(`应用成功！`);
-                } catch(err) {
-                    alert(`本地空间不足啦！请先删除一些不要的动态或表情包再试试。`);
-                }
+                if(w>h && w>maxW) { h*=maxW/w; w=maxW; } else if(h>maxH) { w*=maxH/h; h=maxH; }
+                cvs.width = w; cvs.height = h;
+                ctx.drawImage(img, 0, 0, w, h);
+                
+                let dataUrl = cvs.toDataURL(`image/webp`, 0.92);
+                let actualKey = isolatedKeys.includes(key) ? key + "_" + currentChatId : key;
+                localforage.setItem(actualKey, dataUrl).then(() => {
+                    applyVis();
+                    alert(`应用成功！已无损存入大仓库，画质也提升到超清啦！`);
+                }).catch(err => {
+                    alert(`大仓库写入失败：` + err);
+                });
             };
             img.src = ev.target.result;
-        }; r.readAsDataURL(f);
+        };
+        r.readAsDataURL(f);
     };
 }
+
 
 
 
@@ -2291,62 +2293,101 @@ $(`btnSetChatBack`).onclick = () =>showScreen(`scrRoom`);
 $(`btnHomeWb`).onclick = () =>{ showScreen(`scrWb`); renderWb(); };
 $(`btnCloseModal`).onclick = () =>modal.style.display=`none`;
 let contacts = ls.getItem(`myContacts`) ? JSON.parse(ls.getItem(`myContacts`)) : [];
-function renderContacts() {
+// 核心修复3：把“我的头像”和“我的名字”强制加入隔离库，彻底实现一人一设！
+if(typeof isolatedKeys !== 'undefined') {
+    if(!isolatedKeys.includes('myI')) isolatedKeys.push('myI');
+    if(!isolatedKeys.includes('cMyN')) isolatedKeys.push('cMyN');
+}
 
+async function renderContacts() {
     let listItems = document.querySelectorAll(`#listContent .chat-item`);
     for(let i=1; i<listItems.length; i++) listItems[i].remove();
-    
     let contactItems = document.querySelectorAll(`#contactContent .chat-item`);
-    if(contactItems) {
-        for(let i=1; i<contactItems.length; i++) contactItems[i].remove();
-    }
+    if(contactItems) { for(let i=1; i<contactItems.length; i++) contactItems[i].remove(); }
     
-    contacts.forEach(c => {
-        let div = document.createElement(`div`);
-        div.className = `chat-item`;
-        
+    for (let c of contacts) {
+        let div = document.createElement(`div`); div.className = `chat-item`;
         let isoHistStr = originalGetItem.call(ls, `chatHistory_` + c.id);
         let isoHist = isoHistStr ? JSON.parse(isoHistStr) : [];
         if(currentChatId === c.id) isoHist = history;
         let prevTxt = getPreviewText(isoHist);
-                    let isoAiA = originalGetItem.call(ls, `aiI_` + c.id);
-            let avaHtml = isoAiA ? `<div class=avatar-list style=background-image:url(`+isoAiA+`);font-size:0;></div>` : `<div class=avatar-list>👤</div>`;
-            let isoName = originalGetItem.call(ls, `cN_` + c.id) || c.name;
-            let isBlk = originalGetItem.call(ls, `isBlocked_` + c.id) === 'true';
-            if (isBlk) isoName += `<span style="color:#ff4757;font-size:10px;margin-left:4px;padding:0 2px;">已拉黑</span>`;
-            
-            div.innerHTML = avaHtml + `<div class=chat-info><div class=chat-name>` + isoName + `</div><div class=chat-preview>` + prevTxt + `</div></div>`;
-            div.onclick = () => {
-
-
+        
+        // 从大仓库异步调取超清头像
+        let isoAiA = await localforage.getItem(`aiI_` + c.id);
+        if(!isoAiA) isoAiA = originalGetItem.call(ls, `aiI_` + c.id);
+        
+        let avaHtml = isoAiA ? `<div class=avatar-list style=background-image:url(`+isoAiA+`);font-size:0;></div>` : `<div class=avatar-list>👤</div>`;
+        let isoName = originalGetItem.call(ls, `cN_` + c.id) || c.name;
+        let isBlk = originalGetItem.call(ls, `isBlocked_` + c.id) === 'true';
+        if (isBlk) isoName += `<span style="color:#ff4757;font-size:10px;margin-left:4px;padding:0 2px;">已拉黑</span>`;
+        div.innerHTML = avaHtml + `<div class=chat-info><div class=chat-name>` + isoName + `</div><div class=chat-preview>` + prevTxt + `</div></div>`;
+        div.onclick = () => {
             currentChatId = c.id;
-           
             $(`cfgName`).value = originalGetItem.call(ls, `cN_` + c.id) || c.name;
             $(`cfgRem`).value = originalGetItem.call(ls, `cR_` + c.id) || ``;
-                        $(`cfgAiP`).value = originalGetItem.call(ls, `cAP_` + c.id) || c.prompt;
+            // 核心修复4：精准读取角色的专属玩家设定名，绝不串戏
+            $(`cfgMyName`).value = originalGetItem.call(ls, `cMyN_` + c.id) || originalGetItem.call(ls, `cMyN`) || ``;
+            $(`cfgAiP`).value = originalGetItem.call(ls, `cAP_` + c.id) || c.prompt;
             $(`cfgMyP`).value = originalGetItem.call(ls, `cMP_` + c.id) || ``;
-                        if($(`cfgBubbleCss`)) $(`cfgBubbleCss`).value = originalGetItem.call(ls, `cBubbleCss_` + c.id) || ``;
-            
+            if($(`cfgBubbleCss`)) $(`cfgBubbleCss`).value = originalGetItem.call(ls, `cBubbleCss_` + c.id) || ``;
             let ctxVal = originalGetItem.call(ls, `cCtx_` + c.id);
-            if(ctxVal) $(`cfgCtx`).value = ctxVal; else $(`cfgCtx`).value = originalGetItem.call(ls, `cCtx`) || 100;
+            if(ctxVal) $(`cfgCtx`).value = ctxVal;
+            else $(`cfgCtx`).value = originalGetItem.call(ls, `cCtx`) || 100;
             let tVal = originalGetItem.call(ls, `cT_` + c.id);
-            if(tVal !== null) $(`cfgTime`).checked = tVal === `true`; else $(`cfgTime`).checked = originalGetItem.call(ls, `cT`) !== `false`;
+            if(tVal !== null) $(`cfgTime`).checked = tVal === `true`;
+            else $(`cfgTime`).checked = originalGetItem.call(ls, `cT`) !== `false`;
             let aMemVal = originalGetItem.call(ls, `cAMem_` + c.id);
-            if(aMemVal !== null) $(`cfgAutoMem`).checked = aMemVal === `true`; else $(`cfgAutoMem`).checked = originalGetItem.call(ls, `cAMem`) === `true`;
+            if(aMemVal !== null) $(`cfgAutoMem`).checked = aMemVal === `true`;
+            else $(`cfgAutoMem`).checked = originalGetItem.call(ls, `cAMem`) === `true`;
             let memTVal = originalGetItem.call(ls, `cMemT_` + c.id);
-            if(memTVal) $(`cfgMemTrig`).value = memTVal; else $(`cfgMemTrig`).value = originalGetItem.call(ls, `cMemT`) || 10;
-                                    let memPVal = originalGetItem.call(ls, `cMemP_` + c.id);
-            if(memPVal) $(`cfgMemPmt`).value = memPVal; else $(`cfgMemPmt`).value = originalGetItem.call(ls, `cMemP`) || `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。必须准确写出当前实际参与对话的【具体人物姓名】（包括我、主角色或任何出场的NPC）。`;
-
-
-
+            if(memTVal) $(`cfgMemTrig`).value = memTVal;
+            else $(`cfgMemTrig`).value = originalGetItem.call(ls, `cMemT`) || 10;
+            let memPVal = originalGetItem.call(ls, `cMemP_` + c.id);
+            if(memPVal) $(`cfgMemPmt`).value = memPVal;
+            else $(`cfgMemPmt`).value = originalGetItem.call(ls, `cMemP`) || `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。必须准确写出当前实际参与对话的【具体人物姓名】（包括我、主角色或任何出场的NPC）。`;
             history = ls.getItem(`chatHistory`) ? JSON.parse(ls.getItem(`chatHistory`)) : [];
             aiStatus = ls.getItem(`aiStatus`) ? JSON.parse(ls.getItem(`aiStatus`)) : {weather:"等待连接...",clothing:"等待连接...",action:"等待连接...",thought:"等待连接..."};
-            applyVis(); 
+            applyVis();
             redrawChat();
             showScreen(`scrRoom`);
             msgs.scrollTop = msgs.scrollHeight;
         };
+        $(`listContent`).appendChild(div);
+        if($(`contactContent`)) {
+            let divC = document.createElement(`div`); divC.className = `chat-item`;
+            let charStatusText = originalGetItem.call(ls, `cStatusTxt_` + c.id) || "在线";
+            let charStatusColorClass = originalGetItem.call(ls, `cStatusColor_` + c.id) || "status-online";
+            let charSign = originalGetItem.call(ls, `cSign_` + c.id) || "（该角色还在思考个性签名...）";
+            divC.innerHTML = avaHtml + `<div class=chat-info> <div class=role-header-row> <div class=role-name>` + isoName + `</div> <div class=role-status><div class="status-dot ` + charStatusColorClass + `"></div>` + charStatusText + `</div> </div> <div class=role-signature>` + charSign + `</div> </div>`;
+            divC.onclick = div.onclick;
+            $(`contactContent`).appendChild(divC);
+        }
+    }
+}
+renderContacts();
+
+$(`btnListToRoom`).onclick = () => { 
+    currentChatId = "default"; 
+    $(`cfgName`).value = ls.getItem(`cN`) || `专属恋人`; 
+    $(`cfgRem`).value = ls.getItem(`cR`) || ``; 
+    $(`cfgMyName`).value = ls.getItem(`cMyN`) || ``; 
+    $(`cfgAiP`).value = ls.getItem(`cAP`) || ``; 
+    $(`cfgMyP`).value = ls.getItem(`cMP`) || ``;
+    if($(`cfgBubbleCss`)) $(`cfgBubbleCss`).value = ls.getItem(`cBubbleCss`) || ``; 
+    if(ls.getItem(`cCtx`)) $(`cfgCtx`).value = ls.getItem(`cCtx`); else $(`cfgCtx`).value = 100; 
+    $(`cfgTime`).checked = ls.getItem(`cT`) !== `false`;
+    $(`cfgAutoMem`).checked = ls.getItem(`cAMem`) === `true`; 
+    if(ls.getItem(`cMemT`)) $(`cfgMemTrig`).value = ls.getItem(`cMemT`); else $(`cfgMemTrig`).value = 10; 
+    if(ls.getItem(`cMemP`)) $(`cfgMemPmt`).value = ls.getItem(`cMemP`);
+    else $(`cfgMemPmt`).value = `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。必须准确写出当前实际参与对话的【具体人物姓名】（包括我、主角色或任何出场的NPC）。`; 
+    history = ls.getItem(`chatHistory`) ? JSON.parse(ls.getItem(`chatHistory`)) : []; 
+    aiStatus = ls.getItem(`aiStatus`) ? JSON.parse(ls.getItem(`aiStatus`)) : {weather:"等待连接...",clothing:"等待连接...",action:"等待连接...",thought:"等待连接..."}; 
+    applyVis(); 
+    redrawChat();
+    showScreen(`scrRoom`); 
+    msgs.scrollTop = msgs.scrollHeight; 
+};
+
         $(`listContent`).appendChild(div);
         if($(`contactContent`)) {
             let divC = document.createElement(`div`);
