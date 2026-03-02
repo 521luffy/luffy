@@ -1793,8 +1793,11 @@ let stW=$("stW"), stC=$("stC"), stA=$("stA"), stT=$("stT");
 let ls = localStorage;
 let currentChatId ="default";
 let originalSetItem = ls.setItem;
-let isolatedKeys = ["chatHistory","aiStatus","bgI","aiI","cMP","cN","cR","cAP","cCtx","cT","cAMem","cMemT","cMemP","linkedWb","lastMemCount","memories", "cStatusTxt", "cStatusColor", "cSign", "cBubbleCss", "cCTon", "cCTy", "cCTm", "cCTd", "cCTh", "cCTmin", "cMyN", "myI"];
+let isolatedKeys = ["chatHistory","aiStatus","bgI","aiI","cMP","cN","cR","cAP","cCtx","cT","cAMem","cMemT","cMemP","linkedWb","lastMemCount","memories", "cStatusTxt", "cStatusColor", "cSign", "cBubbleCss", "cCTon", "cCTy", "cCTm", "cCTd", "cCTh", "cCTmin"];
 ls.setItem = function(key, value) {
+
+    // 全局拦截：只要是存表情包和日志，统统强制扔进大仓库，保护老内存！
+
     if (key === "myPhoneStickers" || key === "charStickers" || key === "myLogs") {
         localforage.setItem(key, value);
         return;
@@ -1805,18 +1808,17 @@ ls.setItem = function(key, value) {
         originalSetItem.call(this, key, value);
     }
 };
+
 let originalGetItem = ls.getItem;
 ls.getItem = function(key) {
     if (isolatedKeys.includes(key)) {
         let spec = originalGetItem.call(this, key + "_" + currentChatId);
         if (spec) return spec;
-        if (key === "cMyN" || key === "myI") return originalGetItem.call(this, key);
         if (currentChatId === "default") return originalGetItem.call(this, key);
         return null;
     }
     return originalGetItem.call(this, key);
 };
-
 let originalRemoveItem = ls.removeItem;
 ls.removeItem = function(key) {
     if (isolatedKeys.includes(key)) {
@@ -2109,43 +2111,34 @@ $(`spaceAvatar`).innerHTML = `<div style=width:100%;height:100%;display:flex;jus
 applyVis();
 
 
-async function loadHdFriendImages() {
-    let bg = await localforage.getItem(`bgI_` + currentChatId) || await localforage.getItem(`bgI`);
-    if(bg) {
-        room.style.backgroundImage = `url(${bg})`;
-        if($(`bgPreview`)) { $(`bgPreview`).style.backgroundImage = `url(${bg})`; $(`bgPreview`).innerText = ``; }
-    }
-    let aiA = await localforage.getItem(`aiI_` + currentChatId) || await localforage.getItem(`aiI`);
-    if(aiA) {
-        [$(`listAva`), $(`contactAva`), $(`aiPreview`), $(`spyCharAvatar`)].forEach(el => { 
-            if(el) { el.style.backgroundImage = `url(${aiA})`; el.innerText = ``; } 
-        });
-    }
-    let myA = await localforage.getItem(`myI_` + currentChatId) || await localforage.getItem(`myI`);
-    if(myA) {
-        if($(`myAva`)) { $(`myAva`).style.backgroundImage = `url(${myA})`; $(`myAva`).innerText = ``; }
-        if($(`myPreview`)) { $(`myPreview`).style.backgroundImage = `url(${myA})`; $(`myPreview`).innerText = ``; }
-        if($(`meAvatar`)) { $(`meAvatar`).style.backgroundImage = `url(${myA})`; $(`meAvatar`).innerText = ``; }
-    }
-}
-
 function cmp(id, key) {
-    if(!$(id)) return;
     $(id).onchange = e => {
         let f = e.target.files[0];
         if(!f) return;
         let r = new FileReader();
-        r.onload = async ev => {
-            let originalDataUrl = ev.target.result;
-            let storeKey = key + `_` + currentChatId;
-            await localforage.setItem(storeKey, originalDataUrl);
-            await localforage.setItem(key, originalDataUrl);
-            loadHdFriendImages();
-        };
-        r.readAsDataURL(f);
+        r.onload = ev => {
+            let img = new Image();
+            img.onload = () => {
+                                let cvs = document.createElement(`canvas`), ctx = cvs.getContext(`2d`);
+                let maxW = (key === 'bgI') ? 800 : 300; 
+                let maxH = (key === 'bgI') ? 1400 : 300;
+                let w = img.width, h = img.height;
+                if(w>h && w>maxW) { h*=maxW/w; w=maxW; } else if(h>maxH) { w*=maxH/h; h=maxH;
+                }
+                cvs.width = w;
+                cvs.height = h; ctx.drawImage(img, 0, 0, w, h);
+                try {
+                    ls.setItem(key, cvs.toDataURL(`image/webp`, 0.8));
+
+                    applyVis(); alert(`应用成功！`);
+                } catch(err) {
+                    alert(`本地空间不足啦！请先删除一些不要的动态或表情包再试试。`);
+                }
+            };
+            img.src = ev.target.result;
+        }; r.readAsDataURL(f);
     };
 }
-
 
 
 
@@ -2863,28 +2856,30 @@ window.loadChatSettings = function() {
     else $(`cfgMemPmt`).value = `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。必须准确写出当前实际参与对话的【具体人物姓名】（包括我、主角色或任何出场的NPC）。`;
 };
 
-$(`btnSaveChat`).onclick = () =>{
-    ls.setItem(`cN`, $(`cfgName`).value); ls.setItem(`cR`, $(`cfgRem`).value);
-    ls.setItem(`cMyN`, $(`cfgMyName`).value);
-    ls.setItem(`cAP`, $(`cfgAiP`).value); ls.setItem(`cMP`, $(`cfgMyP`).value);
-    if($(`cfgBubbleCss`)) ls.setItem(`cBubbleCss`, $(`cfgBubbleCss`).value);
-    ls.setItem(`cCtx`, $(`cfgCtx`).value);
-    ls.setItem(`cT`, $(`cfgTime`).checked);
-    ls.setItem(`cCTon`, $(`cfgCustomTime`).checked);
-    ls.setItem(`cCTy`, $(`ctYear`).value);
-    ls.setItem(`cCTm`, $(`ctMonth`).value);
-    ls.setItem(`cCTd`, $(`ctDay`).value);
-    ls.setItem(`cCTh`, $(`ctHour`).value);
-    ls.setItem(`cCTmin`, $(`ctMinute`).value);
-    ls.setItem(`cAMem`, $(`cfgAutoMem`).checked); ls.setItem(`cMemT`, $(`cfgMemTrig`).value); ls.setItem(`cMemP`, $(`cfgMemPmt`).value);
-    applyVis(); alert(`配置已保存！`); showScreen(`scrRoom`);
-};
-
-if($(`btnCancelChat`)) {
-    $(`btnCancelChat`).onclick = () => {
+    $(`btnSaveChat`).onclick = () =>{
+        ls.setItem(`cN`, $(`cfgName`).value);
+        ls.setItem(`cR`, $(`cfgRem`).value);
+        ls.setItem(`cMyN`, $(`cfgMyName`).value);
+        ls.setItem(`cAP`, $(`cfgAiP`).value);
+        ls.setItem(`cMP`, $(`cfgMyP`).value);
+        if($(`cfgBubbleCss`)) ls.setItem(`cBubbleCss`, $(`cfgBubbleCss`).value);
+        ls.setItem(`cCtx`, $(`cfgCtx`).value);
+        ls.setItem(`cT`, $(`cfgTime`).checked);
+        ls.setItem(`cCTon`, $(`cfgCustomTime`).checked);
+        ls.setItem(`cCTy`, $(`ctYear`).value);
+        ls.setItem(`cCTm`, $(`ctMonth`).value);
+        ls.setItem(`cCTd`, $(`ctDay`).value);
+        ls.setItem(`cCTh`, $(`ctHour`).value);
+        ls.setItem(`cCTmin`, $(`ctMinute`).value);
+        ls.setItem(`cAMem`, $(`cfgAutoMem`).checked);
+        ls.setItem(`cMemT`, $(`cfgMemTrig`).value);
+        ls.setItem(`cMemP`, $(`cfgMemPmt`).value);
+        applyVis();
+        loadHdFriendImages();
+        alert(`配置已保存！`);
         showScreen(`scrRoom`);
     };
-}
+
 
 // ==========================================
 
