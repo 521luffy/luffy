@@ -1799,9 +1799,11 @@ let globalMemCache = {};
 
 let originalGetItem = function(key) {
     let fKey = typeof getRealKey === `function` ? getRealKey(key) : key;
-    if (globalMemCache && globalMemCache[fKey] !== undefined) return globalMemCache[fKey];
-    return sysGetItem.call(this, fKey) || sysGetItem.call(this, key);
+    let val = (globalMemCache && globalMemCache[fKey] !== undefined) ? globalMemCache[fKey] : (sysGetItem.call(this, fKey) || sysGetItem.call(this, key));
+    if (typeof val === `object` && val !== null) return JSON.stringify(val);
+    return val;
 };
+
 
 let originalRemoveItem = function(key) {
     let fKey = typeof getRealKey === `function` ? getRealKey(key) : key;
@@ -1823,20 +1825,24 @@ localforage.iterate(function(value, key) {
 });
 
 function getRealKey(k) {
+    if (!k || typeof k !== `string`) return k;
     if (k.includes(`_`)) return k; 
     let isPriv = false;
     if (typeof isolatedKeys !== `undefined` && isolatedKeys.includes(k)) isPriv = true;
-    let kw = [`chatHistory`, `aiStatus`, `diary`, `zhihu`, `worldbook`, `wb`, `time`, `Time`];
+    let kw = [`chatHistory`, `aiStatus`, `diary`, `zhihu`, `worldbook`, `wb`, `time`, `Time`, `cT`, `cCtx`, `cAMem`, `cMem`, `cN`, `cR`, `cAP`, `cMP`, `privacy`, `space`, `Privacy`];
     for (let w of kw) { if (k.includes(w)) isPriv = true; }
     if (isPriv) return k + `_` + currentChatId;
     return k;
 }
 
+
 ls.getItem = function(key) {
-    let fKey = getRealKey(key);
-    if (globalMemCache[fKey] !== undefined) return globalMemCache[fKey];
-    return originalGetItem.call(this, fKey) || originalGetItem.call(this, key);
+    let fKey = typeof getRealKey === `function` ? getRealKey(key) : key;
+    let val = globalMemCache[fKey] !== undefined ? globalMemCache[fKey] : (originalGetItem.call(this, fKey) || originalGetItem.call(this, key));
+    if (typeof val === `object` && val !== null) return JSON.stringify(val);
+    return val;
 };
+
 
 
 ls.setItem = function(key, value) {
