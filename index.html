@@ -1990,7 +1990,6 @@ function updateListPreview() {
 function applyVis() {
     let dn = $(`cfgRem`).value || $(`cfgName`).value || `专属恋人`;
     if($(`roomTitle`)) $(`roomTitle`).innerText = dn;
-    
     let curStatusTxt = originalGetItem.call(ls, `cStatusTxt_` + currentChatId) || `在线`;
     let curStatusCol = originalGetItem.call(ls, `cStatusColor_` + currentChatId) || `status-online`;
     let curSign = originalGetItem.call(ls, `cSign_` + currentChatId) || `（暂无个性签名）`;
@@ -2001,70 +2000,70 @@ function applyVis() {
     }
     if($(`roomStatus`)) $(`roomStatus`).innerHTML = `<div class="status-dot ` + curStatusCol + `"></div>` + curStatusTxt;
     if($(`roomSignature`)) $(`roomSignature`).innerText = curSign;
-
-        let defName = originalGetItem.call(ls, `cR_default`) || originalGetItem.call(ls, `cN_default`) || originalGetItem.call(ls, `cR`) || originalGetItem.call(ls, `cN`) || `专属恋人`;
+    let defName = originalGetItem.call(ls, `cR_default`) || originalGetItem.call(ls, `cN_default`) || originalGetItem.call(ls, `cR`) || originalGetItem.call(ls, `cN`) || `专属恋人`;
     if (currentChatId === `default`) defName = dn;
-    $(`listName`).innerText = defName;
+    if($(`listName`)) $(`listName`).innerText = defName;
     if($(`contactName`)) $(`contactName`).innerText = defName;
     
-    (async function applyImagesAsync() {
-        let getImg = async (k) => {
-            let actualKey = isolatedKeys.includes(k) ? k + "_" + currentChatId : k;
-            if (currentChatId === "default" && isolatedKeys.includes(k)) {
-                let v = await localforage.getItem(actualKey);
-                if(!v) v = await localforage.getItem(k);
-                if(!v) v = originalGetItem.call(ls, actualKey) || originalGetItem.call(ls, k);
-                return v;
-            }
-            let val = await localforage.getItem(actualKey);
-            if(!val) val = originalGetItem.call(ls, actualKey);
-            return val;
-        };
+    let myN = originalGetItem.call(ls, `cMyN_` + currentChatId) || originalGetItem.call(ls, `cMyN`) || `玩家`;
+    let myBio = originalGetItem.call(ls, `myBio`) || `请添加你的个性签名吧！`;
+    
+    ;(async function applyImagesAsync() {
+        try {
+            let getImg = async (k) => {
+                let actualKey = (typeof isolatedKeys !== 'undefined' && isolatedKeys.includes(k)) ? k + "_" + currentChatId : k;
+                let val = await localforage.getItem(actualKey);
+                if(!val && currentChatId === "default") val = await localforage.getItem(k);
+                if(!val) val = originalGetItem.call(ls, actualKey) || originalGetItem.call(ls, k);
+                return val;
+            };
 
-        let bg = await getImg('bgI');
-        if(bg) { 
-            room.style.backgroundImage = `url(${bg})`; 
-            if($(`bgPreview`)) { $(`bgPreview`).style.backgroundImage = `url(${bg})`; $(`bgPreview`).innerText = ``; }
-        } else { 
-            room.style.backgroundImage = `none`;
-            if($(`bgPreview`)) { $(`bgPreview`).style.backgroundImage = `none`; $(`bgPreview`).innerText = `🖼️ 点击选择背景`; }
-        }
-        
-        let defAiA = await localforage.getItem('aiI_default') || originalGetItem.call(ls, 'aiI_default');
-        if(!defAiA) defAiA = await localforage.getItem('aiI') || originalGetItem.call(ls, 'aiI');
-        if (currentChatId === `default`) defAiA = await getImg('aiI');
-        
-        if(defAiA) { 
-            if($(`listAva`)) { $(`listAva`).style.backgroundImage = `url(${defAiA})`; $(`listAva`).innerText = ``; }
-            if($(`contactAva`)) { $(`contactAva`).style.backgroundImage = `url(${defAiA})`; $(`contactAva`).innerText = ``; }
-        } else { 
-            if($(`listAva`)) { $(`listAva`).style.backgroundImage = `none`; $(`listAva`).innerText = `👤`; }
-            if($(`contactAva`)) { $(`contactAva`).style.backgroundImage = `none`; $(`contactAva`).innerText = `👤`; }
-        }
-        
-        let curAiA = await getImg('aiI');
-        if(curAiA) {
-            if($(`aiPreview`)) { $(`aiPreview`).style.backgroundImage = `url(${curAiA})`; $(`aiPreview`).innerText = ``; }
-            if($(`spyCharAvatar`)) { $(`spyCharAvatar`).style.backgroundImage = `url(${curAiA})`; $(`spyCharAvatar`).innerText = ``; }
-        } else {
-            if($(`aiPreview`)) { $(`aiPreview`).style.backgroundImage = `none`; $(`aiPreview`).innerText = `👤`; }
-        }
+            let bg = await getImg('bgI');
+            if(bg) { 
+                room.style.backgroundImage = `url(${bg})`; 
+                if($(`bgPreview`)) { $(`bgPreview`).style.backgroundImage = `url(${bg})`; $(`bgPreview`).innerText = ``; }
+            } else { 
+                room.style.backgroundImage = `none`;
+                if($(`bgPreview`)) { $(`bgPreview`).style.backgroundImage = `none`; $(`bgPreview`).innerText = `🖼️ 点击选择背景`; }
+            }
             
-        let myA = await getImg('myI');
-        if(myA) { 
-            if($(`meAvatar`)) { $(`meAvatar`).style.backgroundImage = `url(${myA})`; $(`meAvatar`).innerHTML = ``; }
-            if($(`spaceAvatar`)) { $(`spaceAvatar`).style.backgroundImage = `url(${myA})`; $(`spaceAvatar`).innerHTML = ``; }
-            if($(`myPreview`)) { $(`myPreview`).style.backgroundImage = `url(${myA})`; $(`myPreview`).innerText = ``; }
-        } else { 
-            if($(`meAvatar`)) { $(`meAvatar`).style.backgroundImage = `none`; $(`meAvatar`).innerHTML = `<div style="width:100%;height:100%;display:flex;justify-content:center;align-items:center;font-size:35px;color:#999;">👤</div>`; }
-            if($(`spaceAvatar`)) { $(`spaceAvatar`).style.backgroundImage = `none`; $(`spaceAvatar`).innerHTML = `<div style="width:100%;height:100%;display:flex;justify-content:center;align-items:center;font-size:35px;color:#999;">👤</div>`; }
-            if($(`myPreview`)) { $(`myPreview`).style.backgroundImage = `none`; $(`myPreview`).innerText = `👤`; }
-        }
+            let defAiA = await localforage.getItem('aiI_default') || originalGetItem.call(ls, 'aiI_default');
+            if(!defAiA) defAiA = await localforage.getItem('aiI') || originalGetItem.call(ls, 'aiI');
+            if (currentChatId === `default`) defAiA = await getImg('aiI');
+            
+            if(defAiA) { 
+                if($(`listAva`)) { $(`listAva`).style.backgroundImage = `url(${defAiA})`; $(`listAva`).innerText = ``; }
+                if($(`contactAva`)) { $(`contactAva`).style.backgroundImage = `url(${defAiA})`; $(`contactAva`).innerText = ``; }
+            } else { 
+                if($(`listAva`)) { $(`listAva`).style.backgroundImage = `none`; $(`listAva`).innerText = `👤`; }
+                if($(`contactAva`)) { $(`contactAva`).style.backgroundImage = `none`; $(`contactAva`).innerText = `👤`; }
+            }
+            
+            let curAiA = await getImg('aiI');
+            if(curAiA) {
+                if($(`aiPreview`)) { $(`aiPreview`).style.backgroundImage = `url(${curAiA})`; $(`aiPreview`).innerText = ``; }
+                if($(`spyCharAvatar`)) { $(`spyCharAvatar`).style.backgroundImage = `url(${curAiA})`; $(`spyCharAvatar`).innerText = ``; }
+            } else {
+                if($(`aiPreview`)) { $(`aiPreview`).style.backgroundImage = `none`; $(`aiPreview`).innerText = `👤`; }
+            }
+                
+            let myA = await getImg('myI');
+            if(myA) { 
+                if($(`meAvatar`)) { $(`meAvatar`).style.backgroundImage = `url(${myA})`; $(`meAvatar`).innerHTML = ``; }
+                if($(`spaceAvatar`)) { $(`spaceAvatar`).style.backgroundImage = `url(${myA})`; $(`spaceAvatar`).innerHTML = ``; }
+                if($(`myPreview`)) { $(`myPreview`).style.backgroundImage = `url(${myA})`; $(`myPreview`).innerText = ``; }
+            } else { 
+                if($(`meAvatar`)) { $(`meAvatar`).style.backgroundImage = `none`; $(`meAvatar`).innerHTML = `<div style="width:100%;height:100%;display:flex;justify-content:center;align-items:center;font-size:35px;color:#999;">👤</div>`; }
+                if($(`spaceAvatar`)) { $(`spaceAvatar`).style.backgroundImage = `none`; $(`spaceAvatar`).innerHTML = `<div style="width:100%;height:100%;display:flex;justify-content:center;align-items:center;font-size:35px;color:#999;">👤</div>`; }
+                if($(`myPreview`)) { $(`myPreview`).style.backgroundImage = `none`; $(`myPreview`).innerText = `👤`; }
+            }
+        } catch(e) { console.error(e); }
     })();
     
     if($(`spaceName`)) $(`spaceName`).innerText = myN;
+    if($(`spaceBio`)) $(`spaceBio`).innerText = myBio;
+}
 
-                if($(`spaceBio`)) $(`spaceBio`).innerText = myBio;
         linkedWb = ls.getItem(`linkedWb`) ? JSON.parse(ls.getItem(`linkedWb`)) : [];
         
                 let isBlk = originalGetItem.call(ls, `isBlocked_` + currentChatId) === 'true';
