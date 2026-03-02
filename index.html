@@ -3764,7 +3764,11 @@ let hasAccept = txt.includes(`[收取转账]`);
             }
             
         } else mkBub(`接口异常。`, `l`);
-    } catch(e) { rmThk(); mkBub(`连接断开。`, `l`); }
+        } catch(e) { 
+        rmThk(); 
+        mkBub(e.message, `l`); 
+    }
+
 };
 
 function renderQuoteBlock(b, txt) {
