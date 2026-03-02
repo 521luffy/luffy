@@ -1794,19 +1794,18 @@ let currentChatId ="default";
 let originalSetItem = ls.setItem;
 let isolatedKeys = ["chatHistory","aiStatus","bgI","aiI","cMP","cN","cR","cAP","cCtx","cT","cAMem","cMemT","cMemP","linkedWb","lastMemCount","memories", "cStatusTxt", "cStatusColor", "cSign", "cBubbleCss", "cCTon", "cCTy", "cCTm", "cCTd", "cCTh", "cCTmin"];
 ls.setItem = function(key, value) {
-
-    // 全局拦截：只要是存表情包和日志，统统强制扔进大仓库，保护老内存！
-
-    if (key === "myPhoneStickers" || key === "charStickers" || key === "myLogs") {
-        localforage.setItem(key, value);
+    if (key === `myPhoneStickers` || key === `charStickers` || key === `myLogs` || key === `chatHistory`) {
+        localforage.setItem(key === `chatHistory` ? (key + `_` + currentChatId) : key, value);
         return;
     }
     if (isolatedKeys.includes(key)) {
-        originalSetItem.call(this, key + "_" + currentChatId, value);
+        originalSetItem.call(this, key + `_` + currentChatId, value);
     } else {
         originalSetItem.call(this, key, value);
     }
 };
+
+
 
 let originalGetItem = ls.getItem;
 ls.getItem = function(key) {
@@ -2368,8 +2367,8 @@ function renderContacts() {
     });
 }
 renderContacts();
-$(`btnListToRoom`).onclick = () => { 
-    currentChatId = "default";
+$(`btnListToRoom`).onclick = async () => { 
+    currentChatId = `default`;
     $(`cfgName`).value = ls.getItem(`cN`) || `专属恋人`;
     $(`cfgRem`).value = ls.getItem(`cR`) || ``;
     $(`cfgAiP`).value = ls.getItem(`cAP`) || ``;
@@ -2380,18 +2379,18 @@ $(`btnListToRoom`).onclick = () => {
     $(`cfgTime`).checked = ls.getItem(`cT`) !== `false`;
     $(`cfgAutoMem`).checked = ls.getItem(`cAMem`) === `true`;
     if(ls.getItem(`cMemT`)) $(`cfgMemTrig`).value = ls.getItem(`cMemT`); else $(`cfgMemTrig`).value = 10;
-            if(ls.getItem(`cMemP`)) $(`cfgMemPmt`).value = ls.getItem(`cMemP`); else $(`cfgMemPmt`).value = `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。必须准确写出当前实际参与对话的【具体人物姓名】（包括我、主角色或任何出场的NPC）。`;
-
-
-
-    history = ls.getItem(`chatHistory`) ? JSON.parse(ls.getItem(`chatHistory`)) : [];
-
+    if(ls.getItem(`cMemP`)) $(`cfgMemPmt`).value = ls.getItem(`cMemP`); else $(`cfgMemPmt`).value = `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。必须准确写出当前实际参与对话的【具体人物姓名】（包括我、主角色或任何出场的NPC）。`;
+    
+    let savedHist = await localforage.getItem(`chatHistory_` + currentChatId) || await localforage.getItem(`chatHistory`) || originalGetItem.call(ls, `chatHistory_` + currentChatId);
+    history = savedHist ? (typeof savedHist === 'string' ? JSON.parse(savedHist) : savedHist) : [];
+    
     aiStatus = ls.getItem(`aiStatus`) ? JSON.parse(ls.getItem(`aiStatus`)) : {weather:"等待连接...",clothing:"等待连接...",action:"等待连接...",thought:"等待连接..."};
     applyVis(); 
     redrawChat();
-        showScreen(`scrRoom`); 
-    msgs.scrollTop = msgs.scrollHeight;
+    showScreen(`scrRoom`); 
+    setTimeout(() => msgs.scrollTop = msgs.scrollHeight, 100);
 };
+
 if($(`btnAddContact`)) $(`btnAddContact`).onclick = () =>{ $(`addFriendModal`).style.display=`flex`; };
 $(`btnCancelAddFriend`).onclick = () =>{ $(`addFriendModal`).style.display=`none`; $(`newFriendName`).value=``; $(`newFriendPrompt`).value=``; };
 if($(`btnRoleHelp`)) $(`btnRoleHelp`).onclick = () => { showCustomText(`【个性签名规则说明】\n\n1. 新建联系人初始状态是没有个性签名的。\n2. 你需要在聊天室主动对TA提出要求（例如：「你改个个性签名吧」），TA才会生成第一条专属签名。\n3. 在后续的聊天过程中，当TA的情绪、想法或剧情发生明显变化时，TA拥有主动权，会自动为你更新头顶的状态和个性签名！`); };
