@@ -1794,8 +1794,9 @@ let currentChatId ="default";
 let originalSetItem = ls.setItem;
 let isolatedKeys = ["chatHistory","aiStatus","bgI","aiI","cMP","cN","cR","cAP","cCtx","cT","cAMem","cMemT","cMemP","linkedWb","lastMemCount","memories", "cStatusTxt", "cStatusColor", "cSign", "cBubbleCss", "cCTon", "cCTy", "cCTm", "cCTd", "cCTh", "cCTmin"];
 ls.setItem = function(key, value) {
-    if (key === `myPhoneStickers` || key === `charStickers` || key === `myLogs` || key === `chatHistory`) {
-        localforage.setItem(key === `chatHistory` ? (key + `_` + currentChatId) : key, value);
+    if (key === `myPhoneStickers` || key === `charStickers` || key === `myLogs` || key === `chatHistory` || key === `aiStatus`) {
+        let finalKey = (key === `chatHistory` || key === `aiStatus`) ? (key + `_` + currentChatId) : key;
+        localforage.setItem(finalKey, value);
         return;
     }
     if (isolatedKeys.includes(key)) {
@@ -1804,6 +1805,7 @@ ls.setItem = function(key, value) {
         originalSetItem.call(this, key, value);
     }
 };
+
 
 
 
