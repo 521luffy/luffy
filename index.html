@@ -2353,10 +2353,7 @@ async function renderContacts() {
             let charSign = originalGetItem.call(ls, `cSign_` + c.id) || "（暂无个性签名）";
             divC.innerHTML = avaHtml + `<div class=chat-info> <div class=role-header-row> <div class=role-name>` + isoName + `</div> <div class=role-status><div class="status-dot ` + charStatusColorClass + `"></div>` + charStatusText + `</div> </div> <div class=role-signature>` + charSign + `</div> </div>`;
                         divC.onclick = div.onclick;
-            $(`contactContent`).appendChild(divC);
-        }
-    }
-}
+            $(`contactContent`).appendChild(divC);}}}
 renderContacts();
 
 
