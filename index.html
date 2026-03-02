@@ -2002,15 +2002,15 @@ function applyVis() {
     if($(`roomStatus`)) $(`roomStatus`).innerHTML = `<div class="status-dot ` + curStatusCol + `"></div>` + curStatusTxt;
     if($(`roomSignature`)) $(`roomSignature`).innerText = curSign;
 
-        let defName = originalGetItem.call(ls, `cR_default`) || originalGetItem.call(ls, `cN_default`) || originalGetItem.call(ls, `cR`) || originalGetItem.call(ls, `cN`) || `专属恋人`;
+            let defName = originalGetItem.call(ls, `cR_default`) || originalGetItem.call(ls, `cN_default`) || originalGetItem.call(ls, `cR`) || originalGetItem.call(ls, `cN`) || `专属恋人`;
     if (currentChatId === `default`) defName = dn;
     $(`listName`).innerText = defName;
     if($(`contactName`)) $(`contactName`).innerText = defName;
     
-    (async function applyImagesAsync() {
+    ;(async function applyImagesAsync() {
         let getImg = async (k) => {
-            let actualKey = isolatedKeys.includes(k) ? k + "_" + currentChatId : k;
-            if (currentChatId === "default" && isolatedKeys.includes(k)) {
+            let actualKey = (typeof isolatedKeys !== 'undefined' && isolatedKeys.includes(k)) ? k + "_" + currentChatId : k;
+            if (currentChatId === "default" && typeof isolatedKeys !== 'undefined' && isolatedKeys.includes(k)) {
                 let v = await localforage.getItem(actualKey);
                 if(!v) v = await localforage.getItem(k);
                 if(!v) v = originalGetItem.call(ls, actualKey) || originalGetItem.call(ls, k);
@@ -2063,6 +2063,7 @@ function applyVis() {
     })();
     
     if($(`spaceName`)) $(`spaceName`).innerText = myN;
+
 
                 if($(`spaceBio`)) $(`spaceBio`).innerText = myBio;
         linkedWb = ls.getItem(`linkedWb`) ? JSON.parse(ls.getItem(`linkedWb`)) : [];
