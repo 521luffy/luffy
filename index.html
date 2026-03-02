@@ -2123,12 +2123,13 @@ function cmp(id, key) {
                 cvs.width = w; cvs.height = h;
                 ctx.drawImage(img, 0, 0, w, h);
                 
-                let dataUrl = cvs.toDataURL(`image/webp`, 0.92);
+                                                let dataUrl = cvs.toDataURL(`image/webp`, 0.92);
                 let actualKey = isolatedKeys.includes(key) ? key + "_" + currentChatId : key;
                 localforage.setItem(actualKey, dataUrl).then(() => {
                     applyVis();
-                    alert(`应用成功！已无损存入大仓库，画质也提升到超清啦！`);
                 }).catch(err => {
+
+
                     alert(`大仓库写入失败：` + err);
                 });
             };
@@ -2855,26 +2856,35 @@ window.loadChatSettings = function() {
     else $(`cfgMemPmt`).value = `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。必须准确写出当前实际参与对话的【具体人物姓名】（包括我、主角色或任何出场的NPC）。`;
 };
 
-$(`btnSaveChat`).onclick = () =>{
-    ls.setItem(`cN`, $(`cfgName`).value); ls.setItem(`cR`, $(`cfgRem`).value);
-    ls.setItem(`cMyN`, $(`cfgMyName`).value);
-    ls.setItem(`cAP`, $(`cfgAiP`).value); ls.setItem(`cMP`, $(`cfgMyP`).value);
-    if($(`cfgBubbleCss`)) ls.setItem(`cBubbleCss`, $(`cfgBubbleCss`).value);
-    ls.setItem(`cCtx`, $(`cfgCtx`).value);
-    ls.setItem(`cT`, $(`cfgTime`).checked);
-    ls.setItem(`cCTon`, $(`cfgCustomTime`).checked);
-    ls.setItem(`cCTy`, $(`ctYear`).value);
-    ls.setItem(`cCTm`, $(`ctMonth`).value);
-    ls.setItem(`cCTd`, $(`ctDay`).value);
-    ls.setItem(`cCTh`, $(`ctHour`).value);
-    ls.setItem(`cCTmin`, $(`ctMinute`).value);
-    ls.setItem(`cAMem`, $(`cfgAutoMem`).checked); ls.setItem(`cMemT`, $(`cfgMemTrig`).value); ls.setItem(`cMemP`, $(`cfgMemPmt`).value);
-    applyVis(); alert(`配置已保存！`); showScreen(`scrRoom`);
-};
+    $(`btnSaveChat`).onclick = () =>{ 
+        ls.setItem(`cN`, $(`cfgName`).value); 
+        ls.setItem(`cR`, $(`cfgRem`).value); ls.setItem(`cMyN`, $(`cfgMyName`).value); 
+        ls.setItem(`cAP`, $(`cfgAiP`).value); ls.setItem(`cMP`, $(`cfgMyP`).value);
+        if($(`cfgBubbleCss`)) ls.setItem(`cBubbleCss`, $(`cfgBubbleCss`).value);
+        ls.setItem(`cCtx`, $(`cfgCtx`).value); ls.setItem(`cT`, $(`cfgTime`).checked);
+        ls.setItem(`cCTon`, $(`cfgCustomTime`).checked); ls.setItem(`cCTy`, $(`ctYear`).value);
+        ls.setItem(`cCTm`, $(`ctMonth`).value); ls.setItem(`cCTd`, $(`ctDay`).value);
+        ls.setItem(`cCTh`, $(`ctHour`).value); ls.setItem(`cCTmin`, $(`ctMinute`).value);
+        ls.setItem(`cAMem`, $(`cfgAutoMem`).checked); ls.setItem(`cMemT`, $(`cfgMemTrig`).value);
+        ls.setItem(`cMemP`, $(`cfgMemPmt`).value);
+        
+        let checkAndSave = (preId, key) => {
+            let el = $(preId);
+            if (el && el.style.backgroundImage && el.style.backgroundImage !== 'none') {
+                let url = el.style.backgroundImage.slice(5, -2);
+                if (url.startsWith('data:')) {
+                    let k = isolatedKeys.includes(key) ? key + "_" + currentChatId : key;
+                    localforage.setItem(k, url);
+                }
+            }
+        };
+        checkAndSave('bgPreview', 'bgI');
+        checkAndSave('aiPreview', 'aiI');
+        checkAndSave('myPreview', 'myI');
 
-if($(`btnCancelChat`)) {
-    $(`btnCancelChat`).onclick = () => {
-        showScreen(`scrRoom`);
+        applyVis(); 
+        alert(`配置已保存！`); 
+        showScreen(`scrRoom`); 
     };
 }
 
