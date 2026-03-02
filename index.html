@@ -1793,45 +1793,43 @@ let ls = localStorage;
 let currentChatId ="default";
 let originalSetItem = ls.setItem;
 let isolatedKeys = ["chatHistory","aiStatus","bgI","aiI","cMP","cN","cR","cAP","cCtx","cT","cAMem","cMemT","cMemP","linkedWb","lastMemCount","memories", "cStatusTxt", "cStatusColor", "cSign", "cBubbleCss", "cCTon", "cCTy", "cCTm", "cCTd", "cCTh", "cCTmin"];
+let originalGetItem = ls.getItem;
+let originalRemoveItem = ls.removeItem;
 let globalMemCache = {};
+
+if($(`date`)) $(`date`).innerText = `系统数据加载中...`;
+
 localforage.iterate(function(value, key) {
     globalMemCache[key] = value;
+}).then(function() {
+    if($(`date`)) $(`date`).innerText = `准备就绪`;
+    if(typeof applyVis === `function`) applyVis();
+    if(typeof renderContacts === `function`) renderContacts();
 });
 
 ls.getItem = function(key) {
-    let fKey = (isolatedKeys.includes(key) || key === `chatHistory` || key === `aiStatus`) ? (key + `_` + currentChatId) : key;
+    let fKey = (typeof isolatedKeys !== `undefined` && isolatedKeys.includes(key) || key === `chatHistory` || key === `aiStatus`) ? (key + `_` + currentChatId) : key;
     if (globalMemCache[fKey] !== undefined) return globalMemCache[fKey];
     return originalGetItem.call(this, fKey) || originalGetItem.call(this, key);
 };
 
 ls.setItem = function(key, value) {
-    let fKey = (isolatedKeys.includes(key) || key === `chatHistory` || key === `aiStatus`) ? (key + `_` + currentChatId) : key;
+    let fKey = (typeof isolatedKeys !== `undefined` && isolatedKeys.includes(key) || key === `chatHistory` || key === `aiStatus`) ? (key + `_` + currentChatId) : key;
     globalMemCache[fKey] = value;
     localforage.setItem(fKey, value);
 };
 
-
-
-
-
-let originalGetItem = ls.getItem;
-ls.getItem = function(key) {
-    if (isolatedKeys.includes(key)) {
-        let spec = originalGetItem.call(this, key + "_" + currentChatId);
-        if (spec) return spec;
-        if (currentChatId === "default") return originalGetItem.call(this, key);
-        return null;
-    }
-    return originalGetItem.call(this, key);
-};
-let originalRemoveItem = ls.removeItem;
 ls.removeItem = function(key) {
-    if (isolatedKeys.includes(key)) {
-        originalRemoveItem.call(this, key + "_" + currentChatId);
+    let fKey = (typeof isolatedKeys !== `undefined` && isolatedKeys.includes(key) || key === `chatHistory` || key === `aiStatus`) ? (key + `_` + currentChatId) : key;
+    delete globalMemCache[fKey];
+    localforage.removeItem(fKey);
+    if (typeof isolatedKeys !== `undefined` && isolatedKeys.includes(key)) {
+        originalRemoveItem.call(this, key + `_` + currentChatId);
     } else {
         originalRemoveItem.call(this, key);
     }
 };
+
 let history = ls.getItem("chatHistory") ? JSON.parse(ls.getItem("chatHistory")) : [];
 let aiStatus = ls.getItem("aiStatus") ? JSON.parse(ls.getItem("aiStatus")) : {weather:"等待连接...",clothing:"等待连接...",action:"等待连接...",thought:"等待连接..."};
 let wbData = ls.getItem(`wbData`) ? JSON.parse(ls.getItem(`wbData`)) : [];
