@@ -2294,24 +2294,23 @@ $(`btnSetChatBack`).onclick = () =>showScreen(`scrRoom`);
 $(`btnHomeWb`).onclick = () =>{ showScreen(`scrWb`); renderWb(); };
 $(`btnCloseModal`).onclick = () =>modal.style.display=`none`;
 let contacts = ls.getItem(`myContacts`) ? JSON.parse(ls.getItem(`myContacts`)) : [];
-function renderContacts() {
-
+async function renderContacts() {
     let listItems = document.querySelectorAll(`#listContent .chat-item`);
     for(let i=1; i<listItems.length; i++) listItems[i].remove();
-    
     let contactItems = document.querySelectorAll(`#contactContent .chat-item`);
     if(contactItems) {
         for(let i=1; i<contactItems.length; i++) contactItems[i].remove();
     }
     
-    contacts.forEach(c => {
+    for (let c of contacts) {
         let div = document.createElement(`div`);
         div.className = `chat-item`;
         
-        let isoHistStr = originalGetItem.call(ls, `chatHistory_` + c.id);
-        let isoHist = isoHistStr ? JSON.parse(isoHistStr) : [];
+        let savedHist = await localforage.getItem(`chatHistory_` + c.id) || originalGetItem.call(ls, `chatHistory_` + c.id);
+        let isoHist = savedHist ? (typeof savedHist === 'string' ? JSON.parse(savedHist) : savedHist) : [];
         if(currentChatId === c.id) isoHist = history;
         let prevTxt = getPreviewText(isoHist);
+
                     let isoAiA = originalGetItem.call(ls, `aiI_` + c.id);
             let avaHtml = isoAiA ? `<div class=avatar-list style=background-image:url(`+isoAiA+`);font-size:0;></div>` : `<div class=avatar-list>👤</div>`;
             let isoName = originalGetItem.call(ls, `cN_` + c.id) || c.name;
@@ -2368,11 +2367,12 @@ function renderContacts() {
                 </div>
                 <div class=role-signature>` + charSign + `</div>
             </div>`;
-            divC.onclick = div.onclick;
-            $(`contactContent`).appendChild(divC);
+                    divC.onclick = div.onclick;
+        $(`contactContent`).appendChild(divC);
         }
-    });
+    }
 }
+
 renderContacts();
 $(`btnListToRoom`).onclick = async () => { 
     currentChatId = `default`;
