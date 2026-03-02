@@ -2332,20 +2332,28 @@ function renderContacts() {
             $(`cfgAiP`).value = ls.getItem(`cAP_` + c.id) || c.prompt;
             $(`cfgMyP`).value = ls.getItem(`cMP_` + c.id) || ``;
             if($(`cfgBubbleCss`)) $(`cfgBubbleCss`).value = ls.getItem(`cBubbleCss_` + c.id) || ``;
+            
             let ctxVal = ls.getItem(`cCtx_` + c.id);
-            if(ctxVal) $(`cfgCtx`).value = ctxVal; else $(`cfgCtx`).value = ls.getItem(`cCtx`) || 100;
+            if(ctxVal) $(`cfgCtx`).value = ctxVal;
+            else $(`cfgCtx`).value = ls.getItem(`cCtx`) || 100;
             let tVal = ls.getItem(`cT_` + c.id);
-            if(tVal !== null) $(`cfgTime`).checked = tVal === `true`; else $(`cfgTime`).checked = ls.getItem(`cT`) !== `false`;
+            if(tVal !== null) $(`cfgTime`).checked = tVal === `true`;
+            else $(`cfgTime`).checked = ls.getItem(`cT`) !== `false`;
             let aMemVal = ls.getItem(`cAMem_` + c.id);
-            if(aMemVal !== null) $(`cfgAutoMem`).checked = aMemVal === `true`; else $(`cfgAutoMem`).checked = ls.getItem(`cAMem`) === `true`;
+            if(aMemVal !== null) $(`cfgAutoMem`).checked = aMemVal === `true`;
+            else $(`cfgAutoMem`).checked = ls.getItem(`cAMem`) === `true`;
             let memTVal = ls.getItem(`cMemT_` + c.id);
-            if(memTVal) $(`cfgMemTrig`).value = memTVal; else $(`cfgMemTrig`).value = ls.getItem(`cMemT`) || 10;
+            if(memTVal) $(`cfgMemTrig`).value = memTVal;
+            else $(`cfgMemTrig`).value = ls.getItem(`cMemT`) || 10;
             let memPVal = ls.getItem(`cMemP_` + c.id);
-            if(memPVal) $(`cfgMemPmt`).value = memPVal; else $(`cfgMemPmt`).value = ls.getItem(`cMemP`) || `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。必须准确写出当前实际参与对话的【具体人物姓名】（包括我、主角色或任何出场的NPC）。`;
+            if(memPVal) $(`cfgMemPmt`).value = memPVal;
+            else $(`cfgMemPmt`).value = ls.getItem(`cMemP`) || `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。必须准确写出当前实际参与对话的【具体人物姓名】（包括我、主角色或任何出场的NPC）。`;
+
             let savedHist = ls.getItem(`chatHistory_` + currentChatId);
             history = savedHist ? (typeof savedHist === 'string' ? JSON.parse(savedHist) : savedHist) : [];
-            let sAi = ls.getItem(`aiStatus_` + currentChatId);
-            aiStatus = sAi ? (typeof sAi === 'string' ? JSON.parse(sAi) : sAi) : {weather:"等待连接...",clothing:"等待连接...",action:"等待连接...",thought:"等待连接..."};
+            let savedAiStatus = ls.getItem(`aiStatus_` + currentChatId);
+            aiStatus = savedAiStatus ? (typeof savedAiStatus === 'string' ? JSON.parse(savedAiStatus) : savedAiStatus) : {weather:`等待连接...`,clothing:`等待连接...`,action:`等待连接...`,thought:`等待连接...`};
+            
             applyVis(); 
             redrawChat();
             showScreen(`scrRoom`);
@@ -2381,15 +2389,19 @@ $(`btnListToRoom`).onclick = () => {
     $(`cfgAiP`).value = ls.getItem(`cAP`) || ``;
     $(`cfgMyP`).value = ls.getItem(`cMP`) || ``;
     if($(`cfgBubbleCss`)) $(`cfgBubbleCss`).value = ls.getItem(`cBubbleCss`) || ``;
+    
     if(ls.getItem(`cCtx`)) $(`cfgCtx`).value = ls.getItem(`cCtx`); else $(`cfgCtx`).value = 100;
     $(`cfgTime`).checked = ls.getItem(`cT`) !== `false`;
     $(`cfgAutoMem`).checked = ls.getItem(`cAMem`) === `true`;
     if(ls.getItem(`cMemT`)) $(`cfgMemTrig`).value = ls.getItem(`cMemT`); else $(`cfgMemTrig`).value = 10;
-    if(ls.getItem(`cMemP`)) $(`cfgMemPmt`).value = ls.getItem(`cMemP`) || `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。必须准确写出当前实际参与对话的【具体人物姓名】（包括我、主角色或任何出场的NPC）。`;
+    if(ls.getItem(`cMemP`)) $(`cfgMemPmt`).value = ls.getItem(`cMemP`); else $(`cfgMemPmt`).value = `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。必须准确写出当前实际参与对话的【具体人物姓名】（包括我、主角色或任何出场的NPC）。`;
+    
     let savedHist = ls.getItem(`chatHistory_` + currentChatId) || ls.getItem(`chatHistory`);
     history = savedHist ? (typeof savedHist === 'string' ? JSON.parse(savedHist) : savedHist) : [];
-    let sAi = ls.getItem(`aiStatus_` + currentChatId);
-    aiStatus = sAi ? (typeof sAi === 'string' ? JSON.parse(sAi) : sAi) : {weather:"等待连接...",clothing:"等待连接...",action:"等待连接...",thought:"等待连接..."};
+    
+    let savedAiStatus = ls.getItem(`aiStatus_` + currentChatId) || ls.getItem(`aiStatus`);
+    aiStatus = savedAiStatus ? (typeof savedAiStatus === 'string' ? JSON.parse(savedAiStatus) : savedAiStatus) : {weather:`等待连接...`,clothing:`等待连接...`,action:`等待连接...`,thought:`等待连接...`};
+    
     applyVis(); 
     redrawChat();
     showScreen(`scrRoom`); 
