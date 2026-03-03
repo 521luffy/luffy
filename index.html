@@ -2286,9 +2286,19 @@ if($(`btnSaveFont`)) {
     };
 }
 
-$(`btnListToRoom`).onclick = () =>{ showScreen(`scrRoom`); msgs.scrollTop = msgs.scrollHeight; };
-
+$(`btnListToRoom`).onclick = async () =>{ 
+    let savedHist = await localforage.getItem(`chatHistory_` + currentChatId) || originalGetItem.call(ls, `chatHistory_` + currentChatId);
+    history = savedHist ? (typeof savedHist === `string` ? JSON.parse(savedHist) : savedHist) : [];
+    let savedAiStatus = await localforage.getItem(`aiStatus_` + currentChatId) || originalGetItem.call(ls, `aiStatus_` + currentChatId);
+    aiStatus = savedAiStatus ? (typeof savedAiStatus === `string` ? JSON.parse(savedAiStatus) : savedAiStatus) : {weather:`等待连接...`,clothing:`等待连接...`,action:`等待连接...`,thought:`等待连接...`};
+    applyVis();
+    if (typeof msgs !== `undefined` && msgs) msgs.innerHTML = ``;
+    if (typeof redrawChat === `function`) redrawChat();
+    showScreen(`scrRoom`); 
+    setTimeout(() => msgs.scrollTop = msgs.scrollHeight, 100);
+};
 $(`btnRoomBack`).onclick = () =>{ showScreen(`scrList`); updateListPreview(); };
+
 $(`btnRoomSet`).onclick = () =>showScreen(`scrSetChat`);
 $(`btnSetChatBack`).onclick = () =>showScreen(`scrRoom`);
 $(`btnHomeWb`).onclick = () =>{ showScreen(`scrWb`); renderWb(); };
@@ -2343,20 +2353,19 @@ function renderContacts() {
             if(memPVal) $(`cfgMemPmt`).value = memPVal;
             else $(`cfgMemPmt`).value = originalGetItem.call(ls, `cMemP`) || `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。必须准确写出当前实际参与对话的【具体人物姓名】（包括我、主角色或任何出场的NPC）。`;
 
-            let savedHist = await localforage.getItem(`chatHistory_` + currentChatId) || originalGetItem.call(ls, `chatHistory_` + currentChatId);
+                        let savedHist = await localforage.getItem(`chatHistory_` + currentChatId) || originalGetItem.call(ls, `chatHistory_` + currentChatId);
             history = savedHist ? (typeof savedHist === 'string' ? JSON.parse(savedHist) : savedHist) : [];
-                                                let savedAiStatus = await localforage.getItem(`aiStatus_` + currentChatId) || ls.getItem(`aiStatus_` + currentChatId);
+            let savedAiStatus = await localforage.getItem(`aiStatus_` + currentChatId) || ls.getItem(`aiStatus_` + currentChatId);
             aiStatus = savedAiStatus ? (typeof savedAiStatus === `string` ? JSON.parse(savedAiStatus) : savedAiStatus) : {weather:`等待连接...`,clothing:`等待连接...`,action:`等待连接...`,thought:`等待连接...`};
             applyVis();
             
             if (typeof msgs !== `undefined` && msgs) msgs.innerHTML = ``;
-            let savedHist = await localforage.getItem(`chatHistory_` + currentChatId) || ls.getItem(`chatHistory_` + currentChatId);
-            history = savedHist ? (typeof savedHist === `string` ? JSON.parse(savedHist) : savedHist) : [];
             
             redrawChat();
             showScreen(`scrRoom`);
             setTimeout(() => msgs.scrollTop = msgs.scrollHeight, 100);
         };
+
 
 
 
@@ -7056,7 +7065,8 @@ function renderSpyMusicList() {
             </div>
             <div class="spy-music-song-mood">${escapeHtml(item.mood)}</div>
         `;
-        div.onclick = function() {
+        div.onclick = async function() {
+
             let moodDiv = this.querySelector('.spy-music-song-mood');
             if(moodDiv.style.display === 'block') {
                 moodDiv.style.display = 'none';
