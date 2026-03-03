@@ -1793,23 +1793,18 @@ let ls = localStorage;
 let currentChatId ="default";
 let originalSetItem = ls.setItem;
 let isolatedKeys = ["chatHistory","aiStatus","bgI","aiI","cMP","cN","cR","cAP","cCtx","cT","cAMem","cMemT","cMemP","linkedWb","lastMemCount","memories", "cStatusTxt", "cStatusColor", "cSign", "cBubbleCss", "cCTon", "cCTy", "cCTm", "cCTd", "cCTh", "cCTmin"];
-let globalMemCache = {};
-localforage.iterate(function(value, key) {
-    globalMemCache[key] = value;
-});
-
-ls.getItem = function(key) {
-    let fKey = (isolatedKeys.includes(key) || key === `chatHistory` || key === `aiStatus`) ? (key + `_` + currentChatId) : key;
-    if (globalMemCache[fKey] !== undefined) return globalMemCache[fKey];
-    return originalGetItem.call(this, fKey) || originalGetItem.call(this, key);
-};
-
 ls.setItem = function(key, value) {
-    let fKey = (isolatedKeys.includes(key) || key === `chatHistory` || key === `aiStatus`) ? (key + `_` + currentChatId) : key;
-    globalMemCache[fKey] = value;
-    localforage.setItem(fKey, value);
+    if (key === `myPhoneStickers` || key === `charStickers` || key === `myLogs` || key === `chatHistory` || key === `aiStatus`) {
+        let finalKey = (key === `chatHistory` || key === `aiStatus`) ? (key + `_` + currentChatId) : key;
+        localforage.setItem(finalKey, value);
+        return;
+    }
+    if (isolatedKeys.includes(key)) {
+        originalSetItem.call(this, key + `_` + currentChatId, value);
+    } else {
+        originalSetItem.call(this, key, value);
+    }
 };
-
 
 
 
@@ -1985,15 +1980,14 @@ function getPreviewText(histArray) {
     txt = txt.replace(/「引用：.*?」\n/g, ``).replace(/【.*?】/g, ``).replace(/\[图片消息：.*?\][\s\S]*/g, `[表情包]`).trim();
     return txt.length > 15 ? txt.substring(0, 15) + `...` : txt;
 }
-function updateListPreview() {
+async function updateListPreview() {
     let p = $(`chatPreview`);
-    let savedHist = ls.getItem(`chatHistory_default`) || ls.getItem(`chatHistory`);
+    let savedHist = await localforage.getItem(`chatHistory_default`) || await localforage.getItem(`chatHistory`) || originalGetItem.call(ls, `chatHistory_default`);
     let defHist = savedHist ? (typeof savedHist === 'string' ? JSON.parse(savedHist) : savedHist) : [];
     if(currentChatId === `default`) defHist = history;
     if(p) p.innerText = getPreviewText(defHist);
     setTimeout(() => { try { if(typeof renderContacts === `function`) renderContacts(); } catch(e){} }, 50);
 }
-
 
 function applyVis() {
     let dn = $(`cfgRem`).value || $(`cfgName`).value || `专属恋人`;
@@ -2301,23 +2295,23 @@ $(`btnHomeWb`).onclick = () =>{ showScreen(`scrWb`); renderWb(); };
 $(`btnCloseModal`).onclick = () =>modal.style.display=`none`;
 let contacts = ls.getItem(`myContacts`) ? JSON.parse(ls.getItem(`myContacts`)) : [];
 function renderContacts() {
+
     let listItems = document.querySelectorAll(`#listContent .chat-item`);
     for(let i=1; i<listItems.length; i++) listItems[i].remove();
+    
     let contactItems = document.querySelectorAll(`#contactContent .chat-item`);
     if(contactItems) {
         for(let i=1; i<contactItems.length; i++) contactItems[i].remove();
     }
     
-    for (let c of contacts) {
+    contacts.forEach(c => {
         let div = document.createElement(`div`);
         div.className = `chat-item`;
         
-        let savedHist = ls.getItem(`chatHistory_` + c.id);
-        let isoHist = savedHist ? (typeof savedHist === 'string' ? JSON.parse(savedHist) : savedHist) : [];
+        let isoHistStr = originalGetItem.call(ls, `chatHistory_` + c.id);
+        let isoHist = isoHistStr ? JSON.parse(isoHistStr) : [];
         if(currentChatId === c.id) isoHist = history;
         let prevTxt = getPreviewText(isoHist);
-
-
                     let isoAiA = originalGetItem.call(ls, `aiI_` + c.id);
             let avaHtml = isoAiA ? `<div class=avatar-list style=background-image:url(`+isoAiA+`);font-size:0;></div>` : `<div class=avatar-list>👤</div>`;
             let isoName = originalGetItem.call(ls, `cN_` + c.id) || c.name;
@@ -2325,41 +2319,40 @@ function renderContacts() {
             if (isBlk) isoName += `<span style="color:#ff4757;font-size:10px;margin-left:4px;padding:0 2px;">已拉黑</span>`;
             
             div.innerHTML = avaHtml + `<div class=chat-info><div class=chat-name>` + isoName + `</div><div class=chat-preview>` + prevTxt + `</div></div>`;
-                            div.onclick = () => {
+                    div.onclick = async () => {
             currentChatId = c.id;
-            $(`cfgName`).value = ls.getItem(`cN_` + c.id) || c.name;
-            $(`cfgRem`).value = ls.getItem(`cR_` + c.id) || ``;
-            $(`cfgAiP`).value = ls.getItem(`cAP_` + c.id) || c.prompt;
-            $(`cfgMyP`).value = ls.getItem(`cMP_` + c.id) || ``;
-            if($(`cfgBubbleCss`)) $(`cfgBubbleCss`).value = ls.getItem(`cBubbleCss_` + c.id) || ``;
+            $(`cfgName`).value = originalGetItem.call(ls, `cN_` + c.id) || c.name;
+            $(`cfgRem`).value = originalGetItem.call(ls, `cR_` + c.id) || ``;
+            $(`cfgAiP`).value = originalGetItem.call(ls, `cAP_` + c.id) || c.prompt;
+            $(`cfgMyP`).value = originalGetItem.call(ls, `cMP_` + c.id) || ``;
+            if($(`cfgBubbleCss`)) $(`cfgBubbleCss`).value = originalGetItem.call(ls, `cBubbleCss_` + c.id) || ``;
             
-            let ctxVal = ls.getItem(`cCtx_` + c.id);
+            let ctxVal = originalGetItem.call(ls, `cCtx_` + c.id);
             if(ctxVal) $(`cfgCtx`).value = ctxVal;
-            else $(`cfgCtx`).value = ls.getItem(`cCtx`) || 100;
-            let tVal = ls.getItem(`cT_` + c.id);
+            else $(`cfgCtx`).value = originalGetItem.call(ls, `cCtx`) || 100;
+            let tVal = originalGetItem.call(ls, `cT_` + c.id);
             if(tVal !== null) $(`cfgTime`).checked = tVal === `true`;
-            else $(`cfgTime`).checked = ls.getItem(`cT`) !== `false`;
-            let aMemVal = ls.getItem(`cAMem_` + c.id);
+            else $(`cfgTime`).checked = originalGetItem.call(ls, `cT`) !== `false`;
+            let aMemVal = originalGetItem.call(ls, `cAMem_` + c.id);
             if(aMemVal !== null) $(`cfgAutoMem`).checked = aMemVal === `true`;
-            else $(`cfgAutoMem`).checked = ls.getItem(`cAMem`) === `true`;
-            let memTVal = ls.getItem(`cMemT_` + c.id);
+            else $(`cfgAutoMem`).checked = originalGetItem.call(ls, `cAMem`) === `true`;
+            let memTVal = originalGetItem.call(ls, `cMemT_` + c.id);
             if(memTVal) $(`cfgMemTrig`).value = memTVal;
-            else $(`cfgMemTrig`).value = ls.getItem(`cMemT`) || 10;
-            let memPVal = ls.getItem(`cMemP_` + c.id);
+            else $(`cfgMemTrig`).value = originalGetItem.call(ls, `cMemT`) || 10;
+            let memPVal = originalGetItem.call(ls, `cMemP_` + c.id);
             if(memPVal) $(`cfgMemPmt`).value = memPVal;
-            else $(`cfgMemPmt`).value = ls.getItem(`cMemP`) || `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。必须准确写出当前实际参与对话的【具体人物姓名】（包括我、主角色或任何出场的NPC）。`;
+            else $(`cfgMemPmt`).value = originalGetItem.call(ls, `cMemP`) || `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。必须准确写出当前实际参与对话的【具体人物姓名】（包括我、主角色或任何出场的NPC）。`;
 
-            let savedHist = ls.getItem(`chatHistory_` + currentChatId);
+            let savedHist = await localforage.getItem(`chatHistory_` + currentChatId) || originalGetItem.call(ls, `chatHistory_` + currentChatId);
             history = savedHist ? (typeof savedHist === 'string' ? JSON.parse(savedHist) : savedHist) : [];
-            let savedAiStatus = ls.getItem(`aiStatus_` + currentChatId);
-            aiStatus = savedAiStatus ? (typeof savedAiStatus === 'string' ? JSON.parse(savedAiStatus) : savedAiStatus) : {weather:`等待连接...`,clothing:`等待连接...`,action:`等待连接...`,thought:`等待连接...`};
+            let savedAiStatus = await localforage.getItem(`aiStatus_` + currentChatId) || originalGetItem.call(ls, `aiStatus_` + currentChatId);
+            aiStatus = savedAiStatus ? (typeof savedAiStatus === 'string' ? JSON.parse(savedAiStatus) : savedAiStatus) : {weather:"等待连接...",clothing:"等待连接...",action:"等待连接...",thought:"等待连接..."};
             
             applyVis(); 
             redrawChat();
             showScreen(`scrRoom`);
             setTimeout(() => msgs.scrollTop = msgs.scrollHeight, 100);
         };
-
 
         $(`listContent`).appendChild(div);
         if($(`contactContent`)) {
@@ -2375,14 +2368,13 @@ function renderContacts() {
                 </div>
                 <div class=role-signature>` + charSign + `</div>
             </div>`;
-                    divC.onclick = div.onclick;
-        $(`contactContent`).appendChild(divC);
+            divC.onclick = div.onclick;
+            $(`contactContent`).appendChild(divC);
         }
-    }
+    });
 }
-
 renderContacts();
-$(`btnListToRoom`).onclick = () => { 
+$(`btnListToRoom`).onclick = async () => { 
     currentChatId = `default`;
     $(`cfgName`).value = ls.getItem(`cN`) || `专属恋人`;
     $(`cfgRem`).value = ls.getItem(`cR`) || ``;
@@ -2396,18 +2388,15 @@ $(`btnListToRoom`).onclick = () => {
     if(ls.getItem(`cMemT`)) $(`cfgMemTrig`).value = ls.getItem(`cMemT`); else $(`cfgMemTrig`).value = 10;
     if(ls.getItem(`cMemP`)) $(`cfgMemPmt`).value = ls.getItem(`cMemP`); else $(`cfgMemPmt`).value = `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。必须准确写出当前实际参与对话的【具体人物姓名】（包括我、主角色或任何出场的NPC）。`;
     
-    let savedHist = ls.getItem(`chatHistory_` + currentChatId) || ls.getItem(`chatHistory`);
+    let savedHist = await localforage.getItem(`chatHistory_` + currentChatId) || await localforage.getItem(`chatHistory`) || originalGetItem.call(ls, `chatHistory_` + currentChatId);
     history = savedHist ? (typeof savedHist === 'string' ? JSON.parse(savedHist) : savedHist) : [];
     
-    let savedAiStatus = ls.getItem(`aiStatus_` + currentChatId) || ls.getItem(`aiStatus`);
-    aiStatus = savedAiStatus ? (typeof savedAiStatus === 'string' ? JSON.parse(savedAiStatus) : savedAiStatus) : {weather:`等待连接...`,clothing:`等待连接...`,action:`等待连接...`,thought:`等待连接...`};
-    
+    aiStatus = ls.getItem(`aiStatus`) ? JSON.parse(ls.getItem(`aiStatus`)) : {weather:"等待连接...",clothing:"等待连接...",action:"等待连接...",thought:"等待连接..."};
     applyVis(); 
     redrawChat();
     showScreen(`scrRoom`); 
     setTimeout(() => msgs.scrollTop = msgs.scrollHeight, 100);
 };
-
 
 if($(`btnAddContact`)) $(`btnAddContact`).onclick = () =>{ $(`addFriendModal`).style.display=`flex`; };
 $(`btnCancelAddFriend`).onclick = () =>{ $(`addFriendModal`).style.display=`none`; $(`newFriendName`).value=``; $(`newFriendPrompt`).value=``; };
