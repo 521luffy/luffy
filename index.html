@@ -2287,11 +2287,12 @@ if($(`btnSaveFont`)) {
 }
 
 $(`btnListToRoom`).onclick = async () =>{ 
-    let savedHist = await loadFromWarehouse('chatHistory');
-    history = savedHist ? savedHist : [];
-
-    let savedAiStatus = await loadFromWarehouse('aiStatus');
-    aiStatus = savedAiStatus ? savedAiStatus : {weather:`等待连接...`,clothing:`等待连接...`,action:`等待连接...`,thought:`等待连接...`}; 
+    currentChatId = `default`;
+    let rawHist = await localforage.getItem(`chatHistory_` + currentChatId);
+    history = rawHist ? (typeof rawHist === 'string' ? JSON.parse(rawHist) : rawHist) : [];
+    
+    let rawStatus = await localforage.getItem(`aiStatus_` + currentChatId);
+    aiStatus = rawStatus ? (typeof rawStatus === 'string' ? JSON.parse(rawStatus) : rawStatus) : {weather:`等待连接...`,clothing:`等待连接...`,action:`等待连接...`,thought:`等待连接...`}; 
     
     applyVis();
     if (typeof msgs !== `undefined` && msgs) msgs.innerHTML = ``;
@@ -2299,6 +2300,7 @@ $(`btnListToRoom`).onclick = async () =>{
     showScreen(`scrRoom`);
     setTimeout(() => msgs.scrollTop = msgs.scrollHeight, 100);
 };
+
 
 $(`btnRoomBack`).onclick = () =>{ showScreen(`scrList`); updateListPreview(); };
 
@@ -2356,22 +2358,21 @@ function renderContacts() {
     if(memPVal) $(`cfgMemPmt`).value = memPVal;
     else $(`cfgMemPmt`).value = originalGetItem.call(ls, `cMemP`) || `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。必须准确写出当前实际参与对话的【具体人物姓名】（包括我、主角色或任何出场的NPC）。`; 
 
-    // 【核心修复区域】：强制使用我们刚确立的独立大仓库读取接口
-    let savedHist = await loadFromWarehouse('chatHistory');
-    history = savedHist ? savedHist : [];
+    // 【暴力直读大仓库，直接解析】
+    let rawHist = await localforage.getItem(`chatHistory_` + currentChatId);
+    history = rawHist ? (typeof rawHist === 'string' ? JSON.parse(rawHist) : rawHist) : [];
     
-    let savedAiStatus = await loadFromWarehouse('aiStatus'); 
-    aiStatus = savedAiStatus ? savedAiStatus : {weather:`等待连接...`,clothing:`等待连接...`,action:`等待连接...`,thought:`等待连接...`}; 
+    let rawStatus = await localforage.getItem(`aiStatus_` + currentChatId);
+    aiStatus = rawStatus ? (typeof rawStatus === 'string' ? JSON.parse(rawStatus) : rawStatus) : {weather:`等待连接...`,clothing:`等待连接...`,action:`等待连接...`,thought:`等待连接...`}; 
     
     applyVis();
-    
-    // 强制阻塞，等数据彻底渲染成功
     if (typeof msgs !== `undefined` && msgs) msgs.innerHTML = ``; 
     if (typeof redrawChat === `function`) redrawChat(); 
     
     showScreen(`scrRoom`); 
     setTimeout(() => msgs.scrollTop = msgs.scrollHeight, 100); 
 }; 
+
 $(`listContent`).appendChild(div);
 
         if($(`contactContent`)) {
