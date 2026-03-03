@@ -1796,13 +1796,27 @@ let isolatedKeys = ["chatHistory","aiStatus","bgI","aiI","cMP","cN","cR","cAP","
 let sysGetItem = ls.getItem;
 let sysRemoveItem = ls.removeItem;
 let globalMemCache = {};
+let originalStorageGet = Storage.prototype.getItem;
+Storage.prototype.getItem = function(key) {
+    let fKey = typeof getRealKey === `function` ? getRealKey(key) : key;
+    if (typeof globalMemCache !== `undefined` && globalMemCache[fKey] !== undefined) {
+        let val = globalMemCache[fKey];
+        if (typeof val === `object` && val !== null) return JSON.stringify(val);
+        if (typeof val === `boolean` || typeof val === `number`) return String(val);
+        return val;
+    }
+    return originalStorageGet.call(this, key);
+};
+
 
 let originalGetItem = function(key) {
     let fKey = typeof getRealKey === `function` ? getRealKey(key) : key;
     let val = (globalMemCache && globalMemCache[fKey] !== undefined) ? globalMemCache[fKey] : (sysGetItem.call(this, fKey) || sysGetItem.call(this, key));
     if (typeof val === `object` && val !== null) return JSON.stringify(val);
+    if (typeof val === `boolean` || typeof val === `number`) return String(val);
     return val;
 };
+
 
 
 let originalRemoveItem = function(key) {
@@ -1836,12 +1850,15 @@ function getRealKey(k) {
 }
 
 
+
 ls.getItem = function(key) {
     let fKey = typeof getRealKey === `function` ? getRealKey(key) : key;
     let val = globalMemCache[fKey] !== undefined ? globalMemCache[fKey] : (originalGetItem.call(this, fKey) || originalGetItem.call(this, key));
     if (typeof val === `object` && val !== null) return JSON.stringify(val);
+    if (typeof val === `boolean` || typeof val === `number`) return String(val);
     return val;
 };
+
 
 
 
