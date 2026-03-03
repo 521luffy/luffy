@@ -1796,45 +1796,12 @@ let isolatedKeys = ["chatHistory","aiStatus","bgI","aiI","cMP","cN","cR","cAP","
 let sysGetItem = ls.getItem;
 let sysRemoveItem = ls.removeItem;
 let globalMemCache = {};
-let originalStorageGet = Storage.prototype.getItem;
-let originalStorageSet = Storage.prototype.setItem;
-let originalStorageRemove = Storage.prototype.removeItem;
-
-Storage.prototype.getItem = function(key) {
-    let fKey = typeof getRealKey === `function` ? getRealKey(key) : key;
-    if (typeof globalMemCache !== `undefined` && globalMemCache[fKey] !== undefined) {
-        let val = globalMemCache[fKey];
-        if (typeof val === `object` && val !== null) return JSON.stringify(val);
-        if (typeof val === `boolean` || typeof val === `number`) return String(val);
-        return val;
-    }
-    return originalStorageGet.call(this, key);
-};
-
-Storage.prototype.setItem = function(key, value) {
-    let fKey = typeof getRealKey === `function` ? getRealKey(key) : key;
-    if (typeof globalMemCache !== `undefined`) globalMemCache[fKey] = value;
-    originalStorageSet.call(this, fKey, value);
-};
-
-Storage.prototype.removeItem = function(key) {
-    let fKey = typeof getRealKey === `function` ? getRealKey(key) : key;
-    if (typeof globalMemCache !== `undefined`) delete globalMemCache[fKey];
-    originalStorageRemove.call(this, fKey);
-    if (fKey !== key) originalStorageRemove.call(this, key);
-};
-
-
 
 let originalGetItem = function(key) {
     let fKey = typeof getRealKey === `function` ? getRealKey(key) : key;
-    let val = (globalMemCache && globalMemCache[fKey] !== undefined) ? globalMemCache[fKey] : (sysGetItem.call(this, fKey) || sysGetItem.call(this, key));
-    if (typeof val === `object` && val !== null) return JSON.stringify(val);
-    if (typeof val === `boolean` || typeof val === `number`) return String(val);
-    return val;
+    if (globalMemCache && globalMemCache[fKey] !== undefined) return globalMemCache[fKey];
+    return sysGetItem.call(this, fKey) || sysGetItem.call(this, key);
 };
-
-
 
 let originalRemoveItem = function(key) {
     let fKey = typeof getRealKey === `function` ? getRealKey(key) : key;
@@ -1856,31 +1823,20 @@ localforage.iterate(function(value, key) {
 });
 
 function getRealKey(k) {
-    if (!k || typeof k !== `string`) return k;
-    
-    if (typeof currentChatId !== `undefined` && currentChatId && k.endsWith(`_` + currentChatId)) return k;
-    
+    if (k.includes(`_`)) return k; 
     let isPriv = false;
     if (typeof isolatedKeys !== `undefined` && isolatedKeys.includes(k)) isPriv = true;
-    let kw = [`chatHistory`, `aiStatus`, `diary`, `zhihu`, `worldbook`, `wb`, `time`, `Time`, `cT`, `cCtx`, `cAMem`, `cMem`, `cN`, `cR`, `cAP`, `cMP`, `privacy`, `space`, `Privacy`];
+    let kw = [`chatHistory`, `aiStatus`, `diary`, `zhihu`, `worldbook`, `wb`, `time`, `Time`];
     for (let w of kw) { if (k.includes(w)) isPriv = true; }
-    
     if (isPriv) return k + `_` + currentChatId;
     return k;
 }
 
-
-
-
 ls.getItem = function(key) {
-    let fKey = typeof getRealKey === `function` ? getRealKey(key) : key;
-    let val = globalMemCache[fKey] !== undefined ? globalMemCache[fKey] : (originalGetItem.call(this, fKey) || originalGetItem.call(this, key));
-    if (typeof val === `object` && val !== null) return JSON.stringify(val);
-    if (typeof val === `boolean` || typeof val === `number`) return String(val);
-    return val;
+    let fKey = getRealKey(key);
+    if (globalMemCache[fKey] !== undefined) return globalMemCache[fKey];
+    return originalGetItem.call(this, fKey) || originalGetItem.call(this, key);
 };
-
-
 
 
 ls.setItem = function(key, value) {
