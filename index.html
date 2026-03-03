@@ -1857,14 +1857,18 @@ localforage.iterate(function(value, key) {
 
 function getRealKey(k) {
     if (!k || typeof k !== `string`) return k;
-    if (k.includes(`_`)) return k; 
+    
+    if (typeof currentChatId !== `undefined` && currentChatId && k.endsWith(`_` + currentChatId)) return k;
+    
     let isPriv = false;
     if (typeof isolatedKeys !== `undefined` && isolatedKeys.includes(k)) isPriv = true;
     let kw = [`chatHistory`, `aiStatus`, `diary`, `zhihu`, `worldbook`, `wb`, `time`, `Time`, `cT`, `cCtx`, `cAMem`, `cMem`, `cN`, `cR`, `cAP`, `cMP`, `privacy`, `space`, `Privacy`];
     for (let w of kw) { if (k.includes(w)) isPriv = true; }
+    
     if (isPriv) return k + `_` + currentChatId;
     return k;
 }
+
 
 
 
