@@ -1797,6 +1797,9 @@ let sysGetItem = ls.getItem;
 let sysRemoveItem = ls.removeItem;
 let globalMemCache = {};
 let originalStorageGet = Storage.prototype.getItem;
+let originalStorageSet = Storage.prototype.setItem;
+let originalStorageRemove = Storage.prototype.removeItem;
+
 Storage.prototype.getItem = function(key) {
     let fKey = typeof getRealKey === `function` ? getRealKey(key) : key;
     if (typeof globalMemCache !== `undefined` && globalMemCache[fKey] !== undefined) {
@@ -1807,6 +1810,20 @@ Storage.prototype.getItem = function(key) {
     }
     return originalStorageGet.call(this, key);
 };
+
+Storage.prototype.setItem = function(key, value) {
+    let fKey = typeof getRealKey === `function` ? getRealKey(key) : key;
+    if (typeof globalMemCache !== `undefined`) globalMemCache[fKey] = value;
+    originalStorageSet.call(this, fKey, value);
+};
+
+Storage.prototype.removeItem = function(key) {
+    let fKey = typeof getRealKey === `function` ? getRealKey(key) : key;
+    if (typeof globalMemCache !== `undefined`) delete globalMemCache[fKey];
+    originalStorageRemove.call(this, fKey);
+    if (fKey !== key) originalStorageRemove.call(this, key);
+};
+
 
 
 let originalGetItem = function(key) {
