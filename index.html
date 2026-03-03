@@ -2286,17 +2286,7 @@ if($(`btnSaveFont`)) {
     };
 }
 
-$(`btnListToRoom`).onclick = async () =>{ 
-    let savedHist = await localforage.getItem(`chatHistory_` + currentChatId) || originalGetItem.call(ls, `chatHistory_` + currentChatId);
-    history = savedHist ? (typeof savedHist === `string` ? JSON.parse(savedHist) : savedHist) : [];
-    let savedAiStatus = await localforage.getItem(`aiStatus_` + currentChatId) || originalGetItem.call(ls, `aiStatus_` + currentChatId);
-    aiStatus = savedAiStatus ? (typeof savedAiStatus === `string` ? JSON.parse(savedAiStatus) : savedAiStatus) : {weather:`等待连接...`,clothing:`等待连接...`,action:`等待连接...`,thought:`等待连接...`};
-    applyVis();
-    if (typeof msgs !== `undefined` && msgs) msgs.innerHTML = ``;
-    if (typeof redrawChat === `function`) redrawChat();
-    showScreen(`scrRoom`); 
-    setTimeout(() => msgs.scrollTop = msgs.scrollHeight, 100);
-};
+$(`btnListToRoom`).onclick = async () =>{currentChatId = `default`;$(`cfgName`).value = ls.getItem(`cN`) || `专属恋人`;$(`cfgRem`).value = ls.getItem(`cR`) || ``;$(`cfgAiP`).value = ls.getItem(`cAP`) || ``;$(`cfgMyP`).value = ls.getItem(`cMP`) || ``;if($(`cfgBubbleCss`)) $(`cfgBubbleCss`).value = ls.getItem(`cBubbleCss`) || ``;if(ls.getItem(`cCtx`)) $(`cfgCtx`).value = ls.getItem(`cCtx`); else $(`cfgCtx`).value = 100;$(`cfgTime`).checked = ls.getItem(`cT`) !== `false`;$(`cfgAutoMem`).checked = ls.getItem(`cAMem`) === `true`;if(ls.getItem(`cMemT`)) $(`cfgMemTrig`).value = ls.getItem(`cMemT`); else $(`cfgMemTrig`).value = 10;if(ls.getItem(`cMemP`)) $(`cfgMemPmt`).value = ls.getItem(`cMemP`); else $(`cfgMemPmt`).value = `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。必须准确写出当前实际参与对话的【具体人物姓名】（包括我、主角色或任何出场的NPC）。`;let savedHist = await localforage.getItem(`chatHistory_` + currentChatId) || await localforage.getItem(`chatHistory`) || originalGetItem.call(ls, `chatHistory_` + currentChatId);history = savedHist ? (typeof savedHist === 'string' ? JSON.parse(savedHist) : savedHist) : [];let savedAiStatus = await localforage.getItem(`aiStatus_` + currentChatId) || await localforage.getItem(`aiStatus`) || ls.getItem(`aiStatus_` + currentChatId);aiStatus = savedAiStatus ? (typeof savedAiStatus === 'string' ? JSON.parse(savedAiStatus) : savedAiStatus) : {weather:"等待连接...",clothing:"等待连接...",action:"等待连接...",thought:"等待连接..."};applyVis();if (typeof msgs !== `undefined` && msgs) msgs.innerHTML = ``;redrawChat();showScreen(`scrRoom`);setTimeout(() => msgs.scrollTop = msgs.scrollHeight, 100);};
 $(`btnRoomBack`).onclick = () =>{ showScreen(`scrList`); updateListPreview(); };
 
 $(`btnRoomSet`).onclick = () =>showScreen(`scrSetChat`);
@@ -2329,42 +2319,7 @@ function renderContacts() {
             if (isBlk) isoName += `<span style="color:#ff4757;font-size:10px;margin-left:4px;padding:0 2px;">已拉黑</span>`;
             
             div.innerHTML = avaHtml + `<div class=chat-info><div class=chat-name>` + isoName + `</div><div class=chat-preview>` + prevTxt + `</div></div>`;
-                    div.onclick = async () => {
-            currentChatId = c.id;
-            $(`cfgName`).value = originalGetItem.call(ls, `cN_` + c.id) || c.name;
-            $(`cfgRem`).value = originalGetItem.call(ls, `cR_` + c.id) || ``;
-            $(`cfgAiP`).value = originalGetItem.call(ls, `cAP_` + c.id) || c.prompt;
-            $(`cfgMyP`).value = originalGetItem.call(ls, `cMP_` + c.id) || ``;
-            if($(`cfgBubbleCss`)) $(`cfgBubbleCss`).value = originalGetItem.call(ls, `cBubbleCss_` + c.id) || ``;
-            
-            let ctxVal = originalGetItem.call(ls, `cCtx_` + c.id);
-            if(ctxVal) $(`cfgCtx`).value = ctxVal;
-            else $(`cfgCtx`).value = originalGetItem.call(ls, `cCtx`) || 100;
-            let tVal = originalGetItem.call(ls, `cT_` + c.id);
-            if(tVal !== null) $(`cfgTime`).checked = tVal === `true`;
-            else $(`cfgTime`).checked = originalGetItem.call(ls, `cT`) !== `false`;
-            let aMemVal = originalGetItem.call(ls, `cAMem_` + c.id);
-            if(aMemVal !== null) $(`cfgAutoMem`).checked = aMemVal === `true`;
-            else $(`cfgAutoMem`).checked = originalGetItem.call(ls, `cAMem`) === `true`;
-            let memTVal = originalGetItem.call(ls, `cMemT_` + c.id);
-            if(memTVal) $(`cfgMemTrig`).value = memTVal;
-            else $(`cfgMemTrig`).value = originalGetItem.call(ls, `cMemT`) || 10;
-            let memPVal = originalGetItem.call(ls, `cMemP_` + c.id);
-            if(memPVal) $(`cfgMemPmt`).value = memPVal;
-            else $(`cfgMemPmt`).value = originalGetItem.call(ls, `cMemP`) || `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。必须准确写出当前实际参与对话的【具体人物姓名】（包括我、主角色或任何出场的NPC）。`;
-
-                        let savedHist = await localforage.getItem(`chatHistory_` + currentChatId) || originalGetItem.call(ls, `chatHistory_` + currentChatId);
-            history = savedHist ? (typeof savedHist === 'string' ? JSON.parse(savedHist) : savedHist) : [];
-            let savedAiStatus = await localforage.getItem(`aiStatus_` + currentChatId) || ls.getItem(`aiStatus_` + currentChatId);
-            aiStatus = savedAiStatus ? (typeof savedAiStatus === `string` ? JSON.parse(savedAiStatus) : savedAiStatus) : {weather:`等待连接...`,clothing:`等待连接...`,action:`等待连接...`,thought:`等待连接...`};
-            applyVis();
-            
-            if (typeof msgs !== `undefined` && msgs) msgs.innerHTML = ``;
-            
-            redrawChat();
-            showScreen(`scrRoom`);
-            setTimeout(() => msgs.scrollTop = msgs.scrollHeight, 100);
-        };
+                    div.onclick = async () => {currentChatId = c.id;$(`cfgName`).value = originalGetItem.call(ls, `cN_` + c.id) || c.name;$(`cfgRem`).value = originalGetItem.call(ls, `cR_` + c.id) || ``;$(`cfgAiP`).value = originalGetItem.call(ls, `cAP_` + c.id) || c.prompt;let ctxVal = originalGetItem.call(ls, `cCtx_` + c.id);if(ctxVal) $(`cfgCtx`).value = ctxVal;else $(`cfgCtx`).value = originalGetItem.call(ls, `cCtx`) || 100;let tVal = originalGetItem.call(ls, `cT_` + c.id);if(tVal !== null) $(`cfgTime`).checked = tVal === `true`;else $(`cfgTime`).checked = originalGetItem.call(ls, `cT`) !== `false`;let aMemVal = originalGetItem.call(ls, `cAMem_` + c.id);if(aMemVal !== null) $(`cfgAutoMem`).checked = aMemVal === `true`;else $(`cfgAutoMem`).checked = originalGetItem.call(ls, `cAMem`) === `true`;let memTVal = originalGetItem.call(ls, `cMemT_` + c.id);if(memTVal) $(`cfgMemTrig`).value = memTVal;else $(`cfgMemTrig`).value = originalGetItem.call(ls, `cMemT`) || 10;let memPVal = originalGetItem.call(ls, `cMemP_` + c.id);if(memPVal) $(`cfgMemPmt`).value = memPVal;else $(`cfgMemPmt`).value = originalGetItem.call(ls, `cMemP`) || `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。必须准确写出当前实际参与对话的【具体人物姓名】（包括我、主角色或任何出场的NPC）。`;let savedHist = await localforage.getItem(`chatHistory_` + currentChatId) || originalGetItem.call(ls, `chatHistory_` + currentChatId);history = savedHist ? (typeof savedHist === 'string' ? JSON.parse(savedHist) : savedHist) : [];let savedAiStatus = await localforage.getItem(`aiStatus_` + currentChatId) || ls.getItem(`aiStatus_` + currentChatId);aiStatus = savedAiStatus ? (typeof savedAiStatus === 'string' ? JSON.parse(savedAiStatus) : savedAiStatus) : {weather:`等待连接...`,clothing:`等待连接...`,action:`等待连接...`,thought:`等待连接...`};applyVis();if (typeof msgs !== `undefined` && msgs) msgs.innerHTML = ``;redrawChat();showScreen(`scrRoom`);setTimeout(() => msgs.scrollTop = msgs.scrollHeight, 100);};
 
 
 
