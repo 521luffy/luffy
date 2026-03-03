@@ -1793,70 +1793,45 @@ let ls = localStorage;
 let currentChatId ="default";
 let originalSetItem = ls.setItem;
 let isolatedKeys = ["chatHistory","aiStatus","bgI","aiI","cMP","cN","cR","cAP","cCtx","cT","cAMem","cMemT","cMemP","linkedWb","lastMemCount","memories", "cStatusTxt", "cStatusColor", "cSign", "cBubbleCss", "cCTon", "cCTy", "cCTm", "cCTd", "cCTh", "cCTmin"];
-let sysGetItem = ls.getItem;
-let sysRemoveItem = ls.removeItem;
 let globalMemCache = {};
-
-let originalGetItem = function(key) {
-    let fKey = typeof getRealKey === `function` ? getRealKey(key) : key;
-    if (globalMemCache && globalMemCache[fKey] !== undefined) return globalMemCache[fKey];
-    return sysGetItem.call(this, fKey) || sysGetItem.call(this, key);
-};
-
-let originalRemoveItem = function(key) {
-    let fKey = typeof getRealKey === `function` ? getRealKey(key) : key;
-    if(globalMemCache) delete globalMemCache[fKey];
-    if(typeof localforage !== `undefined`) localforage.removeItem(fKey);
-    if (fKey !== key) sysRemoveItem.call(this, fKey);
-    sysRemoveItem.call(this, key);
-};
-
-
-if($(`date`)) $(`date`).innerText = `系统数据加载中...`;
-
 localforage.iterate(function(value, key) {
     globalMemCache[key] = value;
-}).then(function() {
-    if($(`date`)) $(`date`).innerText = `准备就绪`;
-    if(typeof applyVis === `function`) applyVis();
-    if(typeof renderContacts === `function`) renderContacts();
 });
 
-function getRealKey(k) {
-    if (k.includes(`_`)) return k; 
-    let isPriv = false;
-    if (typeof isolatedKeys !== `undefined` && isolatedKeys.includes(k)) isPriv = true;
-    let kw = [`chatHistory`, `aiStatus`, `diary`, `zhihu`, `worldbook`, `wb`, `time`, `Time`];
-    for (let w of kw) { if (k.includes(w)) isPriv = true; }
-    if (isPriv) return k + `_` + currentChatId;
-    return k;
-}
-
 ls.getItem = function(key) {
-    let fKey = getRealKey(key);
+    let fKey = (isolatedKeys.includes(key) || key === `chatHistory` || key === `aiStatus`) ? (key + `_` + currentChatId) : key;
     if (globalMemCache[fKey] !== undefined) return globalMemCache[fKey];
     return originalGetItem.call(this, fKey) || originalGetItem.call(this, key);
 };
 
-
 ls.setItem = function(key, value) {
-    let fKey = getRealKey(key);
+    let fKey = (isolatedKeys.includes(key) || key === `chatHistory` || key === `aiStatus`) ? (key + `_` + currentChatId) : key;
     globalMemCache[fKey] = value;
     localforage.setItem(fKey, value);
 };
 
+
+
+
+
+let originalGetItem = ls.getItem;
+ls.getItem = function(key) {
+    if (isolatedKeys.includes(key)) {
+        let spec = originalGetItem.call(this, key + "_" + currentChatId);
+        if (spec) return spec;
+        if (currentChatId === "default") return originalGetItem.call(this, key);
+        return null;
+    }
+    return originalGetItem.call(this, key);
+};
+let originalRemoveItem = ls.removeItem;
 ls.removeItem = function(key) {
-    let fKey = getRealKey(key);
-    delete globalMemCache[fKey];
-    localforage.removeItem(fKey);
-    if (fKey !== key) {
-        originalRemoveItem.call(this, fKey);
+    if (isolatedKeys.includes(key)) {
+        originalRemoveItem.call(this, key + "_" + currentChatId);
     } else {
         originalRemoveItem.call(this, key);
     }
 };
-
-
 let history = ls.getItem("chatHistory") ? JSON.parse(ls.getItem("chatHistory")) : [];
 let aiStatus = ls.getItem("aiStatus") ? JSON.parse(ls.getItem("aiStatus")) : {weather:"等待连接...",clothing:"等待连接...",action:"等待连接...",thought:"等待连接..."};
 let wbData = ls.getItem(`wbData`) ? JSON.parse(ls.getItem(`wbData`)) : [];
