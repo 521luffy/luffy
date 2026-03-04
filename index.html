@@ -7153,27 +7153,51 @@ async function generateSpyAlbum() {
 
 
 // ==========================================
-// ====== 备忘录底层逻辑 ======
+// ====== 备忘录底层逻辑 (大仓库重构完美版) ======
 // ==========================================
 let spyMemoData = [];
 
-function loadSpyMemoData() {
-    let d = originalGetItem.call(ls, `spyMemo_` + currentChatId);
-    spyMemoData = d ? JSON.parse(d) : [];
+async function loadSpyMemoData() {
+    try {
+        let d = await localforage.getItem(`spyMemo_` + currentChatId);
+        spyMemoData = d ? (typeof d === 'string' ? JSON.parse(d) : d) : [];
+    } catch(e) {
+        spyMemoData = [];
+    }
 }
 
-function saveSpyMemoData() {
-    originalSetItem.call(ls, `spyMemo_` + currentChatId, JSON.stringify(spyMemoData));
+async function saveSpyMemoData() {
+    try {
+        await localforage.setItem(`spyMemo_` + currentChatId, JSON.stringify(spyMemoData));
+    } catch(e) {
+        alert(`保存备忘录数据失败，大仓库可能出现问题！`);
+    }
 }
 
-if($(`btnSpyMemo`)) $(`btnSpyMemo`).onclick = () => { loadSpyMemoData(); showScreen(`scrSpyMemo`); renderSpyMemo(); };
-if($(`btnSpyMemoBack`)) $(`btnSpyMemoBack`).onclick = () => { showScreen(`scrCharPhone`); $(`scrSpyMemo`).style.display = `none`; };
-if($(`btnSpyMemoDetailBack`)) $(`btnSpyMemoDetailBack`).onclick = () => { $(`scrSpyMemoDetail`).style.display = `none`; $(`scrSpyMemo`).style.display = `flex`; };
-if($(`btnSpyMemoRefresh`)) $(`btnSpyMemoRefresh`).onclick = () => { generateSpyMemo(); };
-if($(`btnSpyMemoClear`)) $(`btnSpyMemoClear`).onclick = () => {
+if($(`btnSpyMemo`)) $(`btnSpyMemo`).onclick = async () => { 
+    await loadSpyMemoData(); 
+    showScreen(`scrSpyMemo`); 
+    renderSpyMemo(); 
+};
+
+if($(`btnSpyMemoBack`)) $(`btnSpyMemoBack`).onclick = () => { 
+    showScreen(`scrCharPhone`); 
+    $(`scrSpyMemo`).style.display = `none`; 
+};
+
+if($(`btnSpyMemoDetailBack`)) $(`btnSpyMemoDetailBack`).onclick = () => { 
+    $(`scrSpyMemoDetail`).style.display = `none`; 
+    $(`scrSpyMemo`).style.display = `flex`; 
+};
+
+if($(`btnSpyMemoRefresh`)) $(`btnSpyMemoRefresh`).onclick = () => { 
+    generateSpyMemo(); 
+};
+
+if($(`btnSpyMemoClear`)) $(`btnSpyMemoClear`).onclick = async () => {
     if(confirm(`确定要清空当前角色的备忘录记录吗？`)) {
         spyMemoData = [];
-        saveSpyMemoData();
+        await saveSpyMemoData();
         renderSpyMemo();
     }
 };
@@ -7211,29 +7235,68 @@ async function generateSpyMemo() {
     let list = $(`spyMemoList`);
     list.innerHTML = `<div style="text-align:center; padding:30px; color:#576b95; font-size:14px; animation: pulse 1.5s infinite;">正在破解本地备忘录数据...</div>`;
     
+    let charId = currentChatId;
+
+    let dateStr = `今天`;
+    let timeStr = `12:00`;
+    let isCustom = originalGetItem.call(ls, `cCTon_` + charId);
+    if (isCustom === null) isCustom = originalGetItem.call(ls, `cCTon`);
+    
+    if (isCustom === `true`) {
+        let y = originalGetItem.call(ls, `cCTy_` + charId) || originalGetItem.call(ls, `cCTy`);
+        let m = originalGetItem.call(ls, `cCTm_` + charId) || originalGetItem.call(ls, `cCTm`);
+        let d = originalGetItem.call(ls, `cCTd_` + charId) || originalGetItem.call(ls, `cCTd`);
+        
+        let h = originalGetItem.call(ls, `cCTh_` + charId) || originalGetItem.call(ls, `cCTHour`);
+        if (!h) {
+            let now = new Date();
+            h = now.getHours().toString().padStart(2, `0`);
+        }
+        let min = originalGetItem.call(ls, `cCTmin_` + charId) || originalGetItem.call(ls, `cCTMinute`);
+        if (!min) {
+             let now = new Date();
+             min = now.getMinutes().toString().padStart(2, `0`);
+        }
+        
+        if (y && m && d) {
+            dateStr = y + `年` + m.padStart(2, `0`) + `月` + d.padStart(2, `0`) + `日`;
+            timeStr = h.padStart(2, `0`) + `:` + min.padStart(2, `0`);
+        } else {
+            let now = new Date();
+            dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
+            timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
+        }
+    } else {
+        let now = new Date();
+        dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
+        timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
+    }
+
     let charN = `对方`;
     let contacts = ls.getItem(`myContacts`) ? JSON.parse(ls.getItem(`myContacts`)) : [];
-    let c = contacts.find(x => String(x.id) === String(currentChatId));
+    let c = contacts.find(x => String(x.id) === String(charId));
     if(c) charN = originalGetItem.call(ls, `cN_` + c.id) || c.name;
-    if(currentChatId === `default` && !c) charN = $(`cfgName`).value || `对方`;
+    if(charId === `default` && !c) charN = $(`cfgName`).value || `对方`;
     
-    let charP = originalGetItem.call(ls, `cP_` + currentChatId) || ``; 
-    let vTime = getVirtualTime();
-    let myN = $(`cfgMyName`).value || `我`;
+    let myN = $(`cfgMyName`) ? $(`cfgMyName`).value : `我`;
+    let charP = originalGetItem.call(ls, `cP_` + charId) || ``; 
+    let charCtx = originalGetItem.call(ls, `cCtx_` + charId) || originalGetItem.call(ls, `cCtx`) || ``;
     
-    let pmt = `【绝密任务：生成伪造的手机备忘录记录】\n注意：我正在偷看主角色（${charN}）的手机备忘录！\n请扮演系统，为【${charN}】生成6条符合其身份的碎片化生活备忘录。\n当前虚拟时间：${vTime}。\n`;
+    let pmt = `【绝密任务：生成伪造的手机备忘录记录】\n注意：我正在偷看主角色（${charN}）的手机备忘录！\n请扮演系统，为【${charN}】生成6条符合其身份的碎片化生活备忘录。\n当前虚拟时间：${dateStr} ${timeStr}。\n`;
+    
     if(charP) pmt += `【${charN}的专属人设档案】：${charP}\n`; 
+    if(charCtx) pmt += `【当前世界背景与剧情设定】：${charCtx}\n`;
     
-    let specHistStr = originalGetItem.call(ls, `chatHistory_` + currentChatId) || `[]`;
+    let specHistStr = originalGetItem.call(ls, `chatHistory_` + charId) || `[]`;
     let specHist = JSON.parse(specHistStr);
-    if(currentChatId === `default` && typeof history !== 'undefined') specHist = history;
+    if(charId === `default` && typeof history !== 'undefined') specHist = history;
     let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
-    if(recentChat) pmt += `\n【近期聊天记录参考（重点用于构思未发送的草稿或待办事项）】：\n${recentChat}\n`;
     
-    pmt += `\n要求：\n1. 内容必须生活化且碎片化，强制包含以下类型：待办事项列表（购物、工作安排等）、未发送的聊天草稿（想发却没敢发的纠结话语）、隐秘的账号密码备忘（如某网站缩写加数字）、瞬间的情绪或灵感随笔。\n`;
+    if(recentChat) pmt += `\n【近期聊天剧情参考（重点用于构思未发送的草稿或待办事项，看看TA暗地里在计划什么或者纠结什么）】：\n${recentChat}\n`;
+    
+    pmt += `\n要求：\n1. 内容必须生活化且碎片化，强制包含以下类型：待办事项列表（结合剧情的工作或生活安排）、未发送的聊天草稿（想对我说却没敢发的纠结话语）、隐秘的账号密码备忘（如某网站缩写加数字）、瞬间的情绪或灵感随笔。\n`;
     pmt += `2. 时间线合理分布在近期。\n`;
-    
-    pmt += `\n严禁废话！必须且只能输出纯JSON数组，格式如下：\n[{"title":"提取内容第一句话作为粗体标题","time":"如 2026年2月25日 14:30","summary":"一段灰色的简短摘要说明","content":"备忘录的完整详细文本内容，可包含换行符"}]`;
+    pmt += `\n严禁废话！时间必须依据我提供的当前虚拟时间合理推算。必须且只能输出纯JSON数组，格式如下：\n[{"title":"提取内容第一句话作为粗体标题","time":"如 ${dateStr} 14:30 或 昨天","summary":"一段灰色的简短摘要说明","content":"备忘录的完整详细文本内容，可包含换行符"}]`;
 
     try {
         let url = pxy.includes(`chat/completions`) ? pxy : pxy.replace(/\/$/, ``) + `/chat/completions`;
@@ -7249,15 +7312,16 @@ async function generateSpyMemo() {
                 let parsed = JSON.parse(cleanRes);
                 if(Array.isArray(parsed)) {
                     spyMemoData = parsed;
-                    saveSpyMemoData(); 
+                    await saveSpyMemoData(); 
                 }
             } catch(e) { console.error(e); }
         }
-        } catch (e) {
+    } catch (e) {
         alert(`请求失败：` + e.message);
     }
     renderSpyMemo();
 }
+
 
 // ==========================================
 // ====== 网易云音乐底层逻辑 ======
