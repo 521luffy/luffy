@@ -6104,7 +6104,7 @@ let currentSecTab = `draft`;
 let isSpySecEditMode = false;
 let selSpySecItems = new Set();
 
-if($(`btnSpySecret`)) $(`btnSpySecret`).onclick = () => {
+if($(`btnSpySecret`)) $(`btnSpySecret`).onclick = async () => {
     if(!lastSpyCharId) { 
         if(typeof showCustomText === `function`) showCustomText(`请先在右上角选择要查看的角色哦！`);
         return; 
@@ -6113,12 +6113,12 @@ if($(`btnSpySecret`)) $(`btnSpySecret`).onclick = () => {
     if($(`customConfirmText`)) $(`customConfirmText`).innerText = `确定要进入极密隐私空间吗？\n（极度危险：内含角色最深层的阴暗心理和不可告人的记录，可能会引起强烈不适，是否继续？）`;
     if($(`customConfirmModal`)) $(`customConfirmModal`).style.display = `flex`;
     
-    if($(`btnCustomConfirmOk`)) $(`btnCustomConfirmOk`).onclick = () => {
+    if($(`btnCustomConfirmOk`)) $(`btnCustomConfirmOk`).onclick = async () => {
         if($(`customConfirmModal`)) $(`customConfirmModal`).style.display = `none`;
         showScreen(`scrSpySecret`);
         if($(`spySecretLockView`)) $(`spySecretLockView`).style.display = `none`; 
         if($(`spySecretMainView`)) $(`spySecretMainView`).style.display = `flex`;
-        loadSpySecret();
+        await loadSpySecret();
     };
     if($(`btnCustomConfirmCancel`)) $(`btnCustomConfirmCancel`).onclick = () => {
         if($(`customConfirmModal`)) $(`customConfirmModal`).style.display = `none`;
@@ -6148,12 +6148,26 @@ function switchSecTab(tab) {
     renderSpySecret();
 }
 
-function loadSpySecret() {
+async function loadSpySecret() {
     let key = `spySecret_` + lastSpyCharId;
-    let stored = ls.getItem(key);
-    if(stored) spySecretData = JSON.parse(stored);
-    else spySecretData = { draft: [], search: [], black: [], movie: [] };
+    try {
+        let stored = await localforage.getItem(key);
+        if(stored) spySecretData = (typeof stored === 'string' ? JSON.parse(stored) : stored);
+        else spySecretData = { draft: [], search: [], black: [], movie: [] };
+    } catch(e) {
+        spySecretData = { draft: [], search: [], black: [], movie: [] };
+    }
     switchSecTab(`draft`);
+}
+// ====== 查手机：隐私空间系统代码 (大仓库重构版 2/3) ======
+
+// 重新声明为你原版的存储函数名，确保全面兼容
+async function saveSpySecret() {
+    try {
+        await localforage.setItem(`spySecret_` + lastSpyCharId, JSON.stringify(spySecretData));
+    } catch(e) {
+        alert(`保存极密数据失败，大仓库可能出现问题！`);
+    }
 }
 
 function renderSpySecret() {
@@ -6184,7 +6198,7 @@ function renderSpySecret() {
             checkHtml = `<div class="spy-zh-check ${checkedClass}" style="border-color:#555;"></div>`;
         }
         
-                if (currentSecTab === `movie`) {
+        if (currentSecTab === `movie`) {
             card.className = `movie-card`;
             if(isSpySecEditMode && isSel) card.style.borderColor = `#b91c1c`;
             card.innerHTML = `
@@ -6212,7 +6226,6 @@ function renderSpySecret() {
             `;
         }
 
-        
         card.onclick = () => {
             if(!isSpySecEditMode) return;
             if(selSpySecItems.has(realIndex)) selSpySecItems.delete(realIndex);
@@ -6220,7 +6233,7 @@ function renderSpySecret() {
             renderSpySecret();
         };
         
-                                let btnConfront = card.querySelector(`.btn-confront`);
+        let btnConfront = card.querySelector(`.btn-confront`);
         if(btnConfront) {
             btnConfront.onclick = (e) => {
                 e.stopPropagation();
@@ -6250,7 +6263,7 @@ function renderSpySecret() {
                         showScreen(`scrRoom`);
                     }
                     
-                                                                                                    setTimeout(() => {
+                    setTimeout(() => {
                         let visualText = `🚨 【极密空间截获记录】 🚨\n━━━━━━━━━━━━━━\n${item.content}\n━━━━━━━━━━━━━━`;
                         // 加入 %%% 作为隐形分割线，大模型能看见，但屏幕渲染时会被隐形披风抹除
                         let historyText = visualText + `\n\n%%%（系统动作与提示：我刚才偷偷查了你的手机，把这条你隐藏在极密空间的记录翻出来了，并当面质问你！请你严格根据你的人设性格做出被抓包后的反应。完全遵循你原本的人设行事，不要千篇一律地道歉或反击！）`;
@@ -6258,18 +6271,15 @@ function renderSpySecret() {
                         if (typeof mkBub === 'function') mkBub(visualText, `r`); 
                         if (typeof history !== 'undefined') {
                             history.push({role: `user`, content: historyText});
+                            // 保持原样触发拦截器存入大仓库
                             ls.setItem(`chatHistory`, JSON.stringify(history));
                             if(typeof updateListPreview === 'function') updateListPreview();
                         }
                         let msgContainer = document.getElementById(`msgs`);
                         if (msgContainer) msgContainer.scrollTop = msgContainer.scrollHeight;
                     }, 350);
-
-
                 };
                 if($(`btnCustomConfirmCancel`)) $(`btnCustomConfirmCancel`).onclick = () => {
-
-
                     if($(`customConfirmModal`)) $(`customConfirmModal`).style.display = `none`;
                 };
             };
@@ -6277,10 +6287,6 @@ function renderSpySecret() {
         container.appendChild(card);
     });
 }
-
-
-
-
 
 if($(`btnEditSpySecret`)) $(`btnEditSpySecret`).onclick = () => {
     isSpySecEditMode = !isSpySecEditMode;
@@ -6297,7 +6303,7 @@ if($(`btnSelAllSpySecret`)) $(`btnSelAllSpySecret`).onclick = () => {
     renderSpySecret();
 };
 
-if($(`btnDelSpySecret`)) $(`btnDelSpySecret`).onclick = () => {
+if($(`btnDelSpySecret`)) $(`btnDelSpySecret`).onclick = async () => {
     if(selSpySecItems.size === 0) { 
         if(typeof showCustomText === `function`) showCustomText(`请先选中要销毁的内容！`);
         return; 
@@ -6305,11 +6311,13 @@ if($(`btnDelSpySecret`)) $(`btnDelSpySecret`).onclick = () => {
     if($(`customConfirmText`)) $(`customConfirmText`).innerText = `确定彻底销毁这 ` + selSpySecItems.size + ` 条极密记录吗？（物理销毁后不可恢复）`;
     if($(`customConfirmModal`)) $(`customConfirmModal`).style.display = `flex`;
     
-    if($(`btnCustomConfirmOk`)) $(`btnCustomConfirmOk`).onclick = () => {
+    if($(`btnCustomConfirmOk`)) $(`btnCustomConfirmOk`).onclick = async () => {
         if($(`customConfirmModal`)) $(`customConfirmModal`).style.display = `none`;
         let currentData = spySecretData[currentSecTab] || [];
         spySecretData[currentSecTab] = currentData.filter((_, i) => !selSpySecItems.has(i));
-        ls.setItem(`spySecret_` + lastSpyCharId, JSON.stringify(spySecretData));
+        
+        await saveSpySecret(); // 接入大仓库保存
+        
         selSpySecItems.clear();
         
         if (spySecretData[currentSecTab].length === 0) {
@@ -6323,9 +6331,7 @@ if($(`btnDelSpySecret`)) $(`btnDelSpySecret`).onclick = () => {
         if($(`customConfirmModal`)) $(`customConfirmModal`).style.display = `none`;
     };
 };
-
-
-// 核心挖掘函数，支持传入指定的板块进行挖掘
+// ====== 查手机：隐私空间系统代码 (大仓库重构版 3/3 - 上半部分) ======
 async function fetchSpySecretData(targetTab) {
     let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value;
     if(!pxy || !key || !mod) {
@@ -6334,8 +6340,52 @@ async function fetchSpySecretData(targetTab) {
     }
     
     let charId = lastSpyCharId;
-    let baseSys = getSpyBasePrompt(charId);
-    let myN = $(`cfgMyName`).value || `我`;
+    
+    let dateStr = `今天`;
+    let timeStr = `12:00`;
+    let isCustom = originalGetItem.call(ls, `cCTon_` + charId);
+    if (isCustom === null) isCustom = originalGetItem.call(ls, `cCTon`);
+    
+    if (isCustom === `true`) {
+        let y = originalGetItem.call(ls, `cCTy_` + charId) || originalGetItem.call(ls, `cCTy`);
+        let m = originalGetItem.call(ls, `cCTm_` + charId) || originalGetItem.call(ls, `cCTm`);
+        let d = originalGetItem.call(ls, `cCTd_` + charId) || originalGetItem.call(ls, `cCTd`);
+        
+        let h = originalGetItem.call(ls, `cCTh_` + charId) || originalGetItem.call(ls, `cCTHour`);
+        if (!h) {
+            let now = new Date();
+            h = now.getHours().toString().padStart(2, `0`);
+        }
+        let min = originalGetItem.call(ls, `cCTmin_` + charId) || originalGetItem.call(ls, `cCTMinute`);
+        if (!min) {
+             let now = new Date();
+             min = now.getMinutes().toString().padStart(2, `0`);
+        }
+        
+        if (y && m && d) {
+            dateStr = y + `年` + m.padStart(2, `0`) + `月` + d.padStart(2, `0`) + `日`;
+            timeStr = h.padStart(2, `0`) + `:` + min.padStart(2, `0`);
+        } else {
+            let now = new Date();
+            dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
+            timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
+        }
+    } else {
+        let now = new Date();
+        dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
+        timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
+    }
+
+    let baseSys = typeof getSpyBasePrompt === `function` ? getSpyBasePrompt(charId) : ``;
+    let charN = originalGetItem.call(ls, `cN_` + charId) || `对方`;
+    let myN = $(`cfgMyName`) ? $(`cfgMyName`).value : `我`;
+    let charP = originalGetItem.call(ls, `cP_` + charId) || ``;
+    let charCtx = originalGetItem.call(ls, `cCtx_` + charId) || originalGetItem.call(ls, `cCtx`) || ``;
+    
+    let specHistStr = originalGetItem.call(ls, `chatHistory_` + charId) || `[]`;
+    let specHist = JSON.parse(specHistStr);
+    if(charId === `default` && typeof history !== `undefined`) specHist = history;
+    let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
     
     let tabDesc = ``;
     if(targetTab === `draft`) {
@@ -6345,10 +6395,15 @@ async function fetchSpySecretData(targetTab) {
     } else if(targetTab === `black`) {
         tabDesc = `【当前任务：挖掘黑名单短信】\n生成5条被你拉黑的人（可能是疯狂的前任、骚扰者或仇人）发给你的短信记录。\n必须体现出对方的偏执疯狂，或者包含不为人知的秘密。`;
     } else if(targetTab === `movie`) {
-        tabDesc = `【当前任务：挖掘成人向影片记录】\n生成4部符合你隐藏XP和特殊癖好的【极度劲爆】的成人向影片标题。\n【极度重要规则】：\n1. 格式强制：必须模仿真实小网站或私密硬盘命名，必须带有【第一视角】、【私密偷拍】、【强制服从】、【办公室系列】等专属标签前缀。\n2. 词汇大封杀：严禁使用文艺、隐喻或唯美词汇（如：交织、暗流、深渊、沉沦、羁绊等）。必须使用最直白、粗暴、露骨的大白话描写场景和动作！\n3. 极端代入：剧情必须严重影射你对${myN}的极端私密幻想！比如死对头就是调教报复，单相思就是病娇视奸。标题中可直接使用代词或强烈暗示${myN}的身份。\n注意：只生成4条记录！`;
+        tabDesc = `【当前任务：挖掘成人向影片记录】\n生成4部符合你隐藏XP和特殊癖好的【极度劲爆】的成人向影片标题。\n【极度重要规则】：\n1. 格式强制：必须模仿真实小网站或私密硬盘命名，必须带有【第一视角】、【私密偷拍】、【强制服从】、【办公室系列】等专属标签前缀。\n2. 词汇大封杀：严禁使用文艺、隐喻或唯美词汇。必须使用最直白、粗暴、露骨的大白话描写场景和动作！\n3. 极端代入：剧情必须严重影射你对${myN}的极端私密幻想！比如死对头就是调教报复，单相思就是病娇视奸。标题中可直接使用代词或强烈暗示${myN}的身份。\n注意：只生成4条记录！`;
     }
 
-    let sys = baseSys + `${tabDesc}\n\n必须严格按以下格式输出（条目之间用 --- 分隔）：\n时间：(如 凌晨3:15 或 昨天深夜)\n内容：(具体的草稿内容，或搜索词，或短信内容，或影片标题)`;
+    let sys = baseSys + `\n当前虚拟时间：${dateStr} ${timeStr}。\n`;
+    if(charP) sys += `【${charN}的专属人设档案】：${charP}\n`;
+    if(charCtx) sys += `【当前世界背景与剧情设定】：${charCtx}\n`;
+    if(recentChat) sys += `\n【近期聊天剧情参考（重点挖掘TA最深层的心理阴暗面和执念）：\n${recentChat}\n`;
+
+    sys += `\n${tabDesc}\n\n必须严格按以下格式输出（条目之间用 --- 分隔）：\n时间：(如 凌晨3:15 或 昨天深夜)\n内容：(具体的草稿内容，或搜索词，或短信内容，或影片标题)`;
 
     try {
         let url = pxy.includes(`chat/completions`) ? pxy : pxy.replace(/\/$/, ``) + `/chat/completions`;
@@ -6376,13 +6431,14 @@ async function fetchSpySecretData(targetTab) {
             if(newRecords.length > 0) {
                 if(!spySecretData[targetTab]) spySecretData[targetTab] = [];
                 spySecretData[targetTab] = spySecretData[targetTab].concat(newRecords);
-                ls.setItem(`spySecret_` + charId, JSON.stringify(spySecretData));
+                await saveSpySecret(); 
                 return newRecords.length;
             }
         }
     } catch(e) { console.error(e); }
     return 0;
 }
+// ====== 查手机：隐私空间系统代码 (大仓库重构版 3/3 - 下半部分) ======
 
 // 按钮1：追加挖掘当前版块
 if($(`btnGenSpySecret`)) $(`btnGenSpySecret`).onclick = async () => {
@@ -6411,7 +6467,7 @@ if($(`btnRegenSpySecret`)) $(`btnRegenSpySecret`).onclick = async () => {
     
     // 先清空当前版块旧数据
     spySecretData[currentSecTab] = [];
-    ls.setItem(`spySecret_` + lastSpyCharId, JSON.stringify(spySecretData));
+    await saveSpySecret(); // 接入大仓库保存
     renderSpySecret();
     
     let count = await fetchSpySecretData(currentSecTab);
@@ -6443,7 +6499,7 @@ if($(`btnGenAllSpySecret`)) $(`btnGenAllSpySecret`).onclick = async () => {
         
         // 清空所有版块数据
         spySecretData = { draft: [], search: [], black: [], movie: [] };
-        ls.setItem(`spySecret_` + lastSpyCharId, JSON.stringify(spySecretData));
+        await saveSpySecret(); // 接入大仓库保存
         renderSpySecret();
         
         // 依次排队请求，防止大模型接口并发超载卡死
@@ -6500,7 +6556,7 @@ if(!window.domObserverHacked) {
     observer.observe(document.body, { childList: true, subtree: true });
     
     setTimeout(() => {
-                let walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+        let walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
         let n;
         while(n = walk.nextNode()) {
             if(n.nodeValue.includes('%%%')) {
@@ -6509,6 +6565,7 @@ if(!window.domObserverHacked) {
         }
     }, 500);
 }
+
 
 // ==========================================
 // ====== 微信查手机底层逻辑 (全自动静默完美版) ======
