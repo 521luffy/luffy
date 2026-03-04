@@ -7707,41 +7707,61 @@ async function generateSpyMeituan() {
 
 
 // ==========================================
-// ====== 足迹记录底层逻辑 ======
+// ====== 足迹记录底层逻辑 (大仓库重构完美版) ======
 // ==========================================
 let spyFootprintData = [];
 
-function loadSpyFootprintData() {
-    let d = originalGetItem.call(ls, `spyFootprint_` + currentChatId);
-    spyFootprintData = d ? JSON.parse(d) : [];
+async function loadSpyFootprintData() {
+    try {
+        let d = await localforage.getItem(`spyFootprint_` + currentChatId);
+        spyFootprintData = d ? (typeof d === 'string' ? JSON.parse(d) : d) : [];
+    } catch(e) {
+        spyFootprintData = [];
+    }
 }
 
-function saveSpyFootprintData() {
-    originalSetItem.call(ls, `spyFootprint_` + currentChatId, JSON.stringify(spyFootprintData));
+async function saveSpyFootprintData() {
+    try {
+        await localforage.setItem(`spyFootprint_` + currentChatId, JSON.stringify(spyFootprintData));
+    } catch(e) {
+        alert(`保存足迹数据失败，大仓库可能出现问题！`);
+    }
 }
 
-if($(`btnSpyFootprint`)) $(`btnSpyFootprint`).onclick = () => { loadSpyFootprintData(); showScreen(`scrSpyFootprint`); renderSpyFootprint(); };
-if($(`btnSpyFootprintBack`)) $(`btnSpyFootprintBack`).onclick = () => { showScreen(`scrCharPhone`); $(`scrSpyFootprint`).style.display = `none`; };
-if($(`btnSpyFootprintRefresh`)) $(`btnSpyFootprintRefresh`).onclick = () => { generateSpyFootprint(); };
-if($(`btnSpyFootprintClear`)) $(`btnSpyFootprintClear`).onclick = () => {
+if($(`btnSpyFootprint`)) $(`btnSpyFootprint`).onclick = async () => { 
+    await loadSpyFootprintData(); 
+    showScreen(`scrSpyFootprint`); 
+    renderSpyFootprint(); 
+};
+
+if($(`btnSpyFootprintBack`)) $(`btnSpyFootprintBack`).onclick = () => { 
+    showScreen(`scrCharPhone`); 
+    $(`scrSpyFootprint`).style.display = `none`; 
+};
+
+if($(`btnSpyFootprintRefresh`)) $(`btnSpyFootprintRefresh`).onclick = () => { 
+    generateSpyFootprint(); 
+};
+
+if($(`btnSpyFootprintClear`)) $(`btnSpyFootprintClear`).onclick = async () => {
     if(confirm(`确定要清空当前角色的足迹数据吗？`)) {
         spyFootprintData = [];
-        saveSpyFootprintData();
+        await saveSpyFootprintData();
         renderSpyFootprint();
     }
 };
 
-// 提取当前界面的精准日期
+// 提取当前界面的精准日期（已修复自定义时间逻辑）
 function getFootprintDateStr() {
-    // 改为直接从本地缓存读取当前角色的独立设置，不再依赖隐藏的DOM节点
-    let isCustom = ls.getItem(`cCTon`) === `true`;
+    let charId = currentChatId;
+    let isCustom = originalGetItem.call(ls, `cCTon_` + charId);
+    if (isCustom === null) isCustom = originalGetItem.call(ls, `cCTon`);
     
-    if(isCustom) {
-        let cy = ls.getItem(`cCTy`) || new Date().getFullYear();
-        let cm = ls.getItem(`cCTm`) || (new Date().getMonth() + 1);
-        let cd = ls.getItem(`cCTd`) || new Date().getDate();
+    if(isCustom === `true`) {
+        let cy = originalGetItem.call(ls, `cCTy_` + charId) || originalGetItem.call(ls, `cCTy`) || new Date().getFullYear();
+        let cm = originalGetItem.call(ls, `cCTm_` + charId) || originalGetItem.call(ls, `cCTm`) || (new Date().getMonth() + 1);
+        let cd = originalGetItem.call(ls, `cCTd_` + charId) || originalGetItem.call(ls, `cCTd`) || new Date().getDate();
         
-        // 使用独立数据重新计算星期几
         let dateObj = new Date();
         dateObj.setFullYear(parseInt(cy), parseInt(cm) - 1, parseInt(cd));
         let days = [`星期日`,`星期一`,`星期二`,`星期三`,`星期四`,`星期五`,`星期六`];
@@ -7754,7 +7774,6 @@ function getFootprintDateStr() {
         return d.getFullYear() + `年` + (d.getMonth()+1) + `月` + d.getDate() + `日 星期` + days[d.getDay()];
     }
 }
-
 
 function renderSpyFootprint() {
     let list = $(`spyFootprintList`);
@@ -7771,20 +7790,26 @@ function renderSpyFootprint() {
     spyFootprintData.forEach(item => {
         let div = document.createElement(`div`);
         div.className = `spy-fp-item`;
+        
+        // 防符号渗透
+        let cleanTime = item.time ? item.time.replace(/<\/?strong>|<\/?b>|\*\*/gi, '') : '';
+        let cleanLoc = item.location ? item.location.replace(/<\/?strong>|<\/?b>|\*\*/gi, '') : '';
+        let cleanDur = item.duration ? item.duration.replace(/<\/?strong>|<\/?b>|\*\*/gi, '') : '';
+        let cleanTrans = item.transport ? item.transport.replace(/<\/?strong>|<\/?b>|\*\*/gi, '') : '';
+        
         div.innerHTML = `
-            <div class="spy-fp-time">${escapeHtml(item.time)}</div>
+            <div class="spy-fp-time">${escapeHtml(cleanTime)}</div>
             <div class="spy-fp-dot"></div>
             <div class="spy-fp-line"></div>
             <div class="spy-fp-content">
-                <div class="spy-fp-location">${escapeHtml(item.location)}</div>
-                <div class="spy-fp-duration">停留：${escapeHtml(item.duration)}</div>
-                <div class="spy-fp-transport">${escapeHtml(item.transport)}</div>
+                <div class="spy-fp-location">${escapeHtml(cleanLoc)}</div>
+                <div class="spy-fp-duration">停留：${escapeHtml(cleanDur)}</div>
+                <div class="spy-fp-transport">${escapeHtml(cleanTrans)}</div>
             </div>
         `;
         list.appendChild(div);
     });
 }
-
 
 async function generateSpyFootprint() {
     let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value;
@@ -7793,43 +7818,40 @@ async function generateSpyFootprint() {
     let list = $(`spyFootprintList`);
     list.innerHTML = `<div style="text-align:center; padding:30px; color:#0bc15f; font-size:14px; animation: pulse 1.5s infinite;">正在破解卫星定位数据...</div>`;
 
+    let charId = currentChatId;
     let charN = `对方`;
     let contacts = ls.getItem(`myContacts`) ? JSON.parse(ls.getItem(`myContacts`)) : [];
-    let c = contacts.find(x => String(x.id) === String(currentChatId));
+    let c = contacts.find(x => String(x.id) === String(charId));
     if(c) charN = originalGetItem.call(ls, `cN_` + c.id) || c.name;
-    if(currentChatId === `default` && !c) charN = $(`cfgName`).value || `对方`;
+    if(charId === `default` && !c) charN = $(`cfgName`).value || `对方`;
 
-    let charP = originalGetItem.call(ls, `cAP_` + currentChatId) || originalGetItem.call(ls, `cAP`) || ``; 
-    let myN = $(`cfgMyName`).value || `我`;
+    let charP = originalGetItem.call(ls, `cP_` + charId) || ``; 
+    let charCtx = originalGetItem.call(ls, `cCtx_` + charId) || originalGetItem.call(ls, `cCtx`) || ``;
+    let myN = $(`cfgMyName`) ? $(`cfgMyName`).value : `我`;
     
-    // 调用第一部分写好的抓取函数获取最新时间
+    // 获取最新时间字符串
     let vTime = getFootprintDateStr();
 
     let pmt = `【最高优先级绝密任务：生成伪造的手机定位足迹记录】\n注意：我正在偷看主角色（${charN}）的手机足迹！\n请扮演定位系统，为【${charN}】生成当天的行程轨迹（5到7个节点）。当前日期：${vTime}。\n`;
+    
     if(charP) pmt += `【${charN}的专属人设档案（务必逐字仔细阅读并严格遵守）】：${charP}\n`; 
+    if(charCtx) pmt += `【当前世界背景与剧情设定（包含常驻城市和关键地点）】：${charCtx}\n`;
 
-    let wbStr = originalGetItem.call(ls, `linkedWb_` + currentChatId) || originalGetItem.call(ls, `linkedWb`) || `[]`;
-    let curWb = JSON.parse(wbStr);
-    let wbData = ls.getItem(`wbData`) ? JSON.parse(ls.getItem(`wbData`)) : [];
-    let wbTexts = [];
-    wbData.forEach(w => { if(w.type === `global` || curWb.includes(w.id)) wbTexts.push(w.content); });
-    if(wbTexts.length > 0) pmt += `【世界观与背景设定扩展】：\n` + wbTexts.join(`\n`) + `\n`;
-
-    let specHistStr = originalGetItem.call(ls, `chatHistory_` + currentChatId) || `[]`;
+    let specHistStr = originalGetItem.call(ls, `chatHistory_` + charId) || `[]`;
     let specHist = JSON.parse(specHistStr);
-    if(currentChatId === `default` && typeof history !== 'undefined') specHist = history;
+    if(charId === `default` && typeof history !== 'undefined') specHist = history;
     let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
-    if(recentChat) pmt += `\n【近期聊天剧情参考（重点用于推断当前正在发生的事情和最终位置）：\n${recentChat}\n`;
+    if(recentChat) pmt += `\n【近期聊天剧情参考（绝对核心：重点用于推断当前正在发生的事情和最终位置）：\n${recentChat}\n`;
 
     pmt += `\n要求：\n1. 必须形成时间闭环：从早晨出门，到白天活动，最后到当前位置，按时间顺序严格排列。\n`;
     pmt += `2. 强制最新剧情对接：足迹的最后一个时间节点，必须且只能是最新聊天记录里${charN}当前所处的具体位置！如果聊天记录里${charN}在你（${myN}）家拉扯，那最后一个地点必须明确写出所在区或商圈加${myN}的住处；如果在路上，就是具体的路名。前面节点必须根据最终位置倒推。\n`;
     pmt += `3. 尊重原生设定（拒绝偷懒和换名）：必须扫描档案和世界书设定！如果档案里写了具体学校名称（如三中）或特定地点，绝对禁止自动替换成二中或其他通用名字！必须原样照搬设定里的名字！\n`;
     pmt += `4. 中国式作息与性格匹配（最高优先级）：必须根据${charN}的档案性格来安排行程！如果是乖巧普通的中国高中生，下午绝对不可能三四点出去玩，必须安排晚自习到晚上九点或十点才放学！但如果档案明确写了是坏学生、不良少年或者有特定娱乐设定，完全可以不受限制地去酒吧、网吧、逃课等。\n`;
-    pmt += `5. 强效地理围栏：必须提取档案里的常驻城市！写了青岛就必须在青岛市内，绝对禁止跨省瞬移！\n`;
+    pmt += `5. 强效地理围栏：必须提取档案或世界书里的常驻城市！写了青岛就必须在青岛市内，绝对禁止跨省瞬移！\n`;
     pmt += `6. 地点固定命名法则：所有涉及家或住处的地点，必须强制使用所在区或商圈加${charN}的住处、或者所在区或商圈加${myN}的住处的固定格式来命名。\n`;
     pmt += `7. 交通工具匹配：普通人只能步行、骑行或公交地铁。除非档案明确写了家境富裕，否则禁止出现司机接送或专车。\n`;
 
-    pmt += `\n严禁废话！必须且只能输出纯JSON数组，格式如下：\n[{"time":"08:30","location":"具体地点名称","duration":"2小时 或 10分钟","transport":"步行 或 司机接送 或 航班MU5103"}]`;
+    pmt += `\n严禁废话！绝对禁止在生成的任何文本中使用加粗（如**）、HTML标签（如<strong>）等强调符号！必须且只能输出纯JSON数组，格式如下：\n[{"time":"08:30","location":"具体地点名称","duration":"2小时 或 10分钟","transport":"步行 或 司机接送 或 航班MU5103"}]`;
 
     try {
         let url = pxy.includes(`chat/completions`) ? pxy : pxy.replace(/\/$/, ``) + `/chat/completions`;
@@ -7845,16 +7867,16 @@ async function generateSpyFootprint() {
                 let parsed = JSON.parse(cleanRes);
                 if(Array.isArray(parsed)) {
                     spyFootprintData = parsed;
-                    saveSpyFootprintData(); 
+                    await saveSpyFootprintData(); 
                 }
             } catch(e) { console.error(e); }
         }
     } catch (e) {
         alert(`请求失败：` + e.message);
     }
-        // 生成完成后调用渲染函数，即可同步刷新顶部的显示日期
     renderSpyFootprint();
 }
+
 
 // ==========================================
 // ====== 钱包账单底层逻辑 ======
