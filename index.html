@@ -6992,26 +6992,46 @@ async function generateSpyCall() {
 
 
 // ==========================================
-// ====== 相册底层逻辑 ======
+// ====== 相册底层逻辑 (大仓库重构完美版) ======
 // ==========================================
 let spyAlbumData = [];
 
-function loadSpyAlbumData() {
-    let d = originalGetItem.call(ls, `spyAlbum_` + currentChatId);
-    spyAlbumData = d ? JSON.parse(d) : [];
+async function loadSpyAlbumData() {
+    try {
+        let d = await localforage.getItem(`spyAlbum_` + currentChatId);
+        spyAlbumData = d ? (typeof d === 'string' ? JSON.parse(d) : d) : [];
+    } catch(e) {
+        spyAlbumData = [];
+    }
 }
 
-function saveSpyAlbumData() {
-    originalSetItem.call(ls, `spyAlbum_` + currentChatId, JSON.stringify(spyAlbumData));
+async function saveSpyAlbumData() {
+    try {
+        await localforage.setItem(`spyAlbum_` + currentChatId, JSON.stringify(spyAlbumData));
+    } catch(e) {
+        alert(`保存相册数据失败，大仓库可能出现问题！`);
+    }
 }
 
-if($(`btnSpyAlbum`)) $(`btnSpyAlbum`).onclick = () => { loadSpyAlbumData(); showScreen(`scrSpyAlbum`); renderSpyAlbum(); };
-if($(`btnSpyAlbumBack`)) $(`btnSpyAlbumBack`).onclick = () => { showScreen(`scrCharPhone`); $(`scrSpyAlbum`).style.display = `none`; };
-if($(`btnSpyAlbumRefresh`)) $(`btnSpyAlbumRefresh`).onclick = () => { generateSpyAlbum(); };
-if($(`btnSpyAlbumClear`)) $(`btnSpyAlbumClear`).onclick = () => {
+if($(`btnSpyAlbum`)) $(`btnSpyAlbum`).onclick = async () => { 
+    await loadSpyAlbumData(); 
+    showScreen(`scrSpyAlbum`); 
+    renderSpyAlbum(); 
+};
+
+if($(`btnSpyAlbumBack`)) $(`btnSpyAlbumBack`).onclick = () => { 
+    showScreen(`scrCharPhone`); 
+    $(`scrSpyAlbum`).style.display = `none`; 
+};
+
+if($(`btnSpyAlbumRefresh`)) $(`btnSpyAlbumRefresh`).onclick = () => { 
+    generateSpyAlbum(); 
+};
+
+if($(`btnSpyAlbumClear`)) $(`btnSpyAlbumClear`).onclick = async () => {
     if(confirm(`确定要清空当前角色的相册记录吗？`)) {
         spyAlbumData = [];
-        saveSpyAlbumData();
+        await saveSpyAlbumData();
         renderSpyAlbum();
     }
 };
@@ -7044,29 +7064,68 @@ async function generateSpyAlbum() {
     let list = $(`spyAlbumList`);
     list.innerHTML = `<div style="text-align:center; padding:30px; color:#576b95; font-size:14px; grid-column: 1 / -1; animation: pulse 1.5s infinite;">正在破解云端相册数据...</div>`;
     
+    let charId = currentChatId;
+
+    let dateStr = `今天`;
+    let timeStr = `12:00`;
+    let isCustom = originalGetItem.call(ls, `cCTon_` + charId);
+    if (isCustom === null) isCustom = originalGetItem.call(ls, `cCTon`);
+    
+    if (isCustom === `true`) {
+        let y = originalGetItem.call(ls, `cCTy_` + charId) || originalGetItem.call(ls, `cCTy`);
+        let m = originalGetItem.call(ls, `cCTm_` + charId) || originalGetItem.call(ls, `cCTm`);
+        let d = originalGetItem.call(ls, `cCTd_` + charId) || originalGetItem.call(ls, `cCTd`);
+        
+        let h = originalGetItem.call(ls, `cCTh_` + charId) || originalGetItem.call(ls, `cCTHour`);
+        if (!h) {
+            let now = new Date();
+            h = now.getHours().toString().padStart(2, `0`);
+        }
+        let min = originalGetItem.call(ls, `cCTmin_` + charId) || originalGetItem.call(ls, `cCTMinute`);
+        if (!min) {
+             let now = new Date();
+             min = now.getMinutes().toString().padStart(2, `0`);
+        }
+        
+        if (y && m && d) {
+            dateStr = y + `年` + m.padStart(2, `0`) + `月` + d.padStart(2, `0`) + `日`;
+            timeStr = h.padStart(2, `0`) + `:` + min.padStart(2, `0`);
+        } else {
+            let now = new Date();
+            dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
+            timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
+        }
+    } else {
+        let now = new Date();
+        dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
+        timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
+    }
+
     let charN = `对方`;
     let contacts = ls.getItem(`myContacts`) ? JSON.parse(ls.getItem(`myContacts`)) : [];
-    let c = contacts.find(x => String(x.id) === String(currentChatId));
+    let c = contacts.find(x => String(x.id) === String(charId));
     if(c) charN = originalGetItem.call(ls, `cN_` + c.id) || c.name;
-    if(currentChatId === `default` && !c) charN = $(`cfgName`).value || `对方`;
+    if(charId === `default` && !c) charN = $(`cfgName`).value || `对方`;
     
-    let charP = originalGetItem.call(ls, `cP_` + currentChatId) || ``; 
+    let charP = originalGetItem.call(ls, `cP_` + charId) || ``; 
+    let charCtx = originalGetItem.call(ls, `cCtx_` + charId) || originalGetItem.call(ls, `cCtx`) || ``;
     
-    let pmt = `【绝密任务：生成伪造的手机相册记录】\n注意：我正在偷看主角色（${charN}）的手机相册！\n请扮演系统，为【${charN}】生成8张极具故事感的照片描述。\n`;
+    let pmt = `【绝密任务：生成伪造的手机相册记录】\n注意：我正在偷看主角色（${charN}）的手机相册！\n请扮演系统，为【${charN}】生成8张极具故事感的照片描述。\n当前虚拟时间：${dateStr} ${timeStr}。\n`;
     if(charP) pmt += `【${charN}的专属人设档案】：${charP}\n`; 
+    if(charCtx) pmt += `【当前世界背景与剧情设定】：${charCtx}\n`;
     
     pmt += `\n要求：\n1. 请生成正好8条数据，代表8张照片。\n`;
     pmt += `2. 时间跨度分布：2张是童年时期的回忆，2张是学生时代或特定过去阶段的留影，剩下4张严格贴合近期的生活状态或主线剧情抓拍。\n`;
     pmt += `3. 文字描述要充满画面感，能反映出${charN}在不同时期的心境、经历或周围的人事物。\n`;
     
-    let specHistStr = originalGetItem.call(ls, `chatHistory_` + currentChatId) || `[]`;
+    let myN = $(`cfgMyName`) ? $(`cfgMyName`).value : `我`;
+    let specHistStr = originalGetItem.call(ls, `chatHistory_` + charId) || `[]`;
     let specHist = JSON.parse(specHistStr);
-    let myN = $(`cfgMyName`).value || `我`;
-    if(currentChatId === `default` && typeof history !== 'undefined') specHist = history;
+    if(charId === `default` && typeof history !== 'undefined') specHist = history;
     let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
-    if(recentChat) pmt += `\n【近期聊天记录参考（用于构思近期的4张照片）】：\n${recentChat}\n`;
+    if(recentChat) pmt += `\n【近期聊天记录参考（用于构思近期的4张照片，看看TA最近经历了什么、去过哪里、见过谁，拍下与之相关的照片）】：\n${recentChat}\n`;
 
-    pmt += `\n严禁废话！必须且只能输出纯JSON数组，格式如下：\n[{"time":"如 2008年夏 / 昨天下午","desc":"一段走心且具体的照片画面描述"}]`;
+    pmt += `\n严禁废话！时间必须依据我提供的当前虚拟时间合理推算。必须且只能输出纯JSON数组，格式如下：\n[{"time":"如 2008年夏 / 昨天下午","desc":"一段走心且具体的照片画面描述"}]`;
 
     try {
         let url = pxy.includes(`chat/completions`) ? pxy : pxy.replace(/\/$/, ``) + `/chat/completions`;
@@ -7082,15 +7141,16 @@ async function generateSpyAlbum() {
                 let parsed = JSON.parse(cleanRes);
                 if(Array.isArray(parsed)) {
                     spyAlbumData = parsed;
-                    saveSpyAlbumData(); 
+                    await saveSpyAlbumData(); 
                 }
             } catch(e) { console.error(e); }
         }
-        } catch (e) {
+    } catch (e) {
         alert(`请求失败：` + e.message);
     }
     renderSpyAlbum();
 }
+
 
 // ==========================================
 // ====== 备忘录底层逻辑 ======
