@@ -5730,10 +5730,17 @@ if($(`btnGenSpyDiary`)) $(`btnGenSpyDiary`).onclick = async () => {
     
     let charId = lastSpyCharId;
     
-    // 强制精准抓取自定义时间，杜绝大模型乱编
     let dateStr = `今天`;
     if ($(`cfgCustomTime`) && $(`cfgCustomTime`).checked) {
-        dateStr = $(`ctYear`).value + `年` + $(`ctMonth`).value + `月` + $(`ctDay`).value + `日`;
+        let y = $(`ctYear`).value;
+        let m = $(`ctMonth`).value;
+        let d = $(`ctDay`).value;
+        if(y && m && d) {
+            dateStr = y + `年` + m.padStart(2, `0`) + `月` + d.padStart(2, `0`) + `日`;
+        } else {
+            let now = new Date();
+            dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
+        }
     } else {
         let now = new Date();
         dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
@@ -5782,6 +5789,7 @@ if($(`btnGenSpyDiary`)) $(`btnGenSpyDiary`).onclick = async () => {
     $(`btnGenSpyDiary`).innerText = origText;
     $(`btnGenSpyDiary`).style.pointerEvents = `auto`;
 };
+
 
 
 
