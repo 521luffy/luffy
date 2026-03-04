@@ -5805,10 +5805,10 @@ let currentZhTab = `search`;
 let isSpyZhEditMode = false;
 let selSpyZhItems = new Set();
 
-if($(`btnSpyZhihu`)) $(`btnSpyZhihu`).onclick = () => {
+if($(`btnSpyZhihu`)) $(`btnSpyZhihu`).onclick = async () => {
     if(!lastSpyCharId) { alert(`请先在查手机桌面右上角选择要查看的角色哦！`); return; }
     showScreen(`scrSpyZhihu`);
-    loadSpyZhihu();
+    await loadSpyZhihu();
 };
 
 if($(`btnSpyZhihuBack`)) $(`btnSpyZhihuBack`).onclick = () => {
@@ -5844,16 +5844,27 @@ function switchZhTab(tab) {
     renderSpyZhihu();
 }
 
-
-function loadSpyZhihu() {
+async function loadSpyZhihu() {
     let key = `spyZhihu_` + lastSpyCharId;
-    let stored = ls.getItem(key);
-    if(stored) {
-        spyZhihuData = JSON.parse(stored);
-    } else {
+    try {
+        let stored = await localforage.getItem(key);
+        if(stored) {
+            spyZhihuData = typeof stored === 'string' ? JSON.parse(stored) : stored;
+        } else {
+            spyZhihuData = { search: [], fav: [], ask: [] };
+        }
+    } catch(e) {
         spyZhihuData = { search: [], fav: [], ask: [] };
     }
     switchZhTab(`search`);
+}
+
+async function saveSpyZhihu() {
+    try {
+        await localforage.setItem(`spyZhihu_` + lastSpyCharId, JSON.stringify(spyZhihuData));
+    } catch(e) {
+        alert(`保存知乎数据失败，大仓库可能出现问题！`);
+    }
 }
 
 function renderSpyZhihu() {
@@ -5916,7 +5927,6 @@ function renderSpyZhihu() {
     });
 }
 
-
 if($(`btnEditSpyZhihu`)) $(`btnEditSpyZhihu`).onclick = () => {
     isSpyZhEditMode = !isSpyZhEditMode;
     $(`btnEditSpyZhihu`).innerText = isSpyZhEditMode ? `完成` : `管理`;
@@ -5932,17 +5942,16 @@ if($(`btnSelAllSpyZhihu`)) $(`btnSelAllSpyZhihu`).onclick = () => {
     renderSpyZhihu();
 };
 
-if($(`btnDelSpyZhihu`)) $(`btnDelSpyZhihu`).onclick = () => {
+if($(`btnDelSpyZhihu`)) $(`btnDelSpyZhihu`).onclick = async () => {
     if(selSpyZhItems.size === 0) { alert(`请先选中要删除的内容哦！`); return; }
     if(confirm(`确定删除这 ` + selSpyZhItems.size + ` 条记录吗？`)) {
         let currentData = spyZhihuData[currentZhTab] || [];
         spyZhihuData[currentZhTab] = currentData.filter((_, i) => !selSpyZhItems.has(i));
-        ls.setItem(`spyZhihu_` + lastSpyCharId, JSON.stringify(spyZhihuData));
+        await saveSpyZhihu();
         selSpyZhItems.clear();
         renderSpyZhihu();
     }
 };
-
 if($(`btnGenSpyZhihu`)) $(`btnGenSpyZhihu`).onclick = async () => {
     let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value;
     if(!pxy || !key || !mod) { alert(`请先在主设置中配置好API网络哦！`); return; }
@@ -5950,12 +5959,53 @@ if($(`btnGenSpyZhihu`)) $(`btnGenSpyZhihu`).onclick = async () => {
     let targetTab = currentZhTab; 
     let charId = lastSpyCharId;
     
-    // 调用刚刚写好的全局防崩坏基础指令
-    let baseSys = getSpyBasePrompt(charId);
+    let dateStr = `今天`;
+    let timeStr = `12:00`;
+    let isCustom = originalGetItem.call(ls, `cCTon_` + charId);
+    if (isCustom === null) isCustom = originalGetItem.call(ls, `cCTon`);
     
-    // 仅仅获取需要的名字用于匿名生成
+    if (isCustom === `true`) {
+        let y = originalGetItem.call(ls, `cCTy_` + charId) || originalGetItem.call(ls, `cCTy`);
+        let m = originalGetItem.call(ls, `cCTm_` + charId) || originalGetItem.call(ls, `cCTm`);
+        let d = originalGetItem.call(ls, `cCTd_` + charId) || originalGetItem.call(ls, `cCTd`);
+        
+        let h = originalGetItem.call(ls, `cCTh_` + charId) || originalGetItem.call(ls, `cCTHour`);
+        if (!h) {
+            let now = new Date();
+            h = now.getHours().toString().padStart(2, `0`);
+        }
+        let min = originalGetItem.call(ls, `cCTmin_` + charId) || originalGetItem.call(ls, `cCTMinute`);
+        if (!min) {
+             let now = new Date();
+             min = now.getMinutes().toString().padStart(2, `0`);
+        }
+        
+        if (y && m && d) {
+            dateStr = y + `年` + m.padStart(2, `0`) + `月` + d.padStart(2, `0`) + `日`;
+            timeStr = h.padStart(2, `0`) + `:` + min.padStart(2, `0`);
+        } else {
+            let now = new Date();
+            dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
+            timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
+        }
+    } else {
+        let now = new Date();
+        dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
+        timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
+    }
+
+    let baseSys = typeof getSpyBasePrompt === `function` ? getSpyBasePrompt(charId) : ``;
+    
     let cName = originalGetItem.call(ls, `cN_` + charId) || `对方`;
     let anonName = cName.substring(0, 1) + `某人`;
+    let myN = $(`cfgMyName`) ? $(`cfgMyName`).value : `我`;
+    let charP = originalGetItem.call(ls, `cP_` + charId) || ``;
+    let charCtx = originalGetItem.call(ls, `cCtx_` + charId) || originalGetItem.call(ls, `cCtx`) || ``;
+    
+    let specHistStr = originalGetItem.call(ls, `chatHistory_` + charId) || `[]`;
+    let specHist = JSON.parse(specHistStr);
+    if(charId === `default` && typeof history !== `undefined`) specHist = history;
+    let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : cName) + `：` + m.content).join(`\n`);
     
     let tabDesc = ``;
     if(targetTab === `search`) {
@@ -5966,17 +6016,12 @@ if($(`btnGenSpyZhihu`)) $(`btnGenSpyZhihu`).onclick = async () => {
         tabDesc = `【当前任务：生成知乎匿名提问】\n根据上述设定，写出你在极度纠结时，匿名发布的极度私密、羞耻或难以启齿的求助问题。\n核心要求：提问者必须是你的匿名ID：${anonName}。网友只能根据你的提问字面意思来出主意或吐槽，网友没有上帝视角！`;
     }
 
-    let sys = baseSys + `${tabDesc}
+    let sys = baseSys + `\n当前虚拟时间：${dateStr} ${timeStr}。\n`;
+    if(charP) sys += `【${cName}的专属人设档案】：${charP}\n`;
+    if(charCtx) sys += `【当前世界背景与剧情设定】：${charCtx}\n`;
+    if(recentChat) sys += `\n【近期聊天剧情参考（重点挖掘TA最近遇到了什么问题、在思考什么、或者想暗中调查什么）：\n${recentChat}\n`;
 
-【格式与输出严格要求】：
-1. 必须生成10条记录！每条记录之间必须用 --- 分隔。
-2. 网友没有上帝视角！网友的回答绝对不可以照抄或点明聊天记录里的具体细节，只能基于标题的内容给出符合常理的回答。
-3. 网友的语气必须丰富多样，展现真实的互联网生态（必须混合这几种风格：00后网络流行语玩梗、理中客长篇大论分析、中老年人生导师说教、暴躁老哥直接开骂吐槽、温柔女孩子暖心安慰等）。不要千篇一律的严肃。
-4. 必须严格按照以下四行格式输出，不要增加任何多余字段：
-标题：(具体问题或搜索词)
-提问者：(如果是搜索历史，固定写 主动搜索 ；如果是收藏夹，写随机网友昵称；如果是匿名提问，固定写 ${anonName})
-回答者：(随机网友昵称)
-回答：(网友的具体回答，展现多样化风格)`;
+    sys += `\n${tabDesc}\n\n【格式与输出严格要求】：\n1. 必须生成10条记录！每条记录之间必须用 --- 分隔。\n2. 网友没有上帝视角！网友的回答绝对不可以照抄或点明聊天记录里的具体细节，只能基于标题的内容给出符合常理的回答。\n3. 网友的语气必须丰富多样，展现真实的互联网生态（必须混合这几种风格：00后网络流行语玩梗、理中客长篇大论分析、中老年人生导师说教、暴躁老哥直接开骂吐槽、温柔女孩子暖心安慰等）。不要千篇一律的严肃。\n4. 必须严格按照以下四行格式输出，不要增加任何多余字段：\n标题：(具体问题或搜索词)\n提问者：(如果是搜索历史，固定写 主动搜索 ；如果是收藏夹，写随机网友昵称；如果是匿名提问，固定写 ${anonName})\n回答者：(随机网友昵称)\n回答：(网友的具体回答，展现多样化风格)`;
 
     let origText = $(`btnGenSpyZhihu`).innerText;
 
@@ -6014,12 +6059,13 @@ if($(`btnGenSpyZhihu`)) $(`btnGenSpyZhihu`).onclick = async () => {
             if(newRecords.length > 0) {
                 if(!spyZhihuData[targetTab]) spyZhihuData[targetTab] = [];
                 spyZhihuData[targetTab] = spyZhihuData[targetTab].concat(newRecords);
-                ls.setItem(`spyZhihu_` + charId, JSON.stringify(spyZhihuData));
+                
+                await saveSpyZhihu();
                 
                 if(currentZhTab === targetTab) {
                     renderSpyZhihu();
                 }
-                alert(`成功生成 ${newRecords.length} 条数据！`);
+                alert(`成功生成 ` + newRecords.length + ` 条数据！`);
             } else {
                 alert(`数据解析失败，大模型没有按格式输出，请重试。`);
             }
@@ -6034,11 +6080,12 @@ if($(`btnGenSpyZhihu`)) $(`btnGenSpyZhihu`).onclick = async () => {
     let btnText = `✨ 重新生成当前版块`;
     if(currentZhTab === `search`) btnText = `✨ 重新生成【搜索历史】`;
     if(currentZhTab === `fav`) btnText = `✨ 重新生成【收藏夹】`;
-        if(currentZhTab === `ask`) btnText = `✨ 重新生成【匿名提问】`;
+    if(currentZhTab === `ask`) btnText = `✨ 重新生成【匿名提问】`;
     $(`btnGenSpyZhihu`).innerText = btnText;
     
     $(`btnGenSpyZhihu`).style.pointerEvents = `auto`;
 };
+
 
 // ====== 查手机：终极隐形披风与隐私系统 ======
 if(!window.spyHacked) {
