@@ -6821,22 +6821,41 @@ async function generateSpyWechat(isAdvance) {
 
 
 // ==========================================
-// ====== 通话记录底层逻辑 ======
+// ====== 通话记录底层逻辑 (大仓库重构完美版) ======
 // ==========================================
 let spyCallData = [];
 
-function loadSpyCallData() {
-    let d = originalGetItem.call(ls, `spyCall_` + currentChatId);
-    spyCallData = d ? JSON.parse(d) : [];
+async function loadSpyCallData() {
+    try {
+        let d = await localforage.getItem(`spyCall_` + currentChatId);
+        spyCallData = d ? (typeof d === 'string' ? JSON.parse(d) : d) : [];
+    } catch(e) {
+        spyCallData = [];
+    }
 }
 
-function saveSpyCallData() {
-    originalSetItem.call(ls, `spyCall_` + currentChatId, JSON.stringify(spyCallData));
+async function saveSpyCallData() {
+    try {
+        await localforage.setItem(`spyCall_` + currentChatId, JSON.stringify(spyCallData));
+    } catch(e) {
+        alert(`保存通话记录失败，大仓库可能出现问题！`);
+    }
 }
 
-if($(`btnSpyCall`)) $(`btnSpyCall`).onclick = () => { loadSpyCallData(); showScreen(`scrSpyCall`); renderSpyCall(); };
-if($(`btnSpyCallBack`)) $(`btnSpyCallBack`).onclick = () => { showScreen(`scrCharPhone`); $(`scrSpyCall`).style.display = `none`; };
-if($(`btnSpyCallRefresh`)) $(`btnSpyCallRefresh`).onclick = () => { generateSpyCall(); };
+if($(`btnSpyCall`)) $(`btnSpyCall`).onclick = async () => { 
+    await loadSpyCallData(); 
+    showScreen(`scrSpyCall`); 
+    renderSpyCall(); 
+};
+
+if($(`btnSpyCallBack`)) $(`btnSpyCallBack`).onclick = () => { 
+    showScreen(`scrCharPhone`); 
+    $(`scrSpyCall`).style.display = `none`; 
+};
+
+if($(`btnSpyCallRefresh`)) $(`btnSpyCallRefresh`).onclick = () => { 
+    generateSpyCall(); 
+};
 
 function renderSpyCall() {
     let list = $(`spyCallList`);
@@ -6881,25 +6900,71 @@ async function generateSpyCall() {
     let list = $(`spyCallList`);
     list.innerHTML = `<div style="text-align:center; padding:30px; color:#576b95; font-size:14px; animation: pulse 1.5s infinite;">正在破解通信运营商数据...</div>`;
     
+    let charId = currentChatId;
+
+    let dateStr = `今天`;
+    let timeStr = `12:00`;
+    let isCustom = originalGetItem.call(ls, `cCTon_` + charId);
+    if (isCustom === null) isCustom = originalGetItem.call(ls, `cCTon`);
+    
+    if (isCustom === `true`) {
+        let y = originalGetItem.call(ls, `cCTy_` + charId) || originalGetItem.call(ls, `cCTy`);
+        let m = originalGetItem.call(ls, `cCTm_` + charId) || originalGetItem.call(ls, `cCTm`);
+        let d = originalGetItem.call(ls, `cCTd_` + charId) || originalGetItem.call(ls, `cCTd`);
+        
+        let h = originalGetItem.call(ls, `cCTh_` + charId) || originalGetItem.call(ls, `cCTHour`);
+        if (!h) {
+            let now = new Date();
+            h = now.getHours().toString().padStart(2, `0`);
+        }
+        let min = originalGetItem.call(ls, `cCTmin_` + charId) || originalGetItem.call(ls, `cCTMinute`);
+        if (!min) {
+             let now = new Date();
+             min = now.getMinutes().toString().padStart(2, `0`);
+        }
+        
+        if (y && m && d) {
+            dateStr = y + `年` + m.padStart(2, `0`) + `月` + d.padStart(2, `0`) + `日`;
+            timeStr = h.padStart(2, `0`) + `:` + min.padStart(2, `0`);
+        } else {
+            let now = new Date();
+            dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
+            timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
+        }
+    } else {
+        let now = new Date();
+        dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
+        timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
+    }
+    
     let charN = `对方`;
     let contacts = ls.getItem(`myContacts`) ? JSON.parse(ls.getItem(`myContacts`)) : [];
-    let c = contacts.find(x => String(x.id) === String(currentChatId));
+    let c = contacts.find(x => String(x.id) === String(charId));
     if(c) charN = originalGetItem.call(ls, `cN_` + c.id) || c.name;
-    if(currentChatId === `default` && !c) charN = $(`cfgName`).value || `对方`;
+    if(charId === `default` && !c) charN = $(`cfgName`).value || `对方`;
     
-    let charP = originalGetItem.call(ls, `cP_` + currentChatId) || ``; 
-    let vTime = getVirtualTime();
+    let myN = $(`cfgMyName`) ? $(`cfgMyName`).value : `我`;
+    let charP = originalGetItem.call(ls, `cP_` + charId) || ``; 
+    let charCtx = originalGetItem.call(ls, `cCtx_` + charId) || originalGetItem.call(ls, `cCtx`) || ``;
     
-    let pmt = `【绝密任务：生成伪造的通话记录列表】\n注意：我正在偷看主角色（${charN}）的手机通话记录！\n请扮演通信运营商系统，生成8条属于【${charN}】的近期通话记录。\n当前虚拟时间：${vTime}。\n`;
+    let specHistStr = originalGetItem.call(ls, `chatHistory_` + charId) || `[]`;
+    let specHist = JSON.parse(specHistStr);
+    if(charId === `default` && typeof history !== 'undefined') specHist = history;
+    let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
+    
+    let pmt = `【绝密任务：生成伪造的通话记录列表】\n注意：我正在偷看主角色（${charN}）的手机通话记录！\n请扮演通信运营商系统，生成8条属于【${charN}】的近期通话记录。\n当前虚拟时间：${dateStr} ${timeStr}。\n`;
+    
     if(charP) pmt += `【${charN}的专属人设档案】：${charP}\n`; 
+    if(charCtx) pmt += `【当前世界背景与剧情设定】：${charCtx}\n`;
+    if(recentChat) pmt += `\n【近期聊天剧情参考（重点挖掘TA刚才可能在和谁通电话，或者是否有因为在忙某事而产生的未接来电）：\n${recentChat}\n`;
     
-    let npcData = originalGetItem.call(ls, `npcList_` + currentChatId);
+    let npcData = originalGetItem.call(ls, `npcList_` + charId);
     let npcs = npcData ? JSON.parse(npcData) : [];
-    pmt += `\n要求：\n1. 结合人物设定，生成合理来电人员。可以从以下核心社交圈挑选，严禁出现方煜这个名字：\n`;
+    pmt += `\n要求：\n1. 结合人物设定和最新剧情，生成合理来电人员。可以从以下核心社交圈挑选，严禁出现方煜这个名字：\n`;
     npcs.forEach(n => { if(n.name) pmt += `姓名：${n.name}，详情：${n.desc || '暂无'}\n`; });
-    pmt += `2. 必须穿插至少1到2个骚扰电话（如房产中介、保险理财）或生活服务电话（如外卖快递、10086）。\n`;
+    pmt += `2. 必须穿插至少1到2个骚扰电话（如房产中介、保险理财）或生活服务电话（如外卖快递、10086）。如果近期剧情里涉及看病、住酒店或收快递，也可直接体现。\n`;
     pmt += `3. 类型必须严格为：incoming（呼入）、outgoing（呼出）、missed（未接）。如果有夺命连环Call，请把count设置为大于1的数字。\n`;
-    pmt += `\n严禁废话！必须且只能输出纯JSON数组，格式如下：\n[{"name":"名字","location":"号码归属地或类型描述","type":"incoming/outgoing/missed","time":"如 昨天 14:30","duration":"如 12分钟 或 空白","count":1}]`;
+    pmt += `\n严禁废话！时间必须依据我提供的当前虚拟时间合理推算。必须且只能输出纯JSON数组，格式如下：\n[{"name":"名字","location":"号码归属地或类型描述","type":"incoming/outgoing/missed","time":"如 今天 14:30 或 昨天","duration":"如 12分钟 或 空白","count":1}]`;
 
     try {
         let url = pxy.includes(`chat/completions`) ? pxy : pxy.replace(/\/$/, ``) + `/chat/completions`;
@@ -6915,15 +6980,16 @@ async function generateSpyCall() {
                 let parsed = JSON.parse(cleanRes);
                 if(Array.isArray(parsed)) {
                     spyCallData = parsed;
-                    saveSpyCallData(); 
+                    await saveSpyCallData(); 
                 }
             } catch(e) { console.error(e); }
         }
-        } catch (e) {
+    } catch (e) {
         alert(`请求失败：` + e.message);
     }
     renderSpyCall();
 }
+
 
 // ==========================================
 // ====== 相册底层逻辑 ======
