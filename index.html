@@ -5730,8 +5730,14 @@ if($(`btnGenSpyDiary`)) $(`btnGenSpyDiary`).onclick = async () => {
     
     let charId = lastSpyCharId;
     
-    let vTime = typeof getVirtualTime === 'function' ? getVirtualTime() : '今天';
-    let dateStr = vTime.split(' ')[0]; 
+    // 强制精准抓取自定义时间，杜绝大模型乱编
+    let dateStr = `今天`;
+    if ($(`cfgCustomTime`) && $(`cfgCustomTime`).checked) {
+        dateStr = $(`ctYear`).value + `年` + $(`ctMonth`).value + `月` + $(`ctDay`).value + `日`;
+    } else {
+        let now = new Date();
+        dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
+    }
     
     let charN = originalGetItem.call(ls, `cN_` + charId) || `TA`;
     let myN = $(`cfgMyName`) ? $(`cfgMyName`).value : `我`;
@@ -5747,7 +5753,7 @@ if($(`btnGenSpyDiary`)) $(`btnGenSpyDiary`).onclick = async () => {
     if (charCtx) sys += `【当前世界背景与剧情设定】：${charCtx}\n`;
     if (recentChat) sys += `【以下是你刚才经历的真实对话记录，务必结合这些最新发生的事情来写日记】：\n${recentChat}\n\n`;
     
-    sys += `要求：\n1. 字数严格控制在200到400字之间。\n2. 格式要求：第一行必须是日期和天气或心情（格式如：${dateStr} 晴 / 心情烦躁）。从第二行开始写日记正文。\n3. 正文必须紧密围绕上面提供的真实对话记录展开，写出你没有对${myN}说出口的真心话和内心真实想法！`;
+    sys += `要求：\n1. 字数严格控制在200到400字之间。\n2. 格式绝对要求：【第一行必须且只能原样输出这个日期】：${dateStr} ，然后空一格写天气或心情（格式如：${dateStr} 晴 / 心情烦躁）。绝对不允许你自己编造任何其他日期！\n3. 从第二行开始写日记正文，正文必须紧密围绕上面提供的真实对话记录展开，写出你没有对${myN}说出口的真心话和内心真实想法！`;
 
     let origText = $(`btnGenSpyDiary`).innerText;
     $(`btnGenSpyDiary`).innerText = `TA正在提笔写日记...`;
@@ -5776,6 +5782,7 @@ if($(`btnGenSpyDiary`)) $(`btnGenSpyDiary`).onclick = async () => {
     $(`btnGenSpyDiary`).innerText = origText;
     $(`btnGenSpyDiary`).style.pointerEvents = `auto`;
 };
+
 
 
 
