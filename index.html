@@ -8088,29 +8088,49 @@ async function generateSpyWallet() {
 
 
 // ==========================================
-// ====== 购物与碎碎念底层逻辑 ======
+// ====== 购物与碎碎念底层逻辑 (大仓库重构完美版) ======
 // ==========================================
 let spyShopData = { cart: [], orders: [] };
 let currentShopTab = `cart`; // 默认显示购物车
 
-function loadSpyShopData() {
-    let d = originalGetItem.call(ls, `spyShop_` + currentChatId);
-    spyShopData = d ? JSON.parse(d) : { cart: [], orders: [] };
+async function loadSpyShopData() {
+    try {
+        let d = await localforage.getItem(`spyShop_` + currentChatId);
+        spyShopData = d ? (typeof d === 'string' ? JSON.parse(d) : d) : { cart: [], orders: [] };
+    } catch(e) {
+        spyShopData = { cart: [], orders: [] };
+    }
 }
 
-function saveSpyShopData() {
-    originalSetItem.call(ls, `spyShop_` + currentChatId, JSON.stringify(spyShopData));
+async function saveSpyShopData() {
+    try {
+        await localforage.setItem(`spyShop_` + currentChatId, JSON.stringify(spyShopData));
+    } catch(e) {
+        alert(`保存购物数据失败，大仓库可能出现问题！`);
+    }
 }
 
 // 绑定主界面的入口图标
-if($(`btnSpyCart`)) $(`btnSpyCart`).onclick = () => { loadSpyShopData(); showScreen(`scrSpyShop`); renderSpyShop(); };
+if($(`btnSpyCart`)) $(`btnSpyCart`).onclick = async () => { 
+    await loadSpyShopData(); 
+    showScreen(`scrSpyShop`); 
+    renderSpyShop(); 
+};
 
-if($(`btnSpyShopBack`)) $(`btnSpyShopBack`).onclick = () => { showScreen(`scrCharPhone`); $(`scrSpyShop`).style.display = `none`; closeSpyShopPopup(); };
-if($(`btnSpyShopRefresh`)) $(`btnSpyShopRefresh`).onclick = () => { generateSpyShop(); };
-if($(`btnSpyShopClear`)) $(`btnSpyShopClear`).onclick = () => {
+if($(`btnSpyShopBack`)) $(`btnSpyShopBack`).onclick = () => { 
+    showScreen(`scrCharPhone`); 
+    $(`scrSpyShop`).style.display = `none`; 
+    closeSpyShopPopup(); 
+};
+
+if($(`btnSpyShopRefresh`)) $(`btnSpyShopRefresh`).onclick = () => { 
+    generateSpyShop(); 
+};
+
+if($(`btnSpyShopClear`)) $(`btnSpyShopClear`).onclick = async () => {
     if(confirm(`确定要清空TA的购物车和订单记录吗？`)) {
         spyShopData = { cart: [], orders: [] };
-        saveSpyShopData();
+        await saveSpyShopData();
         renderSpyShop();
     }
 };
@@ -8141,7 +8161,9 @@ function showSpyShopThought(thoughtTxt) {
     let pop = $(`spyShopPopup`);
     let content = $(`spyShopPopupContent`);
     if(pop && content) {
-        content.innerText = thoughtTxt;
+        // 防符号渗透清理
+        let cleanThought = thoughtTxt ? thoughtTxt.replace(/<\/?strong>|<\/?b>|\*\*/gi, '') : '';
+        content.innerText = cleanThought;
         pop.style.display = `flex`;
         // 留出一点时间让display生效后再加动画类
         setTimeout(() => { pop.classList.add(`show`); }, 10);
@@ -8161,6 +8183,8 @@ function renderSpyShop() {
     }
 
     renderData.forEach(item => {
+        let cleanTitle = item.title ? item.title.replace(/<\/?strong>|<\/?b>|\*\*/gi, '') : '';
+        
         let div = document.createElement(`div`);
         // 如果是给我买的，加上专属样式和点击事件
         div.className = `spy-shop-item` + (item.isUser ? ` is-user` : ``);
@@ -8170,9 +8194,10 @@ function renderSpyShop() {
 
         let statusHtml = ``;
         if(currentShopTab === `order`) {
-            let sColor = item.status.includes(`签收`) ? `#888` : `#ff8c42`;
-            let sBg = item.status.includes(`签收`) ? `#f0f0f0` : `#fff0e5`;
-            statusHtml = `<div class="spy-shop-status" style="color:${sColor}; background:${sBg};">${escapeHtml(item.status)}</div>`;
+            let cleanStatus = item.status ? item.status.replace(/<\/?strong>|<\/?b>|\*\*/gi, '') : '';
+            let sColor = cleanStatus.includes(`签收`) ? `#888` : `#ff8c42`;
+            let sBg = cleanStatus.includes(`签收`) ? `#f0f0f0` : `#fff0e5`;
+            statusHtml = `<div class="spy-shop-status" style="color:${sColor}; background:${sBg};">${escapeHtml(cleanStatus)}</div>`;
         }
 
         let heartHtml = item.isUser ? `<div class="spy-shop-heart">💝</div>` : ``;
@@ -8181,9 +8206,9 @@ function renderSpyShop() {
             ${heartHtml}
             <div class="spy-shop-img-box">${item.img || `🛍️`}</div>
             <div class="spy-shop-info">
-                <div class="spy-shop-title">${escapeHtml(item.title)}</div>
+                <div class="spy-shop-title">${escapeHtml(cleanTitle)}</div>
                 <div class="spy-shop-bot">
-                    <div class="spy-shop-price">¥${parseFloat(item.price).toFixed(2)}</div>
+                    <div class="spy-shop-price">¥${parseFloat(item.price || 0).toFixed(2)}</div>
                     ${statusHtml}
                 </div>
             </div>
@@ -8199,31 +8224,71 @@ async function generateSpyShop() {
     let list = $(`spyShopList`);
     list.innerHTML = `<div style="text-align:center; padding:40px; color:#ff8c42; font-size:14px; animation: pulse 1.5s infinite;">正在破解购物平台账号数据...</div>`;
 
+    let charId = currentChatId;
+
+    let dateStr = `今天`;
+    let timeStr = `12:00`;
+    let isCustom = originalGetItem.call(ls, `cCTon_` + charId);
+    if (isCustom === null) isCustom = originalGetItem.call(ls, `cCTon`);
+    
+    if (isCustom === `true`) {
+        let y = originalGetItem.call(ls, `cCTy_` + charId) || originalGetItem.call(ls, `cCTy`);
+        let m = originalGetItem.call(ls, `cCTm_` + charId) || originalGetItem.call(ls, `cCTm`);
+        let d = originalGetItem.call(ls, `cCTd_` + charId) || originalGetItem.call(ls, `cCTd`);
+        
+        let h = originalGetItem.call(ls, `cCTh_` + charId) || originalGetItem.call(ls, `cCTHour`);
+        if (!h) {
+            let now = new Date();
+            h = now.getHours().toString().padStart(2, `0`);
+        }
+        let min = originalGetItem.call(ls, `cCTmin_` + charId) || originalGetItem.call(ls, `cCTMinute`);
+        if (!min) {
+             let now = new Date();
+             min = now.getMinutes().toString().padStart(2, `0`);
+        }
+        
+        if (y && m && d) {
+            dateStr = y + `年` + m.padStart(2, `0`) + `月` + d.padStart(2, `0`) + `日`;
+            timeStr = h.padStart(2, `0`) + `:` + min.padStart(2, `0`);
+        } else {
+            let now = new Date();
+            dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
+            timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
+        }
+    } else {
+        let now = new Date();
+        dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
+        timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
+    }
+
     let charN = `对方`;
     let contacts = ls.getItem(`myContacts`) ? JSON.parse(ls.getItem(`myContacts`)) : [];
-    let c = contacts.find(x => String(x.id) === String(currentChatId));
+    let c = contacts.find(x => String(x.id) === String(charId));
     if(c) charN = originalGetItem.call(ls, `cN_` + c.id) || c.name;
-    if(currentChatId === `default` && !c) charN = $(`cfgName`).value || `对方`;
+    if(charId === `default` && !c) charN = $(`cfgName`).value || `对方`;
 
-    let charP = originalGetItem.call(ls, `cAP_` + currentChatId) || originalGetItem.call(ls, `cAP`) || ``; 
-    let myN = $(`cfgMyName`).value || `我`;
+    let charP = originalGetItem.call(ls, `cP_` + charId) || ``; 
+    let charCtx = originalGetItem.call(ls, `cCtx_` + charId) || originalGetItem.call(ls, `cCtx`) || ``;
+    let myN = $(`cfgMyName`) ? $(`cfgMyName`).value : `我`;
 
-    let pmt = `【最高优先级绝密任务：生成伪造的购物软件记录】\n注意：我正在偷看主角色（${charN}）的购物车和订单记录！我的名字是${myN}。\n`;
+    let pmt = `【最高优先级绝密任务：生成伪造的购物软件记录】\n注意：我正在偷看主角色（${charN}）的购物车和订单记录！我的名字是${myN}。当前精准时间：${dateStr} ${timeStr}。\n`;
     if(charP) pmt += `【${charN}的专属人设档案（务必逐字阅读并严格遵守消费水平）】：${charP}\n`; 
+    if(charCtx) pmt += `【当前世界背景与剧情设定】：${charCtx}\n`;
 
-    let specHistStr = originalGetItem.call(ls, `chatHistory_` + currentChatId) || `[]`;
+    let specHistStr = originalGetItem.call(ls, `chatHistory_` + charId) || `[]`;
     let specHist = JSON.parse(specHistStr);
-    if(currentChatId === `default` && typeof history !== 'undefined') specHist = history;
+    if(charId === `default` && typeof history !== 'undefined') specHist = history;
     let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
-    if(recentChat) pmt += `\n【近期聊天剧情参考（最高优先级：用于推测TA近期想买什么）：\n${recentChat}\n`;
+    if(recentChat) pmt += `\n【近期聊天剧情参考（最高优先级：用于推测TA近期想买什么或者暗中为你准备什么惊喜）：\n${recentChat}\n`;
 
-    pmt += `\n要求：\n1. 阶层隔离防OOC：购买的物品必须严格符合身份和经济实力！普通学生只能买零食、文具、便宜的衣服周边；霸道总裁则购买高定、珠宝、昂贵礼品或房车。绝不允许跨越阶层消费！\n`;
+    pmt += `\n要求：\n1. 阶层隔离防OOC：购买的物品必须严格符合身份和经济实力！普通学生只能买零食、文具、便宜的衣服周边；霸道总裁则购买高定、珠宝、昂贵礼品。绝不允许跨越阶层消费！\n`;
     pmt += `2. 强制互动抓取（生死线）：必须仔细分析上述聊天记录！如果${myN}在聊天里提到了生病、冷、饿了、喜欢什么东西，必须立刻在购物车或已付款订单里生成对应的物品！\n`;
     pmt += `3. 专属碎碎念机制（灵魂核心）：你需要生成两组数据（购物车和订单）。其中至少要有一半的物品是准备给${myN}买的！凡是给${myN}买的物品，必须将 isUser 设为 true，并且在 thought 字段里写下${charN}买这件东西时的心理活动（碎碎念）！\n`;
     pmt += `  - 购物车里的 thought 主打纠结和规划：比如 纠结买哪个颜色她更喜欢，或者 攒够钱就立刻清空给她个惊喜。\n`;
     pmt += `  - 订单里的 thought 主打期待和暗喜：比如 每天看好几次物流，想象她收到礼物开心的样子。\n`;
     pmt += `  - 如果是自己用的普通物品，isUser 设为 false，thought 留空。\n`;
     pmt += `4. 状态要求：订单的状态只能是 已签收、运输中、待发货。购物车无状态。\n`;
+    pmt += `5. 严禁使用任何强调符号：绝对禁止在生成的任何文本中使用加粗、星号、HTML等强调符号！\n`;
 
     pmt += `\n严禁废话！必须且只能输出纯JSON对象，包含 cart 和 orders 两个数组，格式如下：\n{"cart": [{"title":"物品名称","price":"58.00","img":"🎁","isUser":true,"thought":"心理活动内容"}], "orders": [{"title":"物品名称","price":"1299.00","img":"👗","status":"运输中","isUser":true,"thought":"心理活动内容"}]}`;
 
@@ -8242,7 +8307,7 @@ async function generateSpyShop() {
                 if(parsed.cart || parsed.orders) {
                     spyShopData.cart = Array.isArray(parsed.cart) ? parsed.cart : [];
                     spyShopData.orders = Array.isArray(parsed.orders) ? parsed.orders : [];
-                    saveSpyShopData(); 
+                    await saveSpyShopData(); 
                 }
             } catch(e) { console.error(e); }
         }
@@ -8251,6 +8316,7 @@ async function generateSpyShop() {
     }
     renderSpyShop();
 }
+
 // ==========================================
 // ====== 爱奇艺视频底层逻辑 ======
 // ==========================================
