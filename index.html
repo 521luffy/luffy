@@ -6482,45 +6482,32 @@ async function saveSpyData() {
         alert(`保存微信数据失败，大仓库可能出现问题！`);
     }
 }
-function getVirtualTime() {
-    if ($(`cfgCustomTime`) && $(`cfgCustomTime`).checked) {
-        let y = $(`ctYear`).value;
-        let m = $(`ctMonth`).value.padStart(2, `0`);
-        let d = $(`ctDay`).value.padStart(2, `0`);
-        let h = $(`ctHour`).value.padStart(2, `0`);
-        let min = $(`ctMinute`).value.padStart(2, `0`);
-        return y + `年` + m + `月` + d + `日 ` + h + `:` + min;
-    } else {
-        let now = new Date();
-        let m = (now.getMonth() + 1).toString().padStart(2, `0`);
-        let d = now.getDate().toString().padStart(2, `0`);
-        let h = now.getHours().toString().padStart(2, `0`);
-        let min = now.getMinutes().toString().padStart(2, `0`);
-        return now.getFullYear() + `年` + m + `月` + d + `日 ` + h + `:` + min;
-    }
-}
 
 if($(`btnSpyWechat`)) $(`btnSpyWechat`).onclick = async () => {
     await loadSpyData();
     showScreen(`scrSpyWechat`);
     renderSpyWechat();
 };
-// 核心修复1：退出微信后直接回到查手机总菜单，绝不乱跳！
+
 if($(`btnSpyWechatBack`)) $(`btnSpyWechatBack`).onclick = () => {
     showScreen(`scrCharPhone`);
     $(`scrSpyWechat`).style.display = `none`;
 };
+
 if($(`btnSpyWcDetailBack`)) $(`btnSpyWcDetailBack`).onclick = () => {
     $(`scrSpyWechatDetail`).style.display = `none`;
     $(`scrSpyWechat`).style.display = `flex`;
     renderSpyWechat();
 };
+
 if($(`btnSpyWechatRefresh`)) $(`btnSpyWechatRefresh`).onclick = () => {
     generateSpyWechat(false);
 };
+
 if($(`btnSpyWechatAdvance`)) $(`btnSpyWechatAdvance`).onclick = () => {
     generateSpyWechat(true);
 };
+
 function renderSpyWechat() {
     let list = $(`spyWechatList`);
     list.innerHTML = ``;
@@ -6541,7 +6528,6 @@ function renderSpyWechat() {
             avatarHtml = `<img src="${matchedNpc.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">`;
         }
         let badgeHtml = item.isRead ? `` : `<div class="spy-wc-badge">1</div>`;
-        // 兼容新版双向对话和老版单向文本
         let chatMsgs = item.msgs || [{role: `npc`, content: item.msg}];
         let lastMsg = chatMsgs[chatMsgs.length - 1].content;
         div.innerHTML = `
@@ -6560,7 +6546,6 @@ function renderSpyWechat() {
                 $(`scrSpyWechatDetail`).style.display = `flex`;
             }
             $(`spyWcDetailTitle`).innerText = item.name;
-            // 构建有来有回的聊天气泡
             let bubblesHtml = `<div style="text-align:center;font-size:12px;color:#bbb;margin-bottom:15px;">${escapeHtml(item.time)}</div>`;
             chatMsgs.forEach(m => {
                 if(m.role === `npc`) {
@@ -6573,7 +6558,6 @@ function renderSpyWechat() {
                         </div>
                     </div>`;
                 } else {
-                    // 主角色视角气泡，绿色且居右
                     let myAvatarBg = $(`spyCharAvatar`) ? $(`spyCharAvatar`).style.backgroundImage : `none`;
                     let myAvatarHtml = `👤`;
                     if(myAvatarBg !== `none` && myAvatarBg !== ``) {
@@ -6591,14 +6575,13 @@ function renderSpyWechat() {
                 }
             });
             $(`spyWcDetailContent`).innerHTML = bubblesHtml;
-            // 点击后自动滚动到最新的一条消息
             setTimeout(() => { $(`spyWcDetailContent`).scrollTop = $(`spyWcDetailContent`).scrollHeight; }, 50);
         };
         list.appendChild(div);
     });
     $(`spyWcCount`).innerText = unreadCount > 0 ? `(${unreadCount})` : ``;
 }
-// 自动在顶部导航栏注入清空按钮
+
 setTimeout(() => {
     let wcHeaderDiv = document.querySelector(`#scrSpyWechat .room-header div`);
     if(wcHeaderDiv && !document.getElementById(`btnSpyWechatClear`)) {
@@ -6623,48 +6606,79 @@ async function generateSpyWechat(isAdvance) {
     if(!pxy || !key || !mod) { alert(`请先在网络配置里填写API信息哦！`); return; }
     let list = $(`spyWechatList`);
     list.innerHTML = `<div style="text-align:center; padding:30px; color:#576b95; font-size:14px; animation: pulse 1.5s infinite;">正在破解并提取聊天记录...</div>`;
-    // 治本核心1：极其严格地抓取当前选中角色的真实姓名，绝不留空
-    let charN = `对方`;
-    let contacts = ls.getItem(`myContacts`) ? JSON.parse(ls.getItem(`myContacts`)) : [];
-    let c = contacts.find(x => String(x.id) === String(currentChatId));
-    if(c) charN = originalGetItem.call(ls, `cN_` + c.id) || c.name;
-    if(currentChatId === `default` && !c) charN = $(`cfgName`).value || `对方`;
+    
+    let charId = currentChatId;
 
-    // 治本核心2：把该角色的专属人设档案直接提取出来
-    let charP = originalGetItem.call(ls, `cP_` + currentChatId) || ``;
-    let myN = $(`cfgMyName`).value || `我`;
-    let vTime = getVirtualTime();
+    let dateStr = `今天`;
+    let timeStr = `12:00`;
+    let isCustom = originalGetItem.call(ls, `cCTon_` + charId);
+    if (isCustom === null) isCustom = originalGetItem.call(ls, `cCTon`);
+    
+    if (isCustom === `true`) {
+        let y = originalGetItem.call(ls, `cCTy_` + charId) || originalGetItem.call(ls, `cCTy`);
+        let m = originalGetItem.call(ls, `cCTm_` + charId) || originalGetItem.call(ls, `cCTm`);
+        let d = originalGetItem.call(ls, `cCTd_` + charId) || originalGetItem.call(ls, `cCTd`);
+        
+        let h = originalGetItem.call(ls, `cCTh_` + charId) || originalGetItem.call(ls, `cCTHour`);
+        if (!h) {
+            let now = new Date();
+            h = now.getHours().toString().padStart(2, `0`);
+        }
+        let min = originalGetItem.call(ls, `cCTmin_` + charId) || originalGetItem.call(ls, `cCTMinute`);
+        if (!min) {
+             let now = new Date();
+             min = now.getMinutes().toString().padStart(2, `0`);
+        }
+        
+        if (y && m && d) {
+            dateStr = y + `年` + m.padStart(2, `0`) + `月` + d.padStart(2, `0`) + `日`;
+            timeStr = h.padStart(2, `0`) + `:` + min.padStart(2, `0`);
+        } else {
+            let now = new Date();
+            dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
+            timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
+        }
+    } else {
+        let now = new Date();
+        dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
+        timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
+    }
+    
+    let charN = originalGetItem.call(ls, `cN_` + charId) || `对方`;
+    let myN = $(`cfgMyName`) ? $(`cfgMyName`).value : `我`;
+    let charP = originalGetItem.call(ls, `cP_` + charId) || ``;
+    let charCtx = originalGetItem.call(ls, `cCtx_` + charId) || originalGetItem.call(ls, `cCtx`) || ``;
+    
+    let specHistStr = originalGetItem.call(ls, `chatHistory_` + charId) || `[]`;
+    let specHist = JSON.parse(specHistStr);
+    if(charId === `default` && typeof history !== 'undefined') specHist = history;
+    let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
 
-    let pmt = `【绝密任务：生成伪造的第三方视角微信列表】\n注意：我正在偷看主角色（${charN}）的手机微信！\n请扮演手机系统，生成5个联系人与【${charN}】的双向互动聊天记录。\n绝对不能是${charN}与${myN}的聊天，而是${charN}与其社交圈其他人的聊天！当前虚拟时间：${vTime}。\n`;
-    if(charP) pmt += `【${charN}的专属人设档案（极其重要，用于分析TA的语气和说话风格，如果高冷就少字，如果温柔就礼貌）：${charP}\n`;
+    let pmt = `【绝密任务：生成伪造的第三方视角微信列表】\n注意：我正在偷看主角色（${charN}）的手机微信！\n请扮演手机系统，生成5个联系人与【${charN}】的双向互动聊天记录。\n绝对不能是${charN}与${myN}的聊天，而是${charN}与其社交圈其他人的聊天！\n当前虚拟时间：${dateStr} ${timeStr}。\n`;
+    if(charP) pmt += `【${charN}的专属人设档案】：${charP}\n`;
+    if(charCtx) pmt += `【当前世界背景与剧情设定】：${charCtx}\n`;
+    if(recentChat) pmt += `【以下是${charN}刚才经历的真实对话记录，务必结合这些最新发生的事情来生成微信聊天，侧面反映TA刚才的经历或当下的心情，但生成的微信内绝对不能出现我（${myN}）】：\n${recentChat}\n\n`;
 
-    let npcData = originalGetItem.call(ls, `npcList_` + currentChatId);
+    let npcData = originalGetItem.call(ls, `npcList_` + charId);
     let npcs = npcData ? JSON.parse(npcData) : [];
-    pmt += `\n要求：\n1. 结合人物设定，生成合理且真实的社交联系人。必须优先从以下设定的核心社交圈挑选互动对象（必须用以下身份和名字）：\n`;
+    pmt += `要求：\n1. 结合以上设定和最新剧情，生成合理且真实的社交联系人。必须优先从以下设定的核心社交圈挑选互动对象（必须用以下身份和名字）：\n`;
     npcs.forEach(n => {
         if(n.name) pmt += `姓名：${n.name}，详情：${n.desc || '暂无'}\n`;
     });
     pmt += `如果上述社交圈不足5人，请自行脑补符合设定的合理身份（例如：导师、舍友、同事、老妈、某品牌代购等），凑够5个联系人。\n`;
-    pmt += `2. 内容必须极具代入感！可以是工作群通知、死党闲聊、父母唠叨、甚至是某些暧昧对象的试探。\n`;
+    pmt += `2. 内容必须极具代入感！并且要与刚才的真实对话记录（剧情）产生巧妙的联动或呼应。\n`;
     pmt += `3. 双向互动机制（重点！）：你需要为每个联系人生成 3到6条 有来有回的对话记录！必须严格标注哪句话是对方发的，哪句话是${charN}自己发的！\n`;
     pmt += `4. 对话排列顺序：按照时间先后顺序排列。数组里最后一条消息，代表是他们聊的最新的一句话。\n`;
     
-    // 如果是推进模式，要求延续旧剧情
     if(isAdvance && spyWechatData.length > 0) {
         let oldCtx = spyWechatData.map(i => {
             let lastChat = i.msgs[i.msgs.length - 1].content;
             return `联系人：${i.name}，上一次的最后聊天：${lastChat}`;
         }).join(`\n`);
-        pmt += `\n【当前是推进剧情模式】\n你必须根据下面这些上次生成的旧聊天记录，顺着旧话题继续往下生成后续的聊天发展：\n${oldCtx}\n不能生硬重复上次的对话，要在其基础上产生新的进展（比如上次说等会去吃，这次就是问到了没）！\n`;
+        pmt += `\n【当前是推进剧情模式】\n你必须根据下面这些上次生成的旧聊天记录，顺着旧话题继续往下生成后续的聊天发展：\n${oldCtx}\n不能生硬重复上次的对话，要在其基础上产生新的进展！\n`;
     }
 
-    pmt += `\n严禁废话！必须且只能输出纯JSON数组，格式如下（直接返回数组）：\n[{"name":"名字或备注","time":"如 14:30 或 昨天","msgs":[{"role":"npc","content":"对方发的话"},{"role":"me","content":"主角色${charN}回复的话"},{"role":"npc","content":"对方的下一句回复"}]}]`;
-
-    let specHistStr = originalGetItem.call(ls, `chatHistory_` + currentChatId) || `[]`;
-    let specHist = JSON.parse(specHistStr);
-    if(currentChatId === `default` && typeof history !== 'undefined') specHist = history;
-    let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
-    if(recentChat) pmt = `【近期我与${charN}的真实聊天记录参考（用于了解${charN}的当前处境，但生成的微信内绝对不能出现我（${myN}））：\n${recentChat}\n\n` + pmt;
+    pmt += `\n严禁废话！时间必须根据我提供的虚拟时间合理推断。必须且只能输出纯JSON数组，格式如下（直接返回数组）：\n[{"name":"名字或备注","time":"如 14:30","msgs":[{"role":"npc","content":"对方发的话"},{"role":"me","content":"主角色${charN}回复的话"},{"role":"npc","content":"对方的下一句回复"}]}]`;
 
     try {
         let url = pxy.includes(`chat/completions`) ? pxy : pxy.replace(/\/$/, ``) + `/chat/completions`;
@@ -6699,6 +6713,7 @@ async function generateSpyWechat(isAdvance) {
     }
     renderSpyWechat();
 }
+
 
 
 // ==========================================
