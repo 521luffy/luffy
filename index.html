@@ -3421,7 +3421,7 @@ if($(`btnCancelPay`)) {
     };
 }
 
-// ====== 修复部分 1/3：发送转账/红包的大仓库同步 ======
+// ====== 终极修复版 1/3：发送红包转账与大仓库同步 ======
 if($(`btnConfirmPay`)) { 
     $(`btnConfirmPay`).onclick = async () => { 
         let pwd = $(`payPwdInput`).value;
@@ -3443,15 +3443,16 @@ if($(`btnConfirmPay`)) {
         } 
         
         let dn = $(`cfgRem`).value || $(`cfgName`).value || `专属恋人`; 
-        let logTitle = currentPayTask.type === `redpacket` ? `发红包给 - ` + dn : `转账给 - ` + dn;
+        let logTitle = currentPayTask.type === `redpacket` ? `微信红包-发给` + dn : `微信转账-转给` + dn;
         myWallet.bills.push({ title: logTitle, time: updTime().toLocaleString(), amount: -amt, type: `transfer` }); 
         ls.setItem(`myWallet`, JSON.stringify(myWallet)); 
         
         let msgText = ``;
+        // 核心修复点：修复暗号格式，让系统能成功认出并渲染卡片图片
         if(currentPayTask.type === `redpacket`) { 
-            msgText = `[红包消息：` + amt.toFixed(2) + `|` + currentPayTask.note + `|未领取|` + currentPayTask.cover + `]`;
+            msgText = `[微信红包：` + amt.toFixed(2) + `|` + currentPayTask.note + `|未领取|` + currentPayTask.cover + `]`;
         } else { 
-            msgText = `[转账消息：` + amt.toFixed(2) + `|` + currentPayTask.note + `|未收款]`; 
+            msgText = `[微信转账：` + amt.toFixed(2) + `|` + currentPayTask.note + `|未收款]`; 
         } 
         currentPayTask = null;
         $(`payPwdInput`).value = ``; 
@@ -3460,7 +3461,7 @@ if($(`btnConfirmPay`)) {
         history.push({role: `user`, content: msgText}); 
         ls.setItem(`chatHistory`, JSON.stringify(history)); 
         
-        // 核心修复：强制把发出的钱同步进大仓库
+        // 核心修复点：强制同步进大仓库，防止系统卡死
         let targetKey = `chatHistory_` + currentChatId;
         await localforage.setItem(targetKey, JSON.stringify(history));
         if(currentChatId === `default`) {
@@ -3471,7 +3472,7 @@ if($(`btnConfirmPay`)) {
     }; 
 }
 // ====== 1/3 结束 ======
-// ====== 修复部分 2/3：聊天室红包与转账的点击领取与大仓库同步 ======
+// ====== 终极修复版 2/3：聊天室红包与转账的点击领取与大仓库同步 ======
 if(document.getElementById(`msgs`)) {
     document.getElementById(`msgs`).addEventListener(`click`, async (e) => {
         let target = e.target.closest(`.rp-card, .transfer-card`);
@@ -3515,7 +3516,7 @@ if(document.getElementById(`msgs`)) {
     });
 }
 // ====== 2/3 结束 ======
-// ====== 修复部分 3/3：状态更新的大仓库强制同步 ======
+// ====== 终极修复版 3/3：状态更新的大仓库强制同步 ======
 // 将更新聊天记录的函数独立封装，确保所有状态改变都能存入大仓库
 async function syncChatHistoryToStorage() {
     try {
@@ -3539,6 +3540,7 @@ if(typeof history !== 'undefined') {
     };
 }
 // ====== 3/3 结束 ======
+
 
 
 
