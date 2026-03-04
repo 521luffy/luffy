@@ -5730,12 +5730,16 @@ if($(`btnGenSpyDiary`)) $(`btnGenSpyDiary`).onclick = async () => {
     
     let charId = lastSpyCharId;
     
+    // 强制穿透：绕开表面输入框，直接深入小抽屉抓取角色专属的私密时间档案
     let dateStr = `今天`;
-    if ($(`cfgCustomTime`) && $(`cfgCustomTime`).checked) {
-        let y = $(`ctYear`).value;
-        let m = $(`ctMonth`).value;
-        let d = $(`ctDay`).value;
-        if(y && m && d) {
+    let isCustom = originalGetItem.call(ls, `cCTon_` + charId);
+    if (isCustom === null) isCustom = originalGetItem.call(ls, `cCTon`);
+    
+    if (isCustom === `true`) {
+        let y = originalGetItem.call(ls, `cCTy_` + charId) || originalGetItem.call(ls, `cCTy`);
+        let m = originalGetItem.call(ls, `cCTm_` + charId) || originalGetItem.call(ls, `cCTm`);
+        let d = originalGetItem.call(ls, `cCTd_` + charId) || originalGetItem.call(ls, `cCTd`);
+        if (y && m && d) {
             dateStr = y + `年` + m.padStart(2, `0`) + `月` + d.padStart(2, `0`) + `日`;
         } else {
             let now = new Date();
@@ -5789,6 +5793,7 @@ if($(`btnGenSpyDiary`)) $(`btnGenSpyDiary`).onclick = async () => {
     $(`btnGenSpyDiary`).innerText = origText;
     $(`btnGenSpyDiary`).style.pointerEvents = `auto`;
 };
+
 
 
 
