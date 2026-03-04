@@ -5617,13 +5617,30 @@ ${recentChat || '（暂无聊天记录，请严格根据人物设定自由发挥
 // ====== 查手机：私密日记系统代码 ======
 let spyDiaryData = [];
 let isSpyDiaryEditMode = false;
-
 let selSpyDiaryItems = new Set();
 
-if($(`btnSpyDiary`)) $(`btnSpyDiary`).onclick = () => {
+async function loadSpyDiaryData() {
+    try {
+        let d = await localforage.getItem(`spyDiary_` + lastSpyCharId);
+        spyDiaryData = d ? (typeof d === 'string' ? JSON.parse(d) : d) : [];
+    } catch(e) {
+        spyDiaryData = [];
+    }
+}
+
+async function saveSpyDiaryData() {
+    try {
+        await localforage.setItem(`spyDiary_` + lastSpyCharId, JSON.stringify(spyDiaryData));
+    } catch(e) {
+        alert(`保存日记失败，大仓库可能出现问题！`);
+    }
+}
+
+if($(`btnSpyDiary`)) $(`btnSpyDiary`).onclick = async () => {
     if(!lastSpyCharId) { alert(`请先在查手机桌面右上角选择要查看的角色哦！`); return; }
+    await loadSpyDiaryData();
     showScreen(`scrSpyDiary`);
-    loadSpyDiary();
+    renderSpyDiary();
 };
 
 if($(`btnSpyDiaryBack`)) $(`btnSpyDiaryBack`).onclick = () => {
@@ -5634,12 +5651,6 @@ if($(`btnSpyDiaryBack`)) $(`btnSpyDiaryBack`).onclick = () => {
     showScreen(`scrCharPhone`);
 };
 
-function loadSpyDiary() {
-    let key = `spyDiary_` + lastSpyCharId;
-    spyDiaryData = ls.getItem(key) ? JSON.parse(ls.getItem(key)) : [];
-    renderSpyDiary();
-}
-
 function renderSpyDiary() {
     let container = $(`spyDiaryList`);
     if(!container) return;
@@ -5648,40 +5659,37 @@ function renderSpyDiary() {
         container.innerHTML = `<div style="text-align:center; color:#999; margin-top:40px; font-size:13px;">TA的日记本里空空如也。</div>`;
         return;
     }
-    
     let displayData = [...spyDiaryData].reverse();
     displayData.forEach((diary, idx) => {
         let realIndex = spyDiaryData.length - 1 - idx;
         let isSel = selSpyDiaryItems.has(realIndex);
-        
         let lines = diary.content.split(`\n`);
         let titleLine = lines[0] || ``;
         let bodyText = lines.slice(1).join(`\n`).trim();
-        if(!bodyText) { bodyText = titleLine; titleLine = diary.date || `未命名日期`; }
-        
+        if(!bodyText) {
+            bodyText = titleLine;
+            titleLine = diary.date || `未命名日期`;
+        }
         let card = document.createElement(`div`);
         card.className = `spy-diary-card`;
         if(isSpyDiaryEditMode && isSel) card.style.borderColor = `#ff4d4f`;
-        
         let checkHtml = ``;
         if(isSpyDiaryEditMode) {
             let checkedClass = isSel ? `checked` : ``;
             checkHtml = `<div class="spy-diary-check ${checkedClass}"></div>`;
         }
-        
         card.innerHTML = `
-            <div style="display:flex; align-items:flex-start;">
-                ${checkHtml}
-                <div style="flex:1;">
-                    <div class="spy-diary-header">
-                        <span class="spy-diary-date">${titleLine.substring(0,30)}</span>
-                        <span class="spy-diary-weather">心情记录</span>
-                    </div>
-                    <div class="spy-diary-content">${bodyText}</div>
+        <div style="display:flex; align-items:flex-start;">
+            ${checkHtml}
+            <div style="flex:1;">
+                <div class="spy-diary-header">
+                    <span class="spy-diary-date">${escapeHtml(titleLine.substring(0,30))}</span>
+                    <span class="spy-diary-weather">心情记录</span>
                 </div>
+                <div class="spy-diary-content">${escapeHtml(bodyText)}</div>
             </div>
+        </div>
         `;
-        
         card.onclick = () => {
             if(!isSpyDiaryEditMode) return;
             if(selSpyDiaryItems.has(realIndex)) selSpyDiaryItems.delete(realIndex);
@@ -5706,11 +5714,11 @@ if($(`btnSelAllSpyDiary`)) $(`btnSelAllSpyDiary`).onclick = () => {
     renderSpyDiary();
 };
 
-if($(`btnDelSpyDiary`)) $(`btnDelSpyDiary`).onclick = () => {
+if($(`btnDelSpyDiary`)) $(`btnDelSpyDiary`).onclick = async () => {
     if(selSpyDiaryItems.size === 0) { alert(`请先选中要撕掉的日记哦！`); return; }
-    if(confirm(`确定撕掉这 ` + selSpyDiaryItems.size + ` 页日记吗？（撕掉就找不回来了）`)) {
+    if(confirm(`确定要撕掉这 ` + selSpyDiaryItems.size + ` 页日记吗？`)) {
         spyDiaryData = spyDiaryData.filter((_, i) => !selSpyDiaryItems.has(i));
-        ls.setItem(`spyDiary_` + lastSpyCharId, JSON.stringify(spyDiaryData));
+        await saveSpyDiaryData();
         selSpyDiaryItems.clear();
         renderSpyDiary();
     }
@@ -5718,42 +5726,32 @@ if($(`btnDelSpyDiary`)) $(`btnDelSpyDiary`).onclick = () => {
 
 if($(`btnGenSpyDiary`)) $(`btnGenSpyDiary`).onclick = async () => {
     let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value;
-    if(!pxy || !key || !mod) { alert(`请先在主设置中配置好API网络哦！`); return; }
+    if(!pxy || !key || !mod) { alert(`请先在网络配置里填写API信息哦！`); return; }
     
     let charId = lastSpyCharId;
-    
-    let dateStr = updTime().toLocaleString().split(` `)[0];
-    if($(`cfgCustomTime`).checked) {
+    let dateStr = typeof getFootprintDateStr === 'function' ? getFootprintDateStr() : '今天';
+    if ($(`cfgCustomTime`) && $(`cfgCustomTime`).checked) {
         dateStr = $(`ctYear`).value + `年` + $(`ctMonth`).value + `月` + $(`ctDay`).value + `日`;
     }
     
     let baseSys = getSpyBasePrompt(charId);
-    let sys = baseSys + `【当前任务：生成私密日记】
-1. 这是你的私密日记本，写下你当前最真实的心理活动，卸下伪装。
-2. 字数严格控制在200-400字左右。
-3. 格式要求：第一行必须是日期和天气或心情（格式如：${dateStr} 晴 / 阴雨 / 心情烦躁）。从第二行开始写日记正文。`;
+    let sys = baseSys + `【当前任务：生成私密日记】\n1. 这是你的私密日记本，写下你当前最真实的心理活动，卸下伪装。\n2. 字数严格控制在200-400字左右。\n3. 格式要求：第一行必须是日期和天气或心情（格式如：${dateStr} 晴 / 阴雨 / 心情烦躁）。从第二行开始写日记正文。`;
 
     let origText = $(`btnGenSpyDiary`).innerText;
-
     $(`btnGenSpyDiary`).innerText = `TA正在提笔写日记...`;
     $(`btnGenSpyDiary`).style.pointerEvents = `none`;
-
     try {
         let url = pxy.includes(`chat/completions`) ? pxy : pxy.replace(/\/$/, ``) + `/chat/completions`;
         let res = await fetch(url, {
-            method: `POST`, 
+            method: `POST`,
             headers: {Authorization: `Bearer ` + key, "Content-Type": `application/json`},
             body: JSON.stringify({model: mod, messages: [{role: `user`, content: sys}], temperature: 0.85})
         });
         let dat = await res.json();
         if(dat.choices && dat.choices.length > 0) {
             let diaryText = dat.choices[0].message.content.trim();
-            spyDiaryData.push({
-                date: dateStr,
-                content: diaryText,
-                timestamp: Date.now()
-            });
-            ls.setItem(`spyDiary_` + charId, JSON.stringify(spyDiaryData));
+            spyDiaryData.push({ date: dateStr, content: diaryText, timestamp: Date.now() });
+            await saveSpyDiaryData();
             renderSpyDiary();
             alert(`TA写完了一篇新日记！`);
         } else {
@@ -5764,8 +5762,9 @@ if($(`btnGenSpyDiary`)) $(`btnGenSpyDiary`).onclick = async () => {
         console.error(e);
     }
     $(`btnGenSpyDiary`).innerText = origText;
-        $(`btnGenSpyDiary`).style.pointerEvents = `auto`;
+    $(`btnGenSpyDiary`).style.pointerEvents = `auto`;
 };
+
 
 // ====== 查手机：知乎系统代码 ======
 let spyZhihuData = { search: [], fav: [], ask: [] };
