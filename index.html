@@ -7213,8 +7213,12 @@ function renderSpyMemo() {
     spyMemoData.forEach(item => {
         let div = document.createElement(`div`);
         div.className = `spy-memo-item`;
+        
+        // 核心修复：把大模型之前瞎加的强标签和星号全部强制扒掉
+        let cleanTitle = item.title ? item.title.replace(/<\/?strong>|<\/?b>|\*\*/gi, '') : '';
+        
         div.innerHTML = `
-            <div class="spy-memo-title">${escapeHtml(item.title)}</div>
+            <div class="spy-memo-title">${escapeHtml(cleanTitle)}</div>
             <div class="spy-memo-time">${escapeHtml(item.time)}</div>
             <div class="spy-memo-summary">${escapeHtml(item.summary)}</div>
         `;
@@ -7296,7 +7300,9 @@ async function generateSpyMemo() {
     
     pmt += `\n要求：\n1. 内容必须生活化且碎片化，强制包含以下类型：待办事项列表（结合剧情的工作或生活安排）、未发送的聊天草稿（想对我说却没敢发的纠结话语）、隐秘的账号密码备忘（如某网站缩写加数字）、瞬间的情绪或灵感随笔。\n`;
     pmt += `2. 时间线合理分布在近期。\n`;
-    pmt += `\n严禁废话！时间必须依据我提供的当前虚拟时间合理推算。必须且只能输出纯JSON数组，格式如下：\n[{"title":"提取内容第一句话作为粗体标题","time":"如 ${dateStr} 14:30 或 昨天","summary":"一段灰色的简短摘要说明","content":"备忘录的完整详细文本内容，可包含换行符"}]`;
+    
+    // 核心修复：警告大模型绝对不准使用任何加粗或HTML符号
+    pmt += `\n严禁废话！时间必须依据我提供的当前虚拟时间合理推算。必须且只能输出纯JSON数组，格式如下：\n[{"title":"提取内容第一句话作为精简标题（绝对禁止使用加粗、星号、HTML等任何符号格式！）","time":"如 ${dateStr} 14:30 或 昨天","summary":"一段灰色的简短摘要说明","content":"备忘录的完整详细文本内容，可包含换行符"}]`;
 
     try {
         let url = pxy.includes(`chat/completions`) ? pxy : pxy.replace(/\/$/, ``) + `/chat/completions`;
@@ -7321,6 +7327,7 @@ async function generateSpyMemo() {
     }
     renderSpyMemo();
 }
+
 
 
 // ==========================================
