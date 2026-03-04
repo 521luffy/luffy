@@ -4042,7 +4042,7 @@ function renderQuoteBlock(b, txt) {
         let opacityStatus = status === `0` ? `1` : `0.6`;
         let titleText = `¥ ${amt.toFixed(2)}`;
         let subText = status === `0` ? note : (status === `1` ? `已收款` : `已退还`);
-        let footerText = status === `1` ? `已存入零钱` : (status === `2` ? `资金已原路退回` : `转账给您`);
+        let footerText = status === `1` ? `已存入零钱` : (status === `2` ? `资金已原路退回` : `转账给你`);
         
         b.innerHTML = `<div style="width:200px; ${bgStyle} ${cursorStyle} border-radius:12px; overflow:hidden; border:1px solid #f39c12; display:flex; flex-direction:column; transition:0.2s; opacity:${opacityStatus};" class="ai-tf-bubble">
             <div style="flex:1; padding:15px; display:flex; align-items:center; gap:12px;">
