@@ -3443,16 +3443,16 @@ if($(`btnConfirmPay`)) {
         } 
         
         let dn = $(`cfgRem`).value || $(`cfgName`).value || `专属恋人`; 
-        let logTitle = currentPayTask.type === `redpacket` ? `微信红包-发给` + dn : `微信转账-转给` + dn;
+        let logTitle = currentPayTask.type === `redpacket` ? `发红包给 - ` + dn : `转账给 - ` + dn;
         myWallet.bills.push({ title: logTitle, time: updTime().toLocaleString(), amount: -amt, type: `transfer` }); 
         ls.setItem(`myWallet`, JSON.stringify(myWallet)); 
         
         let msgText = ``;
-        // 核心修复点：修复暗号格式，让系统能成功认出并渲染卡片图片
+        // 核心修复点：暗号恢复原状，确保系统能正确画出图片
         if(currentPayTask.type === `redpacket`) { 
-            msgText = `[微信红包：` + amt.toFixed(2) + `|` + currentPayTask.note + `|未领取|` + currentPayTask.cover + `]`;
+            msgText = `[红包消息：` + amt.toFixed(2) + `|` + currentPayTask.note + `|未领取|` + currentPayTask.cover + `]`;
         } else { 
-            msgText = `[微信转账：` + amt.toFixed(2) + `|` + currentPayTask.note + `|未收款]`; 
+            msgText = `[转账消息：` + amt.toFixed(2) + `|` + currentPayTask.note + `|未收款]`; 
         } 
         currentPayTask = null;
         $(`payPwdInput`).value = ``; 
@@ -3461,7 +3461,7 @@ if($(`btnConfirmPay`)) {
         history.push({role: `user`, content: msgText}); 
         ls.setItem(`chatHistory`, JSON.stringify(history)); 
         
-        // 核心修复点：强制同步进大仓库，防止系统卡死
+        // 核心修复点：钱扣完、消息发完后，立刻同步进大仓库
         let targetKey = `chatHistory_` + currentChatId;
         await localforage.setItem(targetKey, JSON.stringify(history));
         if(currentChatId === `default`) {
@@ -3540,6 +3540,7 @@ if(typeof history !== 'undefined') {
     };
 }
 // ====== 3/3 结束 ======
+
 
 
 
