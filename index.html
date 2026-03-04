@@ -7879,7 +7879,7 @@ async function generateSpyFootprint() {
 
 
 // ==========================================
-// ====== 钱包账单底层逻辑 (大仓库重构完美版) ======
+// ====== 钱包账单底层逻辑 (大仓库重构完美修复版) ======
 // ==========================================
 
 let spyWalletData = { balance: null, list: [] };
@@ -7937,14 +7937,11 @@ function renderSpyWallet() {
 
     spyWalletData.list.forEach(item => {
         let div = document.createElement(`div`);
-        // 核心高亮逻辑：只要是带有你互动的账单，立刻赋予专属样式
         div.className = `spy-wallet-item` + (item.isUser ? ` spy-wallet-highlight` : ``);
         
-        // 核心修复：防符号渗透
         let cleanTitle = item.title ? item.title.replace(/<\/?strong>|<\/?b>|\*\*/gi, '') : '';
         let cleanTime = item.time ? item.time.replace(/<\/?strong>|<\/?b>|\*\*/gi, '') : '';
         
-        // 智能匹配账单图标
         let icon = `💰`;
         if(cleanTitle.includes(`餐`) || cleanTitle.includes(`外卖`) || cleanTitle.includes(`吃`) || cleanTitle.includes(`茶`)) icon = `🍔`;
         else if(cleanTitle.includes(`车`) || cleanTitle.includes(`出行`) || cleanTitle.includes(`交通`)) icon = `🚕`;
@@ -8024,7 +8021,7 @@ async function generateSpyWallet() {
     
     let pmt = `【最高优先级绝密任务：生成伪造的手机钱包流水记录】\n注意：我正在偷看主角色（${charN}）的钱包！我的名字是${myN}。当前精准时间：${dateStr} ${timeStr}。\n`;
     
-    if(charP) pmt += `【${charN}的专属人设档案（务必逐字仔细阅读并严格遵守）】：${charP}\n`; 
+    if(charP) pmt += `【${charN}的专属人设档案】：${charP}\n`; 
     if(charCtx) pmt += `【当前世界背景与剧情设定】：${charCtx}\n`;
 
     let specHistStr = originalGetItem.call(ls, `chatHistory_` + charId) || `[]`;
@@ -8035,15 +8032,15 @@ async function generateSpyWallet() {
     let isFirstTime = spyWalletData.balance === null;
 
     if(isFirstTime) {
-        pmt += `\n这是该角色首次生成账单。你需要做两件事：\n1. 仔细分析${charN}的身份和经济条件，估算一个极其符合人设的【初始总余额】（如普通高中生可能只有几百到几千；大学生可能有几千到一万多；社畜打工人几万到十几万；富二代或总裁则高达几百万甚至上千万）。\n2. 生成3到5条近期的收支账单流水。\n`;
+        pmt += `\n这是该角色首次生成账单。你需要做两件事：\n1. 估算一个极其符合人设的初始总余额。\n【金额红线严格警告：这是日常支付APP的零钱，绝对不是个人总资产！普通初中高中生绝对不可超过3000元！普通打工人或大学生绝对不可超过50000元！哪怕档案设定是首富或大总裁，日常零钱余额也绝对不可超过50万元（大额资产都在银行卡里）！请严格遵循此红线！】\n2. 生成3到5条近期的收支账单流水。\n`;
     } else {
         pmt += `\n【当前已知余额为：${spyWalletData.balance}】。请直接生成今天的3到5条新增收支账单，系统会自动进行加减法计算最新余额，你只需要生成账单列表即可。\n`;
     }
 
-    if(recentChat) pmt += `\n【近期聊天剧情参考（最高优先级寻找金钱互动）：\n${recentChat}\n`;
+    if(recentChat) pmt += `\n【近期聊天剧情参考（最高优先级任务：雷达扫描金钱互动）：\n${recentChat}\n`;
 
-    pmt += `\n要求：\n1. 双轨合并机制（生死线）：必须仔细检查上述聊天剧情中，${charN}与${myN}之间是否发生了发红包、转账、代付等金钱行为！如果有，必须将其转化为账单记录！例如：微信转账-转给${myN}（支出）或 微信红包-来自${myN}（收入）。凡是涉及到${myN}的金钱互动，必须将 isUser 字段设为 true！如果没有此类剧情，则正常生成日常开销并将 isUser 设为 false。\n`;
-    pmt += `2. 阶层隔离防OOC：日常流水必须严格符合身份！普通学生只能有外卖、游戏、文具、父母转生活费；社畜要有工资卡代发、通勤打车；总裁必须是高定尾款、分红入账、助理代付等。绝对禁止给总裁安排几块钱的共享单车支出！\n`;
+    pmt += `\n要求：\n1. 强制转账捕获机制（生死线）：请像雷达一样死死盯住上方聊天记录！只要看到${charN}给${myN}转账、发红包，或者${myN}给${charN}转账等明确的文字提示，必须100%原封不动地将其转化为当天的账单明细！金额必须完全一致！凡是涉及到${myN}的金钱互动，必须将 isUser 字段设为 true！如果没有此类文字剧情，则正常生成日常开销并将 isUser 设为 false。\n`;
+    pmt += `2. 阶层隔离防OOC：日常流水必须严格符合身份！普通学生只能有外卖、游戏、文具；总裁可以有高定尾款、助理代付等。绝对禁止给总裁安排几块钱的共享单车支出！\n`;
     pmt += `3. 严禁使用任何强调符号：绝对禁止在生成的任何文本中使用加粗、星号、HTML等强调符号！\n`;
 
     if(isFirstTime) {
@@ -8087,6 +8084,7 @@ async function generateSpyWallet() {
     }
     renderSpyWallet();
 }
+
 
 
 // ==========================================
