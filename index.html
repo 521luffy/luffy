@@ -5729,13 +5729,25 @@ if($(`btnGenSpyDiary`)) $(`btnGenSpyDiary`).onclick = async () => {
     if(!pxy || !key || !mod) { alert(`请先在网络配置里填写API信息哦！`); return; }
     
     let charId = lastSpyCharId;
-    let dateStr = typeof getFootprintDateStr === 'function' ? getFootprintDateStr() : '今天';
-    if ($(`cfgCustomTime`) && $(`cfgCustomTime`).checked) {
-        dateStr = $(`ctYear`).value + `年` + $(`ctMonth`).value + `月` + $(`ctDay`).value + `日`;
-    }
     
-    let baseSys = getSpyBasePrompt(charId);
-    let sys = baseSys + `【当前任务：生成私密日记】\n1. 这是你的私密日记本，写下你当前最真实的心理活动，卸下伪装。\n2. 字数严格控制在200-400字左右。\n3. 格式要求：第一行必须是日期和天气或心情（格式如：${dateStr} 晴 / 阴雨 / 心情烦躁）。从第二行开始写日记正文。`;
+    let vTime = typeof getVirtualTime === 'function' ? getVirtualTime() : '今天';
+    let dateStr = vTime.split(' ')[0]; 
+    
+    let charN = originalGetItem.call(ls, `cN_` + charId) || `TA`;
+    let myN = $(`cfgMyName`) ? $(`cfgMyName`).value : `我`;
+    let charP = originalGetItem.call(ls, `cP_` + charId) || ``;
+    let charCtx = originalGetItem.call(ls, `cCtx_` + charId) || originalGetItem.call(ls, `cCtx`) || ``;
+    
+    let specHistStr = originalGetItem.call(ls, `chatHistory_` + charId) || `[]`;
+    let specHist = JSON.parse(specHistStr);
+    let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
+
+    let sys = `【当前任务：生成私密日记】\n你是${charN}，请写一篇私密日记。写下你当前最真实的心理活动，卸下伪装。\n`;
+    if (charP) sys += `【你的性格设定】：${charP}\n`;
+    if (charCtx) sys += `【当前世界背景与剧情设定】：${charCtx}\n`;
+    if (recentChat) sys += `【以下是你刚才经历的真实对话记录，务必结合这些最新发生的事情来写日记】：\n${recentChat}\n\n`;
+    
+    sys += `要求：\n1. 字数严格控制在200到400字之间。\n2. 格式要求：第一行必须是日期和天气或心情（格式如：${dateStr} 晴 / 心情烦躁）。从第二行开始写日记正文。\n3. 正文必须紧密围绕上面提供的真实对话记录展开，写出你没有对${myN}说出口的真心话和内心真实想法！`;
 
     let origText = $(`btnGenSpyDiary`).innerText;
     $(`btnGenSpyDiary`).innerText = `TA正在提笔写日记...`;
@@ -5764,6 +5776,7 @@ if($(`btnGenSpyDiary`)) $(`btnGenSpyDiary`).onclick = async () => {
     $(`btnGenSpyDiary`).innerText = origText;
     $(`btnGenSpyDiary`).style.pointerEvents = `auto`;
 };
+
 
 
 // ====== 查手机：知乎系统代码 ======
