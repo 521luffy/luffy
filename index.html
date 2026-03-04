@@ -7523,26 +7523,46 @@ async function generateSpyMusic() {
 
 
 // ==========================================
-// ====== 美团外卖底层逻辑 ======
+// ====== 美团外卖底层逻辑 (大仓库重构完美版) ======
 // ==========================================
 let spyMeituanData = [];
 
-function loadSpyMeituanData() {
-    let d = originalGetItem.call(ls, `spyMeituan_` + currentChatId);
-    spyMeituanData = d ? JSON.parse(d) : [];
+async function loadSpyMeituanData() {
+    try {
+        let d = await localforage.getItem(`spyMeituan_` + currentChatId);
+        spyMeituanData = d ? (typeof d === 'string' ? JSON.parse(d) : d) : [];
+    } catch(e) {
+        spyMeituanData = [];
+    }
 }
 
-function saveSpyMeituanData() {
-    originalSetItem.call(ls, `spyMeituan_` + currentChatId, JSON.stringify(spyMeituanData));
+async function saveSpyMeituanData() {
+    try {
+        await localforage.setItem(`spyMeituan_` + currentChatId, JSON.stringify(spyMeituanData));
+    } catch(e) {
+        alert(`保存美团数据失败，大仓库可能出现问题！`);
+    }
 }
 
-if($(`btnSpyMeituan`)) $(`btnSpyMeituan`).onclick = () => { loadSpyMeituanData(); showScreen(`scrSpyMeituan`); renderSpyMeituan(); };
-if($(`btnSpyMeituanBack`)) $(`btnSpyMeituanBack`).onclick = () => { showScreen(`scrCharPhone`); $(`scrSpyMeituan`).style.display = `none`; };
-if($(`btnSpyMeituanRefresh`)) $(`btnSpyMeituanRefresh`).onclick = () => { generateSpyMeituan(); };
-if($(`btnSpyMeituanClear`)) $(`btnSpyMeituanClear`).onclick = () => {
+if($(`btnSpyMeituan`)) $(`btnSpyMeituan`).onclick = async () => { 
+    await loadSpyMeituanData(); 
+    showScreen(`scrSpyMeituan`); 
+    renderSpyMeituan(); 
+};
+
+if($(`btnSpyMeituanBack`)) $(`btnSpyMeituanBack`).onclick = () => { 
+    showScreen(`scrCharPhone`); 
+    $(`scrSpyMeituan`).style.display = `none`; 
+};
+
+if($(`btnSpyMeituanRefresh`)) $(`btnSpyMeituanRefresh`).onclick = () => { 
+    generateSpyMeituan(); 
+};
+
+if($(`btnSpyMeituanClear`)) $(`btnSpyMeituanClear`).onclick = async () => {
     if(confirm(`确定要清空当前角色的美团数据吗？`)) {
         spyMeituanData = [];
-        saveSpyMeituanData();
+        await saveSpyMeituanData();
         renderSpyMeituan();
     }
 };
@@ -7558,19 +7578,31 @@ function renderSpyMeituan() {
     spyMeituanData.forEach(item => {
         let div = document.createElement(`div`);
         div.className = `spy-mt-card`;
-        let statusClass = item.status.includes(`送达`) || item.status.includes(`完成`) ? `spy-mt-status` : `spy-mt-status spy-mt-status-active`;
-        let noteHtml = item.note ? `<div class="spy-mt-note">备注：${escapeHtml(item.note)}</div>` : ``;
+        
+        // 核心修复：防符号渗透
+        let cleanShop = item.shop ? item.shop.replace(/<\/?strong>|<\/?b>|\*\*/gi, '') : '';
+        let cleanStatus = item.status ? item.status.replace(/<\/?strong>|<\/?b>|\*\*/gi, '') : '';
+        let cleanNote = item.note ? item.note.replace(/<\/?strong>|<\/?b>|\*\*/gi, '') : '';
+        let cleanAddr = item.address ? item.address.replace(/<\/?strong>|<\/?b>|\*\*/gi, '') : '';
+        
+        let statusClass = cleanStatus.includes(`送达`) || cleanStatus.includes(`完成`) ? `spy-mt-status` : `spy-mt-status spy-mt-status-active`;
+        let noteHtml = cleanNote ? `<div class="spy-mt-note">备注：${escapeHtml(cleanNote)}</div>` : ``;
+
+        let cleanItemsHtml = item.items.map(i => {
+            let cleanI = i ? i.replace(/<\/?strong>|<\/?b>|\*\*/gi, '') : '';
+            return escapeHtml(cleanI);
+        }).join(`<br>`);
 
         div.innerHTML = `
             <div class="spy-mt-shop">
                 <div class="spy-mt-shop-icon">🏪</div>
-                <div>${escapeHtml(item.shop)}</div>
-                <div class="${statusClass}">${escapeHtml(item.status)}</div>
+                <div>${escapeHtml(cleanShop)}</div>
+                <div class="${statusClass}">${escapeHtml(cleanStatus)}</div>
             </div>
-            <div class="spy-mt-items">${item.items.map(i => escapeHtml(i)).join(`<br>`)}</div>
+            <div class="spy-mt-items">${cleanItemsHtml}</div>
             <div class="spy-mt-price">￥${escapeHtml(item.price)}</div>
             ${noteHtml}
-            <div class="spy-mt-addr">📍 ${escapeHtml(item.address)}<br>🕒 ${escapeHtml(item.time)}</div>
+            <div class="spy-mt-addr">📍 ${escapeHtml(cleanAddr)}<br>🕒 ${escapeHtml(item.time)}</div>
         `;
         list.appendChild(div);
     });
@@ -7583,31 +7615,71 @@ async function generateSpyMeituan() {
     let list = $(`spyMeituanList`);
     list.innerHTML = `<div style="text-align:center; padding:30px; color:#ff9900; font-size:14px; animation: pulse 1.5s infinite;">正在破解外卖平台数据...</div>`;
 
+    let charId = currentChatId;
+
+    let dateStr = `今天`;
+    let timeStr = `12:00`;
+    let isCustom = originalGetItem.call(ls, `cCTon_` + charId);
+    if (isCustom === null) isCustom = originalGetItem.call(ls, `cCTon`);
+    
+    if (isCustom === `true`) {
+        let y = originalGetItem.call(ls, `cCTy_` + charId) || originalGetItem.call(ls, `cCTy`);
+        let m = originalGetItem.call(ls, `cCTm_` + charId) || originalGetItem.call(ls, `cCTm`);
+        let d = originalGetItem.call(ls, `cCTd_` + charId) || originalGetItem.call(ls, `cCTd`);
+        
+        let h = originalGetItem.call(ls, `cCTh_` + charId) || originalGetItem.call(ls, `cCTHour`);
+        if (!h) {
+            let now = new Date();
+            h = now.getHours().toString().padStart(2, `0`);
+        }
+        let min = originalGetItem.call(ls, `cCTmin_` + charId) || originalGetItem.call(ls, `cCTMinute`);
+        if (!min) {
+             let now = new Date();
+             min = now.getMinutes().toString().padStart(2, `0`);
+        }
+        
+        if (y && m && d) {
+            dateStr = y + `年` + m.padStart(2, `0`) + `月` + d.padStart(2, `0`) + `日`;
+            timeStr = h.padStart(2, `0`) + `:` + min.padStart(2, `0`);
+        } else {
+            let now = new Date();
+            dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
+            timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
+        }
+    } else {
+        let now = new Date();
+        dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
+        timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
+    }
+
     let charN = `对方`;
     let contacts = ls.getItem(`myContacts`) ? JSON.parse(ls.getItem(`myContacts`)) : [];
-    let c = contacts.find(x => String(x.id) === String(currentChatId));
+    let c = contacts.find(x => String(x.id) === String(charId));
     if(c) charN = originalGetItem.call(ls, `cN_` + c.id) || c.name;
-    if(currentChatId === `default` && !c) charN = $(`cfgName`).value || `对方`;
+    if(charId === `default` && !c) charN = $(`cfgName`).value || `对方`;
 
-    let charP = originalGetItem.call(ls, `cP_` + currentChatId) || ``; 
-    let myN = $(`cfgMyName`).value || `我`;
-    let vTime = getVirtualTime();
-
-    let pmt = `【绝密任务：生成伪造的外卖订单记录】\n注意：我正在偷看主角色（${charN}）的外卖APP！\n请扮演系统，为【${charN}】生成5条近期的外卖、跑腿或买药订单。当前虚拟时间：${vTime}。\n`;
+    let myN = $(`cfgMyName`) ? $(`cfgMyName`).value : `我`;
+    let charP = originalGetItem.call(ls, `cP_` + charId) || ``; 
+    let charCtx = originalGetItem.call(ls, `cCtx_` + charId) || originalGetItem.call(ls, `cCtx`) || ``;
+    
+    let pmt = `【绝密任务：生成伪造的外卖订单记录】\n注意：我正在偷看主角色（${charN}）的外卖APP！\n请扮演系统，为【${charN}】生成5条近期的外卖、跑腿或买药订单。当前虚拟时间：${dateStr} ${timeStr}。\n`;
+    
     if(charP) pmt += `【${charN}的专属人设档案】：${charP}\n`; 
-
-    let specHistStr = originalGetItem.call(ls, `chatHistory_` + currentChatId) || `[]`;
+    if(charCtx) pmt += `【当前世界背景与剧情设定】：${charCtx}\n`;
+    
+    let specHistStr = originalGetItem.call(ls, `chatHistory_` + charId) || `[]`;
     let specHist = JSON.parse(specHistStr);
-    if(currentChatId === `default` && typeof history !== 'undefined') specHist = history;
+    if(charId === `default` && typeof history !== 'undefined') specHist = history;
     let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
-    if(recentChat) pmt += `\n【近期聊天剧情参考（重点用于推测近期的特殊订单，如买药、买酒、买花等）】：\n${recentChat}\n`;
+    
+    if(recentChat) pmt += `\n【近期聊天剧情参考（重点用于推测近期的特殊订单，看看TA最近有没有生病买药、心情不好深夜买酒、或者想要买花送人等行为）】：\n${recentChat}\n`;
 
     pmt += `\n要求：\n1. 订单类型必须多样化：不能全是吃饭！结合剧情穿插大药房买药、深夜便利店买酒、鲜花预定等。\n`;
-    pmt += `2. 备注(note)是灵魂：可以体现隐藏的关心或秘密（如：别放香菜她不吃、放门口别敲门等），部分订单可以无备注。\n`;
-    pmt += `3. 强力纠错指令：收货地址(address)必须先从上方专属人设档案中提取${charN}所在的城市或常驻地！绝对禁止出现设定在A市却把外卖送到B市的错误！地址只需写到小区或大楼名称，如：XX市XX小区。\n`;
+    pmt += `2. 备注(note)是灵魂：可以体现隐藏的关心或秘密（如：她不吃香菜、生病了帮忙送上楼、匿名送惊喜等），部分订单可以无备注。\n`;
+    pmt += `3. 强力纠错指令：收货地址(address)必须先从上方专属人设档案或世界书中提取${charN}所在的城市或常驻地！绝对禁止出现设定在A市却把外卖送到B市的低级错误！地址只需写到小区或大楼名称，如：XX市XX小区。\n`;
     pmt += `4. 状态(status)：大部分为已送达，可以有1条是骑手正送往某地。\n`;
 
-    pmt += `\n严禁废话！必须且只能输出纯JSON数组，格式如下：\n[{"shop":"店铺名称","status":"已送达 或 配送中","items":["物品1 x1","物品2 x2"],"price":"58.50","note":"备注内容或空字符串","address":"XX市XX小区","time":"如 昨天 19:30"}]`;
+    pmt += `\n严禁废话！绝对禁止在生成的任何文本中使用加粗（如**）、HTML标签（如<strong>）等强调符号！必须且只能输出纯JSON数组，格式如下：\n[{"shop":"店铺名称","status":"已送达 或 配送中","items":["物品1 x1","物品2 x2"],"price":"58.50","note":"备注内容或空字符串","address":"XX市XX小区","time":"如 今天 19:30 或 昨天"}]`;
 
     try {
         let url = pxy.includes(`chat/completions`) ? pxy : pxy.replace(/\/$/, ``) + `/chat/completions`;
@@ -7623,15 +7695,16 @@ async function generateSpyMeituan() {
                 let parsed = JSON.parse(cleanRes);
                 if(Array.isArray(parsed)) {
                     spyMeituanData = parsed;
-                    saveSpyMeituanData(); 
+                    await saveSpyMeituanData(); 
                 }
             } catch(e) { console.error(e); }
         }
-        } catch (e) {
+    } catch (e) {
         alert(`请求失败：` + e.message);
     }
     renderSpyMeituan();
 }
+
 
 // ==========================================
 // ====== 足迹记录底层逻辑 ======
