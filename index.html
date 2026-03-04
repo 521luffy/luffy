@@ -7879,27 +7879,47 @@ async function generateSpyFootprint() {
 
 
 // ==========================================
-// ====== 钱包账单底层逻辑 ======
+// ====== 钱包账单底层逻辑 (大仓库重构完美版) ======
 // ==========================================
 
 let spyWalletData = { balance: null, list: [] };
 
-function loadSpyWalletData() {
-    let d = originalGetItem.call(ls, `spyWallet_` + currentChatId);
-    spyWalletData = d ? JSON.parse(d) : { balance: null, list: [] };
+async function loadSpyWalletData() {
+    try {
+        let d = await localforage.getItem(`spyWallet_` + currentChatId);
+        spyWalletData = d ? (typeof d === 'string' ? JSON.parse(d) : d) : { balance: null, list: [] };
+    } catch(e) {
+        spyWalletData = { balance: null, list: [] };
+    }
 }
 
-function saveSpyWalletData() {
-    originalSetItem.call(ls, `spyWallet_` + currentChatId, JSON.stringify(spyWalletData));
+async function saveSpyWalletData() {
+    try {
+        await localforage.setItem(`spyWallet_` + currentChatId, JSON.stringify(spyWalletData));
+    } catch(e) {
+        alert(`保存钱包数据失败，大仓库可能出现问题！`);
+    }
 }
 
-if($(`btnSpyWallet`)) $(`btnSpyWallet`).onclick = () => { loadSpyWalletData(); showScreen(`scrSpyWallet`); renderSpyWallet(); };
-if($(`btnSpyWalletBack`)) $(`btnSpyWalletBack`).onclick = () => { showScreen(`scrCharPhone`); $(`scrSpyWallet`).style.display = `none`; };
-if($(`btnSpyWalletRefresh`)) $(`btnSpyWalletRefresh`).onclick = () => { generateSpyWallet(); };
-if($(`btnSpyWalletClear`)) $(`btnSpyWalletClear`).onclick = () => {
+if($(`btnSpyWallet`)) $(`btnSpyWallet`).onclick = async () => { 
+    await loadSpyWalletData(); 
+    showScreen(`scrSpyWallet`); 
+    renderSpyWallet(); 
+};
+
+if($(`btnSpyWalletBack`)) $(`btnSpyWalletBack`).onclick = () => { 
+    showScreen(`scrCharPhone`); 
+    $(`scrSpyWallet`).style.display = `none`; 
+};
+
+if($(`btnSpyWalletRefresh`)) $(`btnSpyWalletRefresh`).onclick = () => { 
+    generateSpyWallet(); 
+};
+
+if($(`btnSpyWalletClear`)) $(`btnSpyWalletClear`).onclick = async () => {
     if(confirm(`确定要清空当前角色的钱包和余额数据吗？`)) {
         spyWalletData = { balance: null, list: [] };
-        saveSpyWalletData();
+        await saveSpyWalletData();
         renderSpyWallet();
     }
 };
@@ -7917,17 +7937,21 @@ function renderSpyWallet() {
 
     spyWalletData.list.forEach(item => {
         let div = document.createElement(`div`);
-        // 核心高亮逻辑：只要是带有你互动的账单，立刻赋予粉色专属样式
+        // 核心高亮逻辑：只要是带有你互动的账单，立刻赋予专属样式
         div.className = `spy-wallet-item` + (item.isUser ? ` spy-wallet-highlight` : ``);
+        
+        // 核心修复：防符号渗透
+        let cleanTitle = item.title ? item.title.replace(/<\/?strong>|<\/?b>|\*\*/gi, '') : '';
+        let cleanTime = item.time ? item.time.replace(/<\/?strong>|<\/?b>|\*\*/gi, '') : '';
         
         // 智能匹配账单图标
         let icon = `💰`;
-        if(item.title.includes(`餐`) || item.title.includes(`外卖`) || item.title.includes(`吃`) || item.title.includes(`茶`)) icon = `🍔`;
-        else if(item.title.includes(`车`) || item.title.includes(`出行`) || item.title.includes(`交通`)) icon = `🚕`;
-        else if(item.title.includes(`转账`) || item.title.includes(`红包`)) icon = `🧧`;
-        else if(item.title.includes(`工资`) || item.title.includes(`收入`) || item.title.includes(`结款`)) icon = `💳`;
-        else if(item.title.includes(`游戏`) || item.title.includes(`充值`) || item.title.includes(`娱乐`)) icon = `🎮`;
-        else if(item.title.includes(`费`) || item.title.includes(`租`)) icon = `📄`;
+        if(cleanTitle.includes(`餐`) || cleanTitle.includes(`外卖`) || cleanTitle.includes(`吃`) || cleanTitle.includes(`茶`)) icon = `🍔`;
+        else if(cleanTitle.includes(`车`) || cleanTitle.includes(`出行`) || cleanTitle.includes(`交通`)) icon = `🚕`;
+        else if(cleanTitle.includes(`转账`) || cleanTitle.includes(`红包`)) icon = `🧧`;
+        else if(cleanTitle.includes(`工资`) || cleanTitle.includes(`收入`) || cleanTitle.includes(`结款`)) icon = `💳`;
+        else if(cleanTitle.includes(`游戏`) || cleanTitle.includes(`充值`) || cleanTitle.includes(`娱乐`)) icon = `🎮`;
+        else if(cleanTitle.includes(`费`) || cleanTitle.includes(`租`)) icon = `📄`;
 
         let sign = item.type === `income` ? `+` : `-`;
         let cName = item.type === `income` ? `income` : `expense`;
@@ -7935,8 +7959,8 @@ function renderSpyWallet() {
         div.innerHTML = `
             <div class="spy-wallet-icon">${icon}</div>
             <div class="spy-wallet-info">
-                <div class="spy-wallet-title">${escapeHtml(item.title)}</div>
-                <div class="spy-wallet-time">${escapeHtml(item.time)}</div>
+                <div class="spy-wallet-title">${escapeHtml(cleanTitle)}</div>
+                <div class="spy-wallet-time">${escapeHtml(cleanTime)}</div>
             </div>
             <div class="spy-wallet-amount ${cName}">${sign}${parseFloat(item.amount).toFixed(2)}</div>
         `;
@@ -7951,24 +7975,61 @@ async function generateSpyWallet() {
     let list = $(`spyWalletList`);
     list.innerHTML = `<div style="text-align:center; padding:30px; color:#ffb6c1; font-size:14px; animation: pulse 1.5s infinite;">正在破解银行流水网络...</div>`;
 
+    let charId = currentChatId;
+
+    let dateStr = `今天`;
+    let timeStr = `12:00`;
+    let isCustom = originalGetItem.call(ls, `cCTon_` + charId);
+    if (isCustom === null) isCustom = originalGetItem.call(ls, `cCTon`);
+    
+    if (isCustom === `true`) {
+        let y = originalGetItem.call(ls, `cCTy_` + charId) || originalGetItem.call(ls, `cCTy`);
+        let m = originalGetItem.call(ls, `cCTm_` + charId) || originalGetItem.call(ls, `cCTm`);
+        let d = originalGetItem.call(ls, `cCTd_` + charId) || originalGetItem.call(ls, `cCTd`);
+        
+        let h = originalGetItem.call(ls, `cCTh_` + charId) || originalGetItem.call(ls, `cCTHour`);
+        if (!h) {
+            let now = new Date();
+            h = now.getHours().toString().padStart(2, `0`);
+        }
+        let min = originalGetItem.call(ls, `cCTmin_` + charId) || originalGetItem.call(ls, `cCTMinute`);
+        if (!min) {
+             let now = new Date();
+             min = now.getMinutes().toString().padStart(2, `0`);
+        }
+        
+        if (y && m && d) {
+            dateStr = y + `年` + m.padStart(2, `0`) + `月` + d.padStart(2, `0`) + `日`;
+            timeStr = h.padStart(2, `0`) + `:` + min.padStart(2, `0`);
+        } else {
+            let now = new Date();
+            dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
+            timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
+        }
+    } else {
+        let now = new Date();
+        dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
+        timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
+    }
+
     let charN = `对方`;
     let contacts = ls.getItem(`myContacts`) ? JSON.parse(ls.getItem(`myContacts`)) : [];
-    let c = contacts.find(x => String(x.id) === String(currentChatId));
+    let c = contacts.find(x => String(x.id) === String(charId));
     if(c) charN = originalGetItem.call(ls, `cN_` + c.id) || c.name;
-    if(currentChatId === `default` && !c) charN = $(`cfgName`).value || `对方`;
+    if(charId === `default` && !c) charN = $(`cfgName`).value || `对方`;
 
-    let charP = originalGetItem.call(ls, `cAP_` + currentChatId) || originalGetItem.call(ls, `cAP`) || ``; 
-    let myN = $(`cfgMyName`).value || `我`;
+    let charP = originalGetItem.call(ls, `cP_` + charId) || ``; 
+    let charCtx = originalGetItem.call(ls, `cCtx_` + charId) || originalGetItem.call(ls, `cCtx`) || ``;
+    let myN = $(`cfgMyName`) ? $(`cfgMyName`).value : `我`;
     
-    // 提取全局时间
-    let vTime = typeof getFootprintDateStr === 'function' ? getFootprintDateStr() : '今天';
-
-    let pmt = `【最高优先级绝密任务：生成伪造的手机钱包流水记录】\n注意：我正在偷看主角色（${charN}）的钱包！我的名字是${myN}。当前日期：${vTime}。\n`;
+    let pmt = `【最高优先级绝密任务：生成伪造的手机钱包流水记录】\n注意：我正在偷看主角色（${charN}）的钱包！我的名字是${myN}。当前精准时间：${dateStr} ${timeStr}。\n`;
+    
     if(charP) pmt += `【${charN}的专属人设档案（务必逐字仔细阅读并严格遵守）】：${charP}\n`; 
+    if(charCtx) pmt += `【当前世界背景与剧情设定】：${charCtx}\n`;
 
-    let specHistStr = originalGetItem.call(ls, `chatHistory_` + currentChatId) || `[]`;
+    let specHistStr = originalGetItem.call(ls, `chatHistory_` + charId) || `[]`;
     let specHist = JSON.parse(specHistStr);
-    if(currentChatId === `default` && typeof history !== 'undefined') specHist = history;
+    if(charId === `default` && typeof history !== 'undefined') specHist = history;
     let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
     
     let isFirstTime = spyWalletData.balance === null;
@@ -7981,13 +8042,14 @@ async function generateSpyWallet() {
 
     if(recentChat) pmt += `\n【近期聊天剧情参考（最高优先级寻找金钱互动）：\n${recentChat}\n`;
 
-    pmt += `\n要求：\n1. 双轨合并机制（生死线）：必须仔细检查上述聊天剧情中，${charN}与${myN}之间是否发生了发红包、转账、代付等金钱行为！如果有，必须将其转化为账单记录！例如：【转账给${myN}】（支出）或【收到${myN}的红包】（收入）。凡是涉及到${myN}的金钱互动，必须将 isUser 字段设为 true！如果没有此类剧情，则正常生成日常开销并将 isUser 设为 false。\n`;
+    pmt += `\n要求：\n1. 双轨合并机制（生死线）：必须仔细检查上述聊天剧情中，${charN}与${myN}之间是否发生了发红包、转账、代付等金钱行为！如果有，必须将其转化为账单记录！例如：微信转账-转给${myN}（支出）或 微信红包-来自${myN}（收入）。凡是涉及到${myN}的金钱互动，必须将 isUser 字段设为 true！如果没有此类剧情，则正常生成日常开销并将 isUser 设为 false。\n`;
     pmt += `2. 阶层隔离防OOC：日常流水必须严格符合身份！普通学生只能有外卖、游戏、文具、父母转生活费；社畜要有工资卡代发、通勤打车；总裁必须是高定尾款、分红入账、助理代付等。绝对禁止给总裁安排几块钱的共享单车支出！\n`;
+    pmt += `3. 严禁使用任何强调符号：绝对禁止在生成的任何文本中使用加粗、星号、HTML等强调符号！\n`;
 
     if(isFirstTime) {
-        pmt += `\n严禁废话！必须且只能输出纯JSON对象，格式如下：\n{"initBalance": "8500.50", "list": [{"title":"微信红包-收到${myN}的红包","time":"今天 10:30","amount":"520.00","type":"income","isUser":true}, {"title":"美团外卖","time":"昨天 19:00","amount":"35.50","type":"expense","isUser":false}]}`;
+        pmt += `\n必须且只能输出纯JSON对象，时间必须合理推算，格式如下：\n{"initBalance": "8500.50", "list": [{"title":"微信红包-收到${myN}的红包","time":"${dateStr} 10:30","amount":"520.00","type":"income","isUser":true}, {"title":"美团外卖","time":"昨天 19:00","amount":"35.50","type":"expense","isUser":false}]}`;
     } else {
-        pmt += `\n严禁废话！必须且只能输出纯JSON数组，格式如下：\n[{"title":"微信转账-转给${myN}","time":"今天 10:30","amount":"520.00","type":"expense","isUser":true}, {"title":"打车代扣","time":"昨天 19:00","amount":"45.00","type":"expense","isUser":false}]`;
+        pmt += `\n必须且只能输出纯JSON数组，时间必须合理推算，格式如下：\n[{"title":"微信转账-转给${myN}","time":"${dateStr} 10:30","amount":"520.00","type":"expense","isUser":true}, {"title":"打车代扣","time":"昨天 19:00","amount":"45.00","type":"expense","isUser":false}]`;
     }
 
     try {
@@ -8009,17 +8071,15 @@ async function generateSpyWallet() {
                 } else {
                     let base = parseFloat(spyWalletData.balance) || 0;
                     let newList = Array.isArray(parsed) ? parsed : [];
-                    // 底层精准数学计算，避免大模型瞎算
                     newList.forEach(item => {
                         let amt = parseFloat(item.amount || 0);
                         if(item.type === `income`) base += amt;
                         else base -= amt;
                     });
                     spyWalletData.balance = base.toFixed(2);
-                    // 将新账单拼接到最前面，最多保留50条记录防止卡顿
                     spyWalletData.list = newList.concat(spyWalletData.list).slice(0, 50);
                 }
-                saveSpyWalletData();
+                await saveSpyWalletData();
             } catch(e) { console.error(e); }
         }
     } catch (e) {
@@ -8027,6 +8087,7 @@ async function generateSpyWallet() {
     }
     renderSpyWallet();
 }
+
 
 // ==========================================
 // ====== 购物与碎碎念底层逻辑 ======
