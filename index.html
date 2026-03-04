@@ -7763,28 +7763,46 @@ async function generateSpyShop() {
 let spyIqiyiData = { movie: [], tv: [], anime: [], variety: [] };
 let currentIqiyiTab = `movie`;
 
-function loadSpyIqiyiData() {
-    let d = originalGetItem.call(ls, `spyIqiyi_` + currentChatId);
-    spyIqiyiData = d ? JSON.parse(d) : { movie: [], tv: [], anime: [], variety: [] };
+async function loadSpyIqiyiData() {
+    try {
+        let d = await localforage.getItem(`spyIqiyi_` + currentChatId);
+        spyIqiyiData = d ? (typeof d === 'string' ? JSON.parse(d) : d) : { movie: [], tv: [], anime: [], variety: [] };
+    } catch(e) {
+        spyIqiyiData = { movie: [], tv: [], anime: [], variety: [] };
+    }
 }
 
-function saveSpyIqiyiData() {
-    originalSetItem.call(ls, `spyIqiyi_` + currentChatId, JSON.stringify(spyIqiyiData));
+async function saveSpyIqiyiData() {
+    try {
+        await localforage.setItem(`spyIqiyi_` + currentChatId, JSON.stringify(spyIqiyiData));
+    } catch(e) {
+        alert(`保存爱奇艺数据失败，大仓库可能出现问题！`);
+    }
 }
 
-// 绑定主界面的入口图标
-if($(`btnSpyIqiyi`)) $(`btnSpyIqiyi`).onclick = () => { loadSpyIqiyiData(); showScreen(`scrSpyIqiyi`); renderSpyIqiyi(); };
-if($(`btnSpyIqiyiBack`)) $(`btnSpyIqiyiBack`).onclick = () => { showScreen(`scrCharPhone`); $(`scrSpyIqiyi`).style.display = `none`; };
-if($(`btnSpyIqiyiRefresh`)) $(`btnSpyIqiyiRefresh`).onclick = () => { generateSpyIqiyi(); };
-if($(`btnSpyIqiyiClear`)) $(`btnSpyIqiyiClear`).onclick = () => {
+if($(`btnSpyIqiyi`)) $(`btnSpyIqiyi`).onclick = async () => {
+    await loadSpyIqiyiData();
+    showScreen(`scrSpyIqiyi`);
+    renderSpyIqiyi();
+};
+
+if($(`btnSpyIqiyiBack`)) $(`btnSpyIqiyiBack`).onclick = () => {
+    showScreen(`scrCharPhone`);
+    $(`scrSpyIqiyi`).style.display = `none`;
+};
+
+if($(`btnSpyIqiyiRefresh`)) $(`btnSpyIqiyiRefresh`).onclick = () => {
+    generateSpyIqiyi();
+};
+
+if($(`btnSpyIqiyiClear`)) $(`btnSpyIqiyiClear`).onclick = async () => {
     if(confirm(`确定要清空TA的观影记录吗？`)) {
         spyIqiyiData = { movie: [], tv: [], anime: [], variety: [] };
-        saveSpyIqiyiData();
+        await saveSpyIqiyiData();
         renderSpyIqiyi();
     }
 };
 
-// 四大栏目切换逻辑
 [`Movie`, `Tv`, `Anime`, `Variety`].forEach(tab => {
     let el = $(`tabIqiyi` + tab);
     if(el) {
@@ -7803,31 +7821,30 @@ if($(`btnSpyIqiyiClear`)) $(`btnSpyIqiyiClear`).onclick = () => {
 function renderSpyIqiyi() {
     let list = $(`spyIqiyiList`);
     list.innerHTML = ``;
-    
     let renderData = spyIqiyiData[currentIqiyiTab] || [];
-
+    
     if(!renderData || renderData.length === 0) {
         list.innerHTML = `<div style="text-align:center; padding:50px 20px; color:#555; font-size:14px;">该栏目下暂无任何播放记录。<br><br><span style="font-size:12px; color:#00c957;">点击右上角刷新破解最新数据</span></div>`;
         return;
     }
-
+    
     renderData.forEach(item => {
         let div = document.createElement(`div`);
         div.className = `spy-iqiyi-item`;
-
-        // 智能解析播放进度
+        
         let pText = item.progress || `已看完`;
         let pNum = 100;
         if(pText.includes(`%`)) {
             let m = pText.match(/(\d+)/);
             if(m) pNum = parseInt(m[1]);
         } else if(!pText.includes(`完`)) {
-            pNum = 30; // 默认给个在看的进度
+            pNum = 30;
         }
+        
         let pColor = pNum === 100 ? `#888` : `#00c957`;
         let tagText = pNum === 100 ? `看完` : `在看`;
         let tagBg = pNum === 100 ? `rgba(136,136,136,0.9)` : `rgba(0,201,87,0.9)`;
-
+        
         div.innerHTML = `
             <div class="spy-iqiyi-cover">
                 <span style="font-size:28px; color:#555;">▶</span>
@@ -7849,45 +7866,80 @@ function renderSpyIqiyi() {
         list.appendChild(div);
     });
 }
-
 async function generateSpyIqiyi() {
     let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value;
     if(!pxy || !key || !mod) { alert(`请先在网络配置里填写API信息哦！`); return; }
-
+    
     let list = $(`spyIqiyiList`);
-    list.innerHTML = `<div style="text-align:center; padding:50px; color:#00c957; font-size:14px; animation: pulse 1.5s infinite;">正在破解云端观影历史...</div>`;
+    list.innerHTML = `<div style="text-align:center; padding:40px; color:#00c957; font-size:14px; animation: pulse 1.5s infinite;">正在破解视频平台观影记录...</div>`;
+    
+    let charId = currentChatId;
 
-    let charN = `对方`;
-    let contacts = ls.getItem(`myContacts`) ? JSON.parse(ls.getItem(`myContacts`)) : [];
-    let c = contacts.find(x => String(x.id) === String(currentChatId));
-    if(c) charN = originalGetItem.call(ls, `cN_` + c.id) || c.name;
-    if(currentChatId === `default` && !c) charN = $(`cfgName`).value || `对方`;
-
-    let charP = originalGetItem.call(ls, `cAP_` + currentChatId) || originalGetItem.call(ls, `cAP`) || ``; 
-    let myN = $(`cfgMyName`).value || `我`;
-
-    let pmt = `【最高优先级绝密任务：生成伪造的视频软件播放记录】\n注意：我正在偷看主角色（${charN}）的视频播放历史！\n`;
-    if(charP) pmt += `【${charN}的专属人设档案（务必逐字阅读并严格遵守观影偏好）】：${charP}\n`; 
-
-    let specHistStr = originalGetItem.call(ls, `chatHistory_` + currentChatId) || `[]`;
+    let dateStr = `今天`;
+    let timeStr = `12:00`;
+    let isCustom = originalGetItem.call(ls, `cCTon_` + charId);
+    if (isCustom === null) isCustom = originalGetItem.call(ls, `cCTon`);
+    
+    if (isCustom === `true`) {
+        let y = originalGetItem.call(ls, `cCTy_` + charId) || originalGetItem.call(ls, `cCTy`);
+        let m = originalGetItem.call(ls, `cCTm_` + charId) || originalGetItem.call(ls, `cCTm`);
+        let d = originalGetItem.call(ls, `cCTd_` + charId) || originalGetItem.call(ls, `cCTd`);
+        
+        let h = originalGetItem.call(ls, `cCTh_` + charId) || originalGetItem.call(ls, `cCTHour`);
+        if (!h) {
+            let now = new Date();
+            h = now.getHours().toString().padStart(2, `0`);
+        }
+        let min = originalGetItem.call(ls, `cCTmin_` + charId) || originalGetItem.call(ls, `cCTMinute`);
+        if (!min) {
+             let now = new Date();
+             min = now.getMinutes().toString().padStart(2, `0`);
+        }
+        
+        if (y && m && d) {
+            dateStr = y + `年` + m.padStart(2, `0`) + `月` + d.padStart(2, `0`) + `日`;
+            timeStr = h.padStart(2, `0`) + `:` + min.padStart(2, `0`);
+        } else {
+            let now = new Date();
+            dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
+            timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
+        }
+    } else {
+        let now = new Date();
+        dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
+        timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
+    }
+    
+    let charN = originalGetItem.call(ls, `cN_` + charId) || `对方`;
+    let myN = $(`cfgMyName`) ? $(`cfgMyName`).value : `我`;
+    let charP = originalGetItem.call(ls, `cP_` + charId) || ``;
+    let charCtx = originalGetItem.call(ls, `cCtx_` + charId) || originalGetItem.call(ls, `cCtx`) || ``;
+    
+    let specHistStr = originalGetItem.call(ls, `chatHistory_` + charId) || `[]`;
     let specHist = JSON.parse(specHistStr);
-    if(currentChatId === `default` && typeof history !== 'undefined') specHist = history;
+    if(charId === `default` && typeof history !== 'undefined') specHist = history;
     let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
-    if(recentChat) pmt += `\n【近期聊天剧情参考（重点排查两人有没有提到什么影视剧或动漫）：\n${recentChat}\n`;
 
+    let pmt = `【最高优先级绝密任务：生成伪造的视频软件播放记录】\n注意：我正在偷看主角色（${charN}）的视频播放历史！\n当前虚拟时间：${dateStr} ${timeStr}。\n`;
+    if(charP) pmt += `【${charN}的专属人设档案（务必逐字阅读并严格遵守观影偏好）】：${charP}\n`;
+    if(charCtx) pmt += `【当前世界背景与剧情设定】：${charCtx}\n`;
+    
+    if(recentChat) pmt += `\n【近期聊天剧情参考（重点排查两人有没有提到什么影视剧或动漫）：\n${recentChat}\n`;
+    
     pmt += `\n要求：\n1. 极端人设隔离防OOC（生死线）：播放记录必须和${charN}的性格身份完美契合！\n`;
-    pmt += `  - 如果是高冷老干部或大忙人，电影和电视剧可能只有寥寥几部高分经典，动漫和综艺直接为空数组！\n`;
-    pmt += `  - 如果是二次元浓度高的人设，动漫栏目必须排满，而且必须是非常符合设定的日漫或国漫！\n`;
-    pmt += `  - 绝对禁止给严肃硬汉生成甜宠偶像剧！绝对禁止乱拉郎配！完全不符合设定的栏目必须直接返回空数组。\n`;
+    pmt += `   - 如果是高冷老干部或大忙人，电影和电视剧可能只有寥寥几部高分经典，动漫和综艺直接为空数组！\n`;
+    pmt += `   - 如果是二次元浓度高的人设，动漫栏目必须排满，而且必须是非常符合设定的日漫或国漫！\n`;
+    pmt += `   - 绝对禁止给严肃硬汉生成甜宠偶像剧！绝对禁止乱拉郎配！完全不符合设定的栏目必须直接返回空数组。\n`;
     pmt += `2. 数量限制：每个分类下最多只能生成 7 条记录！\n`;
     pmt += `3. 进度真实感：progress字段必须模拟真实的播放进度，例如：已看完、观看至第三集 45%、观看至 12%、仅看了3分钟 等。必须要带有明确的文字说明。\n`;
-
+    
     pmt += `\n严禁废话！必须且只能输出纯JSON对象，包含 movie、tv、anime、variety 四个数组，格式如下：\n{"movie": [{"title":"电影名称","desc":"动作 / 科幻","progress":"已看完"}], "tv": [{"title":"电视剧名称","desc":"2023 / 悬疑","progress":"观看至第五集 30%"}], "anime": [], "variety": []}`;
 
     try {
         let url = pxy.includes(`chat/completions`) ? pxy : pxy.replace(/\/$/, ``) + `/chat/completions`;
         let res = await fetch(url, {
-            method: `POST`, headers: {Authorization: `Bearer ` + key, "Content-Type": `application/json`},
+            method: `POST`,
+            headers: {Authorization: `Bearer ` + key, "Content-Type": `application/json`},
             body: JSON.stringify({model: mod, messages: [{role: `user`, content: pmt}], temperature: 0.8})
         });
         let dat = await res.json();
@@ -7901,15 +7953,18 @@ async function generateSpyIqiyi() {
                     spyIqiyiData.tv = Array.isArray(parsed.tv) ? parsed.tv.slice(0, 7) : [];
                     spyIqiyiData.anime = Array.isArray(parsed.anime) ? parsed.anime.slice(0, 7) : [];
                     spyIqiyiData.variety = Array.isArray(parsed.variety) ? parsed.variety.slice(0, 7) : [];
-                    saveSpyIqiyiData(); 
+                    await saveSpyIqiyiData();
                 }
-            } catch(e) { console.error(e); }
+            } catch(e) {
+                console.error(e);
+            }
         }
     } catch (e) {
         alert(`请求失败：` + e.message);
     }
     renderSpyIqiyi();
 }
+
 
 // ==========================================
 // ====== 个性化装扮底层逻辑 (大仓库无损高清版) ======
