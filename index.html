@@ -2874,47 +2874,53 @@ window.loadChatSettings = function() {
 };
 
 $(`btnSaveChat`).onclick = async () => {
-    ls.setItem(`cN`, $(`cfgName`).value);
-    ls.setItem(`cR`, $(`cfgRem`).value);
-    ls.setItem(`cMyN`, $(`cfgMyName`).value);
-    ls.setItem(`cAP`, $(`cfgAiP`).value);
-    ls.setItem(`cMP`, $(`cfgMyP`).value);
-    if($(`cfgBubbleCss`)) ls.setItem(`cBubbleCss`, $(`cfgBubbleCss`).value);
-    ls.setItem(`cCtx`, $(`cfgCtx`).value);
-    ls.setItem(`cT`, $(`cfgTime`).checked);
-    ls.setItem(`cCTon`, $(`cfgCustomTime`).checked);
-    ls.setItem(`cCTy`, $(`ctYear`).value);
-    ls.setItem(`cCTm`, $(`ctMonth`).value);
-    ls.setItem(`cCTd`, $(`ctDay`).value);
-    ls.setItem(`cCTh`, $(`ctHour`).value);
-    ls.setItem(`cCTmin`, $(`ctMinute`).value);
-    ls.setItem(`cAMem`, $(`cfgAutoMem`).checked);
-    ls.setItem(`cMemT`, $(`cfgMemTrig`).value);
-    ls.setItem(`cMemP`, $(`cfgMemPmt`).value);
+    let safeVal = (id) => $(id) ? $(id).value : ``;
+    let safeCheck = (id) => $(id) ? $(id).checked : false;
+
+    ls.setItem(`cN`, safeVal(`cfgName`));
+    ls.setItem(`cR`, safeVal(`cfgRem`));
+    ls.setItem(`cMyN`, safeVal(`cfgMyName`));
+    ls.setItem(`cAP`, safeVal(`cfgAiP`));
+    ls.setItem(`cMP`, safeVal(`cfgMyP`));
     
+    if($(`cfgBubbleCss`)) ls.setItem(`cBubbleCss`, safeVal(`cfgBubbleCss`));
+    
+    ls.setItem(`cCtx`, safeVal(`cfgCtx`));
+    ls.setItem(`cT`, safeCheck(`cfgTime`));
+    ls.setItem(`cCTon`, safeCheck(`cfgCustomTime`));
+    ls.setItem(`cCTy`, safeVal(`ctYear`));
+    ls.setItem(`cCTm`, safeVal(`ctMonth`));
+    ls.setItem(`cCTd`, safeVal(`ctDay`));
+    ls.setItem(`cCTh`, safeVal(`ctHour`));
+    ls.setItem(`cCTmin`, safeVal(`ctMinute`));
+    
+    ls.setItem(`cAMem`, safeCheck(`cfgAutoMem`));
+    ls.setItem(`cMemT`, safeVal(`cfgMemTrig`));
+    ls.setItem(`cMemP`, safeVal(`cfgMemPmt`));
     let checkAndSave = async (preId, key) => {
         let el = $(preId);
-        if (el && el.style.backgroundImage && el.style.backgroundImage !== 'none') {
+        if (el && el.style.backgroundImage && el.style.backgroundImage !== `none`) {
             let url = el.style.backgroundImage.slice(5, -2);
-            if (url.startsWith('data:')) {
-                let k = isolatedKeys.includes(key) ? key + "_" + currentChatId : key;
+            if (url.startsWith(`data:`)) {
+                let k = isolatedKeys.includes(key) ? key + `_` + currentChatId : key;
                 await localforage.setItem(k, url);
             }
         }
     };
     
     try {
-        await checkAndSave('bgPreview', 'bgI');
-        await checkAndSave('aiPreview', 'aiI');
-        await checkAndSave('myPreview', 'myI');
+        await checkAndSave(`bgPreview`, `bgI`);
+        await checkAndSave(`aiPreview`, `aiI`);
+        await checkAndSave(`myPreview`, `myI`);
     } catch(e) {
         console.log(e);
     }
     
-    applyVis();
+    try { if(typeof applyVis === `function`) applyVis(); } catch(e){}
     alert(`配置已保存！`);
     showScreen(`scrRoom`);
 };
+
 
 
 
