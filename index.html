@@ -2136,6 +2136,9 @@ function cmp(id, key) {
                                                 let dataUrl = cvs.toDataURL(`image/webp`, 0.92);
                 let actualKey = isolatedKeys.includes(key) ? key + "_" + currentChatId : key;
                 localforage.setItem(actualKey, dataUrl).then(() => {
+                    // 修复：立即更新内存缓存，确保聊天气泡渲染能读到新头像
+                    if(key === `myI`) window.currentLoadedMyI = dataUrl;
+                    if(key === `aiI`) window.currentLoadedAiI = dataUrl;
                     applyVis();
                 }).catch(err => {
 
@@ -2298,7 +2301,11 @@ $(`btnListToRoom`).onclick = async () =>{
     currentChatId = `default`;
     $(`cfgName`).value = originalGetItem.call(ls, `cN_default`) || originalGetItem.call(ls, `cN`) || ``;
     $(`cfgRem`).value = originalGetItem.call(ls, `cR_default`) || originalGetItem.call(ls, `cR`) || ``;
-    $(`cfgMyName`).value = originalGetItem.call(ls, `cMyN_default`) || originalGetItem.call(ls, `cMyN`) || ``;
+    // 修复：优先从 localforage 读取，不 fallback 全局旧 cMyN
+    let _cMyN_def = await localforage.getItem(`cMyN_default`)
+                     || originalGetItem.call(ls, `cMyN_default`)
+                     || ``;
+    $(`cfgMyName`).value = _cMyN_def;
     $(`cfgAiP`).value = originalGetItem.call(ls, `cAP_default`) || originalGetItem.call(ls, `cAP`) || ``;
     $(`cfgMyP`).value = originalGetItem.call(ls, `cMP_default`) || originalGetItem.call(ls, `cMP`) || ``;
 
@@ -2347,7 +2354,11 @@ async function renderContacts() {
             currentChatId = c.id;
             $(`cfgName`).value = originalGetItem.call(ls, `cN_` + c.id) || c.name;
             $(`cfgRem`).value = originalGetItem.call(ls, `cR_` + c.id) || ``;
-            $(`cfgMyName`).value = originalGetItem.call(ls, `cMyN_` + c.id) || originalGetItem.call(ls, `cMyN`) || ``;
+            // 修复：优先从 localforage 读取，不 fallback 到全局 cMyN（避免显示旧全局名"檬檬"）
+            let _cMyN_c = await localforage.getItem(`cMyN_` + c.id)
+                           || originalGetItem.call(ls, `cMyN_` + c.id)
+                           || ``;
+            $(`cfgMyName`).value = _cMyN_c;
             $(`cfgAiP`).value = originalGetItem.call(ls, `cAP_` + c.id) || c.prompt;
 
             $(`cfgMyP`).value = originalGetItem.call(ls, `cMP_` + c.id) || ``;
@@ -2850,10 +2861,14 @@ $(`btnCloseMem`).onclick = () =>{ $(`memModal`).style.display = `none`; };
 
 $(`btnGenMem`).onclick = () =>{ runMemorySummary(false); };
 
-window.loadChatSettings = function() {
+window.loadChatSettings = async function() {
     if(ls.getItem(`cN`)) $(`cfgName`).value = ls.getItem(`cN`); else $(`cfgName`).value = '';
     if(ls.getItem(`cR`)) $(`cfgRem`).value = ls.getItem(`cR`); else $(`cfgRem`).value = '';
-    if(ls.getItem(`cMyN`)) $(`cfgMyName`).value = ls.getItem(`cMyN`); else $(`cfgMyName`).value = '';
+    // 修复：优先从 localforage 读取当前角色的专属名字，不 fallback 到全局 cMyN（避免显示旧全局名）
+    let _cMyN = await localforage.getItem(`cMyN_` + currentChatId)
+                 || originalGetItem.call(ls, `cMyN_` + currentChatId)
+                 || ``;
+    $(`cfgMyName`).value = _cMyN;
     if(ls.getItem(`cAP`)) $(`cfgAiP`).value = ls.getItem(`cAP`); else $(`cfgAiP`).value = '';
     if(ls.getItem(`cMP`)) $(`cfgMyP`).value = ls.getItem(`cMP`); else $(`cfgMyP`).value = '';
     if($(`cfgBubbleCss`)) {
@@ -4320,14 +4335,14 @@ function mkBub(txt, side, isT=false) {
     if(side===`l`) {
         let a = document.createElement(`div`);
         a.className = `ava-sm ava-l`;
-        let img = ls.getItem(`aiI`);
+        let img = window.currentLoadedAiI || ``;
         if(img) { a.style.backgroundImage = `url(`+img+`)`; a.innerText = ``; } else a.innerText = `👤`;
         if(!isT) a.onclick = () => { stW.innerText=aiStatus.weather; stC.innerText=aiStatus.clothing; stA.innerText=aiStatus.action; stT.innerText=aiStatus.thought; modal.style.display=`flex`; };
         row.appendChild(a); row.appendChild(b);
     } else {
         row.appendChild(b);
         let a = document.createElement(`div`); a.className = `ava-sm ava-r`;
-        let img = ls.getItem(`myI`);
+        let img = window.currentLoadedMyI || ``;
         if(img) { a.style.backgroundImage = `url(`+img+`)`; a.innerText = ``; } else a.innerText = `👤`;
         row.appendChild(a);
     }
@@ -4341,14 +4356,14 @@ function mkBubSync(txt, side) {
     renderQuoteBlock(b, txt); bindPress(b);
     if(side===`l`) {
         let a = document.createElement(`div`); a.className = `ava-sm ava-l`;
-        let img = ls.getItem(`aiI`);
+        let img = window.currentLoadedAiI || ``;
         if(img) { a.style.backgroundImage = `url(`+img+`)`; a.innerText = ``; } else a.innerText = `👤`;
         a.onclick = () => { stW.innerText=aiStatus.weather; stC.innerText=aiStatus.clothing; stA.innerText=aiStatus.action; stT.innerText=aiStatus.thought; modal.style.display=`flex`; };
         row.appendChild(a); row.appendChild(b);
     } else {
         row.appendChild(b);
         let a = document.createElement(`div`); a.className = `ava-sm ava-r`;
-        let img = ls.getItem(`myI`);
+        let img = window.currentLoadedMyI || ``;
         if(img) { a.style.backgroundImage = `url(`+img+`)`; a.innerText = ``; } else a.innerText = `👤`;
         row.appendChild(a);
     }
@@ -5070,7 +5085,7 @@ function renderLogs() {
     
     let activeChar = $(`cfgName`).value || `专属恋人`;
     let myN = $(`cfgMyName`).value || `我`;
-    let myAva = ls.getItem(`myI`) || ``;
+    let myAva = window.currentLoadedMyI || ``;
     let aiAva = originalGetItem.call(ls, `aiI_` + currLogCharId) || originalGetItem.call(ls, `aiI`) || ``;
     let npcAva = `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><rect width='100' height='100' fill='%23eee'/><text x='50%' y='50%' font-size='40' text-anchor='middle' dy='.3em' fill='%23999'>👤</text></svg>`;
 
@@ -8873,7 +8888,6 @@ setInterval(() => {
 </script>
 </body>
 </html>
-
 
 
 
