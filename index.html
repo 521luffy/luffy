@@ -2874,52 +2874,60 @@ window.loadChatSettings = function() {
 };
 
 $(`btnSaveChat`).onclick = async () => {
-    let safeVal = (id) => $(id) ? $(id).value : ``;
-    let safeCheck = (id) => $(id) ? $(id).checked : false;
-
-    ls.setItem(`cN`, safeVal(`cfgName`));
-    ls.setItem(`cR`, safeVal(`cfgRem`));
-    ls.setItem(`cMyN`, safeVal(`cfgMyName`));
-    ls.setItem(`cAP`, safeVal(`cfgAiP`));
-    ls.setItem(`cMP`, safeVal(`cfgMyP`));
-    
-    if($(`cfgBubbleCss`)) ls.setItem(`cBubbleCss`, safeVal(`cfgBubbleCss`));
-    
-    ls.setItem(`cCtx`, safeVal(`cfgCtx`));
-    ls.setItem(`cT`, safeCheck(`cfgTime`));
-    ls.setItem(`cCTon`, safeCheck(`cfgCustomTime`));
-    ls.setItem(`cCTy`, safeVal(`ctYear`));
-    ls.setItem(`cCTm`, safeVal(`ctMonth`));
-    ls.setItem(`cCTd`, safeVal(`ctDay`));
-    ls.setItem(`cCTh`, safeVal(`ctHour`));
-    ls.setItem(`cCTmin`, safeVal(`ctMinute`));
-    
-    ls.setItem(`cAMem`, safeCheck(`cfgAutoMem`));
-    ls.setItem(`cMemT`, safeVal(`cfgMemTrig`));
-    ls.setItem(`cMemP`, safeVal(`cfgMemPmt`));
-    let checkAndSave = async (preId, key) => {
-        let el = $(preId);
-        if (el && el.style.backgroundImage && el.style.backgroundImage !== `none`) {
-            let url = el.style.backgroundImage.slice(5, -2);
-            if (url.startsWith(`data:`)) {
-                let k = isolatedKeys.includes(key) ? key + `_` + currentChatId : key;
-                await localforage.setItem(k, url);
-            }
-        }
-    };
-    
     try {
-        await checkAndSave(`bgPreview`, `bgI`);
-        await checkAndSave(`aiPreview`, `aiI`);
-        await checkAndSave(`myPreview`, `myI`);
-    } catch(e) {
-        console.log(e);
+        let safeVal = (id) => $(id) ? $(id).value : ``;
+        let safeCheck = (id) => $(id) ? $(id).checked : false;
+
+        let dataObj = {
+            cN: safeVal(`cfgName`),
+            cR: safeVal(`cfgRem`),
+            cMyN: safeVal(`cfgMyName`),
+            cAP: safeVal(`cfgAiP`),
+            cMP: safeVal(`cfgMyP`),
+            cCtx: safeVal(`cfgCtx`),
+            cT: safeCheck(`cfgTime`),
+            cCTon: safeCheck(`cfgCustomTime`),
+            cCTy: safeVal(`ctYear`),
+            cCTm: safeVal(`ctMonth`),
+            cCTd: safeVal(`ctDay`),
+            cCTh: safeVal(`ctHour`),
+            cCTmin: safeVal(`ctMinute`),
+            cAMem: safeCheck(`cfgAutoMem`),
+            cMemT: safeVal(`cfgMemTrig`),
+            cMemP: safeVal(`cfgMemPmt`)
+        };
+        if($(`cfgBubbleCss`)) dataObj.cBubbleCss = safeVal(`cfgBubbleCss`);
+
+        for (let key in dataObj) {
+            ls.setItem(key, dataObj[key]);
+            let finalKey = (typeof isolatedKeys !== `undefined` && isolatedKeys.includes(key)) ? key + `_` + currentChatId : key;
+            await localforage.setItem(finalKey, dataObj[key]);
+        }
+
+        let checkImg = async (preId, key) => {
+            let el = $(preId);
+            if (el && el.style.backgroundImage && el.style.backgroundImage !== `none`) {
+                let url = el.style.backgroundImage.slice(5, -2);
+                if (url.startsWith(`data:`)) {
+                    let finalKey = (typeof isolatedKeys !== `undefined` && isolatedKeys.includes(key)) ? key + `_` + currentChatId : key;
+                    await localforage.setItem(finalKey, url);
+                }
+            }
+        };
+        
+        await checkImg(`bgPreview`, `bgI`);
+        await checkImg(`aiPreview`, `aiI`);
+        await checkImg(`myPreview`, `myI`);
+
+    } catch(err) {
+        console.log(err);
     }
     
     try { if(typeof applyVis === `function`) applyVis(); } catch(e){}
     alert(`配置已保存！`);
     showScreen(`scrRoom`);
 };
+
 
 
 
