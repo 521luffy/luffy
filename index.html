@@ -1029,7 +1029,10 @@ class=back-btn>＜</span>
             <div class=modal-bdy style=padding:15px;>
                 <div class=input-group>
                     <label>头像</label>
-                    <div id=btnSetMeAvatar class=upload-btn>🖼️ 点击上传你的专属头像</div>
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
+                        <div id=meAvaPreview style="width:60px;height:60px;border-radius:50%;background:#eee;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;border:2px solid #ddd;">👤</div>
+                        <div id=btnSetMeAvatar class=upload-btn style="flex:1;">🖼️ 点击上传你的专属头像</div>
+                    </div>
                     <input type=file id=upMeAvatar accept=image/* style=display:none;>
                 </div>
                 <div class=input-group style=margin-top:10px;>
@@ -1806,6 +1809,37 @@ let currentChatId ="default";
 let originalSetItem = ls.setItem;
 let isolatedKeys = ["cMyN", "myI", "chatHistory", "aiStatus", "bgI", "aiI", "cMP", "cN", "cR", "cAP", "cCtx", "cT", "cAMem", "cMemT", "cMemP", "linkedWb", "lastMemCount", "memories", "cStatusTxt", "cStatusColor", "cSign", "cBubbleCss", "cCTon", "cCTy", "cCTm", "cCTd", "cCTh", "cCTmin"];
 
+// ===== 名字内存缓存（绕开 localStorage 满的问题）=====
+window._nameCache = {};
+// 页面启动时从 localforage 异步预加载所有名字到缓存
+(async function preloadNameCache() {
+    try {
+        // 加载 default 角色的名字
+        let v = await localforage.getItem('cMyN_default');
+        if(v) window._nameCache['default'] = v;
+        // 其他角色会在点击时加载
+    } catch(e) {}
+})();
+// ============================================================
+
+// ===== 记忆库 localforage 迁移 =====
+async function getMems(chatId) {
+    let id = chatId || currentChatId;
+    let key = 'memories_' + id;
+    try {
+        let val = await localforage.getItem(key);
+        if(val !== null && val !== undefined) return Array.isArray(val) ? val : JSON.parse(val);
+    } catch(e) {}
+    let lsVal = originalGetItem ? originalGetItem.call(ls, key) : null;
+    if(!lsVal && id === 'default') lsVal = originalGetItem ? originalGetItem.call(ls, 'memories') : null;
+    return lsVal ? JSON.parse(lsVal) : [];
+}
+async function saveMems(mems, chatId) {
+    let id = chatId || currentChatId;
+    await localforage.setItem('memories_' + id, Array.isArray(mems) ? mems : mems);
+}
+// ====================================
+
 // ===== 【记忆库 localforage 迁移】=====
 // 因 localStorage 已满，记忆数据全部存入 localforage
 async function getMems(chatId) {
@@ -2332,10 +2366,9 @@ $(`btnListToRoom`).onclick = async () =>{
     $(`cfgName`).value = originalGetItem.call(ls, `cN_default`) || originalGetItem.call(ls, `cN`) || ``;
     $(`cfgRem`).value = originalGetItem.call(ls, `cR_default`) || originalGetItem.call(ls, `cR`) || ``;
     // 修复：优先从 localforage 读取，不 fallback 全局旧 cMyN
-    let _cMyN_def = await localforage.getItem(`cMyN_default`)
-                     || originalGetItem.call(ls, `cMyN_default`)
-                     || ``;
+    let _cMyN_def = (window._nameCache && window._nameCache[`default`]) || await localforage.getItem(`cMyN_default`) || originalGetItem.call(ls, `cMyN_default`) || ``;
     $(`cfgMyName`).value = _cMyN_def;
+    if(_cMyN_def) { if(!window._nameCache) window._nameCache={}; window._nameCache[`default`]=_cMyN_def; }
     $(`cfgAiP`).value = originalGetItem.call(ls, `cAP_default`) || originalGetItem.call(ls, `cAP`) || ``;
     $(`cfgMyP`).value = originalGetItem.call(ls, `cMP_default`) || originalGetItem.call(ls, `cMP`) || ``;
 
@@ -2358,6 +2391,16 @@ $(`btnHomeWb`).onclick = () =>{ showScreen(`scrWb`); renderWb(); };
 $(`btnCloseModal`).onclick = () =>modal.style.display=`none`;
 let contacts = ls.getItem(`myContacts`) ? JSON.parse(ls.getItem(`myContacts`)) : [];
 let isListRendering = false;
+// 启动时异步从 localforage 补充 contacts（localStorage 满时备用）
+(async function syncContacts() {
+    try {
+        let lf = await localforage.getItem(`myContacts`);
+        if(lf) {
+            let arr = typeof lf === `string` ? JSON.parse(lf) : lf;
+            if(arr.length > contacts.length) { contacts = arr; renderContacts(); }
+        }
+    } catch(e) {}
+})();
 async function renderContacts() {
     if (isListRendering) return;
     isListRendering = true;
@@ -2374,7 +2417,16 @@ async function renderContacts() {
         let isoHist = savedHist ? (typeof savedHist === 'string' ? JSON.parse(savedHist) : savedHist) : [];
         if(currentChatId === c.id) isoHist = history;
         let prevTxt = getPreviewText(isoHist);
-        let isoAiA = await localforage.getItem(`aiI_` + c.id) || originalGetItem.call(ls, `aiI_` + c.id);
+        // 先用 localStorage 快速渲染，异步从 localforage 补充
+        let isoAiA = originalGetItem.call(ls, `aiI_` + c.id);
+        // 异步加载高清头像
+        (async () => {
+            let lfAva = await localforage.getItem(`aiI_` + c.id);
+            if(lfAva && div) {
+                let avaEl = div.querySelector(`.avatar-list`);
+                if(avaEl) { avaEl.style.backgroundImage = `url(${lfAva})`; avaEl.innerText = ``; }
+            }
+        })();
         let avaHtml = isoAiA ? `<div class=avatar-list style=background-image:url(`+isoAiA+`);font-size:0;></div>` : `<div class=avatar-list>👤</div>`;
         let isoName = originalGetItem.call(ls, `cN_` + c.id) || c.name;
         let isBlk = originalGetItem.call(ls, `isBlocked_` + c.id) === 'true';
@@ -2385,10 +2437,9 @@ async function renderContacts() {
             $(`cfgName`).value = originalGetItem.call(ls, `cN_` + c.id) || c.name;
             $(`cfgRem`).value = originalGetItem.call(ls, `cR_` + c.id) || ``;
             // 修复：优先从 localforage 读取，不 fallback 到全局 cMyN（避免显示旧全局名"檬檬"）
-            let _cMyN_c = await localforage.getItem(`cMyN_` + c.id)
-                           || originalGetItem.call(ls, `cMyN_` + c.id)
-                           || ``;
+            let _cMyN_c = (window._nameCache && window._nameCache[c.id]) || await localforage.getItem(`cMyN_` + c.id) || originalGetItem.call(ls, `cMyN_` + c.id) || ``;
             $(`cfgMyName`).value = _cMyN_c;
+            if(_cMyN_c) { if(!window._nameCache) window._nameCache={}; window._nameCache[c.id]=_cMyN_c; }
             $(`cfgAiP`).value = originalGetItem.call(ls, `cAP_` + c.id) || c.prompt;
 
             $(`cfgMyP`).value = originalGetItem.call(ls, `cMP_` + c.id) || ``;
@@ -2479,6 +2530,8 @@ $(`btnConfirmAddFriend`).onclick = () =>{
     
     contacts.push({ name: n, prompt: p, id: newId });
     ls.setItem(`myContacts`, JSON.stringify(contacts));
+    // 同时写入 localforage 防止 localStorage 满的情况
+    localforage.setItem(`myContacts`, JSON.stringify(contacts)).catch(()=>{});
     renderContacts();
     
     $(`addFriendModal`).style.display=`none`;
@@ -2817,7 +2870,7 @@ $(`btnViewMem`).onclick = () =>{
         actions.innerHTML = `<span id=btnSelAllMem style="color:#333;font-size:13px;cursor:pointer;font-weight:bold;">全选</span><span id=btnDelMem style="color:#ff7675;font-size:13px;font-weight:bold;cursor:pointer;">删除选中</span>`;
         $(`memModal`).querySelector(`.modal-ctx`).insertBefore(actions, $(`memList`));
         
-        // 全新的丝滑“原地打字”保存逻辑
+        // 全新的丝滑"原地打字"保存逻辑
         $(`btnInlineEditMem`).onclick = async () => {
             if (isMemEditMode) {
                 isMemEditMode = false;
@@ -2897,10 +2950,16 @@ window.loadChatSettings = function() {
     if(ls.getItem(`cR`)) $(`cfgRem`).value = ls.getItem(`cR`); else $(`cfgRem`).value = '';
     // 【名字修复v3】同步读 localStorage per-char 值（不fallback全局，避免旧名污染）
     // 再异步用 localforage 补充（btnSaveChat 两边都写，localforage 是权威来源）
-    let _syncName = originalGetItem.call(ls, `cMyN_` + currentChatId) || ``;
-    $(`cfgMyName`).value = _syncName;
+    // 先查内存缓存（即时可用），再异步从 localforage 更新
+    let _cachedName = (window._nameCache && window._nameCache[currentChatId]) || ``;
+    if(!_cachedName) _cachedName = originalGetItem.call(ls, `cMyN_` + currentChatId) || ``;
+    $(`cfgMyName`).value = _cachedName;
     localforage.getItem(`cMyN_` + currentChatId).then(v => {
-        if(v !== null && v !== undefined && v !== ``) $(`cfgMyName`).value = v;
+        if(v !== null && v !== undefined && v !== ``) {
+            $(`cfgMyName`).value = v;
+            if(!window._nameCache) window._nameCache = {};
+            window._nameCache[currentChatId] = v;
+        }
     }).catch(() => {});
     if(ls.getItem(`cAP`)) $(`cfgAiP`).value = ls.getItem(`cAP`); else $(`cfgAiP`).value = '';
     if(ls.getItem(`cMP`)) $(`cfgMyP`).value = ls.getItem(`cMP`); else $(`cfgMyP`).value = '';
@@ -2973,6 +3032,11 @@ $(`btnSaveChat`).onclick = async () => {
             ls.setItem(key, dataObj[key]);
             let finalKey = (typeof isolatedKeys !== `undefined` && isolatedKeys.includes(key)) ? key + `_` + currentChatId : key;
             await localforage.setItem(finalKey, dataObj[key]);
+            // 名字写入内存缓存，确保 loadChatSettings 下次即时读到
+            if(key === `cMyN`) {
+                if(!window._nameCache) window._nameCache = {};
+                window._nameCache[currentChatId] = dataObj[key];
+            }
         }
 
         let checkImg = async (preId, key) => {
@@ -3227,9 +3291,9 @@ function redrawChat() {
                 let voiceMatch = line.match(/\[?【?语音消息[^0-9]*(\d+)[^\]】]*\]?】?/);
                 if(voiceMatch) {
                     let sec = voiceMatch[1];
-                    let pureText = line.replace(voiceMatch[0], ``).replace(/['""“”‘’]/g, ``).replace(/\s+/g, `，`).replace(/，+/g, `，`).replace(/([。！？!?…])，/g, `$1`).replace(/^，|，$/g, ``);
+                    let pureText = line.replace(voiceMatch[0], ``).replace(/['""""'']/g, ``).replace(/\s+/g, `，`).replace(/，+/g, `，`).replace(/([。！？!?…])，/g, `$1`).replace(/^，|，$/g, ``);
                     if(!pureText && i + 1 < lns.length) {
-                        pureText = lns[i+1].replace(/['""“”‘’]/g, ``).replace(/\s+/g, `，`).replace(/，+/g, `，`).replace(/([。！？!?…])，/g, `$1`).replace(/^，|，$/g, ``);
+                        pureText = lns[i+1].replace(/['""""'']/g, ``).replace(/\s+/g, `，`).replace(/，+/g, `，`).replace(/([。！？!?…])，/g, `$1`).replace(/^，|，$/g, ``);
                         skipNext = true;
                     }
                     if(pureText && !/[。！？!?…]$/.test(pureText)) pureText += `。`;
@@ -3590,8 +3654,13 @@ if(document.getElementById(`msgs`)) {
         let statusEl = target.querySelector(`.rp-status, .transfer-status`);
         if(!statusEl || (statusEl.innerText !== `未领取` && statusEl.innerText !== `未收款`)) return;
         
-        let amtText = target.querySelector(`.rp-amt, .transfer-amt`).innerText;
-        let amt = parseFloat(amtText.replace(`¥`, ``).trim());
+        let amt;
+        if(target.dataset.amt) {
+            amt = parseFloat(target.dataset.amt);
+        } else {
+            let amtEl = target.querySelector(`.rp-amt, .transfer-amt`);
+            amt = amtEl ? parseFloat(amtEl.innerText.replace(`¥`,``).trim()) : NaN;
+        }
         if(isNaN(amt)) return;
         
         let dn = document.getElementById(`cfgRem`).value || document.getElementById(`cfgName`).value || `对方`;
@@ -3767,7 +3836,7 @@ let resStickers = await localforage.getItem(`charStickers`);
 if(charStickers.length > 0) {
         let names = charStickers.map(x => x.name).join(`、`);
 
-        sys += `\n【你的专属表情包库】如果你想发表情配合情绪，请务必在【回复】中插入代码“[发送表情：表情名称]”。当前你拥有的表情名称有：` + names + `。警告：绝对不要捏造列表外的表情！不要发多余的链接！`;
+        sys += `\n【你的专属表情包库】如果你想发表情配合情绪，请务必在【回复】中插入代码"[发送表情：表情名称]"。当前你拥有的表情名称有：` + names + `。警告：绝对不要捏造列表外的表情！不要发多余的链接！`;
     }
             sys += `\n【资金互动规则】如果玩家发了转账（显示未收款），你必须在回复的最开头写上系统指令 [收取转账] 或 [拒绝转账]。如果玩家发了红包（显示未领取），你必须在回复的最开头写上系统指令 [领取红包] 或 [退回红包]。指令必须严格带上方括号！然后再写你的文字回复。如果不写指令，系统将彻底报错崩溃！`;
 
@@ -3916,9 +3985,9 @@ let hasAccept = txt.includes(`[收取转账]`);
                     let voiceMatch = line.match(/\[?【?语音消息[^0-9]*(\d+)[^\]】]*\]?】?/);
                     if(voiceMatch) {
                         let sec = voiceMatch[1];
-                        let pureText = line.replace(voiceMatch[0], ``).replace(/['""“”‘’]/g, ``).replace(/\s+/g, `，`).replace(/，+/g, `，`).replace(/([。！？!?…])，/g, `$1`).replace(/^，|，$/g, ``);
+                        let pureText = line.replace(voiceMatch[0], ``).replace(/['""""'']/g, ``).replace(/\s+/g, `，`).replace(/，+/g, `，`).replace(/([。！？!?…])，/g, `$1`).replace(/^，|，$/g, ``);
                         if(!pureText && i + 1 < lns.length) {
-                            pureText = lns[i+1].replace(/['""“”‘’]/g, ``).replace(/\s+/g, `，`).replace(/，+/g, `，`).replace(/([。！？!?…])，/g, `$1`).replace(/^，|，$/g, ``);
+                            pureText = lns[i+1].replace(/['""""'']/g, ``).replace(/\s+/g, `，`).replace(/，+/g, `，`).replace(/([。！？!?…])，/g, `$1`).replace(/^，|，$/g, ``);
                             skipNext = true;
                         }
                         if(pureText && !/[。！？!?…]$/.test(pureText)) pureText += `。`;
@@ -3970,15 +4039,17 @@ function renderQuoteBlock(b, txt) {
         let amt = transferMatch[1];
         let note = transferMatch[2];
         let status = transferMatch[3];
-        b.innerHTML = `<div style="width:200px; background:#f3e5f5; border-radius:12px; overflow:hidden; border:1px solid #e1bee7;">
+        let tfAmt = transferMatch[1];
+        let tfCursor = status === `未收款` ? `cursor:pointer;` : ``;
+        b.innerHTML = `<div class="transfer-card" data-amt="${tfAmt}" style="width:200px; background:#f3e5f5; border-radius:12px; overflow:hidden; border:1px solid #e1bee7; ${tfCursor}">
             <div style="padding:15px; display:flex; align-items:center; gap:12px;">
                 <div style="width:36px; height:36px; background:#6c5ce7; border-radius:50%; display:flex; justify-content:center; align-items:center; color:white; font-size:18px; font-weight:bold; flex-shrink:0;">¥</div>
                 <div style="display:flex; flex-direction:column; overflow:hidden;">
-                    <span style="font-size:15px; color:#333; font-weight:bold;">¥ ${amt}</span>
+                    <span class="transfer-amt" style="font-size:15px; color:#333; font-weight:bold;">¥ ${amt}</span>
                     <span style="font-size:12px; color:#666; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${note}</span>
                 </div>
             </div>
-            <div style="padding:4px 15px; background:rgba(255,255,255,0.6); font-size:11px; color:#888; border-top:1px solid rgba(0,0,0,0.05);">
+            <div class="transfer-status" style="padding:4px 15px; background:rgba(255,255,255,0.6); font-size:11px; color:#888; border-top:1px solid rgba(0,0,0,0.05);">
                 专属转账 · ${status}
             </div>
         </div>`;
@@ -3999,13 +4070,15 @@ function renderQuoteBlock(b, txt) {
         let bgStyle = cover ? `background:url(${cover}) center/cover no-repeat;` : `background:#f25542;`;
         let maskStyle = cover ? `background:linear-gradient(to bottom, rgba(242,85,66,0.8) 0%, rgba(242,85,66,0) 60%, rgba(0,0,0,0.6) 100%);` : `background:transparent;`;
         let opacityStatus = status === `未领取` ? `1` : `0.6`;
+        let rpCursor = status === `未领取` ? `cursor:pointer;` : ``;
         
-        b.innerHTML = `<div style="width:150px; height:200px; ${bgStyle} border-radius:12px; overflow:hidden; border:1px solid #ffcccc; position:relative; opacity:${opacityStatus}; display:flex; flex-direction:column;">
+        let rpAmt = rpMatch[1];
+        b.innerHTML = `<div class="rp-card" data-amt="${rpAmt}" style="width:150px; height:200px; ${bgStyle} border-radius:12px; overflow:hidden; border:1px solid #ffcccc; position:relative; opacity:${opacityStatus}; display:flex; flex-direction:column; ${rpCursor}">
             <div style="${maskStyle} flex:1; padding:15px; display:flex; flex-direction:column; gap:8px;">
                 <div style="width:30px; height:30px; background:white; border-radius:5px; display:flex; justify-content:center; align-items:center; color:#f25542; font-size:16px; font-weight:bold;">🧧</div>
                 <div style="display:flex; flex-direction:column; overflow:hidden;">
-                    <span style="font-size:14px; color:white; font-weight:bold; word-wrap:break-word; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">${note}</span>
-                    <span style="font-size:11px; color:rgba(255,255,255,0.9); margin-top:4px;">${status === '未领取' ? '专属红包' : status}</span>
+                    <span class="rp-amt" style="font-size:14px; color:white; font-weight:bold; word-wrap:break-word; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">${note}</span>
+                    <span class="rp-status" style="font-size:11px; color:rgba(255,255,255,0.9); margin-top:4px;">${status === '未领取' ? '专属红包' : status}</span>
                 </div>
             </div>
             <div style="padding:6px 12px; background:white; font-size:11px; color:#888;">
@@ -4553,7 +4626,7 @@ window.deleteSticker = (event, index) =>{
 };
 
 function sendSticker(url, name) {
-    let t = `[图片消息：` + url + `]\n(系统提示：我发送了一个名为“` + name + `”的表情包)`; 
+    let t = `[图片消息：` + url + `]\n(系统提示：我发送了一个名为"` + name + `"的表情包)`; 
     mkBub(t, `r`); history.push({role: `user`, content: t}); ls.setItem(`chatHistory`, JSON.stringify(history)); updateListPreview(); toggleStickerDrawer(false);
 }
 
@@ -4678,18 +4751,56 @@ if($("btnEditMe")) $("btnEditMe").onclick = () =>{
 
     $("iptMeName").value = $("cfgMyName").value || "你的名字";
     $("iptMeBio").value = ls.getItem("myBio") || "";
+    // 加载当前头像缩略图
+    let _meAvaP = $("meAvaPreview");
+    if(_meAvaP) {
+        let _curAva = window.currentLoadedMyI || ``;
+        if(_curAva) { _meAvaP.style.backgroundImage = `url(${_curAva})`; _meAvaP.innerText = ``; }
+        else { _meAvaP.style.backgroundImage = `none`; _meAvaP.innerText = `👤`; }
+    }
     $("editMeModal").style.display = "flex";
 };
 if($("btnCancelEditMe")) $("btnCancelEditMe").onclick = () =>$("editMeModal").style.display ="none";
-if($("btnSaveEditMe")) $("btnSaveEditMe").onclick = () =>{
-    $("cfgMyName").value = $("iptMeName").value;
-    ls.setItem("cMyN", $("iptMeName").value);
-    ls.setItem("myBio", $("iptMeBio").value);
-    applyVis();
+if($("btnSaveEditMe")) $("btnSaveEditMe").onclick = async () =>{
+    let newName = $("iptMeName").value.trim();
+    let newBio = $("iptMeBio").value;
+    $("cfgMyName").value = newName;
+    ls.setItem("cMyN", newName);
+    ls.setItem("myBio", newBio);
+    // 写入 localforage（绕开 localStorage 满的问题）
+    let nameKey = `cMyN_` + currentChatId;
+    await localforage.setItem(nameKey, newName).catch(()=>{});
+    await localforage.setItem(`myBio`, newBio).catch(()=>{});
+    // 更新内存缓存
+    if(!window._nameCache) window._nameCache = {};
+    window._nameCache[currentChatId] = newName;
+    await applyVis();
     $("editMeModal").style.display = "none";
 };
 if($("btnSetMeAvatar")) $("btnSetMeAvatar").onclick = () =>$("upMeAvatar").click();
 cmp("upMeAvatar","myI");
+// 上传后也更新弹窗内的头像缩略图
+if($("upMeAvatar")) {
+    let _origOnchange = $("upMeAvatar").onchange;
+    let _originalCmpOnchange = null;
+    // 用 MutationObserver 或直接 override onchange after cmp sets it
+    setTimeout(() => {
+        let _el = $("upMeAvatar");
+        let _prev = _el.onchange;
+        _el.onchange = function(e) {
+            if(_prev) _prev.call(this, e);
+            // 上传完毕后通过 cmp 的 applyVis 已经更新了 window.currentLoadedMyI
+            // 延迟一点更新预览
+            setTimeout(() => {
+                let _p = $("meAvaPreview");
+                if(_p && window.currentLoadedMyI) {
+                    _p.style.backgroundImage = `url(${window.currentLoadedMyI})`;
+                    _p.innerText = ``;
+                }
+            }, 300);
+        };
+    }, 100);
+}
 
 
 
@@ -5084,9 +5195,9 @@ window.summonComments = async function(id, charName, btnEl) {
     let myN = $(`cfgMyName`).value || `我`;
     let sys = ``;
     if(log.author === `me`) {
-        sys = `玩家（名字：${myN}）在社交平台发布了动态：\n正文：${log.content}\n\n请你扮演3个不同的访客给这条动态写评论。其中必须有1条来自角色「${charName}」的评论（符合TA的性格），另外2条来自普通网友或同学（随机起个真实的网名）。\n警告：评论者的名字绝对不能是“${myN}”。\n要求：可以识别动态中的emoji。请根据每个评论者的性格严格控制是否使用emoji（高冷严谨绝对不用，活泼开朗可以多用）。\n必须返回严格的纯JSON数组格式：\n[{"name":"名字","content":"内容"}]`;
+        sys = `玩家（名字：${myN}）在社交平台发布了动态：\n正文：${log.content}\n\n请你扮演3个不同的访客给这条动态写评论。其中必须有1条来自角色「${charName}」的评论（符合TA的性格），另外2条来自普通网友或同学（随机起个真实的网名）。\n警告：评论者的名字绝对不能是"${myN}"。\n要求：可以识别动态中的emoji。请根据每个评论者的性格严格控制是否使用emoji（高冷严谨绝对不用，活泼开朗可以多用）。\n必须返回严格的纯JSON数组格式：\n[{"name":"名字","content":"内容"}]`;
     } else {
-        sys = `角色（名字：${charName}）在社交平台发布了动态：\n正文：${log.content}\n\n请你扮演3个不同的访客（比如同学、路人网友、共同好友等，请给他们随机起真实的网名或昵称）给这条动态写评论。\n极度重要警告：\n1. 这条动态的作者是${charName}！评论内容必须是对${charName}说的话，绝对不能把作者误认为是${myN}！\n2. 评论者的名字绝对不能是“${charName}”本人，也绝对不能是“${myN}”！\n要求：根据每个访客的性格控制emoji的使用频率。\n必须返回严格的纯JSON数组格式：\n[{"name":"名字","content":"内容"}]`;
+        sys = `角色（名字：${charName}）在社交平台发布了动态：\n正文：${log.content}\n\n请你扮演3个不同的访客（比如同学、路人网友、共同好友等，请给他们随机起真实的网名或昵称）给这条动态写评论。\n极度重要警告：\n1. 这条动态的作者是${charName}！评论内容必须是对${charName}说的话，绝对不能把作者误认为是${myN}！\n2. 评论者的名字绝对不能是"${charName}"本人，也绝对不能是"${myN}"！\n要求：根据每个访客的性格控制emoji的使用频率。\n必须返回严格的纯JSON数组格式：\n[{"name":"名字","content":"内容"}]`;
     }
 
     try {
@@ -8923,6 +9034,7 @@ setInterval(() => {
 </script>
 </body>
 </html>
+
 
 
 
