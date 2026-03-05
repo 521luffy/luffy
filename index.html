@@ -3955,7 +3955,7 @@ function renderQuoteBlock(b, txt) {
                     $(`btnPromptOpt2`).innerText = `2. 狠心拒收 ❌`;
                     $(`customPromptModal`).style.display = `flex`;
                     
-                                        let handleRpChoice = (choice) => {
+                                        let handleRpChoice = async (choice) => {
     $(`customPromptModal`).style.display = `none`;
     $(`btnPromptOpt1`).innerText = `1. 尝试重新添加 (有几率被拒绝)`;
     $(`btnPromptOpt2`).innerText = `2. 强制系统触发 (有几率失败)`;
@@ -3969,9 +3969,9 @@ function renderQuoteBlock(b, txt) {
                 ls.setItem(`chatHistory`, JSON.stringify(history));
                 
                 let targetKey = `chatHistory_` + currentChatId;
-                localforage.setItem(targetKey, JSON.stringify(history));
+                await localforage.setItem(targetKey, JSON.stringify(history));
                 if(currentChatId === `default`) {
-                    localforage.setItem(`chatHistory`, JSON.stringify(history));
+                    await localforage.setItem(`chatHistory`, JSON.stringify(history));
                 }
                 
                 break;
@@ -3988,15 +3988,16 @@ function renderQuoteBlock(b, txt) {
                 ls.setItem(`chatHistory`, JSON.stringify(history));
                 
                 let targetKey = `chatHistory_` + currentChatId;
-                localforage.setItem(targetKey, JSON.stringify(history));
+                await localforage.setItem(targetKey, JSON.stringify(history));
                 if(currentChatId === `default`) {
-                    localforage.setItem(`chatHistory`, JSON.stringify(history));
+                    await localforage.setItem(`chatHistory`, JSON.stringify(history));
                 }
                 
                 break;
             }
         }
         redrawChat();
+
 
 
                             let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value;
@@ -4092,7 +4093,7 @@ function renderQuoteBlock(b, txt) {
                     $(`btnPromptOpt2`).innerText = `2. 立即退还 ❌`;
                     $(`customPromptModal`).style.display = `flex`;
                     
-                                        let handleTfChoice = (choice) => {
+                                        let handleTfChoice = async (choice) => {
     $(`customPromptModal`).style.display = `none`;
     $(`btnPromptOpt1`).innerText = `1. 尝试重新添加 (有几率被拒绝)`;
     $(`btnPromptOpt2`).innerText = `2. 强制系统触发 (有几率失败)`;
@@ -4106,9 +4107,9 @@ function renderQuoteBlock(b, txt) {
                 ls.setItem(`chatHistory`, JSON.stringify(history));
                 
                 let targetKey = `chatHistory_` + currentChatId;
-                localforage.setItem(targetKey, JSON.stringify(history));
+                await localforage.setItem(targetKey, JSON.stringify(history));
                 if(currentChatId === `default`) {
-                    localforage.setItem(`chatHistory`, JSON.stringify(history));
+                    await localforage.setItem(`chatHistory`, JSON.stringify(history));
                 }
                 
                 break;
@@ -4125,15 +4126,16 @@ function renderQuoteBlock(b, txt) {
                 ls.setItem(`chatHistory`, JSON.stringify(history));
                 
                 let targetKey = `chatHistory_` + currentChatId;
-                localforage.setItem(targetKey, JSON.stringify(history));
+                await localforage.setItem(targetKey, JSON.stringify(history));
                 if(currentChatId === `default`) {
-                    localforage.setItem(`chatHistory`, JSON.stringify(history));
+                    await localforage.setItem(`chatHistory`, JSON.stringify(history));
                 }
                 
                 break;
             }
         }
         redrawChat();
+
 
 
                             
