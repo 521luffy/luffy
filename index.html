@@ -2296,11 +2296,20 @@ if($(`btnSaveFont`)) {
 
 $(`btnListToRoom`).onclick = async () =>{ 
     currentChatId = `default`;
-    $(`cfgName`).value = originalGetItem.call(ls, `cN_default`) || originalGetItem.call(ls, `cN`) || ``;
-    $(`cfgRem`).value = originalGetItem.call(ls, `cR_default`) || originalGetItem.call(ls, `cR`) || ``;
-    $(`cfgMyName`).value = originalGetItem.call(ls, `cMyN_default`) || originalGetItem.call(ls, `cMyN`) || ``;
-    $(`cfgAiP`).value = originalGetItem.call(ls, `cAP_default`) || originalGetItem.call(ls, `cAP`) || ``;
-    $(`cfgMyP`).value = originalGetItem.call(ls, `cMP_default`) || originalGetItem.call(ls, `cMP`) || ``;
+    
+    let getDef = async (k) => {
+        let v = await localforage.getItem(k + `_default`);
+        if (!v) v = await localforage.getItem(k);
+        if (!v) v = originalGetItem.call(ls, k + `_default`);
+        return v;
+    };
+
+    $(`cfgName`).value = await getDef(`cN`) || originalGetItem.call(ls, `cN`) || ``;
+    $(`cfgRem`).value = await getDef(`cR`) || originalGetItem.call(ls, `cR`) || ``;
+    $(`cfgMyName`).value = await getDef(`cMyN`) || originalGetItem.call(ls, `cMyN`) || ``;
+    $(`cfgAiP`).value = await getDef(`cAP`) || originalGetItem.call(ls, `cAP`) || ``;
+    $(`cfgMyP`).value = await getDef(`cMP`) || originalGetItem.call(ls, `cMP`) || ``;
+
 
     let savedHist = await localforage.getItem(`chatHistory_` + currentChatId) ||
 originalGetItem.call(ls, `chatHistory_` + currentChatId);
@@ -2343,14 +2352,21 @@ async function renderContacts() {
         let isBlk = originalGetItem.call(ls, `isBlocked_` + c.id) === 'true';
         if (isBlk) isoName += `<span style="color:#ff4757;font-size:10px;margin-left:4px;padding:0 2px;">已拉黑</span>`;
         div.innerHTML = avaHtml + `<div class=chat-info><div class=chat-name>` + isoName + `</div><div class=chat-preview>` + prevTxt + `</div></div>`;
-                div.onclick = async () => {
+                        div.onclick = async () => {
             currentChatId = c.id;
-            $(`cfgName`).value = originalGetItem.call(ls, `cN_` + c.id) || c.name;
-            $(`cfgRem`).value = originalGetItem.call(ls, `cR_` + c.id) || ``;
-            $(`cfgMyName`).value = originalGetItem.call(ls, `cMyN_` + c.id) || originalGetItem.call(ls, `cMyN`) || ``;
-            $(`cfgAiP`).value = originalGetItem.call(ls, `cAP_` + c.id) || c.prompt;
+            
+            let getVal = async (k) => {
+                let v = await localforage.getItem(k + `_` + c.id);
+                if (!v) v = originalGetItem.call(ls, k + `_` + c.id);
+                return v;
+            };
 
-            $(`cfgMyP`).value = originalGetItem.call(ls, `cMP_` + c.id) || ``;
+            $(`cfgName`).value = await getVal(`cN`) || c.name;
+            $(`cfgRem`).value = await getVal(`cR`) || ``;
+            $(`cfgMyName`).value = await getVal(`cMyN`) || originalGetItem.call(ls, `cMyN`) || ``;
+            $(`cfgAiP`).value = await getVal(`cAP`) || c.prompt;
+            $(`cfgMyP`).value = await getVal(`cMP`) || ``;
+
             if($(`cfgBubbleCss`)) $(`cfgBubbleCss`).value = originalGetItem.call(ls, `cBubbleCss_` + c.id) || ``;
             let ctxVal = originalGetItem.call(ls, `cCtx_` + c.id);
             if(ctxVal) $(`cfgCtx`).value = ctxVal;
