@@ -151,7 +151,7 @@ display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 30px
 .sticker-item { background: #fff; border-radius: 10px; padding: 6px; display: flex; flex-direction: column; align-items: center; cursor: pointer; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.02); min-width: 0; }
 
 .sticker-item img { width: 45px; height: 45px; object-fit: contain; margin-bottom: 5px; background: transparent; border-radius: 8px; }
-.sticker-item .name { font-size: 11px; color: #666; text-align: center; width: 100%;overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.sticker-item .name { font-size: 11px; color: #666; text-align: center; width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 
 .sticker-delete-btn { position: absolute; top: -6px; right: -6px; background: #ff4d4f; color: white; border-radius: 50%; width: 20px; height: 20px; text-align: center; line-height: 18px; font-size: 14px; font-weight: bold; display: none; z-index: 2; }
 .sticker-item.edit-mode { animation: shake 0.5s infinite alternate; }
@@ -226,7 +226,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 .catch-switch-wrapper label { font-size: 11px; font-weight: bold; cursor: pointer; }
 .catch-switch { appearance: none; width: 26px; height: 14px; background: rgba(255,255,255,0.4); border-radius: 14px; position: relative; cursor: pointer; outline: none; transition: 0.3s; }
 .catch-switch:checked { background: #ff9a9e; }
-.catch-switch::after { content:''; position: absolute; top: 2px; left: 2px; width: 10px; height: 10px; background: white; border-radius: 50%; transition: 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+.catch-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 10px; height: 10px; background: white; border-radius: 50%; transition: 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
 .catch-switch:checked::after { transform: translateX(12px); }
 .char-phone-desktop { flex: 1; padding: 20px 15px; display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: max-content; gap: 20px 15px; z-index: 2; align-content: start; }
 .char-app-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: 0.2s; }
@@ -257,7 +257,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 .spy-diary-content { font-size: 14px; color: #444; line-height: 1.8; text-align: justify; white-space: pre-wrap; }
 .spy-diary-check { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #ccc; display: flex; justify-content: center; align-items: center; margin-right: 15px; flex-shrink: 0; transition: 0.2s; }
 .spy-diary-check.checked { border-color: #ff9a9e; }
-.spy-diary-check.checked::after { content:''; width: 12px; height: 12px; border-radius: 50%; background: #ff9a9e; }
+.spy-diary-check.checked::after { content: ''; width: 12px; height: 12px; border-radius: 50%; background: #ff9a9e; }
 
 /* 查手机-知乎专属样式 */
 .spy-zhihu-tab-container { display: flex; background: #fff; padding: 10px 15px; gap: 10px; border-bottom: 1px solid #eee; flex-shrink: 0; }
@@ -270,7 +270,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 .spy-zh-content { font-size: 13px; color: #334155; line-height: 1.6; text-align: justify; word-break: break-all; white-space: pre-wrap; }
 .spy-zh-check { width: 22px; height: 22px; border-radius: 4px; border: 2px solid #ccc; display: flex; justify-content: center; align-items: center; margin-right: 15px; flex-shrink: 0; transition: 0.2s; }
 .spy-zh-check.checked { border-color: #0066ff; background: #0066ff; }
-.spy-zh-check.checked::after { content:'✓'; color: white; font-size: 14px; font-weight: bold; }
+.spy-zh-check.checked::after { content: '✓'; color: white; font-size: 14px; font-weight: bold; }
 
 /* 查手机-隐私空间专属样式 */
 .spy-secret-bg { background: #111; color: #eee; }
@@ -368,38 +368,46 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         <div id=momentHeader style="position:relative;width:100%;height:220px;background:linear-gradient(135deg,#ffecd2,#fcb69f);overflow:hidden;flex-shrink:0;">
             <div id=momentBg style="position:absolute;inset:0;background-size:cover;background-position:center;"></div>
             <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0.1),rgba(0,0,0,0.4));"></div>
-            <!-- 右上角管理按钮 -->
+            <!-- 右上角：相机发圈 + 管理 -->
             <div style="position:absolute;top:12px;right:12px;display:flex;gap:8px;z-index:10;">
                 <button id=btnMomentBack style="background:rgba(255,255,255,0.25);border:none;border-radius:20px;padding:6px 12px;color:white;font-size:13px;font-weight:bold;cursor:pointer;backdrop-filter:blur(8px);">＜</button>
+                <button id=btnMomentCamera style="background:rgba(255,255,255,0.25);border:none;border-radius:20px;padding:7px 12px;color:white;font-size:18px;cursor:pointer;backdrop-filter:blur(8px);" title="发朋友圈">📷</button>
                 <button id=btnMomentMultiSelect style="background:rgba(255,255,255,0.25);border:none;border-radius:20px;padding:6px 12px;color:white;font-size:13px;cursor:pointer;backdrop-filter:blur(8px);">☑ 管理</button>
             </div>
             <!-- 右下角用户信息 -->
             <div style="position:absolute;bottom:16px;right:16px;display:flex;align-items:flex-end;gap:10px;z-index:10;">
-                <div style="text-align:right;">
-                    <div id=momentUserName style="color:white;font-size:16px;font-weight:bold;text-shadow:0 1px 4px rgba(0,0,0,0.5);">我的昵称</div>
-                </div>
+                <div id=momentUserName style="color:white;font-size:16px;font-weight:bold;text-shadow:0 1px 4px rgba(0,0,0,0.5);">我的昵称</div>
                 <div id=momentUserAvatar style="width:64px;height:64px;border-radius:10px;background:#ddd;background-size:cover;background-position:center;border:2.5px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:28px;cursor:pointer;flex-shrink:0;">👤</div>
             </div>
-            <!-- 左下角上传背景 -->
             <div style="position:absolute;bottom:16px;left:12px;z-index:10;">
                 <button id=btnUploadMomentBg style="background:rgba(255,255,255,0.25);border:none;border-radius:16px;padding:5px 10px;color:white;font-size:12px;cursor:pointer;backdrop-filter:blur(8px);">🖼 换背景</button>
                 <input type=file id=momentBgInput accept="image/*" style=display:none;>
             </div>
         </div>
 
-        <!-- 发朋友圈工具栏 -->
-        <div style="background:white;padding:10px 16px;display:flex;align-items:center;gap:10px;box-shadow:0 1px 4px rgba(0,0,0,0.06);flex-shrink:0;">
-            <select id=momentPostWho style="flex:1;padding:8px;border:1.5px solid #ffd6e0;border-radius:20px;font-size:13px;background:white;color:#555;outline:none;">
-                <option value="user">✏️ 我来发朋友圈</option>
-            </select>
-            <button id=btnPostMoment style="background:linear-gradient(135deg,#ff9a9e,#fad0c4);border:none;border-radius:20px;padding:8px 18px;color:white;font-size:13px;font-weight:bold;cursor:pointer;white-space:nowrap;">发布 💕</button>
-        </div>
-
-        <!-- 批量管理工具栏（默认隐藏）-->
+        <!-- 批量管理工具栏 -->
         <div id=momentMultiBar style="display:none;background:#fff0f3;padding:8px 16px;align-items:center;gap:10px;flex-shrink:0;">
             <button id=btnMomentSelectAll style="background:#ffd6e0;border:none;border-radius:16px;padding:6px 14px;font-size:13px;cursor:pointer;">全选</button>
             <button id=btnMomentDeleteSel style="background:#ff6b6b;border:none;border-radius:16px;padding:6px 14px;font-size:13px;color:white;cursor:pointer;margin-left:auto;">🗑 删除选中</button>
             <button id=btnMomentCancelSel style="background:#ddd;border:none;border-radius:16px;padding:6px 14px;font-size:13px;cursor:pointer;">取消</button>
+        </div>
+
+        <!-- char/npc 发圈区 -->
+        <div id=momentCharPanel style="background:white;padding:12px 14px;box-shadow:0 1px 4px rgba(0,0,0,0.06);flex-shrink:0;">
+            <div style="font-size:12px;color:#ff9a9e;font-weight:bold;margin-bottom:8px;">💬 让角色/NPC发一条朋友圈</div>
+            <div style="display:flex;gap:8px;">
+                <!-- 左列: Char -->
+                <div style="flex:1;min-width:0;">
+                    <div style="font-size:11px;color:#aaa;margin-bottom:5px;text-align:center;">角色</div>
+                    <div id=momentCharList style="display:flex;flex-direction:column;gap:4px;max-height:130px;overflow-y:auto;"></div>
+                </div>
+                <!-- 右列: NPC -->
+                <div style="flex:1;min-width:0;">
+                    <div style="font-size:11px;color:#aaa;margin-bottom:5px;text-align:center;">NPC</div>
+                    <div id=momentNpcList style="display:flex;flex-direction:column;gap:4px;max-height:130px;overflow-y:auto;"></div>
+                </div>
+            </div>
+            <button id=btnGenCharMoments style="width:100%;margin-top:10px;padding:10px;border-radius:20px;border:none;background:linear-gradient(135deg,#ff9a9e,#fad0c4);color:white;font-size:14px;font-weight:bold;cursor:pointer;">✨ 生成选中角色的朋友圈</button>
         </div>
 
         <!-- 动态列表 -->
@@ -414,31 +422,33 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         </div>
     </div>
 
-    <!-- 发朋友圈 modal -->
-    <div id=momentPostModal class=modal-base style="z-index:8000;display:none;">
-        <div class=modal-ctx style="width:92%;max-width:420px;">
+    <!-- user 发朋友圈 modal (相机点击) -->
+    <div id=momentUserPostModal class=modal-base style="z-index:8000;display:none;">
+        <div class=modal-ctx style="width:94%;max-width:440px;max-height:92vh;overflow-y:auto;">
             <div class=modal-hdr style="background:linear-gradient(135deg,#ff9a9e,#fad0c4);">
-                <span style="color:white;" id=momentPostTitle>发朋友圈</span>
-                <span id=btnCloseMomentPost style="cursor:pointer;font-size:20px;color:white;">✕</span>
+                <span style="color:white;">📷 发朋友圈</span>
+                <span id=btnCloseMomentUserPost style="cursor:pointer;font-size:20px;color:white;">✕</span>
             </div>
             <div class=modal-bdy style="padding:15px;">
-                <textarea id=momentPostText style="width:100%;height:100px;border:1.5px solid #ffd6e0;border-radius:12px;padding:10px;font-size:14px;resize:none;box-sizing:border-box;outline:none;" placeholder="说点什么..."></textarea>
+                <textarea id=momentUserPostText style="width:100%;height:90px;border:1.5px solid #ffd6e0;border-radius:12px;padding:10px;font-size:14px;resize:none;box-sizing:border-box;outline:none;" placeholder="说点什么..."></textarea>
+                <!-- 文字描述图片（和聊天拍照一样） -->
                 <div style="margin-top:10px;">
-                    <label style="font-size:12px;color:#999;">可选：上传图片</label>
-                    <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
-                        <div id=momentPostImgPreview style="width:60px;height:60px;border-radius:10px;background:#f5f5f5;border:1.5px dashed #ffd6e0;display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;">🖼</div>
-                        <input type=file id=momentPostImgInput accept="image/*" style=display:none;>
-                        <button id=btnClearMomentImg style="background:#ddd;border:none;border-radius:12px;padding:5px 12px;font-size:12px;cursor:pointer;">清除图片</button>
+                    <div style="font-size:12px;color:#999;margin-bottom:5px;">图片（可选）：</div>
+                    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                        <div id=momentUserPhotoPreview style="width:70px;height:70px;border-radius:10px;background:#f9f0f5;border:1.5px dashed #ffd6e0;display:flex;align-items:center;justify-content:center;font-size:11px;color:#bbb;text-align:center;cursor:pointer;flex-shrink:0;">上传<br>图片</div>
+                        <input type=file id=momentUserPhotoInput accept="image/*" style=display:none;>
+                        <div style="flex:1;min-width:100px;">
+                            <div style="font-size:11px;color:#aaa;margin-bottom:3px;">或：文字描述图片</div>
+                            <input type=text id=momentUserPhotoDesc style="width:100%;padding:7px 10px;border:1.5px solid #ffd6e0;border-radius:10px;font-size:13px;box-sizing:border-box;outline:none;" placeholder="例：一张在海边拍的日落">
+                        </div>
                     </div>
                 </div>
-                <!-- 召唤评论选择（发布后） -->
-                <div id=momentSummonBlock style="display:none;margin-top:12px;padding:10px;background:#fff9fb;border-radius:10px;border:1px solid #ffd6e0;">
-                    <div style="font-size:12px;color:#ff9a9e;margin-bottom:6px;">💬 发布后召唤谁来评论？</div>
-                    <div id=momentSummonList style="display:flex;flex-direction:column;gap:5px;max-height:120px;overflow-y:auto;"></div>
+                <!-- 召唤评论 -->
+                <div style="margin-top:12px;padding:10px;background:#fff9fb;border-radius:10px;border:1px solid #ffd6e0;">
+                    <div style="font-size:12px;color:#ff9a9e;margin-bottom:6px;">💬 发布后召唤谁来评论？（可多选）</div>
+                    <div id=momentUserSummonList style="display:flex;flex-direction:column;gap:4px;max-height:110px;overflow-y:auto;"></div>
                 </div>
-                <div style="display:flex;gap:8px;margin-top:14px;">
-                    <button id=btnConfirmMomentPost style="flex:1;padding:11px;border-radius:20px;border:none;background:linear-gradient(135deg,#ff9a9e,#fad0c4);color:white;font-size:14px;font-weight:bold;cursor:pointer;">发布 💕</button>
-                </div>
+                <button id=btnConfirmUserPost style="width:100%;margin-top:14px;padding:11px;border-radius:20px;border:none;background:linear-gradient(135deg,#ff9a9e,#fad0c4);color:white;font-size:14px;font-weight:bold;cursor:pointer;">发布 💕</button>
             </div>
         </div>
     </div>
@@ -458,15 +468,17 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         </div>
     </div>
 
+
     <div id=scrContact class=scr-list>
         <div class=chat-header>
                         <span id=btnContactBack 
 class=back-btn>＜</span>
             <span class=header-center>联系人</span>
 
-            <div style="display:flex; align-items:center; gap:15px;">
+            <div style="display:flex; align-items:center; gap:10px;">
                 <span id=btnRoleHelp class=plus-btn style="font-size:20px;">❓</span>
-                <span id=btnAddContact class=plus-btn>+</span>
+                <span id=btnAddContact class=plus-btn title="新增好友">+👤</span>
+                <span id=btnAddGroup class=plus-btn title="新建群聊" style="font-size:15px;">+👥</span>
             </div>
         </div>
 
@@ -1156,6 +1168,101 @@ class=back-btn>＜</span>
     </div>
     
     <!-- 我的空间 独立编辑弹窗 -->
+
+    <!-- ===== 群聊功能 HTML ===== -->
+
+    <!-- 新建群聊 modal -->
+    <div id=createGroupModal class=modal-base style="z-index:9000;display:none;">
+        <div class=modal-ctx style="width:94%;max-width:440px;max-height:90vh;overflow-y:auto;">
+            <div class=modal-hdr style="background:linear-gradient(135deg,#a29bfe,#6c5ce7);">
+                <span style="color:white;">👥 新建群聊</span>
+                <span id=btnCloseCreateGroup style="cursor:pointer;font-size:20px;color:white;">✕</span>
+            </div>
+            <div class=modal-bdy style="padding:15px;">
+                <div style="font-size:12px;color:#6c5ce7;margin-bottom:8px;font-weight:bold;">群聊名称</div>
+                <input type=text id=groupNameInput class=input-field placeholder="输入群聊名称" style="margin-bottom:12px;">
+                <div style="font-size:12px;color:#6c5ce7;margin-bottom:8px;font-weight:bold;">选择群成员（可多选，你默认已在其中）</div>
+                <div id=createGroupMemberList style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;padding:4px;border:1px solid #e0e0fe;border-radius:10px;"></div>
+                <button id=btnConfirmCreateGroup style="width:100%;margin-top:14px;padding:11px;border-radius:20px;border:none;background:linear-gradient(135deg,#a29bfe,#6c5ce7);color:white;font-size:14px;font-weight:bold;cursor:pointer;">建群 👥</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 群聊聊天室 -->
+    <div id=scrGroupRoom class=scr-room style="display:none;">
+        <div class=room-header>
+            <span id=btnGroupRoomBack class=back-btn>＜</span>
+            <div class=room-center style="display:flex;flex-direction:column;align-items:center;line-height:1.2;">
+                <span id=groupRoomTitle style="font-weight:bold;font-size:16px;color:#333;">群聊</span>
+                <span id=groupRoomCount style="font-size:11px;color:#999;"></span>
+            </div>
+            <span id=btnGroupSettings style="cursor:pointer;font-size:20px;padding:0 8px;">☰</span>
+        </div>
+        <div id=groupMsgs class=msgs-area style="flex:1;overflow-y:auto;padding:10px;"></div>
+        <!-- 输入区 -->
+        <div style="background:white;border-top:1px solid #eee;padding:8px 12px;display:flex;align-items:center;gap:8px;flex-shrink:0;">
+            <input type=text id=iptGroupMsg class=msg-input placeholder="输入消息..." style="flex:1;" autocomplete=off>
+            <button id=btnGroupSend class=send-btn>发送</button>
+        </div>
+        <div style="background:#f8f9fa;padding:6px 12px;display:flex;gap:6px;overflow-x:auto;flex-shrink:0;">
+            <button id=btnGroupCallAll style="white-space:nowrap;padding:5px 12px;border-radius:14px;border:none;background:#e8e4ff;color:#6c5ce7;font-size:12px;cursor:pointer;">@全体发言</button>
+            <button id=btnGroupCallOne style="white-space:nowrap;padding:5px 12px;border-radius:14px;border:none;background:#e8e4ff;color:#6c5ce7;font-size:12px;cursor:pointer;">@某人发言</button>
+        </div>
+    </div>
+
+    <!-- 群聊设置面板 -->
+    <div id=scrGroupSettings class=scr-flex style="display:none;z-index:500;position:fixed;inset:0;background:white;overflow-y:auto;">
+        <div class=room-header>
+            <span id=btnGroupSettingsBack class=back-btn>＜</span>
+            <span class=header-title>群聊设置</span>
+            <span class=empty-btn></span>
+        </div>
+        <div style="padding:16px;display:flex;flex-direction:column;gap:14px;">
+            <!-- 群头像 + 名称 -->
+            <div style="background:#f8f9fa;border-radius:14px;padding:14px;">
+                <div style="font-size:12px;color:#aaa;margin-bottom:10px;">群头像与名称</div>
+                <div style="display:flex;align-items:center;gap:14px;">
+                    <div id=groupAvaDisplay style="width:64px;height:64px;border-radius:14px;background:#e8e4ff;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:28px;cursor:pointer;flex-shrink:0;">👥</div>
+                    <input type=file id=groupAvaInput accept="image/*" style=display:none;>
+                    <div style="flex:1;">
+                        <input type=text id=groupNameEdit class=input-field placeholder="群聊名称">
+                    </div>
+                </div>
+            </div>
+            <!-- 聊天背景 -->
+            <div style="background:#f8f9fa;border-radius:14px;padding:14px;">
+                <div style="font-size:12px;color:#aaa;margin-bottom:8px;">聊天背景</div>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <div id=groupBgPreview style="width:50px;height:50px;border-radius:10px;background:#ddd;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:18px;">🖼</div>
+                    <button id=btnUploadGroupBg style="padding:8px 16px;border-radius:14px;border:none;background:#e8e4ff;color:#6c5ce7;font-size:13px;cursor:pointer;">上传本地图片</button>
+                    <input type=file id=groupBgInput accept="image/*" style=display:none;>
+                </div>
+            </div>
+            <!-- 群成员 -->
+            <div style="background:#f8f9fa;border-radius:14px;padding:14px;">
+                <div style="font-size:12px;color:#aaa;margin-bottom:8px;">群成员</div>
+                <div id=groupMemberDisplay style="display:flex;flex-wrap:wrap;gap:10px;"></div>
+            </div>
+            <!-- 群公告 -->
+            <div style="background:#f8f9fa;border-radius:14px;padding:14px;">
+                <div style="font-size:12px;color:#aaa;margin-bottom:8px;">群公告</div>
+                <textarea id=groupNoticeEdit style="width:100%;height:70px;border:1.5px solid #ddd;border-radius:10px;padding:8px;font-size:13px;resize:none;outline:none;box-sizing:border-box;" placeholder="输入群公告..."></textarea>
+            </div>
+            <!-- 我的本群昵称 -->
+            <div style="background:#f8f9fa;border-radius:14px;padding:14px;">
+                <div style="font-size:12px;color:#aaa;margin-bottom:8px;">我的本群昵称</div>
+                <input type=text id=groupMyNickEdit class=input-field placeholder="默认显示我的昵称">
+            </div>
+            <button id=btnSaveGroupSettings style="width:100%;padding:12px;border-radius:20px;border:none;background:linear-gradient(135deg,#a29bfe,#6c5ce7);color:white;font-size:14px;font-weight:bold;cursor:pointer;">保存设置</button>
+            <!-- 解散/退出 -->
+            <div style="display:flex;gap:10px;margin-top:4px;">
+                <button id=btnDisbandGroup style="flex:1;padding:11px;border-radius:20px;border:none;background:#ffe0e0;color:#e74c3c;font-size:13px;font-weight:bold;cursor:pointer;">解散群聊（仅群主）</button>
+                <button id=btnLeaveGroup style="flex:1;padding:11px;border-radius:20px;border:none;background:#f0f0f0;color:#666;font-size:13px;font-weight:bold;cursor:pointer;">退出该群</button>
+            </div>
+        </div>
+    </div>
+
+
     <div id=editSpaceModal class=modal-base>
         <div class=modal-ctx>
             <div class=modal-hdr>
@@ -1219,7 +1326,7 @@ class=back-btn>＜</span>
     <div id=addFriendModal class=modal-base>
         <div class=modal-ctx>
                          <div class=modal-hdr>
-                <span>添加新联系人</span>
+                <span>新增好友</span>
             </div>
             <div class=modal-bdy style=padding:15px;>
                 <div class=input-group>
@@ -1948,7 +2055,7 @@ class=back-btn>＜</span>
 
 <script>
 // localforage CDN 加载失败时的降级方案（避免整个页面崩溃）
-if(typeof localforage ==='undefined') {
+if(typeof localforage === 'undefined') {
     window.localforage = {
         _data: {},
         getItem: function(k) { return Promise.resolve(this._data[k] || null); },
@@ -1965,7 +2072,7 @@ window.showCustomText = function(text) {
     if($(`customTextContent`)) $(`customTextContent`).innerText = text;
     if($(`customTextModal`)) $(`customTextModal`).style.display = `flex`;
 };
-if($(`btnCustomTextClose`)) $(`btnCustomTextClose`).onclick = () =>$(`customTextModal`).style.display = `none`;
+if($(`btnCustomTextClose`)) $(`btnCustomTextClose`).onclick = () => $(`customTextModal`).style.display = `none`;
 
 let lock=$("scrLock"), home=$("scrHome"), list=$("scrList"), room=$("scrRoom"), setApi=$("scrSetApi"), setChat=$("scrSetChat"), scrWb=$("scrWb"), scrWbEdit=$("scrWbEdit"), scrMe=$("scrMe"), scrCharSticker=$("scrCharSticker"), scrSpace=$("scrSpace"), scrLogList=$("scrLogList"), scrLogEdit=$("scrLogEdit");
 let iptMsg=$("iptMsg"), msgs=$("msgs"), modal=$("modal");
@@ -1973,7 +2080,7 @@ let stW=$("stW"), stC=$("stC"), stA=$("stA"), stT=$("stT");
 let ls = localStorage;
 let currentChatId ="default";
 let originalSetItem = ls.setItem;
-let isolatedKeys = ["cMyN","myI","chatHistory","aiStatus","bgI","aiI","cMP","cN","cR","cAP","cCtx","cT","cAMem","cMemT","cMemP","linkedWb","lastMemCount","memories","cStatusTxt","cStatusColor","cSign","cBubbleCss","cCTon","cCTy","cCTm","cCTd","cCTh","cCTmin"];
+let isolatedKeys = ["cMyN", "myI", "chatHistory", "aiStatus", "bgI", "aiI", "cMP", "cN", "cR", "cAP", "cCtx", "cT", "cAMem", "cMemT", "cMemP", "linkedWb", "lastMemCount", "memories", "cStatusTxt", "cStatusColor", "cSign", "cBubbleCss", "cCTon", "cCTy", "cCTm", "cCTd", "cCTh", "cCTmin"];
 
 // ===== 名字内存缓存（绕开 localStorage 满的问题）=====
 window._nameCache = {};
@@ -2082,10 +2189,10 @@ let pressTimer = null;
 let selEl = null;
 let currentQuote ="";
 function showScreen(showId) {
-    [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrSpace, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet"), $("scrContact"), $("scrSetFont"), $("scrCharPhone"), $("scrSpyDiary"), $("scrSpyZhihu"), $("scrSpySecret"), $("scrSpyMeituan"), $("scrSpyFootprint"), $("scrSpyWallet"), $("scrSpyShop"), $("scrSpyIqiyi"), $("scrSpySettings"), $("scrMoment")].forEach(s => { if(s) s.style.display = "none"; });
+    [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrSpace, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet"), $("scrContact"), $("scrSetFont"), $("scrCharPhone"), $("scrSpyDiary"), $("scrSpyZhihu"), $("scrSpySecret"), $("scrSpyMeituan"), $("scrSpyFootprint"), $("scrSpyWallet"), $("scrSpyShop"), $("scrSpyIqiyi"), $("scrSpySettings"), $("scrMoment"), $("scrGroupRoom"), $("scrGroupSettings")].forEach(s => { if(s) s.style.display = "none"; });
     let target = $(showId);
     if(target) {
-        if(showId === "scrRoom" || showId === "scrList" || showId === "scrSetApi" || showId === "scrSetChat" || showId === "scrWb" || showId === "scrWbEdit" || showId === "scrMe" || showId === "scrCharSticker" || showId === "scrSpace" || showId === "scrLogList" || showId === "scrLogEdit" || showId === "scrFav" || showId === "scrWallet" || showId === "scrContact" || showId === "scrSetFont" || showId === "scrSpyDiary" || showId === "scrSpyZhihu" || showId === "scrSpySecret" || showId === "scrSpyMeituan" || showId === "scrSpyFootprint" || showId === "scrSpyWallet" || showId === "scrSpyShop" || showId === "scrSpyIqiyi" || showId === "scrSpySettings" || showId === "scrMoment") {
+        if(showId === "scrRoom" || showId === "scrList" || showId === "scrSetApi" || showId === "scrSetChat" || showId === "scrWb" || showId === "scrWbEdit" || showId === "scrMe" || showId === "scrCharSticker" || showId === "scrSpace" || showId === "scrLogList" || showId === "scrLogEdit" || showId === "scrFav" || showId === "scrWallet" || showId === "scrContact" || showId === "scrSetFont" || showId === "scrSpyDiary" || showId === "scrSpyZhihu" || showId === "scrSpySecret" || showId === "scrSpyMeituan" || showId === "scrSpyFootprint" || showId === "scrSpyWallet" || showId === "scrSpyShop" || showId === "scrSpyIqiyi" || showId === "scrSpySettings" || showId === "scrMoment" || showId === "scrGroupRoom" || showId === "scrGroupSettings") {
             target.style.display = "flex";
         } else if (showId === "scrCharPhone") {
             target.style.display = "flex";
@@ -2432,8 +2539,8 @@ if($(`btnHomeFont`)) {
         showScreen(`scrSetFont`);
     };
 }
-if($(`btnSetFontBack`)) $(`btnSetFontBack`).onclick = () =>showScreen(`scrHome`);
-if($(`btnCancelFont`)) $(`btnCancelFont`).onclick = () =>showScreen(`scrHome`);
+if($(`btnSetFontBack`)) $(`btnSetFontBack`).onclick = () => showScreen(`scrHome`);
+if($(`btnCancelFont`)) $(`btnCancelFont`).onclick = () => showScreen(`scrHome`);
 
 let lastSpyCharId = ls.getItem(`lastSpyCharId`) || ``;
 function renderSpyPhone() {
@@ -2544,51 +2651,76 @@ function updateSpySection(sectionName) {
 }
 
 async function triggerCaughtMessage() {
-    let section = window.currentSpySection || `手机界面`;
-    let dn = ($(`cfgRem`) && $(`cfgRem`).value) || ($(`cfgName`) && $(`cfgName`).value) || `对方`;
-    // 把被抓包状态存入 localforage
-    await localforage.setItem(`catchTriggered_`+currentChatId, true).catch(()=>{});
-    // 构建强制触发消息
-    let sysPrompt = `【系统强制指令 - 优先级最高】玩家刚才偷偷查看了你的手机，被你发现了！对方当时正在查看：${section}。请你立刻以你的人设和性格，发送一条质问/惊讶/愤怒的消息，询问对方为什么偷看你的手机，内容要生动具体地提到"${section}"这个部分。语气完全根据你的性格来，可以是愤怒、委屈、惊讶、醋意等，不要道歉，直接质问！禁止输出任何角色扮演标记，直接以第一人称说话。`;
-    // 调用AI生成质问消息
+    let section = window.currentSpySection || `手机主界面`;
+
+    // ★ 锁定目标 char，防止 currentChatId 乱跳
+    let spyTargetId = lastSpyCharId || currentChatId;
+    if(!spyTargetId) { alert(`请先选择要查看的角色！`); return; }
+
     let pxy = originalGetItem.call(ls, `pxy`) || ``;
     let key = originalGetItem.call(ls, `key`) || ``;
     let mod = originalGetItem.call(ls, `mod`) || ``;
-    if(!pxy || !key) { alert(`被抓包需要先配置API才能发送质问消息！`); return; }
-    if($(`catchLoadingTip`)) $(`catchLoadingTip`).style.display = `block`;
+    if(!pxy || !key) { alert(`被抓包需要先配置API！`); return; }
+
+    // 读取 char 名字和人设，让质问消息有个性
+    let charName = originalGetItem.call(ls, `cN_`+spyTargetId) || `对方`;
+    let charPersonality = (originalGetItem.call(ls, `cAP_`+spyTargetId) || ``).slice(0, 300);
+    let charRole = originalGetItem.call(ls, `cR_`+spyTargetId) || ``;
+    let personalityHint = charPersonality || charRole || ``;
+
+    // 读取 per-char 聊天记录（不用全局 history）
+    let targetHistory = [];
     try {
-        let msgHistory = typeof history !== `undefined` ? [...history.slice(-10)] : [];
-        msgHistory.push({role:`user`, content:`[系统] `+sysPrompt});
+        let th = await localforage.getItem(`chatHistory_`+spyTargetId);
+        if(!th) th = originalGetItem.call(ls, `chatHistory_`+spyTargetId);
+        if(th) targetHistory = typeof th === `string` ? JSON.parse(th) : th;
+    } catch(e){}
+
+    let sysPrompt = `你是${charName}。${personalityHint ? `你的人设/性格：${personalityHint}\n\n` : ``}【情景】你刚刚发现对方在偷偷翻你的手机，对方正在查看：【${section}】。请立刻以你真实的性格发出反应消息。要求：完全符合你的性格（冷酷则冷讽、傲娇则气急、可爱则撒娇生气、成熟则深沉质问）；具体提到"${section}"；不超过60字；直接第一人称输出，不加任何前缀标记。`;
+
+    if($(`catchLoadingTip`)) $(`catchLoadingTip`).style.display = `block`;
+    let reply = ``;
+    try {
+        let msgs2send = [...targetHistory.slice(-6), {role:`user`, content:sysPrompt}];
         let resp = await fetch(pxy, {
             method:`POST`,
             headers:{'Content-Type':'application/json', Authorization:'Bearer '+key},
-            body: JSON.stringify({model:mod, max_tokens:200, messages:msgHistory})
+            body: JSON.stringify({model:mod, max_tokens:150, messages:msgs2send})
         });
         let data = await resp.json();
-        let reply = data.choices?.[0]?.message?.content || `（为什么你在偷看我手机！）`;
-        // 把质问消息推入聊天记录
-        if(typeof mkBub === `function`) mkBub(reply, `l`);
-        if(typeof history !== `undefined`) {
-            history.push({role:`assistant`, content:reply});
-            await localforage.setItem(`chatHistory_`+currentChatId, history).catch(()=>{});
-        }
-        // 回到聊天室显示消息
-        showScreen(`scrRoom`);
-    } catch(err) {
-        // 网络失败时生成默认消息
-        let defaultMsg = `你刚才是不是偷看我手机了？！我看到你在翻我的${section}！`;
-        if(typeof mkBub === `function`) mkBub(defaultMsg, `l`);
-        if(typeof history !== `undefined`) {
-            history.push({role:`assistant`, content:defaultMsg});
-            await localforage.setItem(`chatHistory_`+currentChatId, history).catch(()=>{});
-        }
-        showScreen(`scrRoom`);
-    } finally {
-        if($(`catchLoadingTip`)) $(`catchLoadingTip`).style.display = `none`;
-        // 重置开关
-        if($(`catchSwitch`)) $(`catchSwitch`).checked = false;
-        await localforage.setItem(`catchTriggered_`+currentChatId, false).catch(()=>{});
+        reply = (data.choices?.[0]?.message?.content || ``).trim();
+    } catch(e){}
+    if(!reply) {
+        let defs = [`你刚才……在翻我的${section}？你给我解释！`,`…你偷看我${section}了是吧。`,`哇！你居然看我${section}！坏人！`,`我发现了。你翻了我${section}。`];
+        reply = defs[Math.floor(Math.random()*defs.length)];
     }
+
+    // ★ 强制切换到目标 char 的聊天室
+    currentChatId = spyTargetId;
+    try { originalSetItem.call(ls, `currentChatId`, spyTargetId); } catch(e){}
+
+    // 重新加载该 char 的聊天记录
+    history = targetHistory;
+    history.push({role:`assistant`, content:reply});
+    await localforage.setItem(`chatHistory_`+spyTargetId, history).catch(()=>{});
+
+    // 更新 UI 到目标 char
+    if($(`cfgName`)) $(`cfgName`).value = charName;
+    if($(`cfgRem`)) $(`cfgRem`).value = originalGetItem.call(ls, `cR_`+spyTargetId) || ``;
+    loadChatSettings();
+    await applyVis().catch(()=>{});
+
+    showScreen(`scrRoom`);
+    setTimeout(() => {
+        // redrawChat 重绘所有气泡
+        if(typeof redrawChat === `function`) redrawChat();
+        // 额外插入最新那条
+        if(typeof mkBub === `function`) mkBub(reply, `l`);
+        if(typeof msgs !== `undefined` && msgs) msgs.scrollTop = msgs.scrollHeight;
+    }, 100);
+
+    if($(`catchLoadingTip`)) $(`catchLoadingTip`).style.display = `none`;
+    if($(`catchSwitch`)) $(`catchSwitch`).checked = false;
 }
 
 // 被抓包开关：一旦打开立刻触发
@@ -2601,7 +2733,7 @@ if($(`catchSwitch`)) {
     };
 }
 
-if($("btnCharPhoneExit")) $("btnCharPhoneExit").onclick = () =>{
+if($("btnCharPhoneExit")) $("btnCharPhoneExit").onclick = () => {
     // 退出时如果开关是开的也触发
     if($(`catchSwitch`) && $(`catchSwitch`).checked) {
         triggerCaughtMessage();
@@ -2609,7 +2741,7 @@ if($("btnCharPhoneExit")) $("btnCharPhoneExit").onclick = () =>{
         showScreen("scrHome");
     }
 };
-if($("btnCatchHelp")) $("btnCatchHelp").onclick = () =>showCustomText("【被抓包功能说明】\n\n开启此开关后，系统会立刻强制触发对方发来一条质问消息，内容会根据你当前正在查看的页面生成。\n\n例如：你正在看日记时打开开关，对方就会质问你为什么偷看TA的日记！");
+if($("btnCatchHelp")) $("btnCatchHelp").onclick = () => showCustomText("【被抓包功能说明】\n\n开启此开关后，系统会立刻强制触发对方发来一条质问消息，内容会根据你当前正在查看的页面生成。\n\n例如：你正在看日记时打开开关，对方就会质问你为什么偷看TA的日记！");
 if($(`fontSizeSlider`)) {
 
 
@@ -2783,7 +2915,7 @@ JSON.parse(ls.getItem(`aiStatus`)) : {weather:"等待连接...",clothing:"等待
 
 if($(`btnAddContact`)) $(`btnAddContact`).onclick = () =>{ $(`addFriendModal`).style.display=`flex`; };
 $(`btnCancelAddFriend`).onclick = () =>{ $(`addFriendModal`).style.display=`none`; $(`newFriendName`).value=``; $(`newFriendPrompt`).value=``; };
-if($(`btnRoleHelp`)) $(`btnRoleHelp`).onclick = () =>{ showCustomText(`【个性签名规则说明】\n\n1. 新建联系人初始状态是没有个性签名的。\n2. 你需要在聊天室主动对TA提出要求（例如：「你改个个性签名吧」），TA才会生成第一条专属签名。\n3. 在后续的聊天过程中，当TA的情绪、想法或剧情发生明显变化时，TA拥有主动权，会自动为你更新头顶的状态和个性签名！`); };
+if($(`btnRoleHelp`)) $(`btnRoleHelp`).onclick = () => { showCustomText(`【个性签名规则说明】\n\n1. 新建联系人初始状态是没有个性签名的。\n2. 你需要在聊天室主动对TA提出要求（例如：「你改个个性签名吧」），TA才会生成第一条专属签名。\n3. 在后续的聊天过程中，当TA的情绪、想法或剧情发生明显变化时，TA拥有主动权，会自动为你更新头顶的状态和个性签名！`); };
 
 $(`btnConfirmAddFriend`).onclick = async () =>{
     let n = $(`newFriendName`).value.trim();
@@ -3273,7 +3405,7 @@ window.loadChatSettings = function() {
     showScreen(`scrRoom`);
 };
 
-$(`btnSaveChat`).onclick = async () =>{
+$(`btnSaveChat`).onclick = async () => {
     try {
         let safeVal = (id) => $(id) ? $(id).value : ``;
         
@@ -3491,7 +3623,7 @@ window.saveNpc = function(index, e) {
     }
 };
 
-if($(`btnAddNpc`)) $(`btnAddNpc`).onclick = () =>{
+if($(`btnAddNpc`)) $(`btnAddNpc`).onclick = () => {
     let name = $(`newNpcName`).value.trim();
     let color = $(`newNpcColor`).value;
     if(!name) {
@@ -3605,7 +3737,7 @@ function triggerDownload(obj, filename) {
 }
 
 // 导出全部数据
-if($(`btnExportAll`)) $(`btnExportAll`).onclick = async () =>{
+if($(`btnExportAll`)) $(`btnExportAll`).onclick = async () => {
     let btn=$(`btnExportAll`); btn.disabled=true; btn.innerText=`⏳ 收集中...`;
     try {
         let data = await collectExportData({charIds:`all`, includeWb:true, includeStyle:true});
@@ -3620,8 +3752,8 @@ if($(`btnExportAll`)) $(`btnExportAll`).onclick = async () =>{
 };
 
 // 导入数据
-if($(`btnImportData`)) $(`btnImportData`).onclick = () =>$(`importFileInput`).click();
-if($(`importFileInput`)) $(`importFileInput`).onchange = async e =>{
+if($(`btnImportData`)) $(`btnImportData`).onclick = () => $(`importFileInput`).click();
+if($(`importFileInput`)) $(`importFileInput`).onchange = async e => {
     let file=e.target.files[0]; if(!file) return;
     e.target.value=``;
     let reader=new FileReader();
@@ -3682,7 +3814,7 @@ if($(`importFileInput`)) $(`importFileInput`).onchange = async e =>{
 };
 
 // 自定义导出 - 打开 modal
-if($(`btnCustomExport`)) $(`btnCustomExport`).onclick = async () =>{
+if($(`btnCustomExport`)) $(`btnCustomExport`).onclick = async () => {
     // 动态生成角色列表
     let contacts=[];
     try { let lf=await localforage.getItem(`myContacts`); if(lf) contacts=Array.isArray(lf)?lf:JSON.parse(lf); } catch(e){}
@@ -3703,10 +3835,10 @@ if($(`btnCustomExport`)) $(`btnCustomExport`).onclick = async () =>{
 
     $(`customExportModal`).style.display=`flex`;
 };
-if($(`btnCloseCustomExport`)) $(`btnCloseCustomExport`).onclick = () =>$(`customExportModal`).style.display=`none`;
+if($(`btnCloseCustomExport`)) $(`btnCloseCustomExport`).onclick = () => $(`customExportModal`).style.display=`none`;
 
 // 自定义导出 - 执行
-if($(`btnDoCustomExport`)) $(`btnDoCustomExport`).onclick = async () =>{
+if($(`btnDoCustomExport`)) $(`btnDoCustomExport`).onclick = async () => {
     let btn=$(`btnDoCustomExport`); btn.disabled=true; btn.innerText=`⏳ 导出中...`;
     try {
         let selIds=[...(document.querySelectorAll(`.charExportCheck:checked`)||[])].map(el=>el.dataset.id);
@@ -4182,7 +4314,7 @@ async function syncChatHistoryToStorage() {
 }
 
 // 拦截原版代码中的状态变更并强制触发同步
-if(typeof history !=='undefined') {
+if(typeof history !== 'undefined') {
     let originalPush = history.push;
     history.push = function() {
         let result = originalPush.apply(this, arguments);
@@ -4307,7 +4439,7 @@ let resStickers = await localforage.getItem(`charStickers`);
         localforage.setItem(`charStickers`, ls.getItem(`charStickers`));
     }
 
-if(charStickers.length>0) {
+if(charStickers.length > 0) {
         let names = charStickers.map(x => x.name).join(`、`);
 
         sys += `\n【你的专属表情包库】如果你想发表情配合情绪，请务必在【回复】中插入代码"[发送表情：表情名称]"。当前你拥有的表情名称有：` + names + `。警告：绝对不要捏造列表外的表情！不要发多余的链接！`;
@@ -5207,17 +5339,17 @@ function confirmBatchStickers() {
 
 if(history.length>0) redrawChat();
 if($(`navMsg`)) $(`navMsg`).onclick = () =>showScreen(`scrList`);
-if($(`navContact`)) $(`navContact`).onclick = () =>showScreen(`scrContact`);
-if($(`navMoment`)) $(`navMoment`).onclick = () =>{ initMomentPage(); showScreen(`scrMoment`); };
+if($(`navContact`)) $(`navContact`).onclick = () => { showScreen(`scrContact`); loadGroupData().then(()=>renderGroupList()).catch(()=>{}); };
+if($(`navMoment`)) $(`navMoment`).onclick = () => { initMomentPage(); showScreen(`scrMoment`); };
 if($(`navMe`)) $(`navMe`).onclick = () =>showScreen(`scrMe`);
 
 if($(`navContactToMsg`)) $(`navContactToMsg`).onclick = () =>showScreen(`scrList`);
-if($(`navContactToMoment`)) $(`navContactToMoment`).onclick = () =>{ initMomentPage(); showScreen(`scrMoment`); };
+if($(`navContactToMoment`)) $(`navContactToMoment`).onclick = () => { initMomentPage(); showScreen(`scrMoment`); };
 if($(`navContactToMe`)) $(`navContactToMe`).onclick = () =>showScreen(`scrMe`);
 
 if($(`navMeToMsg`)) $(`navMeToMsg`).onclick = () =>showScreen(`scrList`);
 if($(`navMeToContact`)) $(`navMeToContact`).onclick = () =>showScreen(`scrContact`);
-if($(`navMeToMoment`)) $(`navMeToMoment`).onclick = () =>{ initMomentPage(); showScreen(`scrMoment`); };
+if($(`navMeToMoment`)) $(`navMeToMoment`).onclick = () => { initMomentPage(); showScreen(`scrMoment`); };
 
 if($(`btnMeBack`)) $(`btnMeBack`).onclick = () =>showScreen(`scrHome`);
 if($(`btnContactBack`)) $(`btnContactBack`).onclick = () =>showScreen(`scrHome`);
@@ -5243,7 +5375,7 @@ if($("btnEditMe")) $("btnEditMe").onclick = async () =>{
     }
     $("editMeModal").style.display = "flex";
 };
-if($("btnCancelEditMe")) $("btnCancelEditMe").onclick = () =>$("editMeModal").style.display ="none";
+if($("btnCancelEditMe")) $("btnCancelEditMe").onclick = () => $("editMeModal").style.display = "none";
 if($("btnSaveEditMe")) $("btnSaveEditMe").onclick = async () =>{
     let newName = $("iptMeName").value.trim();
     let newBio  = $("iptMeBio").value;
@@ -5257,7 +5389,7 @@ if($("btnSaveEditMe")) $("btnSaveEditMe").onclick = async () =>{
     if($("meBio"))  $("meBio").innerText  = newBio  || `请添加你的个性签名吧！`;
     $("editMeModal").style.display = "none";
 };
-if($("btnSetMeAvatar")) $("btnSetMeAvatar").onclick = () =>$("upMeAvatar").click();
+if($("btnSetMeAvatar")) $("btnSetMeAvatar").onclick = () => $("upMeAvatar").click();
 cmp("upMeAvatar","myI");
 // cmp 上传完成后同步更新"我的"头像预览
 if($("upMeAvatar")) {
@@ -5307,7 +5439,7 @@ if($("btnEditSpace")) $("btnEditSpace").onclick = async () =>{
     }
     $("editSpaceModal").style.display = "flex";
 };
-if($("btnCancelEditSpace")) $("btnCancelEditSpace").onclick = () =>$("editSpaceModal").style.display ="none";
+if($("btnCancelEditSpace")) $("btnCancelEditSpace").onclick = () => $("editSpaceModal").style.display = "none";
 if($("btnSaveEditSpace")) $("btnSaveEditSpace").onclick = async () =>{
     let spN = $("iptSpaceName") ? $("iptSpaceName").value.trim() : ``;
     let spB = $("iptSpaceBio")  ? $("iptSpaceBio").value         : ``;
@@ -5321,7 +5453,7 @@ if($("btnSaveEditSpace")) $("btnSaveEditSpace").onclick = async () =>{
     if($("spaceBio"))  $("spaceBio").innerText  = spB || `请添加你的个性签名吧！`;
     $("editSpaceModal").style.display = "none";
 };
-if($("btnSetSpaceAvatar")) $("btnSetSpaceAvatar").onclick = () =>{ if($("upSpaceAvatar")) $("upSpaceAvatar").click(); };
+if($("btnSetSpaceAvatar")) $("btnSetSpaceAvatar").onclick = () => { if($("upSpaceAvatar")) $("upSpaceAvatar").click(); };
 if($("upSpaceAvatar")) {
     $("upSpaceAvatar").onchange = e => {
         let f=e.target.files[0]; if(!f) return;
@@ -6460,7 +6592,7 @@ function getSpyBasePrompt(charId) {
 3. 严格禁止使用任何形式的引号符号！
 
 【近期聊天记录】：
-${recentChat ||'（暂无聊天记录，请严格根据人物设定自由发挥）'}
+${recentChat || '（暂无聊天记录，请严格根据人物设定自由发挥）'}
 
 ---
 接下来是你的具体生成任务：
@@ -6489,14 +6621,14 @@ async function saveSpyDiaryData() {
     }
 }
 
-if($(`btnSpyDiary`)) $(`btnSpyDiary`).onclick = async () =>{
+if($(`btnSpyDiary`)) $(`btnSpyDiary`).onclick = async () => {
     if(!lastSpyCharId) { alert(`请先在查手机桌面右上角选择要查看的角色哦！`); return; }
     await loadSpyDiaryData();
     updateSpySection('日记'); showScreen(`scrSpyDiary`);
     renderSpyDiary();
 };
 
-if($(`btnSpyDiaryBack`)) $(`btnSpyDiaryBack`).onclick = () =>{
+if($(`btnSpyDiaryBack`)) $(`btnSpyDiaryBack`).onclick = () => {
     isSpyDiaryEditMode = false;
     if($(`btnEditSpyDiary`)) $(`btnEditSpyDiary`).innerText = `管理`;
     if($(`spyDiaryActions`)) $(`spyDiaryActions`).style.display = `none`;
@@ -6553,7 +6685,7 @@ function renderSpyDiary() {
     });
 }
 
-if($(`btnEditSpyDiary`)) $(`btnEditSpyDiary`).onclick = () =>{
+if($(`btnEditSpyDiary`)) $(`btnEditSpyDiary`).onclick = () => {
     isSpyDiaryEditMode = !isSpyDiaryEditMode;
     $(`btnEditSpyDiary`).innerText = isSpyDiaryEditMode ? `完成` : `管理`;
     $(`spyDiaryActions`).style.display = isSpyDiaryEditMode ? `flex` : `none`;
@@ -6561,13 +6693,13 @@ if($(`btnEditSpyDiary`)) $(`btnEditSpyDiary`).onclick = () =>{
     renderSpyDiary();
 };
 
-if($(`btnSelAllSpyDiary`)) $(`btnSelAllSpyDiary`).onclick = () =>{
+if($(`btnSelAllSpyDiary`)) $(`btnSelAllSpyDiary`).onclick = () => {
     if(selSpyDiaryItems.size === spyDiaryData.length) selSpyDiaryItems.clear();
     else spyDiaryData.forEach((_, i) => selSpyDiaryItems.add(i));
     renderSpyDiary();
 };
 
-if($(`btnDelSpyDiary`)) $(`btnDelSpyDiary`).onclick = async () =>{
+if($(`btnDelSpyDiary`)) $(`btnDelSpyDiary`).onclick = async () => {
     if(selSpyDiaryItems.size === 0) { alert(`请先选中要撕掉的日记哦！`); return; }
     if(confirm(`确定要撕掉这 ` + selSpyDiaryItems.size + ` 页日记吗？`)) {
         spyDiaryData = spyDiaryData.filter((_, i) => !selSpyDiaryItems.has(i));
@@ -6577,7 +6709,7 @@ if($(`btnDelSpyDiary`)) $(`btnDelSpyDiary`).onclick = async () =>{
     }
 };
 
-if($(`btnGenSpyDiary`)) $(`btnGenSpyDiary`).onclick = async () =>{
+if($(`btnGenSpyDiary`)) $(`btnGenSpyDiary`).onclick = async () => {
     let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value;
     if(!pxy || !key || !mod) { alert(`请先在网络配置里填写API信息哦！`); return; }
     
@@ -6658,13 +6790,13 @@ let currentZhTab = `search`;
 let isSpyZhEditMode = false;
 let selSpyZhItems = new Set();
 
-if($(`btnSpyZhihu`)) $(`btnSpyZhihu`).onclick = async () =>{
+if($(`btnSpyZhihu`)) $(`btnSpyZhihu`).onclick = async () => {
     if(!lastSpyCharId) { alert(`请先在查手机桌面右上角选择要查看的角色哦！`); return; }
     updateSpySection('知乎'); showScreen(`scrSpyZhihu`);
     await loadSpyZhihu();
 };
 
-if($(`btnSpyZhihuBack`)) $(`btnSpyZhihuBack`).onclick = () =>{
+if($(`btnSpyZhihuBack`)) $(`btnSpyZhihuBack`).onclick = () => {
     isSpyZhEditMode = false;
     if($(`btnEditSpyZhihu`)) $(`btnEditSpyZhihu`).innerText = `管理`;
     if($(`spyZhihuActions`)) $(`spyZhihuActions`).style.display = `none`;
@@ -6672,9 +6804,9 @@ if($(`btnSpyZhihuBack`)) $(`btnSpyZhihuBack`).onclick = () =>{
     showScreen(`scrCharPhone`);
 };
 
-if($(`tabZhSearch`)) $(`tabZhSearch`).onclick = () =>switchZhTab(`search`);
-if($(`tabZhFav`)) $(`tabZhFav`).onclick = () =>switchZhTab(`fav`);
-if($(`tabZhAsk`)) $(`tabZhAsk`).onclick = () =>switchZhTab(`ask`);
+if($(`tabZhSearch`)) $(`tabZhSearch`).onclick = () => switchZhTab(`search`);
+if($(`tabZhFav`)) $(`tabZhFav`).onclick = () => switchZhTab(`fav`);
+if($(`tabZhAsk`)) $(`tabZhAsk`).onclick = () => switchZhTab(`ask`);
 
 function switchZhTab(tab) {
     currentZhTab = tab;
@@ -6780,7 +6912,7 @@ function renderSpyZhihu() {
     });
 }
 
-if($(`btnEditSpyZhihu`)) $(`btnEditSpyZhihu`).onclick = () =>{
+if($(`btnEditSpyZhihu`)) $(`btnEditSpyZhihu`).onclick = () => {
     isSpyZhEditMode = !isSpyZhEditMode;
     $(`btnEditSpyZhihu`).innerText = isSpyZhEditMode ? `完成` : `管理`;
     $(`spyZhihuActions`).style.display = isSpyZhEditMode ? `flex` : `none`;
@@ -6788,14 +6920,14 @@ if($(`btnEditSpyZhihu`)) $(`btnEditSpyZhihu`).onclick = () =>{
     renderSpyZhihu();
 };
 
-if($(`btnSelAllSpyZhihu`)) $(`btnSelAllSpyZhihu`).onclick = () =>{
+if($(`btnSelAllSpyZhihu`)) $(`btnSelAllSpyZhihu`).onclick = () => {
     let currentData = spyZhihuData[currentZhTab] || [];
     if(selSpyZhItems.size === currentData.length) selSpyZhItems.clear();
     else currentData.forEach((_, i) => selSpyZhItems.add(i));
     renderSpyZhihu();
 };
 
-if($(`btnDelSpyZhihu`)) $(`btnDelSpyZhihu`).onclick = async () =>{
+if($(`btnDelSpyZhihu`)) $(`btnDelSpyZhihu`).onclick = async () => {
     if(selSpyZhItems.size === 0) { alert(`请先选中要删除的内容哦！`); return; }
     if(confirm(`确定删除这 ` + selSpyZhItems.size + ` 条记录吗？`)) {
         let currentData = spyZhihuData[currentZhTab] || [];
@@ -6805,7 +6937,7 @@ if($(`btnDelSpyZhihu`)) $(`btnDelSpyZhihu`).onclick = async () =>{
         renderSpyZhihu();
     }
 };
-if($(`btnGenSpyZhihu`)) $(`btnGenSpyZhihu`).onclick = async () =>{
+if($(`btnGenSpyZhihu`)) $(`btnGenSpyZhihu`).onclick = async () => {
     let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value;
     if(!pxy || !key || !mod) { alert(`请先在主设置中配置好API网络哦！`); return; }
     
@@ -6957,7 +7089,7 @@ let currentSecTab = `draft`;
 let isSpySecEditMode = false;
 let selSpySecItems = new Set();
 
-if($(`btnSpySecret`)) $(`btnSpySecret`).onclick = async () =>{
+if($(`btnSpySecret`)) $(`btnSpySecret`).onclick = async () => {
     if(!lastSpyCharId) { 
         if(typeof showCustomText === `function`) showCustomText(`请先在右上角选择要查看的角色哦！`);
         return; 
@@ -6978,13 +7110,13 @@ if($(`btnSpySecret`)) $(`btnSpySecret`).onclick = async () =>{
     };
 };
 
-if($(`btnSpySecretExitLock`)) $(`btnSpySecretExitLock`).onclick = () =>{ showScreen(`scrCharPhone`); };
-if($(`btnSpySecretBack`)) $(`btnSpySecretBack`).onclick = () =>{ showScreen(`scrCharPhone`); };
+if($(`btnSpySecretExitLock`)) $(`btnSpySecretExitLock`).onclick = () => { showScreen(`scrCharPhone`); };
+if($(`btnSpySecretBack`)) $(`btnSpySecretBack`).onclick = () => { showScreen(`scrCharPhone`); };
 
-if($(`tabSecDraft`)) $(`tabSecDraft`).onclick = () =>switchSecTab(`draft`);
-if($(`tabSecSearch`)) $(`tabSecSearch`).onclick = () =>switchSecTab(`search`);
-if($(`tabSecBlack`)) $(`tabSecBlack`).onclick = () =>switchSecTab(`black`);
-if($(`tabSecMovie`)) $(`tabSecMovie`).onclick = () =>switchSecTab(`movie`);
+if($(`tabSecDraft`)) $(`tabSecDraft`).onclick = () => switchSecTab(`draft`);
+if($(`tabSecSearch`)) $(`tabSecSearch`).onclick = () => switchSecTab(`search`);
+if($(`tabSecBlack`)) $(`tabSecBlack`).onclick = () => switchSecTab(`black`);
+if($(`tabSecMovie`)) $(`tabSecMovie`).onclick = () => switchSecTab(`movie`);
 
 function switchSecTab(tab) {
     currentSecTab = tab;
@@ -7141,7 +7273,7 @@ function renderSpySecret() {
     });
 }
 
-if($(`btnEditSpySecret`)) $(`btnEditSpySecret`).onclick = () =>{
+if($(`btnEditSpySecret`)) $(`btnEditSpySecret`).onclick = () => {
     isSpySecEditMode = !isSpySecEditMode;
     $(`btnEditSpySecret`).innerText = isSpySecEditMode ? `完成` : `管理`;
     $(`spySecretActions`).style.display = isSpySecEditMode ? `flex` : `none`;
@@ -7149,14 +7281,14 @@ if($(`btnEditSpySecret`)) $(`btnEditSpySecret`).onclick = () =>{
     renderSpySecret();
 };
 
-if($(`btnSelAllSpySecret`)) $(`btnSelAllSpySecret`).onclick = () =>{
+if($(`btnSelAllSpySecret`)) $(`btnSelAllSpySecret`).onclick = () => {
     let currentData = spySecretData[currentSecTab] || [];
     if(selSpySecItems.size === currentData.length) selSpySecItems.clear();
     else currentData.forEach((_, i) => selSpySecItems.add(i));
     renderSpySecret();
 };
 
-if($(`btnDelSpySecret`)) $(`btnDelSpySecret`).onclick = async () =>{
+if($(`btnDelSpySecret`)) $(`btnDelSpySecret`).onclick = async () => {
     if(selSpySecItems.size === 0) { 
         if(typeof showCustomText === `function`) showCustomText(`请先选中要销毁的内容！`);
         return; 
@@ -7294,7 +7426,7 @@ async function fetchSpySecretData(targetTab) {
 // ====== 查手机：隐私空间系统代码 (大仓库重构版 3/3 - 下半部分) ======
 
 // 按钮1：追加挖掘当前版块
-if($(`btnGenSpySecret`)) $(`btnGenSpySecret`).onclick = async () =>{
+if($(`btnGenSpySecret`)) $(`btnGenSpySecret`).onclick = async () => {
     let origText = $(`btnGenSpySecret`).innerText;
     $(`btnGenSpySecret`).innerText = `🔥 正在深度挖掘...`;
     $(`btnGenSpySecret`).style.pointerEvents = `none`;
@@ -7313,7 +7445,7 @@ if($(`btnGenSpySecret`)) $(`btnGenSpySecret`).onclick = async () =>{
 };
 
 // 按钮2：刷新重置当前版块
-if($(`btnRegenSpySecret`)) $(`btnRegenSpySecret`).onclick = async () =>{
+if($(`btnRegenSpySecret`)) $(`btnRegenSpySecret`).onclick = async () => {
     let origText = $(`btnRegenSpySecret`).innerText;
     $(`btnRegenSpySecret`).innerText = `✨ 正在刷新...`;
     $(`btnRegenSpySecret`).style.pointerEvents = `none`;
@@ -7337,7 +7469,7 @@ if($(`btnRegenSpySecret`)) $(`btnRegenSpySecret`).onclick = async () =>{
 };
 
 // 按钮3：一键重置四大版块
-if($(`btnGenAllSpySecret`)) $(`btnGenAllSpySecret`).onclick = async () =>{
+if($(`btnGenAllSpySecret`)) $(`btnGenAllSpySecret`).onclick = async () => {
     if($(`customConfirmText`)) $(`customConfirmText`).innerText = `【一键重置警告】\n此操作将彻底清空当前所有四大隐私版块的历史数据，并让系统在后台重新生成一套全新的深渊记录。\n\n由于需同时处理大量数据，大概需要几十秒时间，请耐心等待。确认执行吗？`;
     if($(`customConfirmModal`)) $(`customConfirmModal`).style.display = `flex`;
     
@@ -7440,28 +7572,28 @@ async function saveSpyData() {
     }
 }
 
-if($(`btnSpyWechat`)) $(`btnSpyWechat`).onclick = async () =>{
+if($(`btnSpyWechat`)) $(`btnSpyWechat`).onclick = async () => {
     await loadSpyData();
     updateSpySection('微信'); showScreen(`scrSpyWechat`);
     renderSpyWechat();
 };
 
-if($(`btnSpyWechatBack`)) $(`btnSpyWechatBack`).onclick = () =>{
+if($(`btnSpyWechatBack`)) $(`btnSpyWechatBack`).onclick = () => {
     showScreen(`scrCharPhone`);
     $(`scrSpyWechat`).style.display = `none`;
 };
 
-if($(`btnSpyWcDetailBack`)) $(`btnSpyWcDetailBack`).onclick = () =>{
+if($(`btnSpyWcDetailBack`)) $(`btnSpyWcDetailBack`).onclick = () => {
     $(`scrSpyWechatDetail`).style.display = `none`;
     $(`scrSpyWechat`).style.display = `flex`;
     renderSpyWechat();
 };
 
-if($(`btnSpyWechatRefresh`)) $(`btnSpyWechatRefresh`).onclick = () =>{
+if($(`btnSpyWechatRefresh`)) $(`btnSpyWechatRefresh`).onclick = () => {
     generateSpyWechat(false);
 };
 
-if($(`btnSpyWechatAdvance`)) $(`btnSpyWechatAdvance`).onclick = () =>{
+if($(`btnSpyWechatAdvance`)) $(`btnSpyWechatAdvance`).onclick = () => {
     generateSpyWechat(true);
 };
 
@@ -7539,7 +7671,7 @@ function renderSpyWechat() {
     $(`spyWcCount`).innerText = unreadCount > 0 ? `(${unreadCount})` : ``;
 }
 
-setTimeout(() =>{
+setTimeout(() => {
     let wcHeaderDiv = document.querySelector(`#scrSpyWechat .room-header div`);
     if(wcHeaderDiv && !document.getElementById(`btnSpyWechatClear`)) {
         let clearBtn = document.createElement(`span`);
@@ -7881,7 +8013,7 @@ if($(`btnSpyAlbumRefresh`)) $(`btnSpyAlbumRefresh`).onclick = () => {
     generateSpyAlbum(); 
 };
 
-if($(`btnSpyAlbumClear`)) $(`btnSpyAlbumClear`).onclick = async () =>{
+if($(`btnSpyAlbumClear`)) $(`btnSpyAlbumClear`).onclick = async () => {
     if(confirm(`确定要清空当前角色的相册记录吗？`)) {
         spyAlbumData = [];
         await saveSpyAlbumData();
@@ -8047,7 +8179,7 @@ if($(`btnSpyMemoRefresh`)) $(`btnSpyMemoRefresh`).onclick = () => {
     generateSpyMemo(); 
 };
 
-if($(`btnSpyMemoClear`)) $(`btnSpyMemoClear`).onclick = async () =>{
+if($(`btnSpyMemoClear`)) $(`btnSpyMemoClear`).onclick = async () => {
     if(confirm(`确定要清空当前角色的备忘录记录吗？`)) {
         spyMemoData = [];
         await saveSpyMemoData();
@@ -8226,7 +8358,7 @@ if($(`btnSpyMusicRefresh`)) $(`btnSpyMusicRefresh`).onclick = () => {
     generateSpyMusic(); 
 };
 
-if($(`btnSpyMusicClear`)) $(`btnSpyMusicClear`).onclick = async () =>{
+if($(`btnSpyMusicClear`)) $(`btnSpyMusicClear`).onclick = async () => {
     if(confirm(`确定要清空当前角色的网易云数据吗？`)) {
         spyMusicData = { profile: null, songs: [] };
         await saveSpyMusicData();
@@ -8412,7 +8544,7 @@ if($(`btnSpyMeituanRefresh`)) $(`btnSpyMeituanRefresh`).onclick = () => {
     generateSpyMeituan(); 
 };
 
-if($(`btnSpyMeituanClear`)) $(`btnSpyMeituanClear`).onclick = async () =>{
+if($(`btnSpyMeituanClear`)) $(`btnSpyMeituanClear`).onclick = async () => {
     if(confirm(`确定要清空当前角色的美团数据吗？`)) {
         spyMeituanData = [];
         await saveSpyMeituanData();
@@ -8596,7 +8728,7 @@ if($(`btnSpyFootprintRefresh`)) $(`btnSpyFootprintRefresh`).onclick = () => {
     generateSpyFootprint(); 
 };
 
-if($(`btnSpyFootprintClear`)) $(`btnSpyFootprintClear`).onclick = async () =>{
+if($(`btnSpyFootprintClear`)) $(`btnSpyFootprintClear`).onclick = async () => {
     if(confirm(`确定要清空当前角色的足迹数据吗？`)) {
         spyFootprintData = [];
         await saveSpyFootprintData();
@@ -8769,7 +8901,7 @@ if($(`btnSpyWalletRefresh`)) $(`btnSpyWalletRefresh`).onclick = () => {
     generateSpyWallet(); 
 };
 
-if($(`btnSpyWalletClear`)) $(`btnSpyWalletClear`).onclick = async () =>{
+if($(`btnSpyWalletClear`)) $(`btnSpyWalletClear`).onclick = async () => {
     if(confirm(`确定要清空当前角色的钱包和余额数据吗？`)) {
         spyWalletData = { balance: null, list: [] };
         await saveSpyWalletData();
@@ -8980,7 +9112,7 @@ if($(`btnSpyShopRefresh`)) $(`btnSpyShopRefresh`).onclick = () => {
     generateSpyShop(); 
 };
 
-if($(`btnSpyShopClear`)) $(`btnSpyShopClear`).onclick = async () =>{
+if($(`btnSpyShopClear`)) $(`btnSpyShopClear`).onclick = async () => {
     if(confirm(`确定要清空TA的购物车和订单记录吗？`)) {
         spyShopData = { cart: [], orders: [] };
         await saveSpyShopData();
@@ -9193,22 +9325,22 @@ async function saveSpyIqiyiData() {
     }
 }
 
-if($(`btnSpyIqiyi`)) $(`btnSpyIqiyi`).onclick = async () =>{
+if($(`btnSpyIqiyi`)) $(`btnSpyIqiyi`).onclick = async () => {
     await loadSpyIqiyiData();
     updateSpySection('爱奇艺'); showScreen(`scrSpyIqiyi`);
     renderSpyIqiyi();
 };
 
-if($(`btnSpyIqiyiBack`)) $(`btnSpyIqiyiBack`).onclick = () =>{
+if($(`btnSpyIqiyiBack`)) $(`btnSpyIqiyiBack`).onclick = () => {
     showScreen(`scrCharPhone`);
     $(`scrSpyIqiyi`).style.display = `none`;
 };
 
-if($(`btnSpyIqiyiRefresh`)) $(`btnSpyIqiyiRefresh`).onclick = () =>{
+if($(`btnSpyIqiyiRefresh`)) $(`btnSpyIqiyiRefresh`).onclick = () => {
     generateSpyIqiyi();
 };
 
-if($(`btnSpyIqiyiClear`)) $(`btnSpyIqiyiClear`).onclick = async () =>{
+if($(`btnSpyIqiyiClear`)) $(`btnSpyIqiyiClear`).onclick = async () => {
     if(confirm(`确定要清空TA的观影记录吗？`)) {
         spyIqiyiData = { movie: [], tv: [], anime: [], variety: [] };
         await saveSpyIqiyiData();
@@ -9216,7 +9348,7 @@ if($(`btnSpyIqiyiClear`)) $(`btnSpyIqiyiClear`).onclick = async () =>{
     }
 };
 
-[`Movie`, `Tv`, `Anime`, `Variety`].forEach(tab =>{
+[`Movie`, `Tv`, `Anime`, `Variety`].forEach(tab => {
     let el = $(`tabIqiyi` + tab);
     if(el) {
         el.onclick = () => {
@@ -9382,8 +9514,8 @@ async function generateSpyIqiyi() {
 // ==========================================
 // ====== 个性化装扮底层逻辑 (大仓库无损高清版) ======
 // ==========================================
-let spyThemeData = { bg:'', icons: {} };
-let currentEditingThemeKey ='';
+let spyThemeData = { bg: '', icons: {} };
+let currentEditingThemeKey = '';
 
 // 自动雷达扫描屏幕上的所有APP
 function getThemeItems() {
@@ -9421,8 +9553,8 @@ function saveSpyThemeData() {
     });
 }
 
-if($(`btnSpySettings`)) $(`btnSpySettings`).onclick = () =>{ loadSpyThemeData(); updateSpySection('手机设置'); showScreen(`scrSpySettings`); renderSpySettings(); };
-if($(`btnSpySettingsBack`)) $(`btnSpySettingsBack`).onclick = () =>{ showScreen(`scrCharPhone`); $(`scrSpySettings`).style.display = `none`; };
+if($(`btnSpySettings`)) $(`btnSpySettings`).onclick = () => { loadSpyThemeData(); updateSpySection('手机设置'); showScreen(`scrSpySettings`); renderSpySettings(); };
+if($(`btnSpySettingsBack`)) $(`btnSpySettingsBack`).onclick = () => { showScreen(`scrCharPhone`); $(`scrSpySettings`).style.display = `none`; };
 
 function renderSpySettings() {
     let list = $(`spySetList`);
@@ -9551,7 +9683,7 @@ function applySpyTheme() {
 }
 
 let lastThemeChatId = null;
-setInterval(() =>{
+setInterval(() => {
     let phoneScreen = $(`scrCharPhone`);
     if (phoneScreen && phoneScreen.style.display !== 'none') {
         if (lastThemeChatId !== currentChatId) {
@@ -9569,133 +9701,409 @@ setInterval(() =>{
 
 
 // ================================================================
-// 朋友圈（动态）功能
+// 群聊功能
 // ================================================================
-let momentData = [];         // [{id, author, authorId, authorType, avatar, text, img, time, comments:[], draftPeek}]
+let groupData = {};      // { groupId: {id,name,avatar,bg,members[],notice,myNick,ownerId,messages[],created} }
+let currentGroupId = null;
+
+async function loadGroupData() {
+    try {
+        let d = await localforage.getItem(`groupData`);
+        if(d) groupData = typeof d === 'string' ? JSON.parse(d) : d;
+    } catch(e) { groupData = {}; }
+}
+async function saveGroupData() {
+    await localforage.setItem(`groupData`, groupData).catch(()=>{});
+}
+
+// 联系人页面「新增好友」下方的「新建群聊」按钮
+if($(`btnAddGroup`)) $(`btnAddGroup`).onclick = async () => {
+    await loadGroupData();
+    // 动态填充成员列表
+    let contacts = [];
+    try { let lf=await localforage.getItem(`myContacts`); if(lf) contacts=Array.isArray(lf)?lf:JSON.parse(lf); } catch(e){}
+    if(!contacts.length) { try{ let r=originalGetItem.call(ls,`myContacts`); if(r) contacts=JSON.parse(r); }catch(e){} }
+    let ml = $(`createGroupMemberList`);
+    ml.innerHTML = ``;
+    contacts.forEach(ct => {
+        let cName = originalGetItem.call(ls,`cN_`+ct.id)||ct.name;
+        let lbl = document.createElement(`label`);
+        lbl.style.cssText = `display:flex;align-items:center;gap:9px;padding:7px;background:#f8f9fa;border-radius:9px;cursor:pointer;font-size:14px;`;
+        lbl.innerHTML = `<input type=checkbox class="groupMemberCheck" data-id="${ct.id}" data-name="${cName}" style="width:17px;height:17px;"> ${cName}`;
+        ml.appendChild(lbl);
+    });
+    if($(`groupNameInput`)) $(`groupNameInput`).value = ``;
+    $(`createGroupModal`).style.display = `flex`;
+};
+if($(`btnCloseCreateGroup`)) $(`btnCloseCreateGroup`).onclick = () => $(`createGroupModal`).style.display = `none`;
+
+if($(`btnConfirmCreateGroup`)) $(`btnConfirmCreateGroup`).onclick = async () => {
+    let gName = $(`groupNameInput`).value.trim() || `新群聊`;
+    let checked = [...(document.querySelectorAll(`.groupMemberCheck:checked`)||[])];
+    if(!checked.length) { alert(`请至少选择一个群成员！`); return; }
+
+    await loadGroupData();
+    let uName = ``;
+    try { uName = await localforage.getItem(`myGlobalName`)||``; } catch(e){}
+    if(!uName) uName = originalGetItem.call(ls,`myGlobalName`)||`我`;
+
+    let gid = `g`+Date.now();
+    let members = [{id:`user`, name:uName, isUser:true}];
+    checked.forEach(cb => members.push({id:String(cb.dataset.id), name:cb.dataset.name, isUser:false}));
+
+    groupData[gid] = {
+        id:gid, name:gName, avatar:``, bg:``, members,
+        notice:``, myNick:``, ownerId:`user`, messages:[], created:Date.now()
+    };
+    await saveGroupData();
+    $(`createGroupModal`).style.display = `none`;
+    // 进入群聊室
+    currentGroupId = gid;
+    openGroupRoom(gid);
+};
+
+function openGroupRoom(gid) {
+    let g = groupData[gid];
+    if(!g) return;
+    currentGroupId = gid;
+    if($(`groupRoomTitle`)) $(`groupRoomTitle`).innerText = g.name || `群聊`;
+    if($(`groupRoomCount`)) $(`groupRoomCount`).innerText = `${g.members.length}人`;
+    // 设置背景
+    let gr = $(`scrGroupRoom`);
+    if(gr) gr.style.backgroundImage = g.bg ? `url(${g.bg})` : `none`;
+    renderGroupMsgs();
+    showScreen(`scrGroupRoom`);
+}
+
+function renderGroupMsgs() {
+    let g = groupData[currentGroupId];
+    if(!g) return;
+    let area = $(`groupMsgs`);
+    if(!area) return;
+    area.innerHTML = ``;
+    // 群公告
+    if(g.notice) {
+        let n = document.createElement(`div`);
+        n.style.cssText = `text-align:center;padding:6px 14px;margin:4px;background:#fffde7;border-radius:10px;font-size:12px;color:#e67e22;`;
+        n.innerText = `📢 ${g.notice}`;
+        area.appendChild(n);
+    }
+    (g.messages||[]).forEach(msg => {
+        let row = document.createElement(`div`);
+        let isMe = msg.senderId === `user`;
+        row.style.cssText = `display:flex;gap:8px;margin:6px 10px;align-items:flex-end;${isMe?'flex-direction:row-reverse;':''}`;
+
+        // 头像
+        let ava = document.createElement(`div`);
+        ava.style.cssText = `width:36px;height:36px;border-radius:50%;background:#ddd;flex-shrink:0;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:16px;`;
+        if(msg.avatar) { ava.style.backgroundImage=`url(${msg.avatar})`; }
+        else ava.innerText = `👤`;
+
+        // 气泡
+        let bub = document.createElement(`div`);
+        bub.style.cssText = `max-width:70%;padding:9px 13px;border-radius:${isMe?'16px 4px 16px 16px':'4px 16px 16px 16px'};font-size:14px;line-height:1.5;word-break:break-all;${isMe?'background:#dcf8c6;':'background:white;'}box-shadow:0 1px 3px rgba(0,0,0,0.08);`;
+        bub.innerHTML = `${!isMe?`<div style="font-size:11px;color:#6c5ce7;font-weight:bold;margin-bottom:3px;">${msg.senderName||``}</div>`:``}${msg.content}`;
+
+        if(isMe) { row.appendChild(bub); row.appendChild(ava); }
+        else { row.appendChild(ava); row.appendChild(bub); }
+        area.appendChild(row);
+    });
+    area.scrollTop = area.scrollHeight;
+}
+
+// 群聊发消息（user）
+if($(`btnGroupSend`)) $(`btnGroupSend`).onclick = async () => {
+    let txt = $(`iptGroupMsg`) ? $(`iptGroupMsg`).value.trim() : ``;
+    if(!txt) return;
+    let g = groupData[currentGroupId];
+    if(!g) return;
+    if($(`iptGroupMsg`)) $(`iptGroupMsg`).value = ``;
+
+    let uName = g.myNick || ``;
+    if(!uName) { try { uName=await localforage.getItem(`myGlobalName`)||``; } catch(e){} }
+    if(!uName) uName = `我`;
+    let uAva = null;
+    try { uAva = await localforage.getItem(`myI_global`); } catch(e){}
+
+    g.messages.push({senderId:`user`, senderName:uName, avatar:uAva, content:txt, time:Date.now()});
+    await saveGroupData();
+    renderGroupMsgs();
+};
+if($(`iptGroupMsg`)) $(`iptGroupMsg`).addEventListener(`keydown`, e => { if(e.key===`Enter`&&!e.shiftKey){ e.preventDefault(); if($(`btnGroupSend`)) $(`btnGroupSend`).click(); } });
+
+// @全体发言 - 让所有 char 依次AI回复
+if($(`btnGroupCallAll`)) $(`btnGroupCallAll`).onclick = async () => {
+    let g = groupData[currentGroupId];
+    if(!g) return;
+    let pxy=originalGetItem.call(ls,`pxy`)||``, key=originalGetItem.call(ls,`key`)||``, mod=originalGetItem.call(ls,`mod`)||``;
+    if(!pxy||!key) { alert(`需要配置API！`); return; }
+    $(`btnGroupCallAll`).disabled = true; $(`btnGroupCallAll`).innerText = `⏳生成中...`;
+    for(let m of g.members) {
+        if(m.isUser) continue;
+        let charAP = (originalGetItem.call(ls,`cAP_`+m.id)||``).slice(0,300);
+        let recentMsgs = (g.messages||[]).slice(-6).map(x=>`${x.senderName}：${x.content}`).join(`\n`);
+        let sysPmt = `你是${m.name}。${charAP}你在群聊中，群里最近的消息：\n${recentMsgs}\n\n请你以${m.name}的性格和语气，在群里自然地说一句话（不超过40字），直接输出，不加任何前缀。`;
+        try {
+            let resp = await fetch(pxy,{method:`POST`,headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify({model:mod,max_tokens:80,messages:[{role:`user`,content:sysPmt}]})});
+            let data = await resp.json();
+            let reply = (data.choices?.[0]?.message?.content||``).trim();
+            if(!reply) continue;
+            let ava=null; try{ ava=await localforage.getItem(`aiI_`+m.id); }catch(e){}
+            g.messages.push({senderId:m.id,senderName:m.name,avatar:ava,content:reply,time:Date.now()});
+            await saveGroupData();
+            renderGroupMsgs();
+        } catch(e){}
+    }
+    $(`btnGroupCallAll`).disabled=false; $(`btnGroupCallAll`).innerText=`@全体发言`;
+};
+
+// @某人发言 - 选一个 char 来发言
+if($(`btnGroupCallOne`)) $(`btnGroupCallOne`).onclick = async () => {
+    let g = groupData[currentGroupId];
+    if(!g) return;
+    let chars = g.members.filter(m=>!m.isUser);
+    if(!chars.length) { alert(`没有角色成员！`); return; }
+    let names = chars.map((m,i)=>`${i+1}. ${m.name}`).join(`\n`);
+    let choice = prompt(`让谁发言？\n${names}\n输入序号：`);
+    if(!choice) return;
+    let idx2 = parseInt(choice)-1;
+    if(isNaN(idx2)||idx2<0||idx2>=chars.length) return;
+    let m = chars[idx2];
+    let pxy=originalGetItem.call(ls,`pxy`)||``, key=originalGetItem.call(ls,`key`)||``, mod=originalGetItem.call(ls,`mod`)||``;
+    if(!pxy||!key) { alert(`需要配置API！`); return; }
+    let charAP=(originalGetItem.call(ls,`cAP_`+m.id)||``).slice(0,300);
+    let recentMsgs=(g.messages||[]).slice(-6).map(x=>`${x.senderName}：${x.content}`).join(`\n`);
+    let sysPmt=`你是${m.name}。${charAP}群里最近：\n${recentMsgs}\n\n请以${m.name}的语气说一句（不超过40字），直接输出。`;
+    try {
+        let resp=await fetch(pxy,{method:`POST`,headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify({model:mod,max_tokens:80,messages:[{role:`user`,content:sysPmt}]})});
+        let data=await resp.json();
+        let reply=(data.choices?.[0]?.message?.content||``).trim();
+        if(!reply) return;
+        let ava=null; try{ ava=await localforage.getItem(`aiI_`+m.id); }catch(e){}
+        g.messages.push({senderId:m.id,senderName:m.name,avatar:ava,content:reply,time:Date.now()});
+        await saveGroupData(); renderGroupMsgs();
+    } catch(e){ alert(`生成失败`); }
+};
+
+// 群聊室返回
+if($(`btnGroupRoomBack`)) $(`btnGroupRoomBack`).onclick = () => showScreen(`scrContact`);
+
+// 群聊设置
+if($(`btnGroupSettings`)) $(`btnGroupSettings`).onclick = async () => {
+    let g = groupData[currentGroupId];
+    if(!g) return;
+    if($(`groupNameEdit`)) $(`groupNameEdit`).value = g.name||``;
+    if($(`groupNoticeEdit`)) $(`groupNoticeEdit`).value = g.notice||``;
+    if($(`groupMyNickEdit`)) $(`groupMyNickEdit`).value = g.myNick||``;
+    // 头像
+    if($(`groupAvaDisplay`) && g.avatar) { $(`groupAvaDisplay`).style.backgroundImage=`url(${g.avatar})`; $(`groupAvaDisplay`).innerText=``; }
+    // 背景预览
+    if($(`groupBgPreview`) && g.bg) { $(`groupBgPreview`).style.backgroundImage=`url(${g.bg})`; $(`groupBgPreview`).innerText=``; }
+    // 成员展示
+    let md = $(`groupMemberDisplay`);
+    if(md) {
+        md.innerHTML=``;
+        (g.members||[]).forEach(async m => {
+            let cell=document.createElement(`div`);
+            cell.style.cssText=`display:flex;flex-direction:column;align-items:center;gap:4px;width:56px;`;
+            let ava=null;
+            if(m.isUser){ try{ava=await localforage.getItem(`myI_global`);}catch(e){} }
+            else { try{ava=await localforage.getItem(`aiI_`+m.id);}catch(e){} }
+            let avaEl=document.createElement(`div`);
+            avaEl.style.cssText=`width:44px;height:44px;border-radius:10px;background:#ddd;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:20px;`;
+            if(ava){ avaEl.style.backgroundImage=`url(${ava})`; } else avaEl.innerText=`👤`;
+            let nameEl=document.createElement(`div`);
+            nameEl.style.cssText=`font-size:11px;color:#555;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;`;
+            nameEl.innerText=m.name;
+            cell.appendChild(avaEl); cell.appendChild(nameEl); md.appendChild(cell);
+        });
+    }
+    showScreen(`scrGroupSettings`);
+};
+if($(`btnGroupSettingsBack`)) $(`btnGroupSettingsBack`).onclick = () => showScreen(`scrGroupRoom`);
+
+// 群头像上传
+if($(`groupAvaDisplay`)) $(`groupAvaDisplay`).onclick=()=>{ if($(`groupAvaInput`)) $(`groupAvaInput`).click(); };
+if($(`groupAvaInput`)) $(`groupAvaInput`).onchange=e=>{
+    let f=e.target.files[0]; if(!f) return;
+    let r=new FileReader(); r.onload=async ev=>{
+        let g=groupData[currentGroupId]; if(!g) return;
+        g.avatar=ev.target.result;
+        await saveGroupData();
+        if($(`groupAvaDisplay`)){ $(`groupAvaDisplay`).style.backgroundImage=`url(${g.avatar})`; $(`groupAvaDisplay`).innerText=``; }
+    }; r.readAsDataURL(f); e.target.value=``;
+};
+
+// 群背景上传
+if($(`btnUploadGroupBg`)) $(`btnUploadGroupBg`).onclick=()=>{ if($(`groupBgInput`)) $(`groupBgInput`).click(); };
+if($(`groupBgInput`)) $(`groupBgInput`).onchange=e=>{
+    let f=e.target.files[0]; if(!f) return;
+    let r=new FileReader(); r.onload=async ev=>{
+        let g=groupData[currentGroupId]; if(!g) return;
+        g.bg=ev.target.result;
+        await saveGroupData();
+        if($(`groupBgPreview`)){ $(`groupBgPreview`).style.backgroundImage=`url(${g.bg})`; $(`groupBgPreview`).innerText=``; }
+        if($(`scrGroupRoom`)) $(`scrGroupRoom`).style.backgroundImage=`url(${g.bg})`;
+    }; r.readAsDataURL(f); e.target.value=``;
+};
+
+// 保存群设置
+if($(`btnSaveGroupSettings`)) $(`btnSaveGroupSettings`).onclick=async ()=>{
+    let g=groupData[currentGroupId]; if(!g) return;
+    g.name = $(`groupNameEdit`).value.trim()||g.name;
+    g.notice = $(`groupNoticeEdit`).value;
+    g.myNick = $(`groupMyNickEdit`).value.trim();
+    await saveGroupData();
+    if($(`groupRoomTitle`)) $(`groupRoomTitle`).innerText=g.name;
+    alert(`保存成功！`);
+    showScreen(`scrGroupRoom`);
+    renderGroupMsgs();
+};
+
+// 解散群聊
+if($(`btnDisbandGroup`)) $(`btnDisbandGroup`).onclick=async ()=>{
+    let g=groupData[currentGroupId]; if(!g) return;
+    if(g.ownerId!==`user`){ alert(`只有群主才能解散群聊！`); return; }
+    if(!confirm(`确认解散「${g.name}」？`)) return;
+    delete groupData[currentGroupId];
+    await saveGroupData();
+    currentGroupId=null;
+    showScreen(`scrContact`);
+};
+
+// 退出群聊
+if($(`btnLeaveGroup`)) $(`btnLeaveGroup`).onclick=async ()=>{
+    let g=groupData[currentGroupId]; if(!g) return;
+    if(g.ownerId===`user`){ alert(`你是群主，请先解散群聊或转让群主！`); return; }
+    if(!confirm(`确认退出群聊？`)) return;
+    delete groupData[currentGroupId];
+    await saveGroupData();
+    currentGroupId=null;
+    showScreen(`scrContact`);
+};
+
+// 联系人页面渲染群聊列表
+async function renderGroupList() {
+    await loadGroupData();
+    let container = $(`contactContent`);
+    if(!container) return;
+    // 清除旧群列表
+    container.querySelectorAll(`.group-item`).forEach(el=>el.remove());
+    let gids = Object.keys(groupData);
+    if(!gids.length) return;
+    let sep = document.createElement(`div`);
+    sep.style.cssText=`font-size:12px;color:#aaa;padding:8px 16px 4px;`;
+    sep.textContent=`群聊`;
+    sep.className=`group-item`;
+    container.appendChild(sep);
+    for(let gid of gids) {
+        let g=groupData[gid];
+        let div=document.createElement(`div`);
+        div.className=`chat-item group-item`;
+        let avaEl=`<div style="width:46px;height:46px;border-radius:10px;background:#e8e4ff;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;${g.avatar?'background-image:url('+g.avatar+')':''}">👥</div>`;
+        div.innerHTML=`${avaEl}<div class=chat-info><div class=chat-name>${g.name}</div><div class=chat-preview>${g.members.length}人群聊</div></div>`;
+        div.onclick=()=>{ openGroupRoom(gid); };
+        container.appendChild(div);
+    }
+}
+
+// ================================================================
+// 动态(朋友圈)功能 - 重写
+// ================================================================
+let momentData = [];
 let momentMultiMode = false;
 let momentSelected = new Set();
-let momentPostImg = null;    // base64
+let momentUserPostImg = null;
 
-// 初始化朋友圈页面
 async function initMomentPage() {
-    // 加载数据
-    try {
-        let saved = await localforage.getItem(`momentData`);
-        if(saved) momentData = Array.isArray(saved) ? saved : JSON.parse(saved);
-    } catch(e) { momentData = []; }
-
-    // 加载用户昵称和头像
-    let uName = ``;
-    try { uName = await localforage.getItem(`myGlobalName`) || ``; } catch(e) {}
-    if(!uName) uName = originalGetItem.call(ls, `myGlobalName`) || `我`;
-    if($(`momentUserName`)) $(`momentUserName`).innerText = uName;
-
-    let uAva = null;
-    try { uAva = await localforage.getItem(`myI_global`); } catch(e) {}
-    if(uAva && $(`momentUserAvatar`)) {
-        $(`momentUserAvatar`).style.backgroundImage = `url(${uAva})`;
-        $(`momentUserAvatar`).innerText = ``;
-    }
-
-    // 加载背景图
-    let mbg = null;
-    try { mbg = await localforage.getItem(`momentBg`); } catch(e) {}
-    if(mbg && $(`momentBg`)) $(`momentBg`).style.backgroundImage = `url(${mbg})`;
-
-    // 填充发布者下拉列表
-    await fillMomentPostWho();
-
-    // 渲染列表
+    try { let d=await localforage.getItem(`momentData`); if(d) momentData=Array.isArray(d)?d:JSON.parse(d); } catch(e){ momentData=[]; }
+    let uName=``;
+    try{ uName=await localforage.getItem(`myGlobalName`)||``; }catch(e){}
+    if(!uName) uName=originalGetItem.call(ls,`myGlobalName`)||`我`;
+    if($(`momentUserName`)) $(`momentUserName`).innerText=uName;
+    let uAva=null; try{ uAva=await localforage.getItem(`myI_global`); }catch(e){}
+    if(uAva&&$(`momentUserAvatar`)){ $(`momentUserAvatar`).style.backgroundImage=`url(${uAva})`; $(`momentUserAvatar`).innerText=``; }
+    let mbg=null; try{ mbg=await localforage.getItem(`momentBg`); }catch(e){}
+    if(mbg&&$(`momentBg`)) $(`momentBg`).style.backgroundImage=`url(${mbg})`;
+    await fillCharNpcColumns();
     renderMoments();
 }
 
-async function fillMomentPostWho() {
-    let sel = $(`momentPostWho`);
-    if(!sel) return;
-    sel.innerHTML = `<option value="user">✏️ 我来发朋友圈</option>`;
-    // 加载所有 chars
-    let contacts = [];
-    try { let lf = await localforage.getItem(`myContacts`); if(lf) contacts = Array.isArray(lf)?lf:JSON.parse(lf); } catch(e) {}
-    if(!contacts.length) { try { let r=originalGetItem.call(ls,`myContacts`); if(r) contacts=JSON.parse(r); } catch(e){} }
+async function fillCharNpcColumns() {
+    let contacts=[];
+    try{ let lf=await localforage.getItem(`myContacts`); if(lf) contacts=Array.isArray(lf)?lf:JSON.parse(lf); }catch(e){}
+    if(!contacts.length){ try{let r=originalGetItem.call(ls,`myContacts`); if(r) contacts=JSON.parse(r);}catch(e){} }
+
+    let charList=$(`momentCharList`), npcList=$(`momentNpcList`);
+    if(charList) charList.innerHTML=``;
+    if(npcList) npcList.innerHTML=``;
 
     // default char
-    let defName = originalGetItem.call(ls,`cN_default`) || originalGetItem.call(ls,`cN`) || `角色`;
-    let defOpt = document.createElement(`option`);
-    defOpt.value = `default`; defOpt.text = `🤖 ${defName} 发朋友圈`; sel.appendChild(defOpt);
+    let defName=originalGetItem.call(ls,`cN_default`)||`角色`;
+    appendMomentCheckItem(charList, `char_default`, defName, `default`);
 
     for(let ct of contacts) {
-        let cName = originalGetItem.call(ls,`cN_`+ct.id) || ct.name;
+        let cName=originalGetItem.call(ls,`cN_`+ct.id)||ct.name;
+        appendMomentCheckItem(charList, `char_`+ct.id, cName, String(ct.id));
         // NPC
-        let npcStr = originalGetItem.call(ls,`cMP_`+ct.id) || ``;
+        let npcStr=originalGetItem.call(ls,`cMP_`+ct.id)||``;
         if(npcStr) {
             try {
-                let npcArr = JSON.parse(npcStr);
-                for(let npc of npcArr) {
-                    let o=document.createElement(`option`);
-                    o.value=`npc_`+ct.id+`_`+npc.name; o.text=`👥 ${npc.name}（${cName}圈）发圈`;
-                    sel.appendChild(o);
-                }
+                let npcArr=JSON.parse(npcStr);
+                npcArr.forEach(npc=>{
+                    appendMomentCheckItem(npcList, `npc_`+ct.id+`_`+npc.name, npc.name, `npc_`+ct.id+`_`+npc.name, ct.id);
+                });
             } catch(e2){}
         }
-        let o=document.createElement(`option`);
-        o.value=String(ct.id); o.text=`🤖 ${cName} 发朋友圈`; sel.appendChild(o);
     }
+    if(npcList && !npcList.children.length) {
+        npcList.innerHTML=`<div style="font-size:12px;color:#ccc;text-align:center;padding:10px;">暂无NPC</div>`;
+    }
+}
+
+function appendMomentCheckItem(container, checkId, name, dataVal, relCharId) {
+    if(!container) return;
+    let lbl=document.createElement(`label`);
+    lbl.style.cssText=`display:flex;align-items:center;gap:7px;padding:5px 7px;background:#fff9fb;border-radius:8px;cursor:pointer;font-size:13px;border:1px solid #ffeef5;`;
+    lbl.innerHTML=`<input type=checkbox class="momentGenCheck" data-val="${dataVal}" data-name="${name}" ${relCharId?`data-relchar="${relCharId}"`:`data-relchar="${dataVal}"`} style="width:16px;height:16px;"> ${name}`;
+    container.appendChild(lbl);
+}
+
+async function saveMoments() {
+    await localforage.setItem(`momentData`, momentData).catch(()=>{});
+}
+
+function escHtml(s) {
+    return String(s||``).replace(/&/g,`&amp;`).replace(/</g,`&lt;`).replace(/>/g,`&gt;`).replace(/"/g,`&quot;`);
 }
 
 function renderMoments() {
-    let list = $(`momentList`);
-    if(!list) return;
-    if(!momentData.length) {
-        list.innerHTML = `<div style="text-align:center;padding:40px;color:#bbb;font-size:14px;">还没有动态，快来发第一条吧 💕</div>`;
-        return;
-    }
-    list.innerHTML = ``;
-    // 最新的在上面
-    let sorted = [...momentData].reverse();
-    sorted.forEach(post => {
-        let card = buildMomentCard(post);
-        list.appendChild(card);
-    });
+    let list=$(`momentList`); if(!list) return;
+    if(!momentData.length){ list.innerHTML=`<div style="text-align:center;padding:40px;color:#bbb;font-size:14px;">还没有动态 💕</div>`; return; }
+    list.innerHTML=``;
+    [...momentData].reverse().forEach(post => list.appendChild(buildMomentCard(post)));
 }
 
 function buildMomentCard(post) {
-    let div = document.createElement(`div`);
-    div.dataset.id = post.id;
-    div.style.cssText = `background:white;margin:6px 12px;border-radius:16px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,0.06);position:relative;`;
-
-    let selBox = momentMultiMode
-        ? `<input type=checkbox class="momentSelBox" data-id="${post.id}" ${momentSelected.has(post.id)?'checked':''} style="position:absolute;top:12px;left:12px;width:18px;height:18px;cursor:pointer;">`
-        : ``;
-
-    // 头像
-    let avaStyle = post.avatar
-        ? `background:url(${post.avatar}) center/cover no-repeat;`
-        : `background:#ffd6e0;display:flex;align-items:center;justify-content:center;font-size:20px;`;
-    let avaInner = post.avatar ? `` : `👤`;
-
-    // 爱心草稿（仅 char/npc）
-    let draftHeart = (post.authorType !== `user`)
-        ? `<span class="momentDraftHeart" data-id="${post.id}" title="草稿偷看" style="position:absolute;top:12px;right:12px;font-size:20px;cursor:pointer;color:#ffb3c6;user-select:none;">🤍</span>`
-        : ``;
-
-    // 图片
-    let imgBlock = post.img
-        ? `<div style="margin:8px 0;border-radius:10px;overflow:hidden;"><img src="${post.img}" style="max-width:100%;max-height:200px;border-radius:10px;object-fit:cover;display:block;"></div>`
-        : ``;
-
-    // 评论区
-    let commentsHtml = buildCommentsHtml(post);
-
-    div.innerHTML = `${selBox}
+    let div=document.createElement(`div`);
+    div.dataset.id=post.id;
+    div.style.cssText=`background:white;margin:6px 12px;border-radius:16px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,0.06);position:relative;`;
+    let selBox=momentMultiMode?`<input type=checkbox class="momentSelBox" data-id="${post.id}" ${momentSelected.has(post.id)?`checked`:``} style="position:absolute;top:12px;left:12px;width:18px;height:18px;cursor:pointer;">`:``;
+    let avaStyle=post.avatar?`background:url(${post.avatar}) center/cover no-repeat;`:`background:#ffd6e0;display:flex;align-items:center;justify-content:center;font-size:20px;`;
+    let draftHeart=(post.authorType!==`user`)?`<span class="momentDraftHeart" data-id="${post.id}" style="position:absolute;top:12px;right:12px;font-size:20px;cursor:pointer;color:#ffb3c6;">🤍</span>`:``;
+    let imgBlock=``;
+    if(post.img){ imgBlock=`<div style="margin:8px 0;"><img src="${post.img}" style="max-width:100%;max-height:200px;border-radius:10px;object-fit:cover;display:block;"></div>`; }
+    else if(post.photoDesc){ imgBlock=`<div style="margin:8px 0;padding:10px 14px;background:linear-gradient(135deg,#ffecd2,#fcb69f);border-radius:12px;font-size:13px;color:#8e4520;font-style:italic;">[照片] ${escHtml(post.photoDesc)}</div>`; }
+    let commentsHtml=buildCommentsHtml(post);
+    div.innerHTML=`${selBox}
         <div style="display:flex;gap:10px;align-items:flex-start;">
-            <div style="width:42px;height:42px;border-radius:10px;flex-shrink:0;${avaStyle}">${avaInner}</div>
+            <div style="width:42px;height:42px;border-radius:10px;flex-shrink:0;${avaStyle}">${post.avatar?``:``}</div>
             <div style="flex:1;min-width:0;">
                 <div style="font-weight:bold;font-size:14px;color:#e75480;margin-bottom:4px;">${escHtml(post.author)}</div>
                 <div style="font-size:14px;color:#333;line-height:1.55;word-break:break-all;">${escHtml(post.text)}</div>
                 ${imgBlock}
-                <div style="font-size:11px;color:#bbb;margin-top:6px;">${post.time}</div>
-                <!-- 操作按钮 -->
-                <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+                <div style="font-size:11px;color:#bbb;margin-top:6px;">${post.time||``}</div>
+                <div style="display:flex;gap:7px;margin-top:8px;flex-wrap:wrap;">
                     <button class="momentSummonBtn" data-id="${post.id}" style="font-size:11px;background:#fff0f3;border:1px solid #ffd6e0;border-radius:14px;padding:3px 10px;cursor:pointer;color:#e75480;">💬 召唤评论</button>
                     <button class="momentUserCommentBtn" data-id="${post.id}" style="font-size:11px;background:#fff0f3;border:1px solid #ffd6e0;border-radius:14px;padding:3px 10px;cursor:pointer;color:#e75480;">✏️ 写评论</button>
                 </div>
@@ -9707,331 +10115,257 @@ function buildMomentCard(post) {
 }
 
 function buildCommentsHtml(post) {
-    if(!post.comments || !post.comments.length) return ``;
-    let html = `<div style="background:#fff9fb;border-radius:10px;padding:8px 10px;border:1px solid #ffeef3;">`;
-    post.comments.forEach((cm, idx) => {
-        let replyTo = cm.replyTo ? `<span style="color:#e75480;">回复 ${escHtml(cm.replyTo)}：</span>` : ``;
-        html += `<div style="font-size:13px;color:#444;padding:3px 0;display:flex;justify-content:space-between;align-items:flex-start;gap:4px;">
-            <div style="flex:1;line-height:1.5;">
-                <span style="font-weight:bold;color:#e75480;">${escHtml(cm.author)}：</span>
-                ${replyTo}${escHtml(cm.text)}
-            </div>
+    if(!post.comments||!post.comments.length) return ``;
+    let html=`<div style="background:#fff9fb;border-radius:10px;padding:8px 10px;border:1px solid #ffeef3;">`;
+    post.comments.forEach((cm,idx)=>{
+        let replyTo=cm.replyTo?`<span style="color:#e75480;">回复 ${escHtml(cm.replyTo)}：</span>`:``;
+        html+=`<div style="font-size:13px;color:#444;padding:3px 0;display:flex;justify-content:space-between;align-items:flex-start;gap:4px;">
+            <div style="flex:1;line-height:1.5;"><span style="font-weight:bold;color:#e75480;">${escHtml(cm.author)}：</span>${replyTo}${escHtml(cm.text)}</div>
             <div style="display:flex;gap:4px;flex-shrink:0;">
-                <button class="momentReplyBtn" data-postid="${post.id}" data-cmi="${idx}" data-replyto="${escHtml(cm.author)}" style="font-size:10px;background:#ffd6e0;border:none;border-radius:10px;padding:2px 7px;cursor:pointer;color:#c0392b;white-space:nowrap;">↩ 回</button>
-                <button class="momentDelCommentBtn" data-postid="${post.id}" data-cmi="${idx}" style="font-size:10px;background:#ddd;border:none;border-radius:10px;padding:2px 7px;cursor:pointer;color:#666;white-space:nowrap;">🗑</button>
+                <button class="momentReplyBtn" data-postid="${post.id}" data-cmi="${idx}" data-replyto="${escHtml(cm.author)}" style="font-size:10px;background:#ffd6e0;border:none;border-radius:10px;padding:2px 7px;cursor:pointer;color:#c0392b;">↩</button>
+                <button class="momentDelCommentBtn" data-postid="${post.id}" data-cmi="${idx}" style="font-size:10px;background:#ddd;border:none;border-radius:10px;padding:2px 7px;cursor:pointer;color:#666;">🗑</button>
             </div>
         </div>`;
     });
-    html += `</div>`;
-    return html;
+    return html+`</div>`;
 }
 
-function escHtml(s) {
-    return String(s||``).replace(/&/g,`&amp;`).replace(/</g,`&lt;`).replace(/>/g,`&gt;`).replace(/"/g,`&quot;`);
-}
-
-async function saveMoments() {
-    await localforage.setItem(`momentData`, momentData).catch(()=>{});
-}
-
-// AI生成评论
-async function aiGenComment(postId, summoner, replyTo) {
-    let post = momentData.find(p=>p.id===postId);
-    if(!post) return;
-    let pxy = originalGetItem.call(ls,`pxy`)||``;
-    let key = originalGetItem.call(ls,`key`)||``;
-    let mod = originalGetItem.call(ls,`mod`)||``;
-    if(!pxy||!key) { alert(`需要配置API才能召唤评论！`); return; }
-
-    let authorName = summoner.name;
-    let charPrompt = summoner.prompt || ``;
-    let replyStr = replyTo ? `你正在回复${replyTo}的评论。` : ``;
-    let sysMsg = `你是${authorName}。${charPrompt}你正在看朋友圈，${post.author}发了一条动态："${post.text}"。${replyStr}请以${authorName}的语气和性格写一条朋友圈评论，20字以内，生动自然，不要加引号或前缀。`;
-
-    try {
-        let resp = await fetch(pxy,{method:`POST`,headers:{'Content-Type':'application/json', Authorization:'Bearer '+key},
-            body:JSON.stringify({model:mod,max_tokens:60,messages:[{role:`user`,content:sysMsg}]})});
-        let data = await resp.json();
-        let txt = data.choices?.[0]?.message?.content?.trim() || `（评论生成失败）`;
-        return txt;
-    } catch(e) { return `（网络异常，评论失败）`; }
-}
-
-// AI生成草稿
-async function aiGenDraft(post) {
-    let pxy = originalGetItem.call(ls,`pxy`)||``;
-    let key = originalGetItem.call(ls,`key`)||``;
-    let mod = originalGetItem.call(ls,`mod`)||``;
-    if(!pxy||!key) return `（需要配置API才能查看草稿）`;
-
-    let charPrompt = ``;
-    // 找这个 char 的人设
-    let cid = post.authorId;
-    if(cid && cid !== `user`) {
-        charPrompt = originalGetItem.call(ls,`cAP_`+cid) || originalGetItem.call(ls,`cAP`) || ``;
-    }
-    let sysMsg = `你是${post.author}。${charPrompt}你刚才发了一条朋友圈："${post.text}"。但你其实有一段没有发出去的心里话草稿，请以第一人称写出那段没发出去的内心独白或者草稿内容，不超过100字，真实自然，透露出一些不想公开的情绪。`;
-
-    try {
-        let resp = await fetch(pxy,{method:`POST`,headers:{'Content-Type':'application/json', Authorization:'Bearer '+key},
-            body:JSON.stringify({model:mod,max_tokens:120,messages:[{role:`user`,content:sysMsg}]})});
-        let data = await resp.json();
-        return data.choices?.[0]?.message?.content?.trim() || `（草稿生成失败）`;
-    } catch(e) { return `（网络异常）`; }
-}
-
-// 事件委托
+// 事件委托（朋友圈列表）
 if($(`momentList`)) {
-    $(`momentList`).addEventListener(`click`, async (e) => {
-        // 草稿偷看
-        let heartEl = e.target.closest(`.momentDraftHeart`);
+    $(`momentList`).addEventListener(`click`, async e => {
+        let heartEl=e.target.closest(`.momentDraftHeart`);
         if(heartEl) {
-            let pid = heartEl.dataset.id;
-            let post = momentData.find(p=>p.id===pid);
-            if(!post) return;
-            heartEl.textContent = `💓`;
-            if($(`draftPeekContent`)) $(`draftPeekContent`).innerText = `生成中，请稍等...`;
-            if($(`draftPeekModal`)) $(`draftPeekModal`).style.display = `flex`;
-            let draft = await aiGenDraft(post);
-            if($(`draftPeekContent`)) $(`draftPeekContent`).innerText = draft;
-            heartEl.textContent = `🤍`;
-            return;
+            let post=momentData.find(p=>p.id===heartEl.dataset.id); if(!post) return;
+            heartEl.textContent=`💓`;
+            if($(`draftPeekContent`)) $(`draftPeekContent`).innerText=`生成中...`;
+            if($(`draftPeekModal`)) $(`draftPeekModal`).style.display=`flex`;
+            let draft=await aiGenDraft(post);
+            if($(`draftPeekContent`)) $(`draftPeekContent`).innerText=draft;
+            heartEl.textContent=`🤍`; return;
         }
-
-        // 多选框
-        let selBox = e.target.closest(`.momentSelBox`);
-        if(selBox) {
-            let pid = selBox.dataset.id;
-            if(selBox.checked) momentSelected.add(pid); else momentSelected.delete(pid);
-            return;
+        let selBox=e.target.closest(`.momentSelBox`);
+        if(selBox){ if(selBox.checked) momentSelected.add(selBox.dataset.id); else momentSelected.delete(selBox.dataset.id); return; }
+        let delCm=e.target.closest(`.momentDelCommentBtn`);
+        if(delCm){
+            let p=momentData.find(x=>x.id===delCm.dataset.postid); if(!p) return;
+            p.comments.splice(parseInt(delCm.dataset.cmi),1); await saveMoments(); renderMoments(); return;
         }
-
-        // 删除评论
-        let delCmBtn = e.target.closest(`.momentDelCommentBtn`);
-        if(delCmBtn) {
-            let pid = delCmBtn.dataset.postid, cmi = parseInt(delCmBtn.dataset.cmi);
-            let post = momentData.find(p=>p.id===pid);
-            if(post && post.comments) {
-                post.comments.splice(cmi, 1);
-                await saveMoments();
-                renderMoments();
-            }
-            return;
+        let replyBtn=e.target.closest(`.momentReplyBtn`);
+        if(replyBtn){
+            let txt=prompt(`回复 ${replyBtn.dataset.replyto}：`); if(!txt||!txt.trim()) return;
+            let p=momentData.find(x=>x.id===replyBtn.dataset.postid); if(!p) return;
+            if(!p.comments) p.comments=[];
+            let uN=``;try{uN=await localforage.getItem(`myGlobalName`)||``;}catch(e){} if(!uN) uN=`我`;
+            p.comments.push({author:uN,text:txt.trim(),replyTo:replyBtn.dataset.replyto,time:new Date().toLocaleString()});
+            await saveMoments(); renderMoments(); return;
         }
-
-        // 回复评论
-        let replyBtn = e.target.closest(`.momentReplyBtn`);
-        if(replyBtn) {
-            let pid = replyBtn.dataset.postid;
-            let replyTo = replyBtn.dataset.replyto;
-            let txt = prompt(`回复 ${replyTo}：`);
-            if(!txt || !txt.trim()) return;
-            let post = momentData.find(p=>p.id===pid);
-            if(!post) return;
-            if(!post.comments) post.comments = [];
-            let uName = ``;
-            try { uName = await localforage.getItem(`myGlobalName`)||``; } catch(e){}
-            if(!uName) uName = `我`;
-            post.comments.push({author:uName, text:txt.trim(), replyTo:replyTo, time:new Date().toLocaleString()});
-            await saveMoments(); renderMoments();
-            return;
+        let ucBtn=e.target.closest(`.momentUserCommentBtn`);
+        if(ucBtn){
+            let txt=prompt(`写评论：`); if(!txt||!txt.trim()) return;
+            let p=momentData.find(x=>x.id===ucBtn.dataset.id); if(!p) return;
+            if(!p.comments) p.comments=[];
+            let uN=``;try{uN=await localforage.getItem(`myGlobalName`)||``;}catch(e){} if(!uN) uN=`我`;
+            p.comments.push({author:uN,text:txt.trim(),time:new Date().toLocaleString()});
+            await saveMoments(); renderMoments(); return;
         }
-
-        // 我写评论
-        let userCmBtn = e.target.closest(`.momentUserCommentBtn`);
-        if(userCmBtn) {
-            let pid = userCmBtn.dataset.id;
-            let txt = prompt(`写评论：`);
-            if(!txt||!txt.trim()) return;
-            let post = momentData.find(p=>p.id===pid);
-            if(!post) return;
-            if(!post.comments) post.comments=[];
-            let uName=``;
-            try{ uName=await localforage.getItem(`myGlobalName`)||``; }catch(e){}
-            if(!uName) uName=`我`;
-            post.comments.push({author:uName,text:txt.trim(),time:new Date().toLocaleString()});
-            await saveMoments(); renderMoments();
-            return;
-        }
-
-        // 召唤评论
-        let sumBtn = e.target.closest(`.momentSummonBtn`);
-        if(sumBtn) {
-            let pid = sumBtn.dataset.id;
-            let post = momentData.find(p=>p.id===pid);
-            if(!post) return;
-            // 选择召唤谁
+        let sumBtn=e.target.closest(`.momentSummonBtn`);
+        if(sumBtn){
+            let post=momentData.find(p=>p.id===sumBtn.dataset.id); if(!post) return;
             let contacts=[];
-            try{ let lf=await localforage.getItem(`myContacts`); if(lf) contacts=Array.isArray(lf)?lf:JSON.parse(lf); }catch(e){}
-            let allCommenters = [
-                {id:`default`, name: originalGetItem.call(ls,`cN_default`)||`角色`, prompt: originalGetItem.call(ls,`cAP_default`)||``}
-            ];
-            for(let ct of contacts) {
-                allCommenters.push({id:String(ct.id), name:originalGetItem.call(ls,`cN_`+ct.id)||ct.name, prompt:ct.prompt||``});
-            }
-            if(allCommenters.length===0){ alert(`没有角色可召唤！`); return; }
-            let names = allCommenters.map((a,i)=>`${i+1}. ${a.name}`).join(`
-`);
-            let choice = prompt(`召唤谁来评论？
-${names}
-输入序号：`);
-            if(!choice) return;
-            let idx2 = parseInt(choice)-1;
-            if(isNaN(idx2)||idx2<0||idx2>=allCommenters.length) { alert(`序号无效`); return; }
-            let summoner = allCommenters[idx2];
-            sumBtn.innerText = `⏳ 生成中...`; sumBtn.disabled = true;
-            let txt = await aiGenComment(pid, summoner, null);
+            try{let lf=await localforage.getItem(`myContacts`); if(lf) contacts=Array.isArray(lf)?lf:JSON.parse(lf);}catch(e){}
+            let allC=[{id:`default`,name:originalGetItem.call(ls,`cN_default`)||`角色`,prompt:``}];
+            for(let ct of contacts) allC.push({id:String(ct.id),name:originalGetItem.call(ls,`cN_`+ct.id)||ct.name,prompt:ct.prompt||``});
+            let names=allC.map((a,i)=>`${i+1}. ${a.name}`).join(`\n`);
+            let choice=prompt(`召唤谁评论？\n${names}\n输入序号：`); if(!choice) return;
+            let i2=parseInt(choice)-1; if(isNaN(i2)||i2<0||i2>=allC.length) return;
+            sumBtn.innerText=`⏳...`; sumBtn.disabled=true;
+            let txt=await aiGenComment(post.id,allC[i2],null);
             if(!post.comments) post.comments=[];
-            post.comments.push({author:summoner.name, text:txt, time:new Date().toLocaleString()});
-            await saveMoments(); renderMoments();
-            return;
+            post.comments.push({author:allC[i2].name,text:txt,time:new Date().toLocaleString()});
+            await saveMoments(); renderMoments(); return;
         }
     });
 }
 
-// 发布朋友圈
-if($(`btnPostMoment`)) $(`btnPostMoment`).onclick = async () =>{
-    // 填充召唤选项
+// 相机按钮 - 打开 user 发圈 modal
+if($(`btnMomentCamera`)) $(`btnMomentCamera`).onclick = async () => {
+    momentUserPostImg=null;
+    if($(`momentUserPostText`)) $(`momentUserPostText`).value=``;
+    if($(`momentUserPhotoDesc`)) $(`momentUserPhotoDesc`).value=``;
+    if($(`momentUserPhotoPreview`)){ $(`momentUserPhotoPreview`).style.backgroundImage=`none`; $(`momentUserPhotoPreview`).innerText=`上传\n图片`; }
+    // 填充召唤列表
     let contacts=[];
-    try{ let lf=await localforage.getItem(`myContacts`); if(lf) contacts=Array.isArray(lf)?lf:JSON.parse(lf); }catch(e){}
-    let sl = $(`momentSummonList`);
-    if(sl) {
-        sl.innerHTML=``;
-        let who = $(`momentPostWho`) ? $(`momentPostWho`).value : `user`;
-        if(who === `user`) {
-            // 可召唤所有 char/npc
-            let allS = [{id:`default`,name:originalGetItem.call(ls,`cN_default`)||`角色`,prompt:``}];
-            for(let ct of contacts) allS.push({id:String(ct.id),name:originalGetItem.call(ls,`cN_`+ct.id)||ct.name,prompt:ct.prompt||``});
-            allS.forEach(s=>{
-                let lbl=document.createElement(`label`);
-                lbl.style.cssText=`display:flex;align-items:center;gap:8px;font-size:13px;`;
-                lbl.innerHTML=`<input type=checkbox class="momentSummonCheck" data-id="${s.id}" data-name="${escHtml(s.name)}" data-prompt="${escHtml(s.prompt)}" checked> ${s.name}`;
-                sl.appendChild(lbl);
-            });
-        }
-    }
-    if($(`momentSummonBlock`)) $(`momentSummonBlock`).style.display = $(`momentPostWho`) && $(`momentPostWho`).value === `user` ? `block` : `none`;
-    if($(`momentPostModal`)) $(`momentPostModal`).style.display = `flex`;
+    try{let lf=await localforage.getItem(`myContacts`); if(lf) contacts=Array.isArray(lf)?lf:JSON.parse(lf);}catch(e){}
+    let sl=$(`momentUserSummonList`); if(sl){ sl.innerHTML=``;
+        let allS=[{id:`default`,name:originalGetItem.call(ls,`cN_default`)||`角色`,prompt:``}];
+        for(let ct of contacts) allS.push({id:String(ct.id),name:originalGetItem.call(ls,`cN_`+ct.id)||ct.name,prompt:ct.prompt||``});
+        allS.forEach(s=>{ let lbl=document.createElement(`label`); lbl.style.cssText=`display:flex;align-items:center;gap:8px;font-size:13px;padding:4px;`;
+            lbl.innerHTML=`<input type=checkbox class="momentUserSummonCheck" data-id="${s.id}" data-name="${s.name}" data-prompt="${s.prompt||``}" checked style="width:16px;height:16px;"> ${s.name}`; sl.appendChild(lbl); }); }
+    $(`momentUserPostModal`).style.display=`flex`;
 };
+if($(`btnCloseMomentUserPost`)) $(`btnCloseMomentUserPost`).onclick=()=>{ $(`momentUserPostModal`).style.display=`none`; momentUserPostImg=null; };
 
-if($(`btnCloseMomentPost`)) $(`btnCloseMomentPost`).onclick = () =>{ if($(`momentPostModal`)) $(`momentPostModal`).style.display = `none`; momentPostImg = null; if($(`momentPostImgPreview`)) { $(`momentPostImgPreview`).style.backgroundImage=`none`; $(`momentPostImgPreview`).innerText=`🖼`; } };
-
-// 图片上传
-if($(`momentPostImgPreview`)) $(`momentPostImgPreview`).onclick = () =>{ if($(`momentPostImgInput`)) $(`momentPostImgInput`).click(); };
-if($(`momentPostImgInput`)) $(`momentPostImgInput`).onchange = e =>{
+// 上传图片预览
+if($(`momentUserPhotoPreview`)) $(`momentUserPhotoPreview`).onclick=()=>{ if($(`momentUserPhotoInput`)) $(`momentUserPhotoInput`).click(); };
+if($(`momentUserPhotoInput`)) $(`momentUserPhotoInput`).onchange=e=>{
     let f=e.target.files[0]; if(!f) return;
-    let r=new FileReader(); r.onload=ev=>{
-        momentPostImg=ev.target.result;
-        if($(`momentPostImgPreview`)){ $(`momentPostImgPreview`).style.backgroundImage=`url(${momentPostImg})`; $(`momentPostImgPreview`).style.backgroundSize=`cover`; $(`momentPostImgPreview`).innerText=``; }
+    let r=new FileReader(); r.onload=ev=>{ momentUserPostImg=ev.target.result;
+        if($(`momentUserPhotoPreview`)){ $(`momentUserPhotoPreview`).style.backgroundImage=`url(${momentUserPostImg})`; $(`momentUserPhotoPreview`).style.backgroundSize=`cover`; $(`momentUserPhotoPreview`).innerText=``; }
     }; r.readAsDataURL(f); e.target.value=``;
 };
-if($(`btnClearMomentImg`)) $(`btnClearMomentImg`).onclick = () =>{ momentPostImg=null; if($(`momentPostImgPreview`)){ $(`momentPostImgPreview`).style.backgroundImage=`none`; $(`momentPostImgPreview`).innerText=`🖼`; } };
 
-// 确认发布
-if($(`btnConfirmMomentPost`)) $(`btnConfirmMomentPost`).onclick = async () =>{
-    let txt = $(`momentPostText`) ? $(`momentPostText`).value.trim() : ``;
-    if(!txt) { alert(`请输入内容！`); return; }
-    let who = $(`momentPostWho`) ? $(`momentPostWho`).value : `user`;
-
-    let authorName=`我`, authorId=`user`, authorType=`user`, authorAvatar=null;
-    if(who===`user`) {
-        try{ authorName=await localforage.getItem(`myGlobalName`)||`我`; }catch(e){}
-        try{ authorAvatar=await localforage.getItem(`myI_global`); }catch(e){}
-        authorType=`user`;
-    } else {
-        authorId=who; authorType=`char`;
-        authorName=originalGetItem.call(ls,`cN_`+who)||`角色`;
-        try{ authorAvatar=await localforage.getItem(`aiI_`+who); }catch(e){}
-    }
-
-    let newPost = {
-        id: `m`+Date.now(),
-        author: authorName, authorId, authorType, avatar: authorAvatar,
-        text: txt, img: momentPostImg||null,
-        time: new Date().toLocaleString(`zh-CN`),
-        comments: [], draftPeek: null
-    };
-    momentData.push(newPost);
+// 确认发布（user）
+if($(`btnConfirmUserPost`)) $(`btnConfirmUserPost`).onclick=async ()=>{
+    let txt=($(`momentUserPostText`)?$(`momentUserPostText`).value.trim():``);
+    if(!txt){ alert(`请输入内容！`); return; }
+    let photoDesc=($(`momentUserPhotoDesc`)?$(`momentUserPhotoDesc`).value.trim():``) || ``;
+    let uName=``; try{ uName=await localforage.getItem(`myGlobalName`)||``; }catch(e){} if(!uName) uName=`我`;
+    let uAva=null; try{ uAva=await localforage.getItem(`myI_global`); }catch(e){}
+    let post={id:`m`+Date.now(),author:uName,authorId:`user`,authorType:`user`,avatar:uAva,
+        text:txt,img:momentUserPostImg||null,photoDesc:photoDesc||null,
+        time:new Date().toLocaleString(`zh-CN`),comments:[]};
+    momentData.push(post);
     await saveMoments();
-
-    // 用户发圈 + 勾选了召唤，批量生成AI评论
-    if(who===`user`) {
-        let summons = [...(document.querySelectorAll(`.momentSummonCheck:checked`)||[])].map(el=>({id:el.dataset.id,name:el.dataset.name,prompt:el.dataset.prompt}));
-        if(summons.length) {
-            if($(`momentPostModal`)) $(`momentPostModal`).style.display=`none`;
-            if($(`momentPostText`)) $(`momentPostText`).value=``;
-            momentPostImg=null;
-            renderMoments();
-            for(let s of summons) {
-                let cmtxt = await aiGenComment(newPost.id, s, null);
-                newPost.comments.push({author:s.name,text:cmtxt,time:new Date().toLocaleString()});
-                await saveMoments();
-                renderMoments();
-            }
-            return;
-        }
-    }
-
-    if($(`momentPostModal`)) $(`momentPostModal`).style.display=`none`;
-    if($(`momentPostText`)) $(`momentPostText`).value=``;
-    momentPostImg=null;
-    if($(`momentPostImgPreview`)) { $(`momentPostImgPreview`).style.backgroundImage=`none`; $(`momentPostImgPreview`).innerText=`🖼`; }
+    $(`momentUserPostModal`).style.display=`none`;
+    momentUserPostImg=null;
     renderMoments();
+    // 召唤评论
+    let summons=[...(document.querySelectorAll(`.momentUserSummonCheck:checked`)||[])].map(el=>({id:el.dataset.id,name:el.dataset.name,prompt:el.dataset.prompt}));
+    for(let s of summons){
+        let cmtxt=await aiGenComment(post.id,s,null);
+        if(!post.comments) post.comments=[];
+        post.comments.push({author:s.name,text:cmtxt,time:new Date().toLocaleString()});
+        await saveMoments(); renderMoments();
+    }
 };
 
-// 背景图上传
-if($(`btnUploadMomentBg`)) $(`btnUploadMomentBg`).onclick = () =>{ if($(`momentBgInput`)) $(`momentBgInput`).click(); };
-if($(`momentBgInput`)) $(`momentBgInput`).onchange = e =>{
+// 生成 char/npc 朋友圈
+if($(`btnGenCharMoments`)) $(`btnGenCharMoments`).onclick=async ()=>{
+    let checked=[...(document.querySelectorAll(`.momentGenCheck:checked`)||[])];
+    if(!checked.length){ alert(`请先勾选要发圈的角色或NPC！`); return; }
+    let pxy=originalGetItem.call(ls,`pxy`)||``, key=originalGetItem.call(ls,`key`)||``, mod=originalGetItem.call(ls,`mod`)||``;
+    if(!pxy||!key){ alert(`需要配置API！`); return; }
+    $(`btnGenCharMoments`).disabled=true; $(`btnGenCharMoments`).innerText=`⏳生成中...`;
+
+    for(let cb of checked) {
+        let val=cb.dataset.val, name=cb.dataset.name, relCharId=cb.dataset.relchar||val;
+        let isNpc=val.startsWith(`npc_`);
+        let charAP=``, charHistory=[];
+
+        if(isNpc){
+            // NPC: 用关联 char 的人设
+            let npcName=name;
+            charAP=`你是${npcName}，是${originalGetItem.call(ls,`cN_`+relCharId)||relCharId}身边的人。`;
+        } else {
+            charAP=(originalGetItem.call(ls,`cAP_`+val)||``).slice(0,300);
+            // 读取最近聊天记录
+            try{
+                let h=await localforage.getItem(`chatHistory_`+val);
+                if(!h) h=originalGetItem.call(ls,`chatHistory_`+val);
+                if(h) charHistory=typeof h===`string`?JSON.parse(h):h;
+            }catch(e){}
+        }
+
+        // 从最近聊天记录提炼上下文
+        let recentCtx=``;
+        if(charHistory.length){
+            recentCtx=`（最近和对方的对话片段：${charHistory.slice(-4).map(x=>`[${x.role==='assistant'?name:'对方'}] ${String(x.content).slice(0,40)}`).join(`; `)}）`;
+        }
+
+        let sysPrompt=`你是${name}。${charAP}你正在发一条朋友圈。${recentCtx}请写一条真实自然的朋友圈内容（不超过60字），完全符合你的个性，可以是生活感悟/状态/情绪/碎碎念，不加前缀，直接输出正文。`;
+        try {
+            let resp=await fetch(pxy,{method:`POST`,headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify({model:mod,max_tokens:100,messages:[{role:`user`,content:sysPrompt}]})});
+            let data=await resp.json();
+            let postTxt=(data.choices?.[0]?.message?.content||``).trim();
+            if(!postTxt) continue;
+            let authorAvatar=null;
+            if(!isNpc) { try{ authorAvatar=await localforage.getItem(`aiI_`+val); }catch(e){} }
+            let newPost={id:`m`+Date.now()+Math.random().toString(36).slice(2,6),
+                author:name, authorId:val, authorType:isNpc?`npc`:`char`, avatar:authorAvatar,
+                text:postTxt, img:null, photoDesc:null,
+                time:new Date().toLocaleString(`zh-CN`), comments:[]};
+            momentData.push(newPost);
+            await saveMoments();
+            renderMoments();
+        } catch(e){}
+    }
+    $(`btnGenCharMoments`).disabled=false; $(`btnGenCharMoments`).innerText=`✨ 生成选中角色的朋友圈`;
+};
+
+// 背景上传
+if($(`btnUploadMomentBg`)) $(`btnUploadMomentBg`).onclick=()=>{ if($(`momentBgInput`)) $(`momentBgInput`).click(); };
+if($(`momentBgInput`)) $(`momentBgInput`).onchange=e=>{
     let f=e.target.files[0]; if(!f) return;
     let r=new FileReader(); r.onload=async ev=>{
-        let url=ev.target.result;
-        await localforage.setItem(`momentBg`,url).catch(()=>{});
-        if($(`momentBg`)) $(`momentBg`).style.backgroundImage=`url(${url})`;
+        await localforage.setItem(`momentBg`,ev.target.result).catch(()=>{});
+        if($(`momentBg`)) $(`momentBg`).style.backgroundImage=`url(${ev.target.result})`;
     }; r.readAsDataURL(f); e.target.value=``;
 };
 
-// 头像点击 - 可更换
-if($(`momentUserAvatar`)) $(`momentUserAvatar`).onclick = () =>{ if($(`upMeAvatar`)) $(`upMeAvatar`).click(); };
-
 // 批量管理
-if($(`btnMomentMultiSelect`)) $(`btnMomentMultiSelect`).onclick = () =>{
-    momentMultiMode = true; momentSelected.clear();
-    if($(`momentMultiBar`)) $(`momentMultiBar`).style.display=`flex`;
-    renderMoments();
-};
-if($(`btnMomentCancelSel`)) $(`btnMomentCancelSel`).onclick = () =>{
-    momentMultiMode=false; momentSelected.clear();
-    if($(`momentMultiBar`)) $(`momentMultiBar`).style.display=`none`;
-    renderMoments();
-};
-if($(`btnMomentSelectAll`)) $(`btnMomentSelectAll`).onclick = () =>{
-    momentData.forEach(p=>momentSelected.add(p.id));
-    document.querySelectorAll(`.momentSelBox`).forEach(cb=>{cb.checked=true;});
-};
-if($(`btnMomentDeleteSel`)) $(`btnMomentDeleteSel`).onclick = async () =>{
-    if(!momentSelected.size) { alert(`请先选择要删除的动态！`); return; }
+if($(`btnMomentMultiSelect`)) $(`btnMomentMultiSelect`).onclick=()=>{ momentMultiMode=true; momentSelected.clear(); if($(`momentMultiBar`)) $(`momentMultiBar`).style.display=`flex`; renderMoments(); };
+if($(`btnMomentCancelSel`)) $(`btnMomentCancelSel`).onclick=()=>{ momentMultiMode=false; momentSelected.clear(); if($(`momentMultiBar`)) $(`momentMultiBar`).style.display=`none`; renderMoments(); };
+if($(`btnMomentSelectAll`)) $(`btnMomentSelectAll`).onclick=()=>{ momentData.forEach(p=>momentSelected.add(p.id)); document.querySelectorAll(`.momentSelBox`).forEach(cb=>{cb.checked=true;}); };
+if($(`btnMomentDeleteSel`)) $(`btnMomentDeleteSel`).onclick=async ()=>{
+    if(!momentSelected.size){ alert(`请先选择要删除的动态！`); return; }
     if(!confirm(`确认删除选中的 ${momentSelected.size} 条动态？`)) return;
-    momentData = momentData.filter(p=>!momentSelected.has(p.id));
+    momentData=momentData.filter(p=>!momentSelected.has(p.id));
     momentSelected.clear(); momentMultiMode=false;
     if($(`momentMultiBar`)) $(`momentMultiBar`).style.display=`none`;
     await saveMoments(); renderMoments();
 };
 
 // 草稿 modal 关闭
-if($(`btnCloseDraftPeek`)) $(`btnCloseDraftPeek`).onclick = () =>{ if($(`draftPeekModal`)) $(`draftPeekModal`).style.display=`none`; };
-if($(`btnCloseDraftPeekOk`)) $(`btnCloseDraftPeekOk`).onclick = () =>{ if($(`draftPeekModal`)) $(`draftPeekModal`).style.display=`none`; };
+if($(`btnCloseDraftPeek`)) $(`btnCloseDraftPeek`).onclick=()=>{ if($(`draftPeekModal`)) $(`draftPeekModal`).style.display=`none`; };
+if($(`btnCloseDraftPeekOk`)) $(`btnCloseDraftPeekOk`).onclick=()=>{ if($(`draftPeekModal`)) $(`draftPeekModal`).style.display=`none`; };
 
 // 朋友圈底部导航
-if($(`navMomentToMsg`)) $(`navMomentToMsg`).onclick = () =>showScreen(`scrList`);
-if($(`navMomentToContact`)) $(`navMomentToContact`).onclick = () =>showScreen(`scrContact`);
-if($(`navMomentToMe`)) $(`navMomentToMe`).onclick = () =>showScreen(`scrMe`);
-// ================================================================
+if($(`navMomentToMsg`)) $(`navMomentToMsg`).onclick=()=>showScreen(`scrList`);
+if($(`navMomentToContact`)) $(`navMomentToContact`).onclick=()=>showScreen(`scrContact`);
+if($(`navMomentToMe`)) $(`navMomentToMe`).onclick=()=>showScreen(`scrMe`);
+if($(`btnMomentBack`)) $(`btnMomentBack`).onclick=()=>showScreen(`scrList`);
+if($(`momentUserAvatar`)) $(`momentUserAvatar`).onclick=()=>{ if($(`upMeAvatar`)) $(`upMeAvatar`).click(); };
+
+// AI 生成草稿
+async function aiGenDraft(post) {
+    let pxy=originalGetItem.call(ls,`pxy`)||``, key=originalGetItem.call(ls,`key`)||``, mod=originalGetItem.call(ls,`mod`)||``;
+    if(!pxy||!key) return `（需要配置API才能查看草稿）`;
+    let charAP=``;
+    if(post.authorId&&post.authorId!==`user`) charAP=(originalGetItem.call(ls,`cAP_`+post.authorId)||``).slice(0,200);
+    let sysMsg=`你是${post.author}。${charAP}你发了一条朋友圈："${post.text}"，但你有一段没发出去的心里话。请以第一人称写出那段没发出去的内心独白（不超过100字，真实有情绪感），直接输出。`;
+    try{
+        let resp=await fetch(pxy,{method:`POST`,headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify({model:mod,max_tokens:120,messages:[{role:`user`,content:sysMsg}]})});
+        let data=await resp.json();
+        return (data.choices?.[0]?.message?.content||``).trim()||`（生成失败）`;
+    }catch(e){ return `（网络异常）`; }
+}
+
+// AI 生成评论
+async function aiGenComment(postId, summoner, replyTo) {
+    let post=momentData.find(p=>p.id===postId); if(!post) return `（评论失败）`;
+    let pxy=originalGetItem.call(ls,`pxy`)||``, key=originalGetItem.call(ls,`key`)||``, mod=originalGetItem.call(ls,`mod`)||``;
+    if(!pxy||!key) return `（需要配置API）`;
+    let charAP=(summoner.prompt||``).slice(0,200);
+    let replyStr=replyTo?`你正在回复${replyTo}的评论。`:``;
+    let sysMsg=`你是${summoner.name}。${charAP}你看到${post.author}发了一条朋友圈："${post.text}"。${replyStr}以${summoner.name}的语气写一条朋友圈评论（20字以内），直接输出，不加引号。`;
+    try{
+        let resp=await fetch(pxy,{method:`POST`,headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify({model:mod,max_tokens:50,messages:[{role:`user`,content:sysMsg}]})});
+        let data=await resp.json();
+        return (data.choices?.[0]?.message?.content||``).trim()||`（生成失败）`;
+    }catch(e){ return `（网络异常）`; }
+}
+
+// 联系人页面展示群聊
+loadGroupData().then(()=>renderGroupList()).catch(()=>{});
+
+
 // 朋友圈结束
 // ================================================================
 
 </script>
 </body>
 </html>
+
 
 
 
