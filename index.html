@@ -1776,6 +1776,18 @@ class=back-btn>＜</span>
 
 
 <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
+
+<script>
+// localforage CDN 加载失败时的降级方案（避免整个页面崩溃）
+if(typeof localforage === 'undefined') {
+    window.localforage = {
+        _data: {},
+        getItem: function(k) { return Promise.resolve(this._data[k] || null); },
+        setItem: function(k, v) { this._data[k] = v; return Promise.resolve(v); },
+        config: function() {}
+    };
+}
+</script>
 <script>
 
 
@@ -1793,6 +1805,26 @@ let ls = localStorage;
 let currentChatId ="default";
 let originalSetItem = ls.setItem;
 let isolatedKeys = ["cMyN", "myI", "chatHistory", "aiStatus", "bgI", "aiI", "cMP", "cN", "cR", "cAP", "cCtx", "cT", "cAMem", "cMemT", "cMemP", "linkedWb", "lastMemCount", "memories", "cStatusTxt", "cStatusColor", "cSign", "cBubbleCss", "cCTon", "cCTy", "cCTm", "cCTd", "cCTh", "cCTmin"];
+
+// ===== 【记忆库 localforage 迁移】=====
+// 因 localStorage 已满，记忆数据全部存入 localforage
+async function getMems(chatId) {
+    let id = chatId || currentChatId;
+    let key = `memories_` + id;
+    try {
+        let val = await localforage.getItem(key);
+        if(val !== null && val !== undefined) return Array.isArray(val) ? val : JSON.parse(val);
+    } catch(e) {}
+    // 兼容旧 localStorage 数据
+    let lsVal = originalGetItem.call(ls, key);
+    if(!lsVal && id === `default`) lsVal = originalGetItem.call(ls, `memories`);
+    return lsVal ? JSON.parse(lsVal) : [];
+}
+async function saveMems(mems, chatId) {
+    let id = chatId || currentChatId;
+    await localforage.setItem(`memories_` + id, Array.isArray(mems) ? mems : JSON.parse(mems));
+}
+// ======================================
 
 ls.setItem = function(key, value) {
     if (key === `myPhoneStickers` || key === `charStickers` || key === `myLogs` || key === `chatHistory` || key === `aiStatus`) {
@@ -1897,7 +1929,7 @@ function updTime() {
     $(`date`).innerText = (bj.getMonth()+1) + `月` + bj.getDate() + `日 星期` + days[bj.getDay()];
     return bj;
 }
-setInterval(updTime, 1000);
+updTime(); setInterval(updTime, 1000);
 
 function initCustomTimeUI() {
     let ySel = $(`ctYear`), mSel = $(`ctMonth`), dSel = $(`ctDay`), hSel = $(`ctHour`), minSel = $(`ctMinute`);
@@ -1991,7 +2023,7 @@ async function updateListPreview() {
     setTimeout(() => { try { if(typeof renderContacts === `function`) renderContacts(); } catch(e){} }, 50);
 }
 
-function applyVis() {
+async function applyVis() {
     let dn = $(`cfgRem`).value || $(`cfgName`).value || `专属恋人`;
     if($(`roomTitle`)) $(`roomTitle`).innerText = dn;
     let curStatusTxt = originalGetItem.call(ls, `cStatusTxt_` + currentChatId) || `在线`;
@@ -2009,8 +2041,7 @@ function applyVis() {
     if($(`listName`)) $(`listName`).innerText = defName;
     if($(`contactName`)) $(`contactName`).innerText = defName;
     
-        ;(async function applyImagesAsync() {
-        try {
+    try {
             let getImg = async (k) => {
                 let actualKey = (typeof isolatedKeys !== `undefined` && isolatedKeys.includes(k)) ? k + `_` + currentChatId : k;
                 let val = await localforage.getItem(actualKey);
@@ -2064,7 +2095,6 @@ function applyVis() {
                 if($(`spaceAvatar`)) { $(`spaceAvatar`).style.backgroundImage = `none`; $(`spaceAvatar`).innerHTML = `<div style="width:100%;height:100%;display:flex;justify-content:center;align-items:center;font-size:35px;color:#999;">👤</div>`; }
             }
         } catch(e) { console.error(e); }
-    })();
     
     let globalMyN = originalGetItem.call(ls, `cMyN`) || `玩家`;
     if($(`spaceName`)) $(`spaceName`).innerText = globalMyN;
@@ -2314,7 +2344,7 @@ originalGetItem.call(ls, `chatHistory_` + currentChatId);
     history = savedHist ? (typeof savedHist === `string` ? JSON.parse(savedHist) : savedHist) : [];
     let savedAiStatus = await localforage.getItem(`aiStatus_` + currentChatId) || originalGetItem.call(ls, `aiStatus_` + currentChatId);
     aiStatus = savedAiStatus ? (typeof savedAiStatus === `string` ? JSON.parse(savedAiStatus) : savedAiStatus) : {weather:`等待连接...`,clothing:`等待连接...`,action:`等待连接...`,thought:`等待连接...`};
-    applyVis();
+    await applyVis();
     if (typeof msgs !== `undefined` && msgs) msgs.innerHTML = ``;
     if (typeof redrawChat === `function`) redrawChat();
     showScreen(`scrRoom`); 
@@ -2344,7 +2374,7 @@ async function renderContacts() {
         let isoHist = savedHist ? (typeof savedHist === 'string' ? JSON.parse(savedHist) : savedHist) : [];
         if(currentChatId === c.id) isoHist = history;
         let prevTxt = getPreviewText(isoHist);
-        let isoAiA = originalGetItem.call(ls, `aiI_` + c.id);
+        let isoAiA = await localforage.getItem(`aiI_` + c.id) || originalGetItem.call(ls, `aiI_` + c.id);
         let avaHtml = isoAiA ? `<div class=avatar-list style=background-image:url(`+isoAiA+`);font-size:0;></div>` : `<div class=avatar-list>👤</div>`;
         let isoName = originalGetItem.call(ls, `cN_` + c.id) || c.name;
         let isBlk = originalGetItem.call(ls, `isBlocked_` + c.id) === 'true';
@@ -2382,7 +2412,7 @@ async function renderContacts() {
             history = savedHist ? (typeof savedHist === 'string' ? JSON.parse(savedHist) : savedHist) : [];
             let savedAiStatus = await localforage.getItem(`aiStatus_` + currentChatId) || ls.getItem(`aiStatus_` + currentChatId);
             aiStatus = savedAiStatus ? (typeof savedAiStatus === `string` ? JSON.parse(savedAiStatus) : savedAiStatus) : {weather:`等待连接...`,clothing:`等待连接...`,action:`等待连接...`,thought:`等待连接...`};
-            applyVis();
+            await applyVis();
             if (typeof msgs !== `undefined` && msgs) msgs.innerHTML = ``;
             redrawChat();
             showScreen(`scrRoom`);
@@ -2423,7 +2453,7 @@ $(`btnListToRoom`).onclick = async () => {
         history = savedHist ? (typeof savedHist === 'string' ? JSON.parse(savedHist) : savedHist) : [];
     aiStatus = ls.getItem(`aiStatus`) ?
 JSON.parse(ls.getItem(`aiStatus`)) : {weather:"等待连接...",clothing:"等待连接...",action:"等待连接...",thought:"等待连接..."};
-    applyVis();
+    await applyVis();
 
     if (typeof msgs !== `undefined` && msgs) msgs.innerHTML = ``; 
 
@@ -2688,7 +2718,7 @@ async function runMemorySummary(isAuto = false) {
                 let dat = await res.json();
         if(dat.choices && dat.choices.length > 0) {
             let diary = dat.choices[0].message.content;
-            let mems = ls.getItem(`memories`) ? JSON.parse(ls.getItem(`memories`)) : [];
+            let mems = await getMems();
             
             // 全新的时间戳智能盖章逻辑
             let finalDateStr = ``;
@@ -2704,7 +2734,7 @@ async function runMemorySummary(isAuto = false) {
             }
             
             mems.push({ date: finalDateStr, content: diary });
-            ls.setItem(`memories`, JSON.stringify(mems));
+            await saveMems(mems);
             if(!isAuto) alert(`总结完成！已存入专属记忆库。`);
         }
     } catch(e) { if(!isAuto) alert(`生成失败：${e.message}`); }
@@ -2716,10 +2746,11 @@ let isMemEditMode = false;
 let isMemInlineEditMode = false;
 let selMems = new Set();
 
-function renderMemList() {
+async function renderMemList() {
     let list = $(`memList`);
+    list.innerHTML = `<div style="text-align:center;padding:20px;color:#aaa;font-size:13px;">加载中...</div>`;
+    let mems = await getMems();
     list.innerHTML = ``;
-    let mems = ls.getItem(`memories`) ? JSON.parse(ls.getItem(`memories`)) : [];
     if(mems.length === 0) {
         list.innerHTML = `<div class=stat-txt>记忆库空空如也，快去创造回忆吧！</div>`; 
         if($(`memActions`)) $(`memActions`).style.display = `none`;
@@ -2787,7 +2818,7 @@ $(`btnViewMem`).onclick = () =>{
         $(`memModal`).querySelector(`.modal-ctx`).insertBefore(actions, $(`memList`));
         
         // 全新的丝滑“原地打字”保存逻辑
-        $(`btnInlineEditMem`).onclick = () => {
+        $(`btnInlineEditMem`).onclick = async () => {
             if (isMemEditMode) {
                 isMemEditMode = false;
                 $(`btnEditMem`).innerText = `管理`;
@@ -2800,14 +2831,14 @@ $(`btnViewMem`).onclick = () =>{
                 $(`btnInlineEditMem`).style.color = `#10ac84`; // 变绿色提示保存
                 renderMemList();
             } else {
-                let mems = ls.getItem(`memories`) ? JSON.parse(ls.getItem(`memories`)) : [];
+                let mems = await getMems();
                 mems.forEach((m, i) => {
                     let ta = document.getElementById(`inlineMemEdit_${i}`);
                     if(ta) {
                         m.content = ta.value.trim() || m.content;
                     }
                 });
-                ls.setItem(`memories`, JSON.stringify(mems));
+                await saveMems(mems);
                 isMemInlineEditMode = false;
                 $(`btnInlineEditMem`).innerText = `编辑`;
                 $(`btnInlineEditMem`).style.color = `#ff9f43`; // 变回橘色
@@ -2827,19 +2858,19 @@ $(`btnViewMem`).onclick = () =>{
             renderMemList();
         };
         
-        $(`btnSelAllMem`).onclick = () => {
-            let mems = ls.getItem(`memories`) ? JSON.parse(ls.getItem(`memories`)) : [];
+        $(`btnSelAllMem`).onclick = async () => {
+            let mems = await getMems();
             if(selMems.size === mems.length) selMems.clear();
             else mems.forEach((_, i) => selMems.add(i));
             renderMemList();
         };
         
-        $(`btnDelMem`).onclick = () => {
+        $(`btnDelMem`).onclick = async () => {
             if(selMems.size === 0) { alert(`请先选中要删除的记忆！`); return; }
             if(confirm(`确定删除这 ` + selMems.size + ` 条记忆吗？`)) {
-                let mems = ls.getItem(`memories`) ? JSON.parse(ls.getItem(`memories`)) : [];
+                let mems = await getMems();
                 mems = mems.filter((_, i) => !selMems.has(i));
-                ls.setItem(`memories`, JSON.stringify(mems));
+                await saveMems(mems);
                 selMems.clear();
                 renderMemList();
             }
@@ -2861,14 +2892,16 @@ $(`btnCloseMem`).onclick = () =>{ $(`memModal`).style.display = `none`; };
 
 $(`btnGenMem`).onclick = () =>{ runMemorySummary(false); };
 
-window.loadChatSettings = async function() {
+window.loadChatSettings = function() {
     if(ls.getItem(`cN`)) $(`cfgName`).value = ls.getItem(`cN`); else $(`cfgName`).value = '';
     if(ls.getItem(`cR`)) $(`cfgRem`).value = ls.getItem(`cR`); else $(`cfgRem`).value = '';
-    // 修复：优先从 localforage 读取当前角色的专属名字，不 fallback 到全局 cMyN（避免显示旧全局名）
-    let _cMyN = await localforage.getItem(`cMyN_` + currentChatId)
-                 || originalGetItem.call(ls, `cMyN_` + currentChatId)
-                 || ``;
-    $(`cfgMyName`).value = _cMyN;
+    // 【名字修复v3】同步读 localStorage per-char 值（不fallback全局，避免旧名污染）
+    // 再异步用 localforage 补充（btnSaveChat 两边都写，localforage 是权威来源）
+    let _syncName = originalGetItem.call(ls, `cMyN_` + currentChatId) || ``;
+    $(`cfgMyName`).value = _syncName;
+    localforage.getItem(`cMyN_` + currentChatId).then(v => {
+        if(v !== null && v !== undefined && v !== ``) $(`cfgMyName`).value = v;
+    }).catch(() => {});
     if(ls.getItem(`cAP`)) $(`cfgAiP`).value = ls.getItem(`cAP`); else $(`cfgAiP`).value = '';
     if(ls.getItem(`cMP`)) $(`cfgMyP`).value = ls.getItem(`cMP`); else $(`cfgMyP`).value = '';
     if($(`cfgBubbleCss`)) {
@@ -2949,6 +2982,9 @@ $(`btnSaveChat`).onclick = async () => {
                 if (url.startsWith(`data:`)) {
                     let finalKey = (typeof isolatedKeys !== `undefined` && isolatedKeys.includes(key)) ? key + `_` + currentChatId : key;
                     await localforage.setItem(finalKey, url);
+                    // 保存后立即更新内存缓存
+                    if(key === `myI`) window.currentLoadedMyI = url;
+                    if(key === `aiI`) window.currentLoadedAiI = url;
                 }
             }
         };
@@ -2961,7 +2997,8 @@ $(`btnSaveChat`).onclick = async () => {
         console.log(err);
     }
     
-    try { if(typeof applyVis === `function`) applyVis(); } catch(e){}
+    try { if(typeof applyVis === `function`) await applyVis(); } catch(e){}
+    if(typeof redrawChat === `function`) redrawChat(); // 保存后立刻刷新聊天气泡头像
     alert(`配置已保存！`);
     showScreen(`scrRoom`);
 };
@@ -5205,8 +5242,7 @@ async function generateAiLog(charN) {
     let specHist = specHistStr ? JSON.parse(specHistStr) : [];
     if(currLogCharId === currentChatId) specHist = history;
 
-    let specMemStr = originalGetItem.call(ls, `memories_${currLogCharId}`) || originalGetItem.call(ls, `memories`);
-    let specMem = specMemStr ? JSON.parse(specMemStr) : [];
+    let specMem = await getMems(currLogCharId);
 
     let recentChat = specHist.slice(-15).map(m => (m.role === `user` ? myN : charN) + `:` + m.content).join(`\n`);
     let memData = specMem.slice(-5).map(m => m.content).join(`\n`);
@@ -5418,10 +5454,9 @@ window.forceCheckAutoMem = async function() {
             let dat = await res.json();
             if(dat.choices && dat.choices.length > 0) {
                 let out = dat.choices[0].message.content.trim();
-                let memsStr = currentChatId === `default` ? ls.getItem(`memories`) : ls.getItem(`memories_` + currentChatId);
-                let mems = memsStr ? JSON.parse(memsStr) : [];
+                let mems = await getMems();
                 mems.push({ date: updTime().toLocaleString(), content: out });
-                ls.setItem(currentChatId === `default` ? `memories` : `memories_` + currentChatId, JSON.stringify(mems));
+                await saveMems(mems);
                 console.log(`[系统] 自动记忆总结已静默完成`);
             }
         } catch(e) { console.error(`自动总结网络错误`, e); }
