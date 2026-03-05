@@ -3956,49 +3956,48 @@ function renderQuoteBlock(b, txt) {
                     $(`customPromptModal`).style.display = `flex`;
                     
                                         let handleRpChoice = (choice) => {
-                        $(`customPromptModal`).style.display = `none`;
-                        $(`btnPromptOpt1`).innerText = `1. 尝试重新添加 (有几率被拒绝)`;
-                        $(`btnPromptOpt2`).innerText = `2. 强制系统触发 (有几率失败)`;
-                        if(choice === `1`) {
-                            myWallet.balance += amt;
-                            myWallet.bills.push({ title: `领取红包 - ` + dn, time: updTime().toLocaleString(), amount: amt, type: `wallet` });
-                            ls.setItem(`myWallet`, JSON.stringify(myWallet));
-                            for(let i=history.length-1; i>=0; i--) {
-                                if(history[i].role === `assistant` && history[i].content.includes(txt)) {
-                                    history[i].content = history[i].content.replace(txt, `[AI红包：${amt.toFixed(2)}|${note}|1|${tid}]`);
-                                    ls.setItem(`chatHistory`, JSON.stringify(history));
-                                    
-                                    // 核心补充：领取后强制存入大仓库
-                                    let targetKey = `chatHistory_` + currentChatId;
-                                    localforage.setItem(targetKey, JSON.stringify(history));
-                                    if(currentChatId === `default`) {
-                                        localforage.setItem(`chatHistory`, JSON.stringify(history));
-                                    }
-                                    
-                                    break;
-                                }
-                            }
-                            redrawChat();
-                        } else if(choice === `2`) {
-                            myWallet.bills.push({ title: `拒收红包 - ` + dn, time: updTime().toLocaleString(), amount: 0, type: `wallet` });
-                            ls.setItem(`myWallet`, JSON.stringify(myWallet));
-                            
-                            for(let i=history.length-1; i>=0; i--) {
-                                if(history[i].role === `assistant` && history[i].content.includes(txt)) {
-                                    history[i].content = history[i].content.replace(txt, `[AI红包：${amt.toFixed(2)}|${note}|2|${tid}]`);
-                                    ls.setItem(`chatHistory`, JSON.stringify(history));
-                                    
-                                    // 核心补充：拒收后强制存入大仓库
-                                    let targetKey = `chatHistory_` + currentChatId;
-                                    localforage.setItem(targetKey, JSON.stringify(history));
-                                    if(currentChatId === `default`) {
-                                        localforage.setItem(`chatHistory`, JSON.stringify(history));
-                                    }
-                                    
-                                    break;
-                                }
-                            }
-                            redrawChat();
+    $(`customPromptModal`).style.display = `none`;
+    $(`btnPromptOpt1`).innerText = `1. 尝试重新添加 (有几率被拒绝)`;
+    $(`btnPromptOpt2`).innerText = `2. 强制系统触发 (有几率失败)`;
+    if(choice === `1`) {
+        myWallet.balance += amt;
+        myWallet.bills.push({ title: `领取红包 - ` + dn, time: updTime().toLocaleString(), amount: amt, type: `wallet` });
+        ls.setItem(`myWallet`, JSON.stringify(myWallet));
+        for(let i=history.length-1; i>=0; i--) {
+            if(history[i].role === `assistant` && history[i].content.includes(txt)) {
+                history[i].content = history[i].content.replace(txt, `[AI红包：${amt.toFixed(2)}|${note}|1|${tid}]`);
+                ls.setItem(`chatHistory`, JSON.stringify(history));
+                
+                let targetKey = `chatHistory_` + currentChatId;
+                localforage.setItem(targetKey, JSON.stringify(history));
+                if(currentChatId === `default`) {
+                    localforage.setItem(`chatHistory`, JSON.stringify(history));
+                }
+                
+                break;
+            }
+        }
+        redrawChat();
+    } else if(choice === `2`) {
+        myWallet.bills.push({ title: `拒收红包 - ` + dn, time: updTime().toLocaleString(), amount: 0, type: `wallet` });
+        ls.setItem(`myWallet`, JSON.stringify(myWallet));
+        
+        for(let i=history.length-1; i>=0; i--) {
+            if(history[i].role === `assistant` && history[i].content.includes(txt)) {
+                history[i].content = history[i].content.replace(txt, `[AI红包：${amt.toFixed(2)}|${note}|2|${tid}]`);
+                ls.setItem(`chatHistory`, JSON.stringify(history));
+                
+                let targetKey = `chatHistory_` + currentChatId;
+                localforage.setItem(targetKey, JSON.stringify(history));
+                if(currentChatId === `default`) {
+                    localforage.setItem(`chatHistory`, JSON.stringify(history));
+                }
+                
+                break;
+            }
+        }
+        redrawChat();
+
 
                             let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value;
 
@@ -4094,49 +4093,48 @@ function renderQuoteBlock(b, txt) {
                     $(`customPromptModal`).style.display = `flex`;
                     
                                         let handleTfChoice = (choice) => {
-                        $(`customPromptModal`).style.display = `none`;
-                        $(`btnPromptOpt1`).innerText = `1. 尝试重新添加 (有几率被拒绝)`;
-                        $(`btnPromptOpt2`).innerText = `2. 强制系统触发 (有几率失败)`;
-                        if(choice === `1`) {
-                            myWallet.balance += amt;
-                            myWallet.bills.push({ title: `确认收款 - ` + dn, time: updTime().toLocaleString(), amount: amt, type: `wallet` });
-                            ls.setItem(`myWallet`, JSON.stringify(myWallet));
-                            for(let i=history.length-1; i>=0; i--) {
-                                if(history[i].role === `assistant` && history[i].content.includes(txt)) {
-                                    history[i].content = history[i].content.replace(txt, `[AI转账：${amt.toFixed(2)}|${note}|1|${tid}]`);
-                                    ls.setItem(`chatHistory`, JSON.stringify(history));
-                                    
-                                    // 核心补充：收款后强制存入大仓库
-                                    let targetKey = `chatHistory_` + currentChatId;
-                                    localforage.setItem(targetKey, JSON.stringify(history));
-                                    if(currentChatId === `default`) {
-                                        localforage.setItem(`chatHistory`, JSON.stringify(history));
-                                    }
-                                    
-                                    break;
-                                }
-                            }
-                            redrawChat();
-                        } else if(choice === `2`) {
-                            myWallet.bills.push({ title: `退还转账 - ` + dn, time: updTime().toLocaleString(), amount: 0, type: `wallet` });
-                            ls.setItem(`myWallet`, JSON.stringify(myWallet));
-                            
-                            for(let i=history.length-1; i>=0; i--) {
-                                if(history[i].role === `assistant` && history[i].content.includes(txt)) {
-                                    history[i].content = history[i].content.replace(txt, `[AI转账：${amt.toFixed(2)}|${note}|2|${tid}]`);
-                                    ls.setItem(`chatHistory`, JSON.stringify(history));
-                                    
-                                    // 核心补充：退还后强制存入大仓库
-                                    let targetKey = `chatHistory_` + currentChatId;
-                                    localforage.setItem(targetKey, JSON.stringify(history));
-                                    if(currentChatId === `default`) {
-                                        localforage.setItem(`chatHistory`, JSON.stringify(history));
-                                    }
-                                    
-                                    break;
-                                }
-                            }
-                            redrawChat();
+    $(`customPromptModal`).style.display = `none`;
+    $(`btnPromptOpt1`).innerText = `1. 尝试重新添加 (有几率被拒绝)`;
+    $(`btnPromptOpt2`).innerText = `2. 强制系统触发 (有几率失败)`;
+    if(choice === `1`) {
+        myWallet.balance += amt;
+        myWallet.bills.push({ title: `确认收款 - ` + dn, time: updTime().toLocaleString(), amount: amt, type: `wallet` });
+        ls.setItem(`myWallet`, JSON.stringify(myWallet));
+        for(let i=history.length-1; i>=0; i--) {
+            if(history[i].role === `assistant` && history[i].content.includes(txt)) {
+                history[i].content = history[i].content.replace(txt, `[AI转账：${amt.toFixed(2)}|${note}|1|${tid}]`);
+                ls.setItem(`chatHistory`, JSON.stringify(history));
+                
+                let targetKey = `chatHistory_` + currentChatId;
+                localforage.setItem(targetKey, JSON.stringify(history));
+                if(currentChatId === `default`) {
+                    localforage.setItem(`chatHistory`, JSON.stringify(history));
+                }
+                
+                break;
+            }
+        }
+        redrawChat();
+    } else if(choice === `2`) {
+        myWallet.bills.push({ title: `退还转账 - ` + dn, time: updTime().toLocaleString(), amount: 0, type: `wallet` });
+        ls.setItem(`myWallet`, JSON.stringify(myWallet));
+        
+        for(let i=history.length-1; i>=0; i--) {
+            if(history[i].role === `assistant` && history[i].content.includes(txt)) {
+                history[i].content = history[i].content.replace(txt, `[AI转账：${amt.toFixed(2)}|${note}|2|${tid}]`);
+                ls.setItem(`chatHistory`, JSON.stringify(history));
+                
+                let targetKey = `chatHistory_` + currentChatId;
+                localforage.setItem(targetKey, JSON.stringify(history));
+                if(currentChatId === `default`) {
+                    localforage.setItem(`chatHistory`, JSON.stringify(history));
+                }
+                
+                break;
+            }
+        }
+        redrawChat();
+
 
                             
                             let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value;
