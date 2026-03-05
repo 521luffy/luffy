@@ -2009,13 +2009,13 @@ function applyVis() {
     if($(`listName`)) $(`listName`).innerText = defName;
     if($(`contactName`)) $(`contactName`).innerText = defName;
     
-        ;(async function applyImagesAsync() {
+            ;(async function applyImagesAsync() {
         try {
             let getImg = async (k) => {
                 let actualKey = (typeof isolatedKeys !== `undefined` && isolatedKeys.includes(k)) ? k + `_` + currentChatId : k;
                 let val = await localforage.getItem(actualKey);
                 if(!val && currentChatId === `default`) val = await localforage.getItem(k);
-                if(!val) val = originalGetItem.call(ls, actualKey) || originalGetItem.call(ls, k);
+                // 核心修复：删除了去公共区域找旧照片的 originalGetItem 毒药代码
                 return val;
             };
             let bg = await getImg(`bgI`);
@@ -2027,8 +2027,9 @@ function applyVis() {
                 if($(`bgPreview`)) { $(`bgPreview`).style.backgroundImage = `none`; $(`bgPreview`).innerText = `🖼️ 点击选择背景`; }
             }
             
-            let defAiA = await localforage.getItem(`aiI_default`) || originalGetItem.call(ls, `aiI_default`);
-            if(!defAiA) defAiA = await localforage.getItem(`aiI`) || originalGetItem.call(ls, `aiI`);
+            // 列表和联系人头像功能完整保留，且去掉了毒药
+            let defAiA = await localforage.getItem(`aiI_default`);
+            if(!defAiA) defAiA = await localforage.getItem(`aiI`);
             if (currentChatId === `default`) defAiA = await getImg(`aiI`);
             if(defAiA) { 
                 if($(`listAva`)) { $(`listAva`).style.backgroundImage = `url(${defAiA})`; $(`listAva`).innerText = ``; }
@@ -2055,7 +2056,8 @@ function applyVis() {
                 if($(`myPreview`)) { $(`myPreview`).style.backgroundImage = `none`; $(`myPreview`).innerText = `👤`; }
             }
 
-            let globalMyA = await localforage.getItem(`myI`) || originalGetItem.call(ls, `myI`);
+            // 核心修复：彻底独立读取全局头像，坚决不和聊天页面的专属头像混淆
+            let globalMyA = await localforage.getItem(`myI`);
             if(globalMyA) {
                 if($(`meAvatar`)) { $(`meAvatar`).style.backgroundImage = `url(${globalMyA})`; $(`meAvatar`).innerHTML = ``; }
                 if($(`spaceAvatar`)) { $(`spaceAvatar`).style.backgroundImage = `url(${globalMyA})`; $(`spaceAvatar`).innerHTML = ``; }
@@ -2065,7 +2067,7 @@ function applyVis() {
             }
         } catch(e) { console.error(e); }
     })();
-    
+
     let globalMyN = originalGetItem.call(ls, `cMyN`) || `玩家`;
     if($(`spaceName`)) $(`spaceName`).innerText = globalMyN;
     if($(`meName`)) $(`meName`).innerText = globalMyN;
@@ -2296,20 +2298,11 @@ if($(`btnSaveFont`)) {
 
 $(`btnListToRoom`).onclick = async () =>{ 
     currentChatId = `default`;
-    
-    let getDef = async (k) => {
-        let v = await localforage.getItem(k + `_default`);
-        if (!v) v = await localforage.getItem(k);
-        if (!v) v = originalGetItem.call(ls, k + `_default`);
-        return v;
-    };
-
-    $(`cfgName`).value = await getDef(`cN`) || originalGetItem.call(ls, `cN`) || ``;
-    $(`cfgRem`).value = await getDef(`cR`) || originalGetItem.call(ls, `cR`) || ``;
-    $(`cfgMyName`).value = await getDef(`cMyN`) || originalGetItem.call(ls, `cMyN`) || ``;
-    $(`cfgAiP`).value = await getDef(`cAP`) || originalGetItem.call(ls, `cAP`) || ``;
-    $(`cfgMyP`).value = await getDef(`cMP`) || originalGetItem.call(ls, `cMP`) || ``;
-
+    $(`cfgName`).value = originalGetItem.call(ls, `cN_default`) || originalGetItem.call(ls, `cN`) || ``;
+    $(`cfgRem`).value = originalGetItem.call(ls, `cR_default`) || originalGetItem.call(ls, `cR`) || ``;
+    $(`cfgMyName`).value = originalGetItem.call(ls, `cMyN_default`) || originalGetItem.call(ls, `cMyN`) || ``;
+    $(`cfgAiP`).value = originalGetItem.call(ls, `cAP_default`) || originalGetItem.call(ls, `cAP`) || ``;
+    $(`cfgMyP`).value = originalGetItem.call(ls, `cMP_default`) || originalGetItem.call(ls, `cMP`) || ``;
 
     let savedHist = await localforage.getItem(`chatHistory_` + currentChatId) ||
 originalGetItem.call(ls, `chatHistory_` + currentChatId);
@@ -2355,42 +2348,69 @@ async function renderContacts() {
                         div.onclick = async () => {
             currentChatId = c.id;
             
-            let getVal = async (k) => {
-                let v = await localforage.getItem(k + `_` + c.id);
-                if (!v) v = originalGetItem.call(ls, k + `_` + c.id);
+            // 封装一个只认大仓库专属数据的读取逻辑
+            let getVal = async (key) => {
+                let v = await localforage.getItem(key + `_` + c.id);
+                // 彻底删掉 originalGetItem.call(ls, ...) 这种翻旧账的逻辑
+                // 找不到就返回空，绝对不许去抓外面的旧名字
                 return v;
             };
 
+            // 1. 设置页面的文字内容读取
             $(`cfgName`).value = await getVal(`cN`) || c.name;
             $(`cfgRem`).value = await getVal(`cR`) || ``;
-            $(`cfgMyName`).value = await getVal(`cMyN`) || originalGetItem.call(ls, `cMyN`) || ``;
+            // 核心修复：只取专属名字，没取到就空着，绝不去碰那个会引起混乱的旧数据
+            $(`cfgMyName`).value = await getVal(`cMyN`) || ``; 
             $(`cfgAiP`).value = await getVal(`cAP`) || c.prompt;
             $(`cfgMyP`).value = await getVal(`cMP`) || ``;
 
-            if($(`cfgBubbleCss`)) $(`cfgBubbleCss`).value = originalGetItem.call(ls, `cBubbleCss_` + c.id) || ``;
-            let ctxVal = originalGetItem.call(ls, `cCtx_` + c.id);
-            if(ctxVal) $(`cfgCtx`).value = ctxVal;
-            else $(`cfgCtx`).value = originalGetItem.call(ls, `cCtx`) || 100;
-            let tVal = originalGetItem.call(ls, `cT_` + c.id);
-            if(tVal !== null) $(`cfgTime`).checked = tVal === `true`;
-            else $(`cfgTime`).checked = originalGetItem.call(ls, `cT`) !== `false`;
-            let aMemVal = originalGetItem.call(ls, `cAMem_` + c.id);
-            if(aMemVal !== null) $(`cfgAutoMem`).checked = aMemVal === `true`;
-            else $(`cfgAutoMem`).checked = originalGetItem.call(ls, `cAMem`) === `true`;
-            let memTVal = originalGetItem.call(ls, `cMemT_` + c.id);
-            if(memTVal) $(`cfgMemTrig`).value = memTVal;
-            else $(`cfgMemTrig`).value = originalGetItem.call(ls, `cMemT`) || 10;
-            let memPVal = originalGetItem.call(ls, `cMemP_` + c.id);
-            if(memPVal) $(`cfgMemPmt`).value = memPVal;
-            else $(`cfgMemPmt`).value = originalGetItem.call(ls, `cMemP`) || `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。必须准确写出当前实际参与对话的【具体人物姓名】（包括我、主角色或任何出场的NPC）。`;
-            let savedHist = await localforage.getItem(`chatHistory_` + currentChatId) || originalGetItem.call(ls, `chatHistory_` + currentChatId);
+            // 2. 头像预览图读取：先清空，等拿到专属数据后再显示
+            let curAiA = await getVal(`aiI`);
+            let curMyA = await getVal(`myI`);
+            
+            if(curAiA) {
+                $(`aiPreview`).style.backgroundImage = `url(${curAiA})`;
+                $(`aiPreview`).innerText = ``;
+            } else {
+                $(`aiPreview`).style.backgroundImage = `none`;
+                $(`aiPreview`).innerText = `👤`;
+            }
+
+            if(curMyA) {
+                $(`myPreview`).style.backgroundImage = `url(${curMyA})`;
+                $(`myPreview`).innerText = ``;
+            } else {
+                $(`myPreview`).style.backgroundImage = `none`;
+                $(`myPreview`).innerText = `👤`;
+            }
+
+            // 3. 其他杂项设置读取
+            if($(`cfgBubbleCss`)) $(`cfgBubbleCss`).value = await getVal(`cBubbleCss`) || ``;
+            $(`cfgCtx`).value = await getVal(`cCtx`) || 100;
+            
+            let tVal = await getVal(`cT`);
+            $(`cfgTime`).checked = tVal === `true` || tVal === true;
+            
+            let aMemVal = await getVal(`cAMem`);
+            $(`cfgAutoMem`).checked = aMemVal === `true` || aMemVal === true;
+            
+            $(`cfgMemTrig`).value = await getVal(`cMemT`) || 10;
+            $(`cfgMemPmt`).value = await getVal(`cMemP`) || `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。必须准确写出当前实际参与对话的【具体人物姓名】（包括我、主角色或任何出场的NPC）。`;
+
+            // 4. 加载聊天记录和AI状态（全部修正为从大仓库异步读取）
+            let savedHist = await localforage.getItem(`chatHistory_` + currentChatId);
             history = savedHist ? (typeof savedHist === 'string' ? JSON.parse(savedHist) : savedHist) : [];
-            let savedAiStatus = await localforage.getItem(`aiStatus_` + currentChatId) || ls.getItem(`aiStatus_` + currentChatId);
+            
+            let savedAiStatus = await localforage.getItem(`aiStatus_` + currentChatId);
             aiStatus = savedAiStatus ? (typeof savedAiStatus === `string` ? JSON.parse(savedAiStatus) : savedAiStatus) : {weather:`等待连接...`,clothing:`等待连接...`,action:`等待连接...`,thought:`等待连接...`};
-            applyVis();
+
+            // 5. 刷新界面并切换屏幕
+            if (typeof applyVis === `function`) applyVis();
             if (typeof msgs !== `undefined` && msgs) msgs.innerHTML = ``;
             redrawChat();
             showScreen(`scrRoom`);
+        };
+
             setTimeout(() => msgs.scrollTop = msgs.scrollHeight, 100);
         };
         $(`listContent`).appendChild(div);
@@ -2938,8 +2958,8 @@ $(`btnSaveChat`).onclick = async () => {
         if($(`cfgBubbleCss`)) dataObj.cBubbleCss = safeVal(`cfgBubbleCss`);
 
         for (let key in dataObj) {
-            ls.setItem(key, dataObj[key]);
-            let finalKey = (typeof isolatedKeys !== `undefined` && isolatedKeys.includes(key)) ? key + `_` + currentChatId : key;
+            // 核心修复：把往全局抄送的毒药代码删了，只往大仓库的专属编号里存！
+            let finalKey = key + `_` + currentChatId;
             await localforage.setItem(finalKey, dataObj[key]);
         }
 
@@ -2948,7 +2968,8 @@ $(`btnSaveChat`).onclick = async () => {
             if (el && el.style.backgroundImage && el.style.backgroundImage !== `none`) {
                 let url = el.style.backgroundImage.slice(5, -2);
                 if (url.startsWith(`data:`)) {
-                    let finalKey = (typeof isolatedKeys !== `undefined` && isolatedKeys.includes(key)) ? key + `_` + currentChatId : key;
+                    // 核心修复：图片也只往专属编号里存
+                    let finalKey = key + `_` + currentChatId;
                     await localforage.setItem(finalKey, url);
                 }
             }
@@ -2966,6 +2987,7 @@ $(`btnSaveChat`).onclick = async () => {
     alert(`配置已保存！`);
     showScreen(`scrRoom`);
 };
+
 
 
 
