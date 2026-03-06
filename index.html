@@ -996,7 +996,6 @@ class=back-btn>＜</span>
             </div>
             <div style="padding:4px 12px 8px;display:flex;gap:8px;">
                 <button id=btnGroupCallAll style="padding:5px 14px;border-radius:14px;border:none;background:#e8e4ff;color:#6c5ce7;font-size:12px;cursor:pointer;font-weight:bold;">@全体发言</button>
-                <button id=btnGroupCallOne style="padding:5px 14px;border-radius:14px;border:none;background:#e8e4ff;color:#6c5ce7;font-size:12px;cursor:pointer;font-weight:bold;">@某人发言</button>
             </div>
         </div>
     </div>
@@ -2718,7 +2717,7 @@ async function triggerCaughtMessage() {
         let resp = await fetch(pxy, {
             method:`POST`,
             headers:{'Content-Type':'application/json', Authorization:'Bearer '+key},
-            body: JSON.stringify({model:mod, max_tokens:200, messages:msgHistory})
+            body: JSON.stringify({model:mod, max_tokens:500, messages:msgHistory})
         });
         let data = await resp.json();
         let reply = data.choices?.[0]?.message?.content || `（为什么你在偷看我手机！）`;
@@ -9916,7 +9915,7 @@ async function aiGenComment(postId, summoner, replyTo) {
 
     try {
         let resp = await fetch(pxy,{method:`POST`,headers:{'Content-Type':'application/json', Authorization:'Bearer '+key},
-            body:JSON.stringify({model:mod,max_tokens:100,messages:[{role:`user`,content:sysMsg}]})});
+            body:JSON.stringify({model:mod,max_tokens:500,messages:[{role:`user`,content:sysMsg}]})});
         let data = await resp.json();
         let txt = data.choices?.[0]?.message?.content?.trim() || `（评论生成失败）`;
         return txt;
@@ -9940,7 +9939,7 @@ async function aiGenDraft(post) {
 
     try {
         let resp = await fetch(pxy,{method:`POST`,headers:{'Content-Type':'application/json', Authorization:'Bearer '+key},
-            body:JSON.stringify({model:mod,max_tokens:250,messages:[{role:`user`,content:sysMsg}]})});
+            body:JSON.stringify({model:mod,max_tokens:500,messages:[{role:`user`,content:sysMsg}]})});
         let data = await resp.json();
         return data.choices?.[0]?.message?.content?.trim() || `（草稿生成失败）`;
     } catch(e) { return `（网络异常）`; }
@@ -10070,7 +10069,7 @@ if($(`momentList`)) {
             for(let s of allCommenters) {
                 let sysMsg=`你是${s.name}。${s.prompt?`性格：${s.prompt.slice(0,150)}`:``}你在看朋友圈，${post.author}刚发了一条："${post.text}"。以${s.name}的语气写一条朋友圈评论，20字以内，自然生动，直接输出不加任何前缀。`;
                 try{
-                    let resp=await fetch(pxy,{method:`POST`,headers:{[`Content-Type`]:`application/json`,Authorization:`Bearer `+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:100,messages:[{role:`user`,content:sysMsg}]})});
+                    let resp=await fetch(pxy,{method:`POST`,headers:{[`Content-Type`]:`application/json`,Authorization:`Bearer `+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:500,messages:[{role:`user`,content:sysMsg}]})});
                     let dat=await resp.json();
                     let cmtxt=(dat.choices?.[0]?.message?.content||``).trim()||`（评论失败）`;
                     post.comments.push({author:s.name,text:cmtxt,time:new Date().toLocaleString()});
@@ -10239,9 +10238,14 @@ if($(`navMomentToMe`)) $(`navMomentToMe`).onclick = () => showScreen(`scrMe`);
 // ================================================================
 async function triggerCaughtMessage() {
     let section = window.currentSpySection || `手机界面`;
-    // 关键：被抓包的是 lastSpyCharId，不是 currentChatId
-    let targetId = (typeof lastSpyCharId !== `undefined` && lastSpyCharId) ? lastSpyCharId : currentChatId;
-    if(!targetId) { alert(`请先选择要查看的角色！`); return; }
+    // 被抓包：必须从 spyCharSelect 读当前选中的char（最可靠的来源）
+    let _spySel = $(`spyCharSelect`);
+    let targetId = (_spySel && _spySel.value) ? _spySel.value 
+                   : ((typeof lastSpyCharId !== `undefined` && lastSpyCharId) ? lastSpyCharId : ``);
+    if(!targetId) { 
+        alert(`请先在查手机页面的右上角下拉选择要查看的角色，再开启被抓包！`); 
+        return; 
+    }
 
     let pxy = originalGetItem.call(ls, `pxy`) || ``;
     let key = originalGetItem.call(ls, `key`) || ``;
@@ -10297,7 +10301,7 @@ async function triggerCaughtMessage() {
         let resp = await fetch(pxy, {
             method:`POST`,
             headers:{[`Content-Type`]:`application/json`, Authorization:`Bearer `+key},
-            body:JSON.stringify({model:mod, max_tokens:150, messages:msgs})
+            body:JSON.stringify({model:mod, max_tokens:500, messages:msgs})
         });
         let data = await resp.json();
         reply = (data.choices?.[0]?.message?.content || ``).trim();
@@ -10456,7 +10460,7 @@ if($(`btnGenCharMoments`)) $(`btnGenCharMoments`).onclick = async () => {
             let resp = await fetch(pxy, {
                 method:`POST`,
                 headers:{[`Content-Type`]:`application/json`, Authorization:`Bearer `+key},
-                body:JSON.stringify({model:mod, temperature:tp, max_tokens:120, messages:[{role:`user`,content:sysMsg}]})
+                body:JSON.stringify({model:mod, temperature:tp, max_tokens:500, messages:[{role:`user`,content:sysMsg}]})
             });
             let data = await resp.json();
             let postTxt = (data.choices?.[0]?.message?.content || ``).trim();
@@ -10577,7 +10581,7 @@ if($(`btnConfirmMomentUserPost`)) $(`btnConfirmMomentUserPost`).onclick = async 
                 let s={id:cb.dataset.id,name:cb.dataset.name,prompt:cb.dataset.prompt||``};
                 let sysMsg=`你是${s.name}。${s.prompt?`性格设定：${s.prompt.slice(0,200)}`:``}你在看朋友圈，${uName}发了一条："${txt}"。请以${s.name}的语气写一条评论，20字以内，自然生动，直接输出不加前缀。`;
                 try{
-                    let resp=await fetch(pxy,{method:`POST`,headers:{[`Content-Type`]:`application/json`,Authorization:`Bearer `+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:100,messages:[{role:`user`,content:sysMsg}]})});
+                    let resp=await fetch(pxy,{method:`POST`,headers:{[`Content-Type`]:`application/json`,Authorization:`Bearer `+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:500,messages:[{role:`user`,content:sysMsg}]})});
                     let data=await resp.json();
                     let cmtxt=(data.choices?.[0]?.message?.content||``).trim()||`（评论生成失败）`;
                     newPost.comments.push({author:s.name,text:cmtxt,time:new Date().toLocaleString()});
@@ -10854,7 +10858,7 @@ if($(`btnGroupLemon`)) $(`btnGroupLemon`).onclick = async () => {
             let resp=await fetch(pxy,{
                 method:`POST`,
                 headers:{[`Content-Type`]:`application/json`,Authorization:`Bearer `+key},
-                body:JSON.stringify({model:mod,temperature:tp,max_tokens:300,messages:[{role:`user`,content:sysMsg}]})
+                body:JSON.stringify({model:mod,temperature:tp,max_tokens:600,messages:[{role:`user`,content:sysMsg}]})
             });
             let dat=await resp.json();
             let reply=(dat.choices?.[0]?.message?.content||``).trim();
@@ -10874,40 +10878,6 @@ if($(`btnGroupLemon`)) $(`btnGroupLemon`).onclick = async () => {
 // @全体发言
 if($(`btnGroupCallAll`)) $(`btnGroupCallAll`).onclick=()=>{if($(`btnGroupLemon`)) $(`btnGroupLemon`).click();};
 
-// @某人发言
-if($(`btnGroupCallOne`)) $(`btnGroupCallOne`).onclick = async () => {
-    let g=groupData[currentGroupId]; if(!g) return;
-    let charMembers=(g.members||[]).filter(m=>!m.isUser);
-    if(!charMembers.length){alert(`群里没有角色成员！`);return;}
-    let names=charMembers.map((m,i)=>`${i+1}. ${m.name}`).join(`\n`);
-    let choice=prompt(`@谁发言？\n${names}\n输入序号：`);
-    if(!choice) return;
-    let idx=parseInt(choice)-1;
-    if(idx<0||idx>=charMembers.length) return;
-    let m=charMembers[idx];
-
-    let pxy=originalGetItem.call(ls,`pxy`)||``;
-    let key=originalGetItem.call(ls,`key`)||``;
-    let mod=originalGetItem.call(ls,`mod`)||``;
-    if(pxy&&!pxy.includes(`chat/completions`)) pxy=pxy.replace(/\/$/,``)+`/chat/completions`;
-    let tp=parseFloat(originalGetItem.call(ls,`temp`)||`0.8`)||0.8;
-    if(!pxy||!key){alert(`需要先配置API！`);return;}
-
-    let recentMsgs=(g.messages||[]).slice(-10).map(x=>`${x.senderName}：${x.content}`).join(`\n`);
-    let charAP=(originalGetItem.call(ls,`cAP_`+m.id)||``).slice(0,250);
-    let sysMsg=`你是${m.name}。${charAP?`你的性格人设：${charAP}。`:``}\n群内最近消息：\n${recentMsgs}\n\n以${m.name}的性格自然地说一句话（不超过50字），直接输出。`;
-    try{
-        let resp=await fetch(pxy,{method:`POST`,headers:{[`Content-Type`]:`application/json`,Authorization:`Bearer `+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:300,messages:[{role:`user`,content:sysMsg}]})});
-        let dat=await resp.json();
-        let reply=(dat.choices?.[0]?.message?.content||``).trim();
-        if(reply){
-            let ava=null; try{ava=await localforage.getItem(`aiI_`+m.id);}catch(e){}
-            g.messages.push({senderId:m.id,senderName:m.name,avatar:ava,content:reply,time:Date.now()});
-            await _saveGroupData(); _renderGroupMsgs();
-            renderGroupInMsgList().catch(()=>{});
-        }
-    }catch(err){}
-};
 
 // 群聊设置
 if($(`btnGroupSettings`)) $(`btnGroupSettings`).onclick = async () => {
@@ -11031,7 +11001,7 @@ window.aiGenComment=async function(postId,summoner,replyTo){
     let replyStr=replyTo?`你正在回复${replyTo}的评论。`:``;
     let sysMsg=`你是${summoner.name}。${summoner.prompt||``}你在看朋友圈，${post.author}发了一条："${post.text}"。${replyStr}请以${summoner.name}的语气写一条评论，20字以内，生动自然，直接输出不加引号或前缀。`;
     try{
-        let resp=await fetch(pxy,{method:`POST`,headers:{[`Content-Type`]:`application/json`,Authorization:`Bearer `+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:100,messages:[{role:`user`,content:sysMsg}]})});
+        let resp=await fetch(pxy,{method:`POST`,headers:{[`Content-Type`]:`application/json`,Authorization:`Bearer `+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:500,messages:[{role:`user`,content:sysMsg}]})});
         let data=await resp.json();
         return (data.choices?.[0]?.message?.content||``).trim()||`（评论生成失败）`;
     }catch(e){return `（网络异常）`;}
@@ -11050,7 +11020,7 @@ window.aiGenDraft=async function(post){
     if(cid&&cid!==`user`) charPrompt=originalGetItem.call(ls,`cAP_`+cid)||originalGetItem.call(ls,`cAP`)||``;
     let sysMsg=`你是${post.author}。${charPrompt}你刚发了一条朋友圈："${post.text}"。请写出你没发出去的内心独白或草稿，不超过100字，真实自然，透露一些不想公开的情绪。直接第一人称输出。`;
     try{
-        let resp=await fetch(pxy,{method:`POST`,headers:{[`Content-Type`]:`application/json`,Authorization:`Bearer `+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:200,messages:[{role:`user`,content:sysMsg}]})});
+        let resp=await fetch(pxy,{method:`POST`,headers:{[`Content-Type`]:`application/json`,Authorization:`Bearer `+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:500,messages:[{role:`user`,content:sysMsg}]})});
         let data=await resp.json();
         return (data.choices?.[0]?.message?.content||``).trim()||`（草稿生成失败）`;
     }catch(e){return `（网络异常）`;}
@@ -11093,18 +11063,62 @@ if($(`btnRepairHistory`)) $(`btnRepairHistory`).onclick = async () => {
 
     if(Object.keys(allHists).length === 0) { alert(`没有找到任何聊天记录。`); return; }
 
-    // 找出重复的（内容相同的历史）
-    let fingerprints = {};
+    // 检测污染：比较最后5条消息（污染内容追加在末尾）
+    let tailPrints = {};  // 用尾部指纹
+    let fullPrints = {};  // 用全量指纹
     for(let [id, h] of Object.entries(allHists)) {
-        // 取前5条和后5条的内容拼接作为指纹
-        let sample = h.slice(0,3).concat(h.slice(-3)).map(m=>String(m.content||``).slice(0,20)).join(`|`);
-        if(!fingerprints[sample]) fingerprints[sample] = [];
-        fingerprints[sample].push(id);
+        if(h.length < 2) continue;
+        // 尾部5条指纹（污染通常在末尾）
+        let tail = h.slice(-5).map(m=>String(m.content||``).slice(0,30)).join(`|`);
+        if(!tailPrints[tail]) tailPrints[tail] = [];
+        tailPrints[tail].push(id);
+        // 全量指纹（完全相同才算）
+        let full = h.map(m=>m.role+`:` + String(m.content||``).slice(0,15)).join(`|`);
+        if(!fullPrints[full]) fullPrints[full] = [];
+        fullPrints[full].push(id);
     }
 
-    let polluted = Object.values(fingerprints).filter(ids => ids.length > 1);
-    if(polluted.length === 0) {
-        alert(`✅ 检测完成，未发现重复/污染的聊天记录！`); return;
+    // 合并：尾部相同 OR 完全相同 的都算污染
+    let pollutedMap = {};
+    for(let ids of Object.values(tailPrints).concat(Object.values(fullPrints))) {
+        if(ids.length > 1) ids.forEach(id => pollutedMap[id] = true);
+    }
+    let pollutedIds = Object.keys(pollutedMap);
+
+    if(pollutedIds.length === 0) {
+        // 自动提示手动清空入口
+        let allCharNames = Object.fromEntries(allIds.map(id=>[id, originalGetItem.call(ls,`cN_`+id)||originalGetItem.call(ls,`cN`)||id]));
+        let charList = Object.entries(allHists).map(([id,h])=>`${allCharNames[id]||id}（${h.length}条）`).join(`
+`);
+        let manualChoice = confirm(`✅ 自动检测未发现重复记录。
+
+当前所有聊天记录：
+${charList}
+
+点击「确定」进入手动选择清空模式（可清空任意角色的记录）`);
+        if(!manualChoice) return;
+        
+        // 手动选择
+        let manualList = allIds.filter(id=>allHists[id]);
+        let allCharN = allIds.reduce((o,id)=>{o[id]=originalGetItem.call(ls,`cN_`+id)||originalGetItem.call(ls,`cN`)||id;return o},{});
+        let nameList2 = manualList.map((id,i)=>`${i+1}. ${allCharN[id]||id}（${(allHists[id]||[]).length}条消息）`).join(`
+`);
+        let choice = prompt(`输入要清空的角色序号（多个用逗号分隔，如 1,3,4）：
+${nameList2}`);
+        if(!choice) return;
+        let idxs = choice.split(`,`).map(s=>parseInt(s.trim())-1).filter(i=>i>=0&&i<manualList.length);
+        if(!idxs.length) return;
+        for(let i of idxs) {
+            let cid = manualList[i];
+            await localforage.removeItem(`chatHistory_`+cid).catch(()=>{});
+            try { ls.removeItem(`chatHistory_`+cid); } catch(e) {}
+            if(cid===`default`) { await localforage.removeItem(`chatHistory`).catch(()=>{}); try{ls.removeItem(`chatHistory`);}catch(e){} }
+            if(cid===currentChatId) { history=[]; if(typeof msgs!==`undefined`&&msgs) msgs.innerHTML=``; }
+        }
+        let clearedN = idxs.map(i=>allCharN[manualList[i]]||manualList[i]).join(`、`);
+        alert(`✅ 已清空：${clearedN}`);
+        if(typeof renderContacts===`function`) renderContacts();
+        return;
     }
 
     // 显示结果，询问是否清空
@@ -11114,8 +11128,9 @@ if($(`btnRepairHistory`)) $(`btnRepairHistory`).onclick = async () => {
         names[id] = n;
     }
 
-    let pollutedIds = [...new Set(polluted.flat())];
-    let nameList = pollutedIds.map(id=>`「${names[id]||id}」`).join(` `);
+    let names2 = {};
+    for(let id of allIds) names2[id] = originalGetItem.call(ls,`cN_`+id)||originalGetItem.call(ls,`cN`)||id;
+    let nameList = pollutedIds.map(id=>`「${names2[id]||id}」`).join(` `);
     let confirm1 = confirm(
         `⚠️ 检测到污染的聊天记录！\n以下 ${pollutedIds.length} 个角色的聊天记录完全相同（已被"被抓包"bug污染）：\n\n${nameList}\n\n是否清空这些角色的聊天记录？（注意：无法恢复）`
     );
@@ -11130,7 +11145,7 @@ if($(`btnRepairHistory`)) $(`btnRepairHistory`).onclick = async () => {
             await localforage.removeItem(`chatHistory`).catch(()=>{});
             try { ls.removeItem(`chatHistory`); } catch(e) {}
         }
-        clearedNames.push(names[id]||id);
+        clearedNames.push(names2[id]||id);
     }
 
     // 如果当前聊天是被污染的之一，也清空全局history
@@ -11229,7 +11244,7 @@ ${charRel ? `【你的身份关系】${charRel}` : ``}${recentCtx}
             let resp = await fetch(pxy, {
                 method:`POST`,
                 headers:{[`Content-Type`]:`application/json`, Authorization:`Bearer `+key},
-                body:JSON.stringify({model:mod, temperature:tp, max_tokens:200, messages:[{role:`user`,content:sysMsg}]})
+                body:JSON.stringify({model:mod, temperature:tp, max_tokens:500, messages:[{role:`user`,content:sysMsg}]})
             });
             let data = await resp.json();
             let postTxt = (data.choices?.[0]?.message?.content || ``).trim();
@@ -11293,7 +11308,7 @@ ${charRel ? `【关系设定】${charRel}` : ``}
         let resp = await fetch(pxy, {
             method:`POST`,
             headers:{[`Content-Type`]:`application/json`, Authorization:`Bearer `+key},
-            body:JSON.stringify({model:mod, temperature:tp, max_tokens:200, messages:[{role:`user`,content:sysMsg}]})
+            body:JSON.stringify({model:mod, temperature:tp, max_tokens:500, messages:[{role:`user`,content:sysMsg}]})
         });
         let data = await resp.json();
         return (data.choices?.[0]?.message?.content||``).trim() || `（草稿生成失败）`;
@@ -11364,7 +11379,7 @@ ${recentMsgs}
                 let resp = await fetch(pxy, {
                     method:`POST`,
                     headers:{[`Content-Type`]:`application/json`, Authorization:`Bearer `+key},
-                    body:JSON.stringify({model:mod, temperature:tp, max_tokens:300, messages:[{role:`user`,content:sysMsg}]})
+                    body:JSON.stringify({model:mod, temperature:tp, max_tokens:600, messages:[{role:`user`,content:sysMsg}]})
                 });
                 let dat = await resp.json();
                 let reply = (dat.choices?.[0]?.message?.content||``).trim();
@@ -11413,6 +11428,204 @@ document.addEventListener(`keydown`, async e => {
 
 // ===== 7. 确保btnRepairHistory（修复工具）初始化时能找到 =====
 // 如果在 scrSetApi 里找不到，也在首页挂一个
+
+
+// ================================================================
+// ▼ 最终修复补丁 ▼
+// ================================================================
+// ================================================================
+// ▼▼▼ 最终修复补丁 ▼▼▼
+// ================================================================
+
+// ===== 1. 群聊AI：多条连续短消息（仿正常聊天风格）+ 读私聊历史获取说话风格 =====
+setTimeout(() => {
+    if(!$(`btnGroupLemon`)) return;
+
+    async function _groupAiReply(memberIds_override) {
+        let g = groupData[currentGroupId]; if(!g) return;
+
+        // 先发输入框内容
+        let inputTxt = $(`iptGroupMsg`) ? $(`iptGroupMsg`).value.trim() : ``;
+        if(inputTxt) {
+            if($(`iptGroupMsg`)) $(`iptGroupMsg`).value = ``;
+            let uName = g.myNick || ``;
+            if(!uName) { try { uName=await localforage.getItem(`myGlobalName`)||``; } catch(e) {} }
+            if(!uName) uName = `我`;
+            let uAva = null; try { uAva=await localforage.getItem(`myI_global`); } catch(e) {}
+            g.messages.push({senderId:`user`, senderName:uName, avatar:uAva, content:inputTxt, time:Date.now()});
+            await _saveGroupData(); _renderGroupMsgs();
+        }
+
+        let allCharMembers = (g.members||[]).filter(m=>!m.isUser);
+        let charMembers = memberIds_override 
+            ? allCharMembers.filter(m=>memberIds_override.includes(m.id)) 
+            : allCharMembers;
+        if(!charMembers.length) { alert(`群里没有角色成员！`); return; }
+        if(!g.messages.length) { alert(`请先发一条消息！`); return; }
+
+        let pxy = originalGetItem.call(ls,`pxy`) || ``;
+        let key = originalGetItem.call(ls,`key`) || ``;
+        let mod = originalGetItem.call(ls,`mod`) || ``;
+        if(pxy && !pxy.includes(`chat/completions`)) pxy = pxy.replace(/\/$/, ``) + `/chat/completions`;
+        let tp = parseFloat(originalGetItem.call(ls,`temp`)||`0.8`) || 0.8;
+        if(!pxy||!key) { alert(`需要先配置API！`); return; }
+
+        let tip = $(`groupTypingTip`);
+        let lemon = $(`btnGroupLemon`);
+        if(tip) tip.style.display = `block`;
+        if(lemon) lemon.style.opacity = `0.4`;
+
+        let recentGroupMsgs = (g.messages||[]).slice(-10).map(x=>`${x.senderName}：${x.content}`).join(`\n`);
+
+        for(let m of charMembers) {
+            let charAP = (originalGetItem.call(ls,`cAP_`+m.id)||originalGetItem.call(ls,`cAP`)||``).slice(0,400);
+            let charRel = originalGetItem.call(ls,`cR_`+m.id) || ``;
+            let myNick2 = ``;
+            try { myNick2 = await localforage.getItem(`cMyN_`+m.id)||``; } catch(e) {}
+            if(!myNick2) myNick2 = originalGetItem.call(ls,`cMyN_`+m.id) || ``;
+
+            // 读私聊历史，提取说话风格样本
+            let privateMsgs = [];
+            try {
+                let h = await localforage.getItem(`chatHistory_`+m.id);
+                if(!h) h = originalGetItem.call(ls, `chatHistory_`+m.id);
+                if(h) { let arr = typeof h===`string`?JSON.parse(h):h; privateMsgs = arr.slice(-8); }
+            } catch(e) {}
+
+            let styleRef = ``;
+            if(privateMsgs.length) {
+                let samples = privateMsgs.filter(mm=>mm.role===`assistant`).slice(-4).map(mm=>String(mm.content||``).trim().slice(0,40));
+                if(samples.length) styleRef = `\n\n【你的说话风格参考（私聊中的真实发言）】\n${samples.join(`\n`)}`;
+            }
+
+            // 关键改变：不限制"一句话"，让AI根据性格自然发言（可以2-3条短消息）
+            let sysMsg = `你是${m.name}。
+${charAP ? `【人设性格】${charAP}` : ``}
+${charRel ? `【与对方关系】${charRel}` : ``}${styleRef}
+
+【当前群聊最近消息】
+${recentGroupMsgs}
+
+请以${m.name}的真实性格回复。重要规则：
+- 完全符合你的说话风格（参考上方的私聊样本）
+- 自然真实，不要刻意解释自己，不要说废话套话
+- 字数根据性格和内容决定（话少的人也许就一两个字，话多的人可以多说几句）
+- 直接输出你说的内容，禁止任何前缀（如"我：""答："等）
+- 禁止输出格式标记`;
+
+            try {
+                let resp = await fetch(pxy, {
+                    method:`POST`,
+                    headers:{[`Content-Type`]:`application/json`, Authorization:`Bearer `+key},
+                    body:JSON.stringify({model:mod, temperature:tp, max_tokens:600, messages:[{role:`user`,content:sysMsg}]})
+                });
+                let dat = await resp.json();
+                let reply = (dat.choices?.[0]?.message?.content||``).trim();
+                reply = reply.replace(/^【[^】]*】/g,``).replace(/^\[.*?\]/,``).replace(/^(我|答|回复|说)[:：]/,``).trim();
+                if(!reply) continue;
+
+                // 把回复拆成多条短消息（模拟真实发消息习惯）
+                let parts = reply.split(/(?<=[。！？…~～\n])\s*/g).filter(s=>s.trim().length>0);
+                if(parts.length === 1 || reply.length <= 20) parts = [reply];
+                
+                let ava = null; try { ava=await localforage.getItem(`aiI_`+m.id); } catch(e) {}
+                for(let part of parts) {
+                    if(!part.trim()) continue;
+                    g.messages.push({senderId:m.id, senderName:m.name, avatar:ava, content:part.trim(), time:Date.now()});
+                    await _saveGroupData();
+                    _renderGroupMsgs();
+                    await new Promise(r=>setTimeout(r,350));
+                }
+            } catch(err) { console.warn(`group reply failed for ${m.name}:`, err); }
+            await new Promise(r=>setTimeout(r,200));
+        }
+
+        if(tip) tip.style.display = `none`;
+        if(lemon) lemon.style.opacity = `1`;
+        renderGroupInMsgList().catch(()=>{});
+    }
+
+    // 小狗脑袋 = @全体
+    $(`btnGroupLemon`).onclick = () => _groupAiReply(null);
+    if($(`btnGroupCallAll`)) $(`btnGroupCallAll`).onclick = () => _groupAiReply(null);
+
+    // 把 _groupAiReply 挂到 window 供 @某人调用
+    window._groupAiReply = _groupAiReply;
+
+}, 600);
+
+// ===== 2. 召唤评论：只召唤1-2个与该帖子相关的char，不全部召唤 =====
+// 覆盖 momentList 的 sumBtn 处理（补丁方式）
+document.addEventListener(`click`, async function(e) {
+    let sumBtn = e.target.closest(`.momentSummonBtn`);
+    if(!sumBtn) return;
+    e.stopImmediatePropagation();  // 阻止之前的handler
+
+    let pid = sumBtn.dataset.id;
+    let post = momentData.find(p=>p.id===pid);
+    if(!post) return;
+
+    let pxy = originalGetItem.call(ls,`pxy`) || ``;
+    let key = originalGetItem.call(ls,`key`) || ``;
+    let mod = originalGetItem.call(ls,`mod`) || ``;
+    if(pxy && !pxy.includes(`chat/completions`)) pxy = pxy.replace(/\/$/, ``) + `/chat/completions`;
+    let tp = parseFloat(originalGetItem.call(ls,`temp`)||`0.8`) || 0.8;
+    if(!pxy||!key) { alert(`需要先配置API！`); return; }
+
+    let contacts = [];
+    try { let lf=await localforage.getItem(`myContacts`); if(lf) contacts=Array.isArray(lf)?lf:JSON.parse(lf); } catch(e) {}
+
+    // 构建候选名单（只选和发帖人关系亲密的 或 对内容有共鸣的）
+    let allC = [{id:`default`, name:originalGetItem.call(ls,`cN_default`)||`角色`, ap:originalGetItem.call(ls,`cAP_default`)||``, rel:``}];
+    for(let ct of contacts) {
+        allC.push({id:String(ct.id), name:originalGetItem.call(ls,`cN_`+ct.id)||ct.name, 
+                   ap:originalGetItem.call(ls,`cAP_`+ct.id)||``, rel:originalGetItem.call(ls,`cR_`+ct.id)||``});
+    }
+    // 排除发帖人自己
+    let candidates = allC.filter(s => s.id !== post.authorId && s.name !== post.author);
+    if(!candidates.length) { alert(`没有其他角色！`); return; }
+
+    // 随机打乱，但优先选有私聊历史的（更有缘分的char）
+    let withHistory = [], noHistory = [];
+    for(let s of candidates) {
+        let hasH = false;
+        try { let h=await localforage.getItem(`chatHistory_`+s.id); if(h&&(Array.isArray(h)?h.length>0:true)) hasH=true; } catch(e) {}
+        if(hasH) withHistory.push(s); else noHistory.push(s);
+    }
+    // 混合：优先有聊天记录的，随机选1-3个
+    let pool = [...withHistory.sort(()=>Math.random()-0.5), ...noHistory.sort(()=>Math.random()-0.5)];
+    let pickCount = Math.min(3, Math.max(1, Math.floor(Math.random()*2)+1)); // 随机1-3个
+    let picked = pool.slice(0, pickCount);
+
+    sumBtn.innerText = `⏳ 生成中...`; sumBtn.disabled = true;
+    if(!post.comments) post.comments = [];
+
+    for(let s of picked) {
+        let sysMsg = `你是${s.name}。
+${s.ap ? `【人设性格】${s.ap.slice(0,200)}` : ``}
+${s.rel ? `【与主人的关系】${s.rel}` : ``}
+
+你在朋友圈看到${post.author}发了："${post.text}"
+
+请以${s.name}的真实语气和性格，写一条自然的评论。
+要求：
+- 评论长度根据你的性格和这条动态对你的触动程度决定（可以就1-2个字，也可以一句话）
+- 不必每次都很热情，冷淡的人可以只回一个表情或简短的话
+- 直接输出评论内容，不加任何前缀`;
+
+        try {
+            let resp = await fetch(pxy, {method:`POST`, headers:{[`Content-Type`]:`application/json`, Authorization:`Bearer `+key}, body:JSON.stringify({model:mod, temperature:tp, max_tokens:500, messages:[{role:`user`,content:sysMsg}]})});
+            let dat = await resp.json();
+            let cmtxt = (dat.choices?.[0]?.message?.content||``).trim() || `（评论失败）`;
+            post.comments.push({author:s.name, text:cmtxt, time:new Date().toLocaleString()});
+            await saveMoments(); renderMoments();
+        } catch(err) {}
+        await new Promise(r=>setTimeout(r,250));
+    }
+
+    sumBtn.innerText = `💬 召唤评论`; sumBtn.disabled = false;
+}, true);  // capture=true 确保比之前的handler先执行
+
 
 
 </script>
