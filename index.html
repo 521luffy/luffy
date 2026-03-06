@@ -370,7 +370,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
             <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0.1),rgba(0,0,0,0.4));pointer-events:none;"></div>
             <!-- 右上角管理按钮 -->
             <div style="position:absolute;top:12px;right:12px;display:flex;gap:8px;z-index:10;">
-                <button id=btnMomentBack style="background:rgba(255,255,255,0.25);border:none;border-radius:20px;padding:6px 12px;color:white;font-size:13px;font-weight:bold;cursor:pointer;backdrop-filter:blur(8px);">＜</button>
+                <button id=btnMomentBack onclick="showScreen('scrHome')" style="background:rgba(255,255,255,0.25);border:none;border-radius:20px;padding:6px 12px;color:white;font-size:13px;font-weight:bold;cursor:pointer;backdrop-filter:blur(8px);">＜</button>
                 <button onclick="document.getElementById('momentUserPostModal').style.display='flex'" style="background:rgba(255,255,255,0.25);border:none;border-radius:50%;width:36px;height:36px;color:white;font-size:18px;cursor:pointer;backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;">📷</button>
                 <button id=btnMomentMultiSelect style="background:rgba(255,255,255,0.25);border:none;border-radius:20px;padding:6px 12px;color:white;font-size:13px;cursor:pointer;backdrop-filter:blur(8px);">☑ 管理</button>
             </div>
@@ -783,7 +783,7 @@ class=back-btn>＜</span>
                     <div id=btnDelFriend class=clear-btn style="display:none;">删除好友</div>
                 </div>
                                 <div id=btnClearChat class=clear-btn style=margin-top:10px;>清空当前聊天记录</div>
-                <div id=btnSearchChat class=clear-btn style="margin-top:8px;background:linear-gradient(135deg,#a29bfe,#6c5ce7);color:white;">🔍 查找聊天记录</div>
+                <div id=btnSearchChat class=clear-btn style="margin-top:8px;background:linear-gradient(135deg,#ffd6e0,#ffb3c6);color:#c0392b;border:1px solid #ffb3c6;">🔍 查找聊天记录</div>
             </div>
             <div class=flex-row style="margin-top:10px; gap:10px;">
                 <button id=btnCancelChat class=clear-btn style="margin-top:0; padding:15px; font-size:15px; border-radius:12px; background:#f0f2f5; color:#333; border:none;">✖ 取消修改</button>
@@ -2784,50 +2784,83 @@ function updateSpySection(sectionName) {
 
 async function triggerCaughtMessage() {
     let section = window.currentSpySection || `手机界面`;
-    let dn = ($(`cfgRem`) && $(`cfgRem`).value) || ($(`cfgName`) && $(`cfgName`).value) || `对方`;
-    // 把被抓包状态存入 localforage
-    await localforage.setItem(`catchTriggered_`+currentChatId, true).catch(()=>{});
-    // 构建强制触发消息
-    let sysPrompt = `【系统强制指令 - 优先级最高】玩家刚才偷偷查看了你的手机，被你发现了！对方当时正在查看：${section}。请你立刻以你的人设和性格，发送一条质问/惊讶/愤怒的消息，询问对方为什么偷看你的手机，内容要生动具体地提到"${section}"这个部分。语气完全根据你的性格来，可以是愤怒、委屈、惊讶、醋意等，不要道歉，直接质问！禁止输出任何角色扮演标记，直接以第一人称说话。`;
-    // 调用AI生成质问消息
-    let pxy = originalGetItem.call(ls, `pxy`) || ``;
-    let key = originalGetItem.call(ls, `key`) || ``;
-    let mod = originalGetItem.call(ls, `mod`) || ``;
-    if(!pxy || !key) { alert(`被抓包需要先配置API才能发送质问消息！`); return; }
-    if($(`catchLoadingTip`)) $(`catchLoadingTip`).style.display = `block`;
+    let _spySel = $(`spyCharSelect`);
+    let targetId = (_spySel && _spySel.value) ? _spySel.value 
+                   : ((typeof lastSpyCharId !== `undefined` && lastSpyCharId) ? lastSpyCharId : ``);
+    if(!targetId) { alert(`请先在查手机页面右上角选择要查看的角色！`); return; }
+
+    let pxy = originalGetItem.call(ls,`pxy`)||``;
+    let key = originalGetItem.call(ls,`key`)||``;
+    let mod = originalGetItem.call(ls,`mod`)||``;
+    if(pxy && !pxy.includes(`chat/completions`)) pxy = pxy.replace(/\/$/,``)+`/chat/completions`;
+    let tp = parseFloat(originalGetItem.call(ls,`temp`)||`0.8`)||0.8;
+    if(!pxy||!key) { alert(`被抓包需要先配置API！`); return; }
+
+    if($(`catchLoadingTip`)) $(`catchLoadingTip`).style.display=`block`;
+    if($(`catchSwitch`)) $(`catchSwitch`).disabled=true;
+
     try {
-        let msgHistory = typeof history !== `undefined` ? [...history.slice(-10)] : [];
-        msgHistory.push({role:`user`, content:`[系统] `+sysPrompt});
-        let resp = await fetch(pxy, {
-            method:`POST`,
-            headers:{'Content-Type':'application/json', Authorization:'Bearer '+key},
-            body: JSON.stringify({model:mod, max_tokens:1500, messages:msgHistory})
-        });
-        let data = await resp.json();
-        let reply = data.choices?.[0]?.message?.content || `（为什么你在偷看我手机！）`;
-        // 把质问消息推入聊天记录
-        if(typeof mkBub === `function`) mkBub(reply, `l`);
-        if(typeof history !== `undefined`) {
-            history.push({role:`assistant`, content:reply});
-            await localforage.setItem(`chatHistory_`+currentChatId, history).catch(()=>{});
+        let charAP=(originalGetItem.call(ls,`cAP_`+targetId)||originalGetItem.call(ls,`cAP`)||``).slice(0,500);
+        let charRel=originalGetItem.call(ls,`cR_`+targetId)||``;
+        let charName=originalGetItem.call(ls,`cN_`+targetId)||`对方`;
+        let myNick=(await localforage.getItem(`cMyN_`+targetId).catch(()=>``))||originalGetItem.call(ls,`cMyN_`+targetId)||originalGetItem.call(ls,`cMyN`)||`对方`;
+
+        let wbItems=[]; try{let wb=await localforage.getItem(`wbData`)||[]; wbItems=Array.isArray(wb)?wb:JSON.parse(wb||`[]`);}catch(e){}
+        let wbText=[...wbItems.filter(x=>x.type===`global`).map(x=>`${x.name}：${x.content}`),...(wbItems.filter(x=>x.type===`local`&&(x.charId===targetId||(x.charIds||[]).includes(targetId))).map(x=>`${x.name}：${x.content}`))].join(`\n`).slice(0,400)||``;
+
+        let targetHist=[];
+        try{let h=await localforage.getItem(`chatHistory_`+targetId)||originalGetItem.call(ls,`chatHistory_`+targetId); if(h) targetHist=typeof h===`string`?JSON.parse(h):(Array.isArray(h)?h:[]);}catch(e){}
+        let recentCtx=targetHist.slice(-10).map(m=>m.role===`assistant`?`${charName}：${String(m.content||``).replace(/【[\s\S]*?】[^\n]*/g,``).trim().slice(0,60)}`:`${myNick}：${String(m.content||``).slice(0,40)}`).join(`\n`);
+
+        let _apLine=charAP?`【你的人设】${charAP}`:``;
+        let _relLine=charRel?`【关系设定】${charRel}`:``;
+        let _wbLine=wbText?`【世界设定】${wbText}`:``;
+        let _recLine=recentCtx?`【最近私聊记录】\n${recentCtx}`:``;
+        let sys=`你是${charName}。\n${_apLine}\n${_relLine}\n${_wbLine}\n${_recLine}\n\n${myNick}刚刚被你发现在偷翻你的手机，TA正在看你的【${section}】。\n请以你的第一人称、符合当前感情状态和性格直接回应。不加任何前缀或角色标记，字数不限，完整表达。`;
+
+        let resp=await fetch(pxy,{method:`POST`,headers:{[`Content-Type`]:`application/json`,Authorization:`Bearer `+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:1500,messages:[{role:`user`,content:sys}]})});
+        let data=await resp.json();
+        let reply=(data.choices?.[0]?.message?.content||``).trim();
+        reply=reply.replace(/^【[^】]*】/g,``).replace(/^(我|说|答|回复)[:：]/,``).replace(/^\|[^\n]*\|[^\n]*$/gm,``).trim();
+        if(!reply) return;
+
+        // 存入该char独立历史
+        let newHist=[...targetHist,{role:`assistant`,content:reply}];
+        await localforage.setItem(`chatHistory_`+targetId,JSON.stringify(newHist)).catch(()=>{});
+        ls.setItem(`chatHistory_`+targetId,JSON.stringify(newHist));
+
+        // === 复用"去对峙"方式：找chatItem并click，完整加载一切 ===
+        let chatItemsAll=document.querySelectorAll(`#listContent .chat-item`);
+        let clicked=false;
+        for(let i=0;i<chatItemsAll.length;i++){
+            if(chatItemsAll[i].style.display===`none`) continue;
+            let nameEl=chatItemsAll[i].querySelector(`.chat-name`);
+            if(nameEl && nameEl.innerText.trim()===charName){chatItemsAll[i].click(); clicked=true; break;}
         }
-        // 回到聊天室显示消息
-        showScreen(`scrRoom`);
-    } catch(err) {
-        // 网络失败时生成默认消息
-        let defaultMsg = `你刚才是不是偷看我手机了？！我看到你在翻我的${section}！`;
-        if(typeof mkBub === `function`) mkBub(defaultMsg, `l`);
-        if(typeof history !== `undefined`) {
-            history.push({role:`assistant`, content:defaultMsg});
-            await localforage.setItem(`chatHistory_`+currentChatId, history).catch(()=>{});
+        if(!clicked){
+            currentChatId=targetId; history=newHist;
+            if($(`cfgName`)) $(`cfgName`).value=originalGetItem.call(ls,`cN_`+targetId)||``;
+            if($(`roomTitle`)) $(`roomTitle`).innerText=charName;
+            let _ava=await localforage.getItem(`aiI_`+targetId).catch(()=>null)||originalGetItem.call(ls,`aiI_`+targetId);
+            window.currentLoadedAiI=_ava||``;
+            if($(`aiPreview`)){$(`aiPreview`).style.backgroundImage=_ava?`url(${_ava})`:`none`;}
+            if(typeof redrawChat===`function`) redrawChat();
+            showScreen(`scrRoom`);
         }
-        showScreen(`scrRoom`);
-    } finally {
-        if($(`catchLoadingTip`)) $(`catchLoadingTip`).style.display = `none`;
-        // 重置开关
-        if($(`catchSwitch`)) $(`catchSwitch`).checked = false;
-        await localforage.setItem(`catchTriggered_`+currentChatId, false).catch(()=>{});
-    }
+        // 延迟渲染最新AI气泡（等待chatItem.click完成页面切换）
+        setTimeout(()=>{
+            if(msgs){
+                let txt=reply.replace(/^\|[^\n]*\|[^\n]*$/gm,``).replace(/^【[^】]*】[^\n]*$/gm,``).trim();
+                if(txt) mkBub(txt,`l`);
+                msgs.scrollTop=msgs.scrollHeight;
+            }
+            if(typeof updateListPreview===`function`) updateListPreview();
+        },550);
+
+    } catch(e){console.warn(`triggerCaughtMessage error:`,e);}
+    if($(`catchLoadingTip`)) $(`catchLoadingTip`).style.display=`none`;
+    if($(`catchSwitch`)){$(`catchSwitch`).disabled=false;$(`catchSwitch`).checked=false;}
+    await localforage.setItem(`catchTriggered_`+targetId,false).catch(()=>{});
 }
 
 // 被抓包开关：一旦打开立刻触发
@@ -10590,7 +10623,8 @@ if($(`btnGenCharMoments`)) $(`btnGenCharMoments`).onclick = async () => {
                 r10.map(m => (m.role===`assistant`?name:`对方`) + `：` + String(m.content||``).replace(/【[\s\S]*?】/g,``).trim().slice(0,40)).join(`\n`);
         }
 
-        let sysMsg = `你是${name}。${charAP?`你的性格人设：${charAP.slice(0,250)}`:``}${recentCtx}\n\n现在请以${name}的真实性格和当前状态，写一条朋友圈。内容真实自然，结合最近聊天心境，长度根据性格自然决定。直接输出正文，不加任何前缀或引号。`;
+        let _apMoment = charAP ? `【性格人设】${charAP.slice(0,400)}` : ``;
+        let sysMsg = `你是${name}。\n${_apMoment}\n${recentCtx}\n\n【必须】你发的朋友圈内容必须直接反映上方最近聊天记录的情绪状态：\n- 聊天甜蜜→朋友圈甜蜜，聊天冷淡→朋友圈疏离，刚发生重要事→围绕那件事发圈\n- 不写和聊天记录完全无关的内容\n- 用你自己的性格风格，长度自然，直接输出正文，不加前缀。`;
 
         try {
             let resp = await fetch(pxy, {
@@ -12088,8 +12122,15 @@ window._groupCurrentCtxMsg = null;
 
 // ===== 群聊 + 号菜单抽屉 =====
 if($(`btnGroupNewMenu`)) $(`btnGroupNewMenu`).onclick = () => {
-    let d = $(`groupMenuDrawer`);
-    if(d) d.style.display = d.style.display === `block` ? `none` : `block`;
+    let d=$(`groupMenuDrawer`); if(!d) return;
+    let isOpen=d.classList.contains(`drawer-open`);
+    if(isOpen){
+        d.classList.remove(`drawer-open`);
+        d.style.visibility=`hidden`; d.style.opacity=`0`; d.style.transform=`translateY(150%)`; d.style.zIndex=`-10`;
+    } else {
+        d.style.display=`flex`; d.style.visibility=`visible`; d.style.opacity=`1`;
+        d.style.transform=`translateY(0)`; d.style.zIndex=`100`; d.classList.add(`drawer-open`);
+    }
 };
 
 // 群聊上传图片
@@ -12103,7 +12144,7 @@ if($(`groupPicInput`)) $(`groupPicInput`).onchange = async function() {
         let uAva = null; try{uAva=await localforage.getItem(`myI_global`);}catch(e){}
         g.messages.push({senderId:`user`, senderName:uName, avatar:uAva, content:`[图片]`, img:e.target.result, time:Date.now()});
         await _saveGroupData(); _renderGroupMsgs();
-        if($(`groupMenuDrawer`)) $(`groupMenuDrawer`).style.display=`none`;
+        if($(`groupMenuDrawer`)){let _gd=$(`groupMenuDrawer`);_gd.classList.remove(`drawer-open`);_gd.style.visibility=`hidden`;_gd.style.opacity=`0`;_gd.style.transform=`translateY(150%)`;_gd.style.zIndex=`-10`;}
     };
     reader.readAsDataURL(file);
     this.value=``;
@@ -12111,7 +12152,7 @@ if($(`groupPicInput`)) $(`groupPicInput`).onchange = async function() {
 
 // 群聊转账 - 复用单聊的 transferModal
 if($(`btnGroupTransfer`)) $(`btnGroupTransfer`).onclick = () => {
-    if($(`groupMenuDrawer`)) $(`groupMenuDrawer`).style.display=`none`;
+    if($(`groupMenuDrawer`)){let _gd=$(`groupMenuDrawer`);_gd.classList.remove(`drawer-open`);_gd.style.visibility=`hidden`;_gd.style.opacity=`0`;_gd.style.transform=`translateY(150%)`;_gd.style.zIndex=`-10`;}
     // 设置 transferModal 的确认按钮指向群聊发送
     window._groupTransferPending = true;
     if($(`transferAmount`)) $(`transferAmount`).value = ``;
@@ -12121,7 +12162,7 @@ if($(`btnGroupTransfer`)) $(`btnGroupTransfer`).onclick = () => {
 
 // 群聊红包 - 复用单聊的 redPacketModal
 if($(`btnGroupRedPacket`)) $(`btnGroupRedPacket`).onclick = () => {
-    if($(`groupMenuDrawer`)) $(`groupMenuDrawer`).style.display=`none`;
+    if($(`groupMenuDrawer`)){let _gd=$(`groupMenuDrawer`);_gd.classList.remove(`drawer-open`);_gd.style.visibility=`hidden`;_gd.style.opacity=`0`;_gd.style.transform=`translateY(150%)`;_gd.style.zIndex=`-10`;}
     window._groupRedPacketPending = true;
     if($(`redPacketAmount`)) $(`redPacketAmount`).value = ``;
     if($(`redPacketNote`)) $(`redPacketNote`).value = `恭喜发财，大吉大利`;
@@ -12132,7 +12173,7 @@ if($(`btnGroupRedPacket`)) $(`btnGroupRedPacket`).onclick = () => {
 
 // 群聊拍照 - 复用单聊的 takePhotoModal
 if($(`btnGroupTakePhoto`)) $(`btnGroupTakePhoto`).onclick = () => {
-    if($(`groupMenuDrawer`)) $(`groupMenuDrawer`).style.display=`none`;
+    if($(`groupMenuDrawer`)){let _gd=$(`groupMenuDrawer`);_gd.classList.remove(`drawer-open`);_gd.style.visibility=`hidden`;_gd.style.opacity=`0`;_gd.style.transform=`translateY(150%)`;_gd.style.zIndex=`-10`;}
     window._groupTakePhotoPending = true;
     if($(`takePhotoInput`)) $(`takePhotoInput`).value = ``;
     if($(`takePhotoModal`)) $(`takePhotoModal`).style.display = `flex`;
@@ -12152,22 +12193,30 @@ if($(`btnGroupRegen`)) $(`btnGroupRegen`).onclick = async () => {
     g.messages.splice(lastAiIdx, 1);
     await _saveGroupData(); _renderGroupMsgs();
     if(typeof window._groupAiReply === `function`) window._groupAiReply([lastAiId]);
-    if($(`groupMenuDrawer`)) $(`groupMenuDrawer`).style.display=`none`;
+    if($(`groupMenuDrawer`)){let _gd=$(`groupMenuDrawer`);_gd.classList.remove(`drawer-open`);_gd.style.visibility=`hidden`;_gd.style.opacity=`0`;_gd.style.transform=`translateY(150%)`;_gd.style.zIndex=`-10`;}
 };
 
-// 群聊语音按钮 - 复用单聊语音录制UI
+// 群聊语音按钮 - 独立弹窗，不串到单聊
 if($(`btnGroupMic`)) $(`btnGroupMic`).onclick = () => {
-    // 触发单聊的语音模态或直接用文字输入
-    if($(`voiceModal`) || $(`btnMic`)) {
-        // 若有语音modal，复用它，pending标识
-        window._groupVoicePending = true;
-        if($(`voiceModal`)) $(`voiceModal`).style.display = `flex`;
-        else {
-            // 若没有语音modal，用简单文字输入
-            let vt = $(`voiceInputModal`);
-            if(vt) { window._groupVoicePending=true; vt.style.display=`flex`; }
-        }
-    }
+    let existing=$(`groupVoiceModal`);
+    if(existing){existing.style.display=`flex`; let gi=$(`groupVoiceInput`); if(gi){gi.value=``;gi.focus();} return;}
+    let overlay=document.createElement(`div`);
+    overlay.id=`groupVoiceModal`;
+    overlay.style.cssText=`position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9000;display:flex;align-items:center;justify-content:center;`;
+    overlay.innerHTML=`<div style="background:white;border-radius:20px;padding:24px 20px;width:85%;max-width:320px;"><div style="text-align:center;font-weight:bold;margin-bottom:16px;color:#333;font-size:16px;">🎤 发送语音消息</div><textarea id=groupVoiceInput style="width:100%;height:90px;border:1.5px solid #e0d8ff;border-radius:12px;padding:10px;box-sizing:border-box;font-size:14px;resize:none;outline:none;" placeholder="输入语音内容…"></textarea><div style="display:flex;gap:10px;margin-top:14px;"><button onclick="document.getElementById('groupVoiceModal').style.display='none'" style="flex:1;padding:10px;border:none;border-radius:12px;background:#f0f0f0;cursor:pointer;font-size:14px;">取消</button><button id=btnGroupVoiceSend style="flex:1;padding:10px;border:none;border-radius:12px;background:linear-gradient(135deg,#a29bfe,#6c5ce7);color:white;cursor:pointer;font-size:14px;font-weight:bold;">发送</button></div></div>`;
+    document.body.appendChild(overlay);
+    let gi=$(`groupVoiceInput`); if(gi) gi.focus();
+    let sendBtn=$(`btnGroupVoiceSend`);
+    if(sendBtn) sendBtn.onclick=async()=>{
+        let gi2=$(`groupVoiceInput`); let txt=gi2?gi2.value.trim():``; if(!txt) return;
+        let secs=Math.max(1,Math.round(txt.length*0.4));
+        let msgText=`🎤 [语音 ${secs}″] ${txt}`;
+        overlay.style.display=`none`;
+        let g=groupData[currentGroupId]; if(!g) return;
+        let uName=g.myNick||`我`; let uAva=null; try{uAva=await localforage.getItem(`myI_global`);}catch(e){}
+        g.messages.push({senderId:`user`,senderName:uName,avatar:uAva,content:msgText,time:Date.now()});
+        await _saveGroupData(); _renderGroupMsgs(); renderGroupInMsgList().catch(()=>{});
+    };
 };
 
 // 群聊表情包按钮 - 复用单聊的表情包面板
@@ -12206,19 +12255,36 @@ window._renderGroupMsgs = function() {
             avaDiv.dataset.name = msg.senderName || ``;
             avaDiv.title = `点击查看心声`;
             avaDiv.onclick = async function() {
-                let memberId = this.dataset.memberid, memberName = this.dataset.name || `角色`;
+                let memberId=this.dataset.memberid, memberName=this.dataset.name||`角色`;
                 let pxy=originalGetItem.call(ls,`pxy`)||``, key=originalGetItem.call(ls,`key`)||``, mod=originalGetItem.call(ls,`mod`)||``;
                 if(pxy&&!pxy.includes(`chat/completions`)) pxy=pxy.replace(/\/$/,``)+`/chat/completions`;
-                if(!pxy||!key) return;
-                let charAP=(originalGetItem.call(ls,`cAP_`+memberId)||``).slice(0,300);
-                let recentMsgs=(g.messages||[]).slice(-5).map(x=>`${x.senderName}：${x.content}`).join(`\n`);
-                let sysMsg=`你是${memberName}。${charAP?`【人设】${charAP}\n\n`:`\n\n`}根据群聊最近内容：\n${recentMsgs}\n\n用15字内说出你此刻内心真实想法（第一人称，直接输出）`;
-                try {
-                    let r=await fetch(pxy,{method:`POST`,headers:{[`Content-Type`]:`application/json`,Authorization:`Bearer `+key},body:JSON.stringify({model:mod,temperature:0.9,max_tokens:200,messages:[{role:`user`,content:sysMsg}]})});
+                let statusModal=$(`modal`); if(!statusModal) return;
+                let stWEl=$(`stW`),stCEl=$(`stC`),stAEl=$(`stA`),stTEl=$(`stT`);
+                if(stWEl) stWEl.innerText=`生成中…`; if(stCEl) stCEl.innerText=`生成中…`;
+                if(stAEl) stAEl.innerText=`生成中…`; if(stTEl) stTEl.innerText=`生成中…`;
+                let hdrSpan=statusModal.querySelector(`.modal-hdr span:first-child`);
+                if(hdrSpan) hdrSpan.innerText=`${memberName}当前状态`;
+                statusModal.style.display=`flex`;
+                if(!pxy||!key){ if(stWEl) stWEl.innerText=`请先配置API`; return; }
+                let charAP=(originalGetItem.call(ls,`cAP_`+memberId)||``).slice(0,400);
+                let charRel=originalGetItem.call(ls,`cR_`+memberId)||``;
+                let recentMsgs=(g.messages||[]).slice(-8).map(x=>`${x.senderName}：${String(x.content||``).slice(0,40)}`).join(`\n`);
+                let privHist=[]; try{let ph=await localforage.getItem(`chatHistory_`+memberId); if(ph) privHist=typeof ph===`string`?JSON.parse(ph):ph;}catch(e){}
+                let privCtx=privHist.slice(-5).map(m=>m.role===`assistant`?`${memberName}：${String(m.content||``).replace(/【[\s\S]*?】[^\n]*/g,``).trim().slice(0,50)}`:`我：${String(m.content||``).slice(0,30)}`).join(`\n`);
+                let _ap=charAP?`【人设】${charAP}`:``;
+                let _rel=charRel?`【关系】${charRel}`:``;
+                let _priv=privCtx?`【与主人私聊】\n${privCtx}`:``;
+                let sysMsg=`你是${memberName}。\n${_ap}\n${_rel}\n${_priv}\n\n群聊最近内容：\n${recentMsgs}\n\n分别写四个状态（每段30字以内）：\n【定位与天气】当前地点天气氛围\n【当日服装】当前穿着\n【表情与动作】当前表情动作\n【隐秘心声】内心真实独白`;
+                try{
+                    let r=await fetch(pxy,{method:`POST`,headers:{[`Content-Type`]:`application/json`,Authorization:`Bearer `+key},body:JSON.stringify({model:mod,temperature:0.85,max_tokens:400,messages:[{role:`user`,content:sysMsg}]})});
                     let d=await r.json();
-                    let t=(d.choices?.[0]?.message?.content||``).trim();
-                    if(t) alert(`💭 ${memberName}的心声：\n\n${t}`);
-                } catch(e){}
+                    let txt=(d.choices?.[0]?.message?.content||``).trim();
+                    let wM=txt.match(/【定位与天气】([\s\S]*?)(?=【|$)/),cM=txt.match(/【当日服装】([\s\S]*?)(?=【|$)/),aM=txt.match(/【表情与动作】([\s\S]*?)(?=【|$)/),tM=txt.match(/【隐秘心声】([\s\S]*?)(?=【|$)/);
+                    if(stWEl) stWEl.innerText=wM?wM[1].trim():`暂无`;
+                    if(stCEl) stCEl.innerText=cM?cM[1].trim():`暂无`;
+                    if(stAEl) stAEl.innerText=aM?aM[1].trim():`暂无`;
+                    if(stTEl) stTEl.innerText=tM?tM[1].trim():`暂无`;
+                }catch(e){if(stWEl) stWEl.innerText=`生成失败`;}
             };
         }
 
@@ -12279,56 +12345,53 @@ window._renderGroupMsgs = function() {
 let _groupCtxMenu = null;
 function showGroupCtxMenu(x, y, msg, msgIdx) {
     if(_groupCtxMenu) _groupCtxMenu.remove();
-    let menu = document.createElement(`div`);
-    menu.style.cssText = `position:fixed;background:white;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.15);z-index:9999;overflow:hidden;min-width:120px;`;
-    // 位置调整，避免超出屏幕
-    menu.style.left = Math.min(x, window.innerWidth-140) + `px`;
-    menu.style.top = Math.min(y, window.innerHeight-200) + `px`;
-
+    let isMe = msg.senderId === `user`;
     let items = [
-        {label:`复制`, action:()=>{ navigator.clipboard.writeText(msg.content||``).catch(()=>{}); }},
-        {label:`引用`, action:()=>{
-            window._groupQuoteContent = msg.content||``;
+        {label:`复制`,icon:`📋`,action:()=>{navigator.clipboard.writeText(msg.content||``).catch(()=>{});}},
+        {label:`引用`,icon:`↩️`,action:()=>{
+            window._groupQuoteContent=msg.content||``;
             let qb=$(`groupQuoteBox`),qt=$(`groupQuoteText`);
             if(qb) qb.style.display=`block`;
             if(qt) qt.innerText=(msg.senderName||``)+`：`+(msg.content||``).slice(0,40);
             $(`iptGroupMsg`)?.focus();
         }},
-        {label:`收藏`, action:async()=>{
+        {label:`收藏`,icon:`⭐`,action:async()=>{
             let favs=[]; try{let f=await localforage.getItem(`myFavs`); if(f) favs=Array.isArray(f)?f:JSON.parse(f);}catch(e){}
             favs.push({id:Date.now(),text:msg.content,img:msg.img||null,from:msg.senderName||`群聊`,time:new Date().toLocaleString()});
             await localforage.setItem(`myFavs`,favs).catch(()=>{});
-            alert(`✅ 已收藏`);
+            let tip=document.createElement(`div`); tip.style.cssText=`position:fixed;bottom:120px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:white;padding:8px 16px;border-radius:20px;font-size:13px;z-index:9999;`; tip.innerText=`已收藏`; document.body.appendChild(tip); setTimeout(()=>tip.remove(),1500);
+        }},
+        {label:`多选`,icon:`☑️`,action:()=>{
+            if(!window._groupMultiSelect) window._groupMultiSelect=new Set();
+            window._groupMultiSelect.add(msgIdx); window._groupMultiSelectMode=true; _renderGroupMsgs();
+        }},
+        {label:`编辑`,icon:`✏️`,action:()=>{
+            if(!isMe){alert(`只能编辑自己的消息`);return;}
+            let nt=prompt(`编辑消息：`,msg.content||``); if(nt===null) return;
+            let g=groupData[currentGroupId]; if(!g) return;
+            g.messages[msgIdx].content=nt; _saveGroupData().then(()=>_renderGroupMsgs());
+        }},
+        {label:`删除`,icon:`🗑️`,color:`#ff4757`,action:()=>{
+            let g=groupData[currentGroupId]; if(!g) return;
+            if(!confirm(`删除这条消息？`)) return;
+            g.messages.splice(msgIdx,1); _saveGroupData().then(()=>_renderGroupMsgs());
         }},
     ];
-    // 只有用户自己发的消息才能删除/编辑
-    if(msg.senderId===`user`) {
-        items.push({label:`编辑`, action:()=>{
-            let newText=prompt(`编辑消息：`,msg.content||``);
-            if(newText===null) return;
-            let g=groupData[currentGroupId]; if(!g) return;
-            g.messages[msgIdx].content = newText;
-            _saveGroupData().then(()=>_renderGroupMsgs());
-        }});
-        items.push({label:`删除`, color:`#ff4757`, action:()=>{
-            let g=groupData[currentGroupId]; if(!g) return;
-            g.messages.splice(msgIdx,1);
-            _saveGroupData().then(()=>_renderGroupMsgs());
-        }});
-    }
-
+    let menu=document.createElement(`div`);
+    menu.style.cssText=`position:fixed;background:white;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.18);z-index:9999;overflow:hidden;display:flex;flex-direction:row;`;
+    let totalW=items.length*60;
+    menu.style.left=Math.min(Math.max(x-totalW/2,8),window.innerWidth-totalW-8)+`px`;
+    menu.style.top=Math.min(y+8,window.innerHeight-110)+`px`;
     items.forEach(item=>{
         let div=document.createElement(`div`);
-        div.innerText=item.label;
-        div.style.cssText=`padding:12px 20px;font-size:14px;cursor:pointer;color:${item.color||`#333`};border-bottom:1px solid #f5f5f5;`;
-        div.onmousedown=e=>e.stopPropagation();
-        div.onclick=()=>{ item.action(); menu.remove(); _groupCtxMenu=null; };
+        div.style.cssText=`display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 10px;cursor:pointer;color:${item.color||`#333`};font-size:11px;gap:3px;min-width:56px;`;
+        div.innerHTML=`<span style="font-size:18px;">${item.icon}</span><span>${item.label}</span>`;
+        div.onclick=()=>{item.action();menu.remove();_groupCtxMenu=null;};
         menu.appendChild(div);
     });
-
     document.body.appendChild(menu);
-    _groupCtxMenu = menu;
-    setTimeout(()=>{ document.addEventListener(`click`,()=>{ menu.remove(); _groupCtxMenu=null; },{once:true}); },100);
+    _groupCtxMenu=menu;
+    setTimeout(()=>{document.addEventListener(`click`,()=>{if(menu.parentNode){menu.remove();_groupCtxMenu=null;}},{once:true});},100);
 }
 
 // ===== 群聊发送时支持引用 =====
