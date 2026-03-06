@@ -365,9 +365,9 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         <!-- ===== 朋友圈动态页面 ===== -->
     <div id=scrMoment class=scr-list style="background:#f0f0f0;display:none;">
         <!-- 顶部背景区域：点击任意位置上传背景图 -->
-        <div id=momentHeader onclick="document.getElementById('momentBgInput').click()" style="position:relative;width:100%;height:220px;background:linear-gradient(135deg,#ffecd2,#fcb69f);overflow:hidden;flex-shrink:0;cursor:pointer;" title="点击更换背景图">
-            <div id=momentBg style="position:absolute;inset:0;background-size:cover;background-position:center;"></div>
-            <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0.1),rgba(0,0,0,0.4));"></div>
+        <div id=momentHeader style="position:relative;width:100%;height:220px;background:linear-gradient(135deg,#ffecd2,#fcb69f);overflow:hidden;flex-shrink:0;">
+            <div id=momentBg style="position:absolute;inset:0;background-size:cover;background-position:center;cursor:pointer;" onclick="document.getElementById('momentBgInput').click()" title="点击更换背景图"></div>
+            <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0.1),rgba(0,0,0,0.4));pointer-events:none;"></div>
             <!-- 右上角管理按钮 -->
             <div style="position:absolute;top:12px;right:12px;display:flex;gap:8px;z-index:10;">
                 <button id=btnMomentBack style="background:rgba(255,255,255,0.25);border:none;border-radius:20px;padding:6px 12px;color:white;font-size:13px;font-weight:bold;cursor:pointer;backdrop-filter:blur(8px);">＜</button>
@@ -463,15 +463,15 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 
     <!-- 草稿偷看 modal -->
     <div id=draftPeekModal class=modal-base style="z-index:8001;display:none;">
-        <div class=modal-ctx style="width:88%;max-width:380px;">
+        <div class=modal-ctx style="width:88%;max-width:380px;max-height:85vh;overflow:hidden;display:flex;flex-direction:column;">
             <div class=modal-hdr style="background:linear-gradient(135deg,#ffd6e0,#ffb3c6);">
                 <span style="color:#c0392b;">💗 草稿偷看</span>
                 <span id=btnCloseDraftPeek style="cursor:pointer;font-size:20px;color:#c0392b;">✕</span>
             </div>
-            <div class=modal-bdy style="padding:16px;">
-                <div style="font-size:12px;color:#ff9a9e;margin-bottom:6px;">TA写了一半却没发出去的内容：</div>
-                <div id=draftPeekContent style="background:#fff9fb;border-radius:10px;padding:12px;font-size:14px;color:#555;line-height:1.6;min-height:60px;border:1px solid #ffd6e0;">加载中...</div>
-                <button id=btnCloseDraftPeekOk style="width:100%;margin-top:12px;padding:10px;border-radius:20px;border:none;background:linear-gradient(135deg,#ffd6e0,#ffb3c6);color:#c0392b;font-weight:bold;cursor:pointer;font-size:14px;">知道啦 💕</button>
+            <div class=modal-bdy style="padding:16px;overflow:hidden;display:flex;flex-direction:column;flex:1;">
+                <div style="font-size:12px;color:#ff9a9e;margin-bottom:6px;flex-shrink:0;">TA写了一半却没发出去的内容：</div>
+                <div id=draftPeekContent style="background:#fff9fb;border-radius:10px;padding:12px;font-size:14px;color:#555;line-height:1.6;min-height:60px;max-height:55vh;overflow-y:auto;border:1px solid #ffd6e0;white-space:pre-wrap;">加载中...</div>
+                <button id=btnCloseDraftPeekOk style="width:100%;margin-top:12px;padding:10px;border-radius:20px;border:none;background:linear-gradient(135deg,#ffd6e0,#ffb3c6);color:#c0392b;font-weight:bold;cursor:pointer;font-size:14px;flex-shrink:0;">知道啦 💕</button>
             </div>
         </div>
     </div>
@@ -989,34 +989,47 @@ class=back-btn>＜</span>
             <!-- 正在输入提示 -->
             <div id=groupTypingTip style="display:none;padding:3px 16px 0;font-size:12px;color:#a29bfe;font-style:italic;">对方正在输入中…</div>
             <!-- 引用框 -->
-            <div id=groupQuoteBox style="display:none;background:#f8f4ff;border-left:3px solid #a29bfe;padding:6px 12px;margin:0 8px;border-radius:6px;font-size:12px;color:#666;position:relative;">
+            <div id=groupQuoteBox style="display:none;background:#f8f4ff;border-left:3px solid #a29bfe;padding:6px 12px;margin:0 8px 4px;border-radius:6px;font-size:12px;color:#666;position:relative;">
                 <span id=groupQuoteText style="display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:85%;"></span>
                 <span onclick="document.getElementById('groupQuoteBox').style.display='none';window._groupQuoteContent=''" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;color:#aaa;font-size:14px;">✖</span>
             </div>
-            <!-- 主输入栏 -->
-            <div style="padding:8px 12px;display:flex;align-items:center;gap:8px;">
-                <div id=btnGroupSticker class=tool-svg style="flex-shrink:0;"><svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg></div>
-                <div id=btnGroupMic class=tool-svg style="flex-shrink:0;"><svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg></div>
-                <input type=text id=iptGroupMsg style="flex:1;padding:9px 14px;border:1.5px solid #e0d8ff;border-radius:22px;font-size:14px;outline:none;background:white;" placeholder="输入消息..." autocomplete=off>
-                <!-- 小狗脑袋 -->
-                <div id=btnGroupLemon style="width:38px;height:38px;border-radius:50%;background:#ede9ff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;" title="让群成员AI回复">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#6c5ce7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M10 5.172C10 3.782 8.423 2.679 6.5 3c-2.823.47-4.113 6.006-4 7 .08.703 1.725 1.722 3.656 1 1.261-.467 1.95-1.9 3.844-2.5"></path><path d="M14 5.172C14 3.782 15.577 2.679 17.5 3c2.823.47 4.113 6.006 4 7-.08.703-1.725 1.722-3.656 1-1.261-.467-1.95-1.9-3.844-2.5"></path><path d="M8 14v1a4 4 0 0 0 8 0v-1"></path><path d="M16 10.5h.01"></path><path d="M8 10.5h.01"></path></svg>
-                </div>
-                <div id=btnGroupNewMenu class=tool-svg style="flex-shrink:0;"><svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg></div>
-                <button id=btnGroupSend style="padding:9px 22px;border:none;border-radius:22px;background:linear-gradient(135deg,#a29bfe,#6c5ce7);color:white;font-size:14px;font-weight:bold;cursor:pointer;flex-shrink:0;">发送</button>
+            <!-- 输入栏：完全仿照单聊 -->
+            <div class=chat-input>
+                <div id=btnGroupSticker class=tool-svg><svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg></div>
+                <div id=btnGroupMic class=tool-svg><svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg></div>
+                <input type=text id=iptGroupMsg class=msg-input placeholder="输入消息..." autocomplete=off>
+                <div id=btnGroupLemon class=tool-svg title="让群成员AI回复"><svg viewBox="0 0 24 24" fill="none" stroke="#6c5ce7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5.172C10 3.782 8.423 2.679 6.5 3c-2.823.47-4.113 6.006-4 7 .08.703 1.725 1.722 3.656 1 1.261-.467 1.95-1.9 3.844-2.5"></path><path d="M14 5.172C14 3.782 15.577 2.679 17.5 3c2.823.47 4.113 6.006 4 7-.08.703-1.725 1.722-3.656 1-1.261-.467-1.95-1.9-3.844-2.5"></path><path d="M8 14v1a4 4 0 0 0 8 0v-1"></path><path d="M16 10.5h.01"></path><path d="M8 10.5h.01"></path></svg></div>
+                <div id=btnGroupNewMenu class=tool-svg><svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg></div>
+                <button id=btnGroupSend class=send-btn>发送</button>
             </div>
-            <!-- 快捷按钮行 -->
+            <!-- @全体 快捷按钮 -->
             <div style="padding:0 12px 6px;display:flex;gap:8px;">
                 <button id=btnGroupCallAll style="padding:5px 14px;border-radius:14px;border:none;background:#e8e4ff;color:#6c5ce7;font-size:12px;cursor:pointer;font-weight:bold;">@全体发言</button>
             </div>
-            <!-- 功能抽屉（+号展开） -->
-            <div id=groupMenuDrawer style="display:none;background:#f8f9fa;border-top:1px solid #eee;padding:12px 16px;">
-                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
-                    <div id=btnGroupRegen class=menu-icon-btn><div class=menu-icon-svg style="background:#a29bfe;"><svg width=16 height=16 viewBox="0 0 24 24" fill=none stroke=#fff stroke-width=2 stroke-linecap=round stroke-linejoin=round><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><polyline points="3 3 3 8 8 8"></polyline></svg></div><div class=menu-icon-text>重新生成</div></div>
-                    <div id=btnGroupUploadPic class=menu-icon-btn><div class=menu-icon-svg style="background:#f3e5f5;"><svg width=20 height=20 viewBox="0 0 24 24" fill=none stroke=#6c5ce7 stroke-width=2 stroke-linecap=round stroke-linejoin=round><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg></div><div class=menu-icon-text>图片</div><input type=file id=groupPicInput accept=image/* style=display:none;></div>
-                    <div id=btnGroupTransfer class=menu-icon-btn><div class=menu-icon-svg style="background:#f3e5f5;"><svg width=20 height=20 viewBox="0 0 24 24" fill=none stroke=#6c5ce7 stroke-width=2 stroke-linecap=round stroke-linejoin=round><line x1="6" y1="11" x2="18" y2="11"></line><line x1="6" y1="15" x2="18" y2="15"></line><polyline points="6 5 12 11 18 5"></polyline><line x1="12" y1="11" x2="12" y2="20"></line></svg></div><div class=menu-icon-text>转账</div></div>
-                    <div id=btnGroupRedPacket class=menu-icon-btn><div class=menu-icon-svg style="background:#ffefef;"><svg width=20 height=20 viewBox="0 0 24 24" fill=none stroke=#ff4d4f stroke-width=2 stroke-linecap=round stroke-linejoin=round><rect x="3" y="4" width="18" height="16" rx="2" ry="2"></rect><line x1="3" y1="10" x2="21" y2="10"></line><circle cx="12" cy="10" r="2"></circle></svg></div><div class=menu-icon-text>红包</div></div>
-                    <div id=btnGroupAiPic class=menu-icon-btn><div class=menu-icon-svg style="background:#e8f5e9;"><svg width=20 height=20 viewBox="0 0 24 24" fill=none stroke=#27ae60 stroke-width=2><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg></div><div class=menu-icon-text>AI生图</div></div>
+            <!-- 功能抽屉（仿单聊 newMenuDrawer） -->
+            <div id=groupMenuDrawer class=menu-drawer style="display:none;">
+                <div class=menu-grid>
+                    <div id=btnGroupRegen class=menu-icon-btn>
+                        <div class=menu-icon-svg style="background:#a29bfe;"><svg width=16 height=16 viewBox="0 0 24 24" fill=none stroke=#fff stroke-width=2 stroke-linecap=round stroke-linejoin=round><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><polyline points="3 3 3 8 8 8"></polyline></svg></div>
+                        <div class=menu-icon-text>重新生成</div>
+                    </div>
+                    <div id=btnGroupTakePhoto class=menu-icon-btn>
+                        <div class=menu-icon-svg style="background:#f3e5f5;"><svg width=20 height=20 viewBox="0 0 24 24" fill=none stroke=#6c5ce7 stroke-width=2 stroke-linecap=round stroke-linejoin=round><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg></div>
+                        <div class=menu-icon-text>拍照</div>
+                    </div>
+                    <div id=btnGroupUploadPic class=menu-icon-btn>
+                        <div class=menu-icon-svg style="background:#f3e5f5;"><svg width=20 height=20 viewBox="0 0 24 24" fill=none stroke=#6c5ce7 stroke-width=2 stroke-linecap=round stroke-linejoin=round><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg></div>
+                        <div class=menu-icon-text>图片</div>
+                        <input type=file id=groupPicInput accept=image/* style=display:none;>
+                    </div>
+                    <div id=btnGroupTransfer class=menu-icon-btn>
+                        <div class=menu-icon-svg style="background:#f3e5f5;"><svg width=20 height=20 viewBox="0 0 24 24" fill=none stroke=#6c5ce7 stroke-width=2 stroke-linecap=round stroke-linejoin=round><line x1="6" y1="11" x2="18" y2="11"></line><line x1="6" y1="15" x2="18" y2="15"></line><polyline points="6 5 12 11 18 5"></polyline><line x1="12" y1="11" x2="12" y2="20"></line></svg></div>
+                        <div class=menu-icon-text>转账</div>
+                    </div>
+                    <div id=btnGroupRedPacket class=menu-icon-btn>
+                        <div class=menu-icon-svg style="background:#ffefef;"><svg width=20 height=20 viewBox="0 0 24 24" fill=none stroke=#ff4d4f stroke-width=2 stroke-linecap=round stroke-linejoin=round><rect x="3" y="4" width="18" height="16" rx="2" ry="2"></rect><line x1="3" y1="10" x2="21" y2="10"></line><circle cx="12" cy="10" r="2"></circle></svg></div>
+                        <div class=menu-icon-text>红包</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -3981,6 +3994,11 @@ function redrawChat() {
             let rM = txt.match(/【回复】([\s\S]*)$/);
             let out = txt;
             if(rM) out = rM[1].trim();
+            // 过滤掉格式行：|日期|星期|学期| 等系统注入的时间行
+            out = out.replace(/^\|[^\n]*\|[^\n]*$/gm, ``).replace(/\n{3,}/g, `\n\n`).trim();
+            // 过滤掉 【】 状态行
+            out = out.replace(/^【[^】]*】[^\n]*$/gm, ``).replace(/^（[^）]*）$/gm, ``).trim();
+            if(!out) return; // 整条消息如果全是格式就跳过
             
             let lns = out.split(/\n+/).filter(x => x.trim() !== ``);
             if(lns.length === 1 && out.length > 30 && !out.includes(`[图片消息`)) { 
@@ -4198,15 +4216,26 @@ if($("btnCancelTakePhoto")) {
     $("btnCancelTakePhoto").onclick = () => $("takePhotoModal").style.display = "none";
 }
 if($("btnSendTakePhoto")) {
-    $("btnSendTakePhoto").onclick = () => {
+    $("btnSendTakePhoto").onclick = async () => {
         let txt = $("takePhotoInput").value.trim();
         if(!txt) { alert("请先描述一下你拍的内容哦！"); return; }
         let msgText = "[照片消息：" + txt + "]";
+        $("takePhotoModal").style.display = "none";
+        if(window._groupTakePhotoPending) {
+            window._groupTakePhotoPending = false;
+            let gp = groupData[currentGroupId];
+            if(gp) {
+                let uName=gp.myNick||`我`; let uAva=null; try{uAva=await localforage.getItem(`myI_global`);}catch(e){}
+                gp.messages.push({senderId:`user`,senderName:uName,avatar:uAva,content:msgText,time:Date.now()});
+                await _saveGroupData(); _renderGroupMsgs();
+            }
+            return;
+        }
         mkBub(msgText, "r");
         history.push({role: "user", content: msgText});
         ls.setItem("chatHistory", JSON.stringify(history));
+        await localforage.setItem(`chatHistory_`+currentChatId, JSON.stringify(history)).catch(()=>{});
         if(typeof updateListPreview === "function") updateListPreview();
-        $("takePhotoModal").style.display = "none";
     };
 }
 if($(`btnTransfer`)) {
@@ -4331,14 +4360,23 @@ if($(`btnConfirmPay`)) {
         } 
         currentPayTask = null;
         $(`payPwdInput`).value = ``; 
-        mkBub(msgText, `r`); 
-        
-        history.push({role: `user`, content: msgText}); 
-        ls.setItem(`chatHistory`, JSON.stringify(history)); 
-        
-        // 核心修复点：钱扣完、消息发完后，立刻同步进大仓库
-        let targetKey = `chatHistory_` + currentChatId;
-        await localforage.setItem(targetKey, JSON.stringify(history));
+        // 检查是否为群聊待发送
+        if(window._groupRedPacketPending || window._groupTransferPending) {
+            let gp = groupData[currentGroupId];
+            if(gp) {
+                let uName=gp.myNick||`我`; let uAva=null; try{uAva=await localforage.getItem(`myI_global`);}catch(e){}
+                gp.messages.push({senderId:`user`,senderName:uName,avatar:uAva,content:msgText,time:Date.now()});
+                await _saveGroupData(); _renderGroupMsgs(); renderGroupInMsgList().catch(()=>{});
+            }
+            window._groupRedPacketPending=false; window._groupTransferPending=false;
+        } else {
+            mkBub(msgText, `r`); 
+            history.push({role: `user`, content: msgText}); 
+            ls.setItem(`chatHistory`, JSON.stringify(history)); 
+            // 核心修复点：钱扣完、消息发完后，立刻同步进大仓库
+            let targetKey = `chatHistory_` + currentChatId;
+            await localforage.setItem(targetKey, JSON.stringify(history));
+        }
         if(currentChatId === `default`) {
             await localforage.setItem(`chatHistory`, JSON.stringify(history));
         }
@@ -5163,6 +5201,9 @@ function mkBub(txt, side, isT=false) {
 }
 
 function mkBubSync(txt, side) {
+    // 过滤系统格式行
+    txt = String(txt||``).replace(/^\|[^\n]*\|[^\n]*$/gm,``).replace(/^【[^】]*】[^\n]*$/gm,``).replace(/\n{3,}/g,`\n\n`).trim();
+    if(!txt) return;
     let row = document.createElement(`div`);
     row.className = `msg-row ` + (side===`l`?`row-left`:`row-right`);
     let b = document.createElement(`div`); b.className = `bubble ` + (side===`l`?`bub-left`:`bub-right`); 
@@ -5328,9 +5369,20 @@ window.deleteSticker = (event, index) =>{
     selectedStickers.clear(); renderStickers();
 };
 
-function sendSticker(url, name) {
-    let t = `[图片消息：` + url + `]\n(系统提示：我发送了一个名为"` + name + `"的表情包)`; 
-    mkBub(t, `r`); history.push({role: `user`, content: t}); ls.setItem(`chatHistory`, JSON.stringify(history)); updateListPreview(); toggleStickerDrawer(false);
+async function sendSticker(url, name) {
+    let t = `[图片消息：` + url + `]\n(系统提示：我发送了一个名为"` + name + `"的表情包)`;
+    toggleStickerDrawer(false);
+    if(window._groupStickerPending) {
+        window._groupStickerPending = false;
+        let gp = groupData[currentGroupId];
+        if(gp) {
+            let uName=gp.myNick||`我`; let uAva=null; try{uAva=await localforage.getItem(`myI_global`);}catch(e){}
+            gp.messages.push({senderId:`user`,senderName:uName,avatar:uAva,content:t,img:url,time:Date.now()});
+            await _saveGroupData(); _renderGroupMsgs();
+        }
+        return;
+    }
+    mkBub(t, `r`); history.push({role: `user`, content: t}); ls.setItem(`chatHistory`, JSON.stringify(history)); updateListPreview();
 }
 
 function renderStickers() {
@@ -10401,8 +10453,18 @@ ${myNick}刚刚被你发现在偷翻你的手机，TA正在看你的【${section
         if($(`cfgMyP`)) $(`cfgMyP`).value = originalGetItem.call(ls,`cMP_`+targetId)||``;
         if($(`cfgRem`)) $(`cfgRem`).value = originalGetItem.call(ls,`cR_`+targetId)||``;
         if($(`cfgBubbleCss`)) $(`cfgBubbleCss`).value = originalGetItem.call(ls,`cBubbleCss_`+targetId)||``;
-        if($(`roomTitle`)) $(`roomTitle`).innerText = originalGetItem.call(ls,`cN_`+targetId)||``;
+        let _charName = originalGetItem.call(ls,`cN_`+targetId)||``;
+        if($(`roomTitle`)) $(`roomTitle`).innerText = _charName;
         ls.setItem(`chatHistory_`+targetId, JSON.stringify(newHist));
+        // 加载头像（异步，避免卡顿）
+        (async()=>{
+            try {
+                let _ava = await localforage.getItem(`aiI_`+targetId) || originalGetItem.call(ls,`aiI_`+targetId);
+                window.currentLoadedAiI = _ava || ``;
+                if($(`aiPreview`)) { $(`aiPreview`).style.backgroundImage=_ava?`url(${_ava})`:`none`; $(`aiPreview`).innerText=_ava?``:``; }
+                if($(`spyCharAvatar`)) { $(`spyCharAvatar`).style.backgroundImage=_ava?`url(${_ava})`:`none`; }
+            } catch(e){}
+        })();
         if(typeof redrawChat === `function`) redrawChat();
         showScreen(`scrRoom`);
         setTimeout(()=>{ if(msgs) msgs.scrollTop=msgs.scrollHeight; },150);
@@ -10803,7 +10865,9 @@ async function renderGroupList() {
         let preview=_getGroupPreview(g);
         let avaHtml=g.avatar?`<div class=avatar-list style="background:url(${g.avatar}) center/cover no-repeat;font-size:0;"></div>`:`<div class=avatar-list style="background:#e8e4ff;display:flex;align-items:center;justify-content:center;font-size:22px;">👥</div>`;
         let noticeHtml = g.notice ? `<div style="font-size:11px;color:#a29bfe;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📢 ${g.notice}</div>` : ``;
-        div.innerHTML=`${avaHtml}<div class=chat-info><div class=chat-name>${g.name||`群聊`}</div><div class=chat-preview>${preview}</div>${noticeHtml}</div>`;
+        // 联系人页：只显示群公告（有则显示，无则空白）
+        let contactNotice = g.notice ? `<div class=chat-preview style="color:#a29bfe;">📢 ${g.notice}</div>` : `<div class=chat-preview style="color:#ccc;">暂无公告</div>`;
+        div.innerHTML=`${avaHtml}<div class=chat-info><div class=chat-name>${g.name||`群聊`}</div>${contactNotice}</div>`;
         div.onclick=()=>openGroupRoom(gid);
         container.appendChild(div);
     }
@@ -11386,7 +11450,7 @@ ${charRel ? `【关系设定】${charRel}` : ``}
 请写出那段没发出去的内容：
 - 真实暴露你没有公开说的情绪或想法
 - 可以比发出去的版本更直接、更脆弱、或更复杂
-- 字数不限，完整写完，第一人称，直接输出不加前缀`;
+- 字数控制在100字以内，情感真实，第一人称，直接输出不加前缀`;
 
     try {
         let resp = await fetch(pxy, {
@@ -11467,6 +11531,8 @@ ${recentMsgs}
                 });
                 let dat = await resp.json();
                 let reply = (dat.choices?.[0]?.message?.content||``).trim();
+                // 过滤格式行
+                reply = reply.replace(/^\|[^\n]*\|[^\n]*$/gm,``).replace(/^【[^】]*】[^\n]*$/gm,``).replace(/\n{3,}/g,`\n\n`).trim();
                 reply = reply.replace(/^【[^】]*】/,``).replace(/^\[.*?\]/,``).trim();
                 if(!reply) continue;
                 let ava = null; try { ava=await localforage.getItem(`aiI_`+m.id); } catch(e) {}
@@ -11879,7 +11945,7 @@ setTimeout(() => {
         for(let m of charMembers) {
             // 从单聊设置读取人设（按单聊的key格式）
             let charName = originalGetItem.call(ls,`cN_`+m.id) || m.name;
-            let charAP = (originalGetItem.call(ls,`cAP_`+m.id) || originalGetItem.call(ls,`cAP`) || ``).slice(0,400);
+            let charAP = originalGetItem.call(ls,`cAP_`+m.id) || originalGetItem.call(ls,`cAP`) || ``;
             let charRel = originalGetItem.call(ls,`cR_`+m.id) || ``;
             let myNickInChat = originalGetItem.call(ls,`cMyN_`+m.id) || g.myNick || `对方`;
 
@@ -11905,7 +11971,14 @@ setTimeout(() => {
                     if(h) refHist = typeof h===`string`?JSON.parse(h):h;
                 } catch(e) {}
                 if(refHist.length) {
-                    let samples = refHist.slice(-memRefCount).filter(mm=>mm.role===`assistant`).map(mm=>String(mm.content||``).replace(/【[\s\S]*?】/g,``).replace(/^\[.*?\]/,``).trim().slice(0,60));
+                    let samples = refHist.slice(-memRefCount).filter(mm=>mm.role===`assistant`).map(mm=>{
+                        let txt = String(mm.content||``);
+                        // 提取【回复】后的内容，去除所有状态标记
+                        let replyMatch = txt.match(/【回复】([\s\S]*)$/);
+                        if(replyMatch) txt = replyMatch[1];
+                        txt = txt.replace(/【[\s\S]*?】[^\n]*/g,``).replace(/\[[^\]]*\]/g,``).replace(/^[|｜].*/gm,``).trim();
+                        return txt.slice(0,80);
+                    }).filter(s=>s.length>0);
                     if(samples.length) privateCtx += `\n【${refName}的说话风格参考（私聊历史）】\n${samples.join(`\n`)}`;
                 }
             }
@@ -11918,12 +11991,13 @@ ${npcCtx}${wbText}${timeCtx}${privateCtx}
 【当前群聊（${g.name||`群聊`}）最近消息】
 ${recentGroupMsgs}
 
-以${charName}的真实性格和说话风格，自然地回复这段群聊。
-规则：
-- 完全按你的人设性格发言，高冷就简短，话多就多说
-- 参考私聊风格中的说话方式，不要改变性格
-- 不要输出任何格式标记、前缀或角色标签
-- 直接输出你要说的话，字数由性格决定`;
+以${charName}的真实性格和说话风格自然回复群聊。
+【绝对禁止】：不得输出【】、《》、|日期|、(状态) 等任何格式标记，不得写前缀。
+【发言规则】：
+- 话少的人（高冷/内敛）：直接一句话或几个字
+- 话多的人（活泼/话唠）：分3-5条发送，每条换一行，每条一句话，就像真人发消息一样
+- 内容完全符合你的人设性格和当前聊天语境
+- 只输出你要说的话，绝不加任何角色名或说明`;
 
             try {
                 let resp = await fetch(pxy, {
@@ -12035,51 +12109,33 @@ if($(`groupPicInput`)) $(`groupPicInput`).onchange = async function() {
     this.value=``;
 };
 
-// 群聊转账
+// 群聊转账 - 复用单聊的 transferModal
 if($(`btnGroupTransfer`)) $(`btnGroupTransfer`).onclick = () => {
-    let amount = prompt(`给哪位成员转账多少？格式：姓名 金额\n例如：方煜 520`);
-    if(!amount) return;
-    let g = groupData[currentGroupId]; if(!g) return;
-    let uName = g.myNick || `我`;
-    let [name, amt] = amount.split(/\s+/);
-    let msg = `[转账给${name||`全体`}：¥${parseFloat(amt)||0}]`;
-    (async()=>{
-        let uAva=null; try{uAva=await localforage.getItem(`myI_global`);}catch(e){}
-        g.messages.push({senderId:`user`,senderName:uName,avatar:uAva,content:msg,time:Date.now()});
-        await _saveGroupData(); _renderGroupMsgs();
-        if($(`groupMenuDrawer`)) $(`groupMenuDrawer`).style.display=`none`;
-    })();
+    if($(`groupMenuDrawer`)) $(`groupMenuDrawer`).style.display=`none`;
+    // 设置 transferModal 的确认按钮指向群聊发送
+    window._groupTransferPending = true;
+    if($(`transferAmount`)) $(`transferAmount`).value = ``;
+    if($(`transferNote`)) $(`transferNote`).value = ``;
+    if($(`transferModal`)) $(`transferModal`).style.display = `flex`;
 };
 
-// 群聊红包
+// 群聊红包 - 复用单聊的 redPacketModal
 if($(`btnGroupRedPacket`)) $(`btnGroupRedPacket`).onclick = () => {
-    let amount = prompt(`发红包金额和留言：格式：金额 留言\n例如：88.88 大家抢红包啦！`);
-    if(!amount) return;
-    let g = groupData[currentGroupId]; if(!g) return;
-    let uName = g.myNick || `我`;
-    let parts = amount.split(/\s+/);
-    let amt = parseFloat(parts[0])||8.88;
-    let note = parts.slice(1).join(` `) || `恭喜发财！`;
-    (async()=>{
-        let uAva=null; try{uAva=await localforage.getItem(`myI_global`);}catch(e){}
-        g.messages.push({senderId:`user`,senderName:uName,avatar:uAva,content:`🧧 [群红包：¥${amt} ${note}]`,time:Date.now()});
-        await _saveGroupData(); _renderGroupMsgs();
-        if($(`groupMenuDrawer`)) $(`groupMenuDrawer`).style.display=`none`;
-    })();
+    if($(`groupMenuDrawer`)) $(`groupMenuDrawer`).style.display=`none`;
+    window._groupRedPacketPending = true;
+    if($(`redPacketAmount`)) $(`redPacketAmount`).value = ``;
+    if($(`redPacketNote`)) $(`redPacketNote`).value = `恭喜发财，大吉大利`;
+    if($(`rpCoverPreview`)) $(`rpCoverPreview`).style.display=`none`;
+    window.tempRpCoverUrl = ``;
+    if($(`redPacketModal`)) $(`redPacketModal`).style.display = `flex`;
 };
 
-// 群聊AI生图（文字描述）
-if($(`btnGroupAiPic`)) $(`btnGroupAiPic`).onclick = () => {
-    let desc = prompt(`描述要生成的图片内容：`);
-    if(!desc) return;
-    let g = groupData[currentGroupId]; if(!g) return;
-    let uName = g.myNick || `我`;
-    (async()=>{
-        let uAva=null; try{uAva=await localforage.getItem(`myI_global`);}catch(e){}
-        g.messages.push({senderId:`user`,senderName:uName,avatar:uAva,content:`[AI生图：${desc}]`,time:Date.now()});
-        await _saveGroupData(); _renderGroupMsgs();
-        if($(`groupMenuDrawer`)) $(`groupMenuDrawer`).style.display=`none`;
-    })();
+// 群聊拍照 - 复用单聊的 takePhotoModal
+if($(`btnGroupTakePhoto`)) $(`btnGroupTakePhoto`).onclick = () => {
+    if($(`groupMenuDrawer`)) $(`groupMenuDrawer`).style.display=`none`;
+    window._groupTakePhotoPending = true;
+    if($(`takePhotoInput`)) $(`takePhotoInput`).value = ``;
+    if($(`takePhotoModal`)) $(`takePhotoModal`).style.display = `flex`;
 };
 
 // 群聊重新生成（让最后发言的AI成员重新说）
@@ -12099,47 +12155,27 @@ if($(`btnGroupRegen`)) $(`btnGroupRegen`).onclick = async () => {
     if($(`groupMenuDrawer`)) $(`groupMenuDrawer`).style.display=`none`;
 };
 
-// 群聊语音按钮（显示录音说明）
+// 群聊语音按钮 - 复用单聊语音录制UI
 if($(`btnGroupMic`)) $(`btnGroupMic`).onclick = () => {
-    let desc = prompt(`输入语音内容（文字转语音消息）：`);
-    if(!desc) return;
-    let g = groupData[currentGroupId]; if(!g) return;
-    let uName = g.myNick || `我`;
-    (async()=>{
-        let uAva=null; try{uAva=await localforage.getItem(`myI_global`);}catch(e){}
-        let words = desc.length;
-        let secs = Math.max(1, Math.round(words * 0.4));
-        g.messages.push({senderId:`user`,senderName:uName,avatar:uAva,content:`🎤 [语音 ${secs}″] ${desc}`,time:Date.now()});
-        await _saveGroupData(); _renderGroupMsgs();
-    })();
+    // 触发单聊的语音模态或直接用文字输入
+    if($(`voiceModal`) || $(`btnMic`)) {
+        // 若有语音modal，复用它，pending标识
+        window._groupVoicePending = true;
+        if($(`voiceModal`)) $(`voiceModal`).style.display = `flex`;
+        else {
+            // 若没有语音modal，用简单文字输入
+            let vt = $(`voiceInputModal`);
+            if(vt) { window._groupVoicePending=true; vt.style.display=`flex`; }
+        }
+    }
 };
 
-// 群聊表情包按钮
+// 群聊表情包按钮 - 复用单聊的表情包面板
 if($(`btnGroupSticker`)) $(`btnGroupSticker`).onclick = () => {
-    // 如果有单聊的表情包系统，复用；否则选一个emoji
-    if(typeof showStickerPanel === `function`) {
-        // 暂存回调
-        window._stickerCallback = (stickerUrl) => {
-            let g = groupData[currentGroupId]; if(!g) return;
-            let uName = g.myNick||`我`;
-            (async()=>{
-                let uAva=null; try{uAva=await localforage.getItem(`myI_global`);}catch(e){}
-                g.messages.push({senderId:`user`,senderName:uName,avatar:uAva,content:`[表情包]`,img:stickerUrl,time:Date.now()});
-                await _saveGroupData(); _renderGroupMsgs();
-            })();
-        };
-        showStickerPanel();
-    } else {
-        let emoji = prompt(`输入要发送的表情（或表情包描述）：`);
-        if(!emoji) return;
-        let g = groupData[currentGroupId]; if(!g) return;
-        let uName = g.myNick||`我`;
-        (async()=>{
-            let uAva=null; try{uAva=await localforage.getItem(`myI_global`);}catch(e){}
-            g.messages.push({senderId:`user`,senderName:uName,avatar:uAva,content:emoji,time:Date.now()});
-            await _saveGroupData(); _renderGroupMsgs();
-        })();
-    }
+    window._groupStickerPending = true;
+    // 打开单聊的表情包面板
+    if(typeof showStickerPanel === `function`) showStickerPanel();
+    else if($(`btnOpenSticker`)) $(`btnOpenSticker`).click();
 };
 
 // ===== 群聊消息长按菜单 =====
