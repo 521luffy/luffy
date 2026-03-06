@@ -1,4 +1,6 @@
-﻿<!DOCTYPE html>
+﻿小手机 v9fix10 完整源码
+12671 行 | 661167 字节
+<!DOCTYPE html>
 <html>
 <head>
 <meta charset=utf-8>
@@ -2463,8 +2465,10 @@ function getPreviewText(histArray) {
         }
     }
     txt = txt.replace(/「引用：.*?」\n/g, ``).replace(/【.*?】/g, ``).replace(/\[图片消息：.*?\][\s\S]*/g, `[表情包]`).trim();
-    // 过滤掉 |日期|星期| 格式的污染行
-    txt = txt.replace(/^\|[^|]*\|[^|]*\|.*$/gm, ``).trim();
+    // 过滤掉所有 |日期|/|时间| 格式的污染行（单竖线也过滤）
+    txt = txt.replace(/^\|[^\n]*$/gm, ``).trim();
+    // 过滤掉 【状态标签】行
+    txt = txt.replace(/^【[^】]+】[^\n]*$/gm, ``).trim();
     // 如果过滤后为空，从历史倒数第二条找
     if(!txt && histArray.length > 1) {
         let prev = histArray[histArray.length - 2];
@@ -2473,6 +2477,10 @@ function getPreviewText(histArray) {
     return txt.length > 15 ? txt.substring(0, 15) + `...` : (txt || `你们已成为好友，请开始聊天吧！`);
 }
 async function updateListPreview() {
+    // 记录最后聊天时间戳（用于消息列表排序）
+    let _now = String(Date.now());
+    try { ls.setItem(`lastChatTime_`+currentChatId, _now); } catch(e){}
+
     let p = $(`chatPreview`);
     let savedHist = await localforage.getItem(`chatHistory_default`) || await localforage.getItem(`chatHistory`) || originalGetItem.call(ls, `chatHistory_default`);
     let defHist = savedHist ? (typeof savedHist === 'string' ? JSON.parse(savedHist) : savedHist) : [];
@@ -2831,53 +2839,19 @@ async function triggerCaughtMessage() {
         reply=reply.replace(/^【[^】]*】/g,``).replace(/^(我|说|答|回复)[:：]/,``).replace(/^\|[^\n]*\|[^\n]*$/gm,``).trim();
         if(!reply) return;
 
-        // 存入该char独立历史，并更新history全局变量
-        let newHist=[...targetHist,{role:`assistant`,content:reply}];
+        // 存入该char独立历史
+        let newHist=[...targetHist,{role:`assistant`,content:reply,ts:Date.now()}];
         await localforage.setItem(`chatHistory_`+targetId,JSON.stringify(newHist)).catch(()=>{});
         ls.setItem(`chatHistory_`+targetId,JSON.stringify(newHist));
-        // 预设 currentChatId 和 history，让 redrawChat 能读到正确内容
-        currentChatId = targetId;
-        history = newHist;
 
-        // === 复用"去对峙"方式：找chatItem并click，完整加载一切 ===
-        let chatItemsAll=document.querySelectorAll(`#listContent .chat-item`);
-        let clicked=false;
-        for(let i=0;i<chatItemsAll.length;i++){
-            if(chatItemsAll[i].style.display===`none`) continue;
-            let nameEl=chatItemsAll[i].querySelector(`.chat-name`);
-            if(nameEl && nameEl.innerText.trim()===charName){chatItemsAll[i].click(); clicked=true; break;}
-        }
-        if(!clicked){
-            // 手动加载聊天室（chatItem未找到时走这里）
-            currentChatId=targetId; history=newHist;
-            if($(`cfgName`)) $(`cfgName`).value=charAP;
-            if($(`cfgName`) && $(`cfgName`).id===`cfgName`) $(`cfgName`).value=originalGetItem.call(ls,`cN_`+targetId)||``;
-            if($(`roomTitle`)) $(`roomTitle`).innerText=charName;
-            // 配置房间设置
-            if($(`cfgAiP`)) $(`cfgAiP`).value=charAP;
-            if($(`cfgMyName`)) $(`cfgMyName`).value=(await localforage.getItem(`cMyN_`+targetId).catch(()=>``))||originalGetItem.call(ls,`cMyN_`+targetId)||``;
-            if($(`cfgMyP`)) $(`cfgMyP`).value=originalGetItem.call(ls,`cMP_`+targetId)||``;
-            if($(`cfgRem`)) $(`cfgRem`).value=originalGetItem.call(ls,`cR_`+targetId)||``;
-            let _ava=await localforage.getItem(`aiI_`+targetId).catch(()=>null)||originalGetItem.call(ls,`aiI_`+targetId);
-            window.currentLoadedAiI=_ava||``;
-            if($(`aiPreview`)){$(`aiPreview`).style.backgroundImage=_ava?`url(${_ava})`:`none`;$(`aiPreview`).innerText=_ava?``:`👤`;}
-            if($(`spyCharAvatar`)){$(`spyCharAvatar`).style.backgroundImage=_ava?`url(${_ava})`:`none`;}
-            if(typeof redrawChat===`function`) redrawChat();
-            showScreen(`scrRoom`);
-        }
-        // 等待room切换完成后滚到底（不重复渲染，redrawChat已经渲染了newHist）
-        setTimeout(async()=>{
-            // 确保头像正确更新
-            let _ava2=await localforage.getItem(`aiI_`+targetId).catch(()=>null)||originalGetItem.call(ls,`aiI_`+targetId);
-            if(_ava2) {
-                window.currentLoadedAiI=_ava2;
-                if($(`aiPreview`)){$(`aiPreview`).style.backgroundImage=`url(${_ava2})`;$(`aiPreview`).innerText=``;}
-            }
-            // 重绘聊天以确保最新消息可见（此时history已是newHist）
-            if(currentChatId===targetId && typeof redrawChat===`function`) redrawChat();
+        // === 使用全局 loadCharRoom 精确加载目标角色聊天室（不依赖DOM）===
+        await window.loadCharRoom(targetId, newHist);
+        setTimeout(()=>{
             if(msgs) msgs.scrollTop=msgs.scrollHeight;
             if(typeof updateListPreview===`function`) updateListPreview();
-        },600);
+            if(typeof renderContacts===`function`) renderContacts();
+            renderGroupInMsgList().catch(()=>{});
+        }, 200);
 
     } catch(e){console.warn(`triggerCaughtMessage error:`,e);}
     if($(`catchLoadingTip`)) $(`catchLoadingTip`).style.display=`none`;
@@ -2976,6 +2950,10 @@ async function renderContacts() {
     // 同步读取 localStorage 中的最后消息时间戳
     contactsSorted.sort((a, b) => {
         let getLastTime = (id) => {
+            // 优先使用专门的lastChatTime_时间戳（每次发消息时更新）
+            let t = Number(originalGetItem.call(ls, `lastChatTime_`+id) || 0);
+            if(t) return t;
+            // 回退：读history中最后一条消息的时间
             let h = originalGetItem.call(ls, `chatHistory_`+id);
             if(!h) return 0;
             try {
@@ -3069,6 +3047,57 @@ async function renderContacts() {
     isListRendering = false;
     if(typeof _sortMsgListByTime===`function`) _sortMsgListByTime();
 }
+
+// === 全局加载角色聊天室函数（被抓包等场景使用）===
+window.loadCharRoom = async function(charId, preloadHistory) {
+    let cid = charId;
+    let cname = originalGetItem.call(ls, `cN_`+cid) || cid;
+    currentChatId = cid;
+    if(preloadHistory) history = preloadHistory;
+    $(`cfgName`).value = cname;
+    $(`cfgRem`).value = originalGetItem.call(ls, `cR_`+cid) || ``;
+    let _cMyN_c = (window._nameCache && window._nameCache[cid]) || await localforage.getItem(`cMyN_`+cid) || originalGetItem.call(ls, `cMyN_`+cid) || ``;
+    $(`cfgMyName`).value = _cMyN_c;
+    if(_cMyN_c) { if(!window._nameCache) window._nameCache={}; window._nameCache[cid]=_cMyN_c; }
+    $(`cfgAiP`).value = originalGetItem.call(ls, `cAP_`+cid) || ``;
+    $(`cfgMyP`).value = originalGetItem.call(ls, `cMP_`+cid) || ``;
+    if($(`cfgBubbleCss`)) $(`cfgBubbleCss`).value = originalGetItem.call(ls, `cBubbleCss_`+cid) || ``;
+    let ctxVal = originalGetItem.call(ls, `cCtx_`+cid);
+    if(ctxVal) $(`cfgCtx`).value = ctxVal;
+    else $(`cfgCtx`).value = originalGetItem.call(ls, `cCtx`) || 100;
+    let tVal = originalGetItem.call(ls, `cT_`+cid);
+    if(tVal !== null) $(`cfgTime`).checked = tVal===`true`;
+    else $(`cfgTime`).checked = originalGetItem.call(ls, `cT`) !== `false`;
+    let aMemVal = originalGetItem.call(ls, `cAMem_`+cid);
+    if(aMemVal !== null) $(`cfgAutoMem`).checked = aMemVal===`true`;
+    else $(`cfgAutoMem`).checked = originalGetItem.call(ls, `cAMem`) === `true`;
+    let memTVal = originalGetItem.call(ls, `cMemT_`+cid);
+    if(memTVal) $(`cfgMemTrig`).value = memTVal;
+    else $(`cfgMemTrig`).value = originalGetItem.call(ls, `cMemT`) || 10;
+    let memPVal = originalGetItem.call(ls, `cMemP_`+cid);
+    if(memPVal) $(`cfgMemPmt`).value = memPVal;
+    else $(`cfgMemPmt`).value = originalGetItem.call(ls, `cMemP`) || ``;
+    if($(`cfgGenderAI`)) { let gv=originalGetItem.call(ls,`cGenderAI_`+cid); if(gv) $(`cfgGenderAI`).value=gv; }
+    let wbList = []; try { let wb=await localforage.getItem(`wbData`)||[]; wbList=Array.isArray(wb)?wb:JSON.parse(wb||`[]`); } catch(e){}
+    if(wbList.length) { /* worldbook loaded */ }
+    if($(`roomTitle`)) $(`roomTitle`).innerText = cname;
+    let _ava = await localforage.getItem(`aiI_`+cid).catch(()=>null) || originalGetItem.call(ls,`aiI_`+cid);
+    window.currentLoadedAiI = _ava||``;
+    if($(`aiPreview`)) { $(`aiPreview`).style.backgroundImage=_ava?`url(${_ava})`:`none`; $(`aiPreview`).innerText=_ava?``:`👤`; }
+    if($(`spyCharAvatar`)) $(`spyCharAvatar`).style.backgroundImage=_ava?`url(${_ava})`:`none`;
+    if(!preloadHistory) {
+        let savedH = await localforage.getItem(`chatHistory_`+cid).catch(()=>null) || originalGetItem.call(ls,`chatHistory_`+cid);
+        history = savedH ? (typeof savedH===`string`?JSON.parse(savedH):(Array.isArray(savedH)?savedH:[])) : [];
+    }
+    let savedAiStatus = await localforage.getItem(`aiStatus_`+cid).catch(()=>null);
+    if(savedAiStatus) { let s=typeof savedAiStatus===`string`?JSON.parse(savedAiStatus):savedAiStatus; if(typeof applyVis===`function`) await applyVis(); }
+    if(typeof msgs!==`undefined`&&msgs) msgs.innerHTML=``;
+    redrawChat();
+    showScreen(`scrRoom`);
+    setTimeout(()=>{ if(msgs) msgs.scrollTop=msgs.scrollHeight; },100);
+};
+
+
 
 
 renderContacts();
@@ -10229,8 +10258,13 @@ if($(`momentList`)) {
             let pid = userCmBtn.dataset.id;
             // 找到对应的写评论输入框并切换显示
             // 直接在当前卡片内找 writeBox
-            let card2 = e.target.closest(`[data-id="${pid}"]`) || document.querySelector(`[data-id="${pid}"]`);
-            let writeBox = card2 ? card2.querySelector(`.momentWriteBox`) : document.querySelector(`.momentWriteBox[data-id="${pid}"]`);
+            // 找到包含该post的父卡片（不是按钮本身）
+            let writeBox = document.querySelector(`.momentWriteBox[data-id="${pid}"]`);
+            if(!writeBox) {
+                // fallback: 找最近的ancestor的writeBox
+                let par = e.target.parentElement;
+                while(par && !writeBox) { writeBox = par.querySelector(`.momentWriteBox[data-id="${pid}"]`); par=par.parentElement; }
+            }
             if(writeBox) {
                 let isHidden = writeBox.style.display === `none` || !writeBox.style.display;
                 writeBox.style.display = isHidden ? `block` : `none`;
@@ -10882,6 +10916,12 @@ async function _loadGroupData() {
     try { let dl=originalGetItem.call(ls,`groupData`); if(dl) groupData=JSON.parse(dl); } catch(e) { groupData={}; }
 }
 async function _saveGroupData() {
+    // 更新当前群聊的最后活跃时间戳（用于消息列表排序）
+    if(currentGroupId && groupData[currentGroupId]) {
+        let g=groupData[currentGroupId];
+        let t=g.messages&&g.messages.length?Number(g.messages[g.messages.length-1].time||Date.now()):Date.now();
+        try { ls.setItem(`lastChatTime_group_`+currentGroupId, String(t)); } catch(e){}
+    }
     await localforage.setItem(`groupData`,groupData).catch(()=>{});
     try { originalSetItem.call(ls,`groupData`,JSON.stringify(groupData)); } catch(e) {}
 }
@@ -11017,7 +11057,7 @@ async function renderGroupInMsgList() {
         let preview=_getGroupPreview(g);
         let div=document.createElement(`div`);
         div.className=`chat-item group-msg-item`;
-        div.dataset.lasttime=lastMsg?Number(lastMsg.time)||0:0;
+        div.dataset.lasttime=Number(originalGetItem.call(ls,`lastChatTime_group_`+gid)||0) || (lastMsg?Number(lastMsg.time)||0:0);
         let avaHtml=g.avatar?`<div class=avatar-list style="background:url(${g.avatar}) center/cover no-repeat;font-size:0;"></div>`:`<div class=avatar-list style="background:#e8e4ff;display:flex;align-items:center;justify-content:center;font-size:22px;">👥</div>`;
         div.innerHTML=`${avaHtml}<div class=chat-info><div class=chat-name>${g.name||`群聊`}</div><div class=chat-preview>${preview}</div></div>`;
         div.onclick=()=>openGroupRoom(gid);
@@ -12309,8 +12349,21 @@ if($(`btnGroupMic`)) $(`btnGroupMic`).onclick = () => {
 if($(`btnGroupSticker`)) $(`btnGroupSticker`).onclick = async () => {
     // 直接显示群聊专用表情包选择器（避免单聊drawer定位问题）
     let existing=$(`groupStickerOverlay`); if(existing){existing.remove();return;}
-    let stickers=[]; try{let s=await localforage.getItem(`stickerList`); stickers=s?JSON.parse(s):[];}catch(e){}
-    if(!stickers.length){alert(`还没有添加表情包，请先在单聊页面→+号→表情包 添加`);return;}
+    let stickers=[];
+    // 读取与单聊相同的表情包数据源 (myPhoneStickers)
+    let _rawStickers=null;
+    try{_rawStickers=await localforage.getItem(`myPhoneStickers`);}catch(e){}
+    if(!_rawStickers) try{_rawStickers=await localforage.getItem(`stickerList`);}catch(e){}
+    if(_rawStickers){
+        let _parsed=typeof _rawStickers===`string`?JSON.parse(_rawStickers):_rawStickers;
+        stickers=Array.isArray(_parsed)?_parsed:Object.values(_parsed||{}).flat();
+    }
+    if(!stickers.length){
+        // 直接复用单聊的stickerDrawer
+        window._groupStickerPending=true;
+        if(typeof toggleStickerDrawer===`function`) toggleStickerDrawer(true);
+        return;
+    }
     let ov=document.createElement(`div`);
     ov.id=`groupStickerOverlay`;
     ov.style.cssText=`position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9000;display:flex;align-items:flex-end;justify-content:center;`;
@@ -12320,17 +12373,23 @@ if($(`btnGroupSticker`)) $(`btnGroupSticker`).onclick = async () => {
     let grid=document.createElement(`div`);
     grid.style.cssText=`display:grid;grid-template-columns:repeat(3,1fr);gap:8px;`;
     stickers.forEach(st=>{
+        let stickerUrl=st.url||st;
+        let stickerName=st.name||`表情包`;
+        if(!stickerUrl) return;
         let item=document.createElement(`div`);
-        item.style.cssText=`cursor:pointer;border-radius:12px;overflow:hidden;aspect-ratio:1;`;
+        item.style.cssText=`cursor:pointer;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;align-items:center;gap:4px;`;
         let img=document.createElement(`img`);
-        img.src=st.url||st; img.style.cssText=`width:100%;height:100%;object-fit:cover;`;
-        item.appendChild(img);
+        img.src=stickerUrl; img.style.cssText=`width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;pointer-events:none;`;
+        img.onerror=()=>{item.style.display=`none`;};
+        let nm=document.createElement(`div`);
+        nm.style.cssText=`font-size:10px;color:#666;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;`;
+        nm.innerText=stickerName;
+        item.appendChild(img); item.appendChild(nm);
         item.onclick=async(e)=>{
             e.stopPropagation();
             ov.remove();
             let g=groupData[currentGroupId]; if(!g) return;
             let uName=g.myNick||`我`; let uAva=null; try{uAva=await localforage.getItem(`myI_global`);}catch(e){}
-            let stickerUrl=st.url||st; let stickerName=st.name||`表情包`;
             let stickerText=`[图片消息：${stickerUrl}]\n(系统提示：我发送了一个名为"${stickerName}"的表情包)`;
             g.messages.push({senderId:`user`,senderName:uName,avatar:uAva,content:stickerText,img:stickerUrl,time:Date.now()});
             await _saveGroupData(); _renderGroupMsgs(); renderGroupInMsgList().catch(()=>{});
@@ -12491,12 +12550,31 @@ function showGroupCtxMenu(x, y, msg, msgIdx) {
     // 复制
     menu.appendChild(mkItem(`复制`, null, () => { navigator.clipboard.writeText(msg.content||``).catch(()=>{}); }));
 
-    // 编辑（任何消息都可以编辑）
+    // 编辑（使用与单聊相同的 editMsgModal，不用 prompt）
     let editDiv = mkItem(`编辑`, null, () => {
-        let nt = prompt(`编辑消息：`, msg.content||``); if(nt === null) return;
-        if(!g) return;
-        g.messages[msgIdx].content = nt;
-        _saveGroupData().then(() => _renderGroupMsgs());
+        // 复用单聊的编辑弹窗
+        let modal=$(`editMsgModal`);
+        let inp=$(`editMsgInput`);
+        if(!modal||!inp) {
+            // fallback
+            let nt=prompt(`编辑消息：`,msg.content||``); if(nt===null) return;
+            if(!g) return; g.messages[msgIdx].content=nt; _saveGroupData().then(()=>_renderGroupMsgs());
+            return;
+        }
+        inp.value=msg.content||``;
+        modal.style.display=`flex`;
+        // 临时覆盖确定按钮逻辑
+        let confirmBtn=$(`btnConfirmEdit`);
+        let origOnclick=confirmBtn.onclick;
+        confirmBtn.onclick=()=>{
+            let nt=inp.value; if(!nt) return;
+            modal.style.display=`none`;
+            confirmBtn.onclick=origOnclick; // 还原
+            if(!g) return; g.messages[msgIdx].content=nt; _saveGroupData().then(()=>_renderGroupMsgs());
+        };
+        let cancelBtn=$(`btnCancelEdit`);
+        let origCancel=cancelBtn.onclick;
+        cancelBtn.onclick=()=>{ modal.style.display=`none`; confirmBtn.onclick=origOnclick; cancelBtn.onclick=origCancel; };
     });
     menu.appendChild(editDiv);
 
