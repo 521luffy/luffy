@@ -978,24 +978,49 @@ class=back-btn>＜</span>
             </div>
             <span id=btnGroupSettings style="font-size:22px;cursor:pointer;padding:4px 8px;">☰</span>
         </div>
+        <!-- 群公告横幅（有公告时显示） -->
+        <div id=groupNoticeBanner style="display:none;background:linear-gradient(135deg,#ede9ff,#d8d0ff);padding:6px 14px;font-size:12px;color:#6c5ce7;position:relative;z-index:2;flex-shrink:0;cursor:pointer;" onclick="this.style.display='none'">
+            📢 <span id=groupNoticeBannerText></span> <span style="float:right;opacity:0.6;">×</span>
+        </div>
         <!-- 消息区 -->
         <div id=groupMsgs style="flex:1;overflow-y:auto;padding:12px 10px;display:flex;flex-direction:column;gap:10px;position:relative;z-index:1;"></div>
         <!-- 输入区 -->
         <div style="position:relative;z-index:2;background:rgba(255,255,255,0.95);border-top:1px solid #eee;flex-shrink:0;">
             <!-- 正在输入提示 -->
             <div id=groupTypingTip style="display:none;padding:3px 16px 0;font-size:12px;color:#a29bfe;font-style:italic;">对方正在输入中…</div>
+            <!-- 引用框 -->
+            <div id=groupQuoteBox style="display:none;background:#f8f4ff;border-left:3px solid #a29bfe;padding:6px 12px;margin:0 8px;border-radius:6px;font-size:12px;color:#666;position:relative;">
+                <span id=groupQuoteText style="display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:85%;"></span>
+                <span onclick="document.getElementById('groupQuoteBox').style.display='none';window._groupQuoteContent=''" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;color:#aaa;font-size:14px;">✖</span>
+            </div>
+            <!-- 主输入栏 -->
             <div style="padding:8px 12px;display:flex;align-items:center;gap:8px;">
+                <div id=btnGroupSticker class=tool-svg style="flex-shrink:0;"><svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg></div>
+                <div id=btnGroupMic class=tool-svg style="flex-shrink:0;"><svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg></div>
                 <input type=text id=iptGroupMsg style="flex:1;padding:9px 14px;border:1.5px solid #e0d8ff;border-radius:22px;font-size:14px;outline:none;background:white;" placeholder="输入消息..." autocomplete=off>
-                <!-- 小狗脑袋：移到发送按钮左边 -->
+                <!-- 小狗脑袋 -->
                 <div id=btnGroupLemon style="width:38px;height:38px;border-radius:50%;background:#ede9ff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;" title="让群成员AI回复">
                     <svg viewBox="0 0 24 24" fill="none" stroke="#6c5ce7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M10 5.172C10 3.782 8.423 2.679 6.5 3c-2.823.47-4.113 6.006-4 7 .08.703 1.725 1.722 3.656 1 1.261-.467 1.95-1.9 3.844-2.5"></path><path d="M14 5.172C14 3.782 15.577 2.679 17.5 3c2.823.47 4.113 6.006 4 7-.08.703-1.725 1.722-3.656 1-1.261-.467-1.95-1.9-3.844-2.5"></path><path d="M8 14v1a4 4 0 0 0 8 0v-1"></path><path d="M16 10.5h.01"></path><path d="M8 10.5h.01"></path></svg>
                 </div>
+                <div id=btnGroupNewMenu class=tool-svg style="flex-shrink:0;"><svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg></div>
                 <button id=btnGroupSend style="padding:9px 22px;border:none;border-radius:22px;background:linear-gradient(135deg,#a29bfe,#6c5ce7);color:white;font-size:14px;font-weight:bold;cursor:pointer;flex-shrink:0;">发送</button>
             </div>
-            <div style="padding:4px 12px 8px;display:flex;gap:8px;">
+            <!-- 快捷按钮行 -->
+            <div style="padding:0 12px 6px;display:flex;gap:8px;">
                 <button id=btnGroupCallAll style="padding:5px 14px;border-radius:14px;border:none;background:#e8e4ff;color:#6c5ce7;font-size:12px;cursor:pointer;font-weight:bold;">@全体发言</button>
             </div>
+            <!-- 功能抽屉（+号展开） -->
+            <div id=groupMenuDrawer style="display:none;background:#f8f9fa;border-top:1px solid #eee;padding:12px 16px;">
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+                    <div id=btnGroupRegen class=menu-icon-btn><div class=menu-icon-svg style="background:#a29bfe;"><svg width=16 height=16 viewBox="0 0 24 24" fill=none stroke=#fff stroke-width=2 stroke-linecap=round stroke-linejoin=round><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><polyline points="3 3 3 8 8 8"></polyline></svg></div><div class=menu-icon-text>重新生成</div></div>
+                    <div id=btnGroupUploadPic class=menu-icon-btn><div class=menu-icon-svg style="background:#f3e5f5;"><svg width=20 height=20 viewBox="0 0 24 24" fill=none stroke=#6c5ce7 stroke-width=2 stroke-linecap=round stroke-linejoin=round><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg></div><div class=menu-icon-text>图片</div><input type=file id=groupPicInput accept=image/* style=display:none;></div>
+                    <div id=btnGroupTransfer class=menu-icon-btn><div class=menu-icon-svg style="background:#f3e5f5;"><svg width=20 height=20 viewBox="0 0 24 24" fill=none stroke=#6c5ce7 stroke-width=2 stroke-linecap=round stroke-linejoin=round><line x1="6" y1="11" x2="18" y2="11"></line><line x1="6" y1="15" x2="18" y2="15"></line><polyline points="6 5 12 11 18 5"></polyline><line x1="12" y1="11" x2="12" y2="20"></line></svg></div><div class=menu-icon-text>转账</div></div>
+                    <div id=btnGroupRedPacket class=menu-icon-btn><div class=menu-icon-svg style="background:#ffefef;"><svg width=20 height=20 viewBox="0 0 24 24" fill=none stroke=#ff4d4f stroke-width=2 stroke-linecap=round stroke-linejoin=round><rect x="3" y="4" width="18" height="16" rx="2" ry="2"></rect><line x1="3" y1="10" x2="21" y2="10"></line><circle cx="12" cy="10" r="2"></circle></svg></div><div class=menu-icon-text>红包</div></div>
+                    <div id=btnGroupAiPic class=menu-icon-btn><div class=menu-icon-svg style="background:#e8f5e9;"><svg width=20 height=20 viewBox="0 0 24 24" fill=none stroke=#27ae60 stroke-width=2><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg></div><div class=menu-icon-text>AI生图</div></div>
+                </div>
+            </div>
         </div>
+
     </div>
 
     <!-- ===== 群聊设置页面 ===== -->
@@ -1079,7 +1104,7 @@ class=back-btn>＜</span>
             <!-- 新增：气泡CSS -->
             <div style="background:white;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
                 <div style="font-size:13px;color:#6c5ce7;font-weight:bold;margin-bottom:8px;">🫧 气泡CSS（可选）</div>
-                <textarea id=groupBubbleCss style="width:100%;height:80px;border:1.5px solid #e0d8ff;border-radius:10px;padding:8px;font-size:12px;resize:none;box-sizing:border-box;outline:none;" placeholder="输入群聊专属气泡CSS（参考好友设置里的气泡设置格式）"></textarea>
+                <textarea id=groupBubbleCss style="width:100%;height:80px;border:1.5px solid #e0d8ff;border-radius:10px;padding:8px;font-size:12px;resize:none;box-sizing:border-box;outline:none;" placeholder="输入群聊专属气泡CSS（格式参考好友设置→气泡设置，例如：background:#ffe0f0;color:#333;border-radius:8px;）"></textarea>
             </div>
 
             <button id=btnSaveGroupSettings style="padding:13px;border-radius:22px;border:none;background:linear-gradient(135deg,#a29bfe,#6c5ce7);color:white;font-size:15px;font-weight:bold;cursor:pointer;">💾 保存设置</button>
@@ -2763,7 +2788,7 @@ async function triggerCaughtMessage() {
         let resp = await fetch(pxy, {
             method:`POST`,
             headers:{'Content-Type':'application/json', Authorization:'Bearer '+key},
-            body: JSON.stringify({model:mod, max_tokens:500, messages:msgHistory})
+            body: JSON.stringify({model:mod, max_tokens:1500, messages:msgHistory})
         });
         let data = await resp.json();
         let reply = data.choices?.[0]?.message?.content || `（为什么你在偷看我手机！）`;
@@ -9961,7 +9986,7 @@ async function aiGenComment(postId, summoner, replyTo) {
 
     try {
         let resp = await fetch(pxy,{method:`POST`,headers:{'Content-Type':'application/json', Authorization:'Bearer '+key},
-            body:JSON.stringify({model:mod,max_tokens:500,messages:[{role:`user`,content:sysMsg}]})});
+            body:JSON.stringify({model:mod,max_tokens:1500,messages:[{role:`user`,content:sysMsg}]})});
         let data = await resp.json();
         let txt = data.choices?.[0]?.message?.content?.trim() || `（评论生成失败）`;
         return txt;
@@ -9985,7 +10010,7 @@ async function aiGenDraft(post) {
 
     try {
         let resp = await fetch(pxy,{method:`POST`,headers:{'Content-Type':'application/json', Authorization:'Bearer '+key},
-            body:JSON.stringify({model:mod,max_tokens:500,messages:[{role:`user`,content:sysMsg}]})});
+            body:JSON.stringify({model:mod,max_tokens:1500,messages:[{role:`user`,content:sysMsg}]})});
         let data = await resp.json();
         return data.choices?.[0]?.message?.content?.trim() || `（草稿生成失败）`;
     } catch(e) { return `（网络异常）`; }
@@ -10123,7 +10148,7 @@ if($(`momentList`)) {
             for(let s of allCommenters) {
                 let sysMsg=`你是${s.name}。${s.prompt?`性格：${s.prompt.slice(0,150)}`:``}你在看朋友圈，${post.author}刚发了一条："${post.text}"。以${s.name}的语气写一条朋友圈评论，20字以内，自然生动，直接输出不加任何前缀。`;
                 try{
-                    let resp=await fetch(pxy,{method:`POST`,headers:{[`Content-Type`]:`application/json`,Authorization:`Bearer `+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:500,messages:[{role:`user`,content:sysMsg}]})});
+                    let resp=await fetch(pxy,{method:`POST`,headers:{[`Content-Type`]:`application/json`,Authorization:`Bearer `+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:1500,messages:[{role:`user`,content:sysMsg}]})});
                     let dat=await resp.json();
                     let cmtxt=(dat.choices?.[0]?.message?.content||``).trim()||`（评论失败）`;
                     post.comments.push({author:s.name,text:cmtxt,time:new Date().toLocaleString()});
@@ -10366,6 +10391,21 @@ ${myNick}刚刚被你发现在偷翻你的手机，TA正在看你的【${section
             history = newHist;
             ls.setItem(`chatHistory_`+targetId, JSON.stringify(newHist));
         }
+        // 自动跳转到被抓包 char 的聊天室
+        currentChatId = targetId;
+        history = newHist;
+        // 加载 char 设置
+        if($(`cfgName`)) $(`cfgName`).value = originalGetItem.call(ls,`cN_`+targetId)||``;
+        if($(`cfgAiP`)) $(`cfgAiP`).value = originalGetItem.call(ls,`cAP_`+targetId)||``;
+        if($(`cfgMyName`)) $(`cfgMyName`).value = (await localforage.getItem(`cMyN_`+targetId).catch(()=>``))||originalGetItem.call(ls,`cMyN_`+targetId)||``;
+        if($(`cfgMyP`)) $(`cfgMyP`).value = originalGetItem.call(ls,`cMP_`+targetId)||``;
+        if($(`cfgRem`)) $(`cfgRem`).value = originalGetItem.call(ls,`cR_`+targetId)||``;
+        if($(`cfgBubbleCss`)) $(`cfgBubbleCss`).value = originalGetItem.call(ls,`cBubbleCss_`+targetId)||``;
+        if($(`roomTitle`)) $(`roomTitle`).innerText = originalGetItem.call(ls,`cN_`+targetId)||``;
+        ls.setItem(`chatHistory_`+targetId, JSON.stringify(newHist));
+        if(typeof redrawChat === `function`) redrawChat();
+        showScreen(`scrRoom`);
+        setTimeout(()=>{ if(msgs) msgs.scrollTop=msgs.scrollHeight; },150);
         updateListPreview();
     } catch(e) {
         console.warn(`triggerCaughtMessage error:`, e);
@@ -10488,13 +10528,13 @@ if($(`btnGenCharMoments`)) $(`btnGenCharMoments`).onclick = async () => {
                 r10.map(m => (m.role===`assistant`?name:`对方`) + `：` + String(m.content||``).replace(/【[\s\S]*?】/g,``).trim().slice(0,40)).join(`\n`);
         }
 
-        let sysMsg = `你是${name}。${charAP?`你的性格人设：${charAP.slice(0,250)}`:``}${recentCtx}\n\n现在请以${name}的真实性格和当前状态，写一条朋友圈正文（不超过60字），内容真实自然，与你的性格和近期状态吻合。直接输出正文，不加任何前缀或引号。`;
+        let sysMsg = `你是${name}。${charAP?`你的性格人设：${charAP.slice(0,250)}`:``}${recentCtx}\n\n现在请以${name}的真实性格和当前状态，写一条朋友圈。内容真实自然，结合最近聊天心境，长度根据性格自然决定。直接输出正文，不加任何前缀或引号。`;
 
         try {
             let resp = await fetch(pxy, {
                 method:`POST`,
                 headers:{[`Content-Type`]:`application/json`, Authorization:`Bearer `+key},
-                body:JSON.stringify({model:mod, temperature:tp, max_tokens:500, messages:[{role:`user`,content:sysMsg}]})
+                body:JSON.stringify({model:mod, temperature:tp, max_tokens:1500, messages:[{role:`user`,content:sysMsg}]})
             });
             let data = await resp.json();
             let postTxt = (data.choices?.[0]?.message?.content || ``).trim();
@@ -10615,7 +10655,7 @@ if($(`btnConfirmMomentUserPost`)) $(`btnConfirmMomentUserPost`).onclick = async 
                 let s={id:cb.dataset.id,name:cb.dataset.name,prompt:cb.dataset.prompt||``};
                 let sysMsg=`你是${s.name}。${s.prompt?`性格设定：${s.prompt.slice(0,200)}`:``}你在看朋友圈，${uName}发了一条："${txt}"。请以${s.name}的语气写一条评论，20字以内，自然生动，直接输出不加前缀。`;
                 try{
-                    let resp=await fetch(pxy,{method:`POST`,headers:{[`Content-Type`]:`application/json`,Authorization:`Bearer `+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:500,messages:[{role:`user`,content:sysMsg}]})});
+                    let resp=await fetch(pxy,{method:`POST`,headers:{[`Content-Type`]:`application/json`,Authorization:`Bearer `+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:1500,messages:[{role:`user`,content:sysMsg}]})});
                     let data=await resp.json();
                     let cmtxt=(data.choices?.[0]?.message?.content||``).trim()||`（评论生成失败）`;
                     newPost.comments.push({author:s.name,text:cmtxt,time:new Date().toLocaleString()});
@@ -10729,6 +10769,12 @@ async function openGroupRoom(gid) {
     if(bgEl) bgEl.style.backgroundImage=g.bg?`url(${g.bg})`:``;
     if($(`groupRoomTitle`)) $(`groupRoomTitle`).innerText=g.name||`群聊`;
     if($(`groupRoomCount`)) $(`groupRoomCount`).innerText=`${(g.members||[]).length}人`;
+    // 显示群公告
+    let banner=$(`groupNoticeBanner`), bannerTxt=$(`groupNoticeBannerText`);
+    if(banner && bannerTxt) {
+        if(g.notice) { bannerTxt.innerText=g.notice; banner.style.display=`block`; }
+        else { banner.style.display=`none`; }
+    }
     _renderGroupMsgs();
     showScreen(`scrGroupRoom`);
 }
@@ -10737,26 +10783,26 @@ async function openGroupRoom(gid) {
 async function renderGroupList() {
     await _loadGroupData();
     let container=$(`contactContent`); if(!container) return;
-    // 只清除群聊条目（class=group-item），不碰其他
+    // 清除旧群聊条目
     container.querySelectorAll(`.group-item`).forEach(el=>el.remove());
 
     let gids=Object.keys(groupData);
     if(!gids.length) return;
 
-    let sep=document.createElement(`div`);
-    sep.className=`group-item`;
-    sep.style.cssText=`font-size:12px;color:#aaa;padding:8px 16px 4px;font-weight:bold;border-top:1px solid #f0f0f0;`;
-    sep.textContent=`群聊`;
-    container.appendChild(sep);
-
-    for(let gid of gids) {
+    // 构建带时间的群聊条目，按最新消息时间排序后插入
+    let groupEntries = gids.map(gid=>{
         let g=groupData[gid];
+        let lastTime = (g.messages && g.messages.length) ? (g.messages[g.messages.length-1].time || 0) : 0;
+        return {gid, g, lastTime};
+    }).sort((a,b)=>b.lastTime - a.lastTime);
+
+    for(let {gid, g} of groupEntries) {
         let div=document.createElement(`div`);
         div.className=`chat-item group-item`;
         div.dataset.gid=gid;
         let preview=_getGroupPreview(g);
         let avaHtml=g.avatar?`<div class=avatar-list style="background:url(${g.avatar}) center/cover no-repeat;font-size:0;"></div>`:`<div class=avatar-list style="background:#e8e4ff;display:flex;align-items:center;justify-content:center;font-size:22px;">👥</div>`;
-        let noticeHtml = g.notice ? `<div style="font-size:11px;color:#a29bfe;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">[公告] ${g.notice}</div>` : ``;
+        let noticeHtml = g.notice ? `<div style="font-size:11px;color:#a29bfe;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📢 ${g.notice}</div>` : ``;
         div.innerHTML=`${avaHtml}<div class=chat-info><div class=chat-name>${g.name||`群聊`}</div><div class=chat-preview>${preview}</div>${noticeHtml}</div>`;
         div.onclick=()=>openGroupRoom(gid);
         container.appendChild(div);
@@ -10894,7 +10940,7 @@ if($(`btnGroupLemon`)) $(`btnGroupLemon`).onclick = async () => {
             let resp=await fetch(pxy,{
                 method:`POST`,
                 headers:{[`Content-Type`]:`application/json`,Authorization:`Bearer `+key},
-                body:JSON.stringify({model:mod,temperature:tp,max_tokens:600,messages:[{role:`user`,content:sysMsg}]})
+                body:JSON.stringify({model:mod,temperature:tp,max_tokens:1500,messages:[{role:`user`,content:sysMsg}]})
             });
             let dat=await resp.json();
             let reply=(dat.choices?.[0]?.message?.content||``).trim();
@@ -10944,6 +10990,8 @@ if($(`btnGroupSettings`)) $(`btnGroupSettings`).onclick = async () => {
         }
     }
     showScreen(`scrGroupSettings`);
+    // 触发新版设置初始化（世界书/记忆参考/时间/气泡CSS）
+    if(typeof window.openGroupSettings===`function`) window.openGroupSettings(currentGroupId);
 };
 if($(`btnGroupSettingsBack`)) $(`btnGroupSettingsBack`).onclick=()=>{if(currentGroupId) openGroupRoom(currentGroupId);};
 
@@ -11037,7 +11085,7 @@ window.aiGenComment=async function(postId,summoner,replyTo){
     let replyStr=replyTo?`你正在回复${replyTo}的评论。`:``;
     let sysMsg=`你是${summoner.name}。${summoner.prompt||``}你在看朋友圈，${post.author}发了一条："${post.text}"。${replyStr}请以${summoner.name}的语气写一条评论，20字以内，生动自然，直接输出不加引号或前缀。`;
     try{
-        let resp=await fetch(pxy,{method:`POST`,headers:{[`Content-Type`]:`application/json`,Authorization:`Bearer `+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:500,messages:[{role:`user`,content:sysMsg}]})});
+        let resp=await fetch(pxy,{method:`POST`,headers:{[`Content-Type`]:`application/json`,Authorization:`Bearer `+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:1500,messages:[{role:`user`,content:sysMsg}]})});
         let data=await resp.json();
         return (data.choices?.[0]?.message?.content||``).trim()||`（评论生成失败）`;
     }catch(e){return `（网络异常）`;}
@@ -11056,7 +11104,7 @@ window.aiGenDraft=async function(post){
     if(cid&&cid!==`user`) charPrompt=originalGetItem.call(ls,`cAP_`+cid)||originalGetItem.call(ls,`cAP`)||``;
     let sysMsg=`你是${post.author}。${charPrompt}你刚发了一条朋友圈："${post.text}"。请写出你没发出去的内心独白或草稿，不超过100字，真实自然，透露一些不想公开的情绪。直接第一人称输出。`;
     try{
-        let resp=await fetch(pxy,{method:`POST`,headers:{[`Content-Type`]:`application/json`,Authorization:`Bearer `+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:500,messages:[{role:`user`,content:sysMsg}]})});
+        let resp=await fetch(pxy,{method:`POST`,headers:{[`Content-Type`]:`application/json`,Authorization:`Bearer `+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:1500,messages:[{role:`user`,content:sysMsg}]})});
         let data=await resp.json();
         return (data.choices?.[0]?.message?.content||``).trim()||`（草稿生成失败）`;
     }catch(e){return `（网络异常）`;}
@@ -11273,14 +11321,14 @@ ${charRel ? `【你的身份关系】${charRel}` : ``}${recentCtx}
 要求：
 - 符合你的语气和性格（高冷的人发的圈和活泼的人完全不同）
 - 和你最近的状态/心情有关联
-- 不超过60字，可以加适量emoji（根据性格决定）
+- 长度根据性格和心境自然决定，可以加适量emoji
 - 直接输出朋友圈正文，不加任何前缀、引号或说明`;
 
         try {
             let resp = await fetch(pxy, {
                 method:`POST`,
                 headers:{[`Content-Type`]:`application/json`, Authorization:`Bearer `+key},
-                body:JSON.stringify({model:mod, temperature:tp, max_tokens:500, messages:[{role:`user`,content:sysMsg}]})
+                body:JSON.stringify({model:mod, temperature:tp, max_tokens:1500, messages:[{role:`user`,content:sysMsg}]})
             });
             let data = await resp.json();
             let postTxt = (data.choices?.[0]?.message?.content || ``).trim();
@@ -11329,22 +11377,22 @@ window.aiGenDraft = async function(post) {
     }
 
     let sysMsg = `你是${post.author}。
-${charAP ? `【你的人设性格】${charAP.slice(0,300)}` : ``}
+${charAP ? `【你的人设性格】${charAP.slice(0,400)}` : ``}
 ${charRel ? `【关系设定】${charRel}` : ``}
 
 你刚才在朋友圈发了一条："${post.text}"
 
 这条朋友圈是精心修改过的版本，你实际上有一段更真实、更私密的内心独白或草稿没有发出去。
-请写出那段没发出去的内容，要求：
+请写出那段没发出去的内容：
 - 真实暴露你没有公开说的情绪或想法
 - 可以比发出去的版本更直接、更脆弱、或更复杂
-- 不超过100字，第一人称，直接输出不加前缀`;
+- 字数不限，完整写完，第一人称，直接输出不加前缀`;
 
     try {
         let resp = await fetch(pxy, {
             method:`POST`,
             headers:{[`Content-Type`]:`application/json`, Authorization:`Bearer `+key},
-            body:JSON.stringify({model:mod, temperature:tp, max_tokens:500, messages:[{role:`user`,content:sysMsg}]})
+            body:JSON.stringify({model:mod, temperature:tp, max_tokens:3000, messages:[{role:`user`,content:sysMsg}]})
         });
         let data = await resp.json();
         return (data.choices?.[0]?.message?.content||``).trim() || `（草稿生成失败）`;
@@ -11415,7 +11463,7 @@ ${recentMsgs}
                 let resp = await fetch(pxy, {
                     method:`POST`,
                     headers:{[`Content-Type`]:`application/json`, Authorization:`Bearer `+key},
-                    body:JSON.stringify({model:mod, temperature:tp, max_tokens:600, messages:[{role:`user`,content:sysMsg}]})
+                    body:JSON.stringify({model:mod, temperature:tp, max_tokens:1500, messages:[{role:`user`,content:sysMsg}]})
                 });
                 let dat = await resp.json();
                 let reply = (dat.choices?.[0]?.message?.content||``).trim();
@@ -11553,7 +11601,7 @@ ${recentGroupMsgs}
                 let resp = await fetch(pxy, {
                     method:`POST`,
                     headers:{[`Content-Type`]:`application/json`, Authorization:`Bearer `+key},
-                    body:JSON.stringify({model:mod, temperature:tp, max_tokens:600, messages:[{role:`user`,content:sysMsg}]})
+                    body:JSON.stringify({model:mod, temperature:tp, max_tokens:1500, messages:[{role:`user`,content:sysMsg}]})
                 });
                 let dat = await resp.json();
                 let reply = (dat.choices?.[0]?.message?.content||``).trim();
@@ -11650,7 +11698,7 @@ ${s.rel ? `【与主人的关系】${s.rel}` : ``}
 - 直接输出评论内容，不加任何前缀`;
 
         try {
-            let resp = await fetch(pxy, {method:`POST`, headers:{[`Content-Type`]:`application/json`, Authorization:`Bearer `+key}, body:JSON.stringify({model:mod, temperature:tp, max_tokens:500, messages:[{role:`user`,content:sysMsg}]})});
+            let resp = await fetch(pxy, {method:`POST`, headers:{[`Content-Type`]:`application/json`, Authorization:`Bearer `+key}, body:JSON.stringify({model:mod, temperature:tp, max_tokens:1500, messages:[{role:`user`,content:sysMsg}]})});
             let dat = await resp.json();
             let cmtxt = (dat.choices?.[0]?.message?.content||``).trim() || `（评论失败）`;
             post.comments.push({author:s.name, text:cmtxt, time:new Date().toLocaleString()});
@@ -11881,7 +11929,7 @@ ${recentGroupMsgs}
                 let resp = await fetch(pxy, {
                     method:`POST`,
                     headers:{[`Content-Type`]:`application/json`, Authorization:`Bearer `+key},
-                    body:JSON.stringify({model:mod, temperature:tp, max_tokens:600, messages:[{role:`user`,content:sysMsg}]})
+                    body:JSON.stringify({model:mod, temperature:tp, max_tokens:1500, messages:[{role:`user`,content:sysMsg}]})
                 });
                 let dat = await resp.json();
                 let reply = (dat.choices?.[0]?.message?.content||``).trim();
@@ -11950,6 +11998,327 @@ window._renderGroupMsgs = function() {
         };
     });
 };
+
+
+
+// ================================================================
+// ▼ 群聊完整功能 ▼
+// ================================================================
+// ================================================================
+// ▼▼▼ 群聊完整功能：长按消息菜单+富功能工具栏+AI修复 ▼▼▼
+// ================================================================
+
+// 初始化群聊的当前引用内容
+window._groupQuoteContent = '';
+window._groupCurrentCtxMsg = null;
+
+// ===== 群聊 + 号菜单抽屉 =====
+if($(`btnGroupNewMenu`)) $(`btnGroupNewMenu`).onclick = () => {
+    let d = $(`groupMenuDrawer`);
+    if(d) d.style.display = d.style.display === `block` ? `none` : `block`;
+};
+
+// 群聊上传图片
+if($(`btnGroupUploadPic`)) $(`btnGroupUploadPic`).onclick = () => $(`groupPicInput`) && $(`groupPicInput`).click();
+if($(`groupPicInput`)) $(`groupPicInput`).onchange = async function() {
+    let file = this.files[0]; if(!file) return;
+    let reader = new FileReader();
+    reader.onload = async e => {
+        let g = groupData[currentGroupId]; if(!g) return;
+        let uName = g.myNick || ``; if(!uName) try{uName=await localforage.getItem(`myGlobalName`)||``;}catch(e){}; if(!uName) uName=`我`;
+        let uAva = null; try{uAva=await localforage.getItem(`myI_global`);}catch(e){}
+        g.messages.push({senderId:`user`, senderName:uName, avatar:uAva, content:`[图片]`, img:e.target.result, time:Date.now()});
+        await _saveGroupData(); _renderGroupMsgs();
+        if($(`groupMenuDrawer`)) $(`groupMenuDrawer`).style.display=`none`;
+    };
+    reader.readAsDataURL(file);
+    this.value=``;
+};
+
+// 群聊转账
+if($(`btnGroupTransfer`)) $(`btnGroupTransfer`).onclick = () => {
+    let amount = prompt(`给哪位成员转账多少？格式：姓名 金额\n例如：方煜 520`);
+    if(!amount) return;
+    let g = groupData[currentGroupId]; if(!g) return;
+    let uName = g.myNick || `我`;
+    let [name, amt] = amount.split(/\s+/);
+    let msg = `[转账给${name||`全体`}：¥${parseFloat(amt)||0}]`;
+    (async()=>{
+        let uAva=null; try{uAva=await localforage.getItem(`myI_global`);}catch(e){}
+        g.messages.push({senderId:`user`,senderName:uName,avatar:uAva,content:msg,time:Date.now()});
+        await _saveGroupData(); _renderGroupMsgs();
+        if($(`groupMenuDrawer`)) $(`groupMenuDrawer`).style.display=`none`;
+    })();
+};
+
+// 群聊红包
+if($(`btnGroupRedPacket`)) $(`btnGroupRedPacket`).onclick = () => {
+    let amount = prompt(`发红包金额和留言：格式：金额 留言\n例如：88.88 大家抢红包啦！`);
+    if(!amount) return;
+    let g = groupData[currentGroupId]; if(!g) return;
+    let uName = g.myNick || `我`;
+    let parts = amount.split(/\s+/);
+    let amt = parseFloat(parts[0])||8.88;
+    let note = parts.slice(1).join(` `) || `恭喜发财！`;
+    (async()=>{
+        let uAva=null; try{uAva=await localforage.getItem(`myI_global`);}catch(e){}
+        g.messages.push({senderId:`user`,senderName:uName,avatar:uAva,content:`🧧 [群红包：¥${amt} ${note}]`,time:Date.now()});
+        await _saveGroupData(); _renderGroupMsgs();
+        if($(`groupMenuDrawer`)) $(`groupMenuDrawer`).style.display=`none`;
+    })();
+};
+
+// 群聊AI生图（文字描述）
+if($(`btnGroupAiPic`)) $(`btnGroupAiPic`).onclick = () => {
+    let desc = prompt(`描述要生成的图片内容：`);
+    if(!desc) return;
+    let g = groupData[currentGroupId]; if(!g) return;
+    let uName = g.myNick || `我`;
+    (async()=>{
+        let uAva=null; try{uAva=await localforage.getItem(`myI_global`);}catch(e){}
+        g.messages.push({senderId:`user`,senderName:uName,avatar:uAva,content:`[AI生图：${desc}]`,time:Date.now()});
+        await _saveGroupData(); _renderGroupMsgs();
+        if($(`groupMenuDrawer`)) $(`groupMenuDrawer`).style.display=`none`;
+    })();
+};
+
+// 群聊重新生成（让最后发言的AI成员重新说）
+if($(`btnGroupRegen`)) $(`btnGroupRegen`).onclick = async () => {
+    let g = groupData[currentGroupId]; if(!g) return;
+    // 找最后一条AI消息并删除，重新触发
+    let msgs = g.messages || [];
+    let lastAiIdx = -1;
+    for(let i=msgs.length-1; i>=0; i--) {
+        if(msgs[i].senderId !== `user`) { lastAiIdx = i; break; }
+    }
+    if(lastAiIdx === -1) { alert(`没有AI消息可重新生成！`); return; }
+    let lastAiId = msgs[lastAiIdx].senderId;
+    g.messages.splice(lastAiIdx, 1);
+    await _saveGroupData(); _renderGroupMsgs();
+    if(typeof window._groupAiReply === `function`) window._groupAiReply([lastAiId]);
+    if($(`groupMenuDrawer`)) $(`groupMenuDrawer`).style.display=`none`;
+};
+
+// 群聊语音按钮（显示录音说明）
+if($(`btnGroupMic`)) $(`btnGroupMic`).onclick = () => {
+    let desc = prompt(`输入语音内容（文字转语音消息）：`);
+    if(!desc) return;
+    let g = groupData[currentGroupId]; if(!g) return;
+    let uName = g.myNick || `我`;
+    (async()=>{
+        let uAva=null; try{uAva=await localforage.getItem(`myI_global`);}catch(e){}
+        let words = desc.length;
+        let secs = Math.max(1, Math.round(words * 0.4));
+        g.messages.push({senderId:`user`,senderName:uName,avatar:uAva,content:`🎤 [语音 ${secs}″] ${desc}`,time:Date.now()});
+        await _saveGroupData(); _renderGroupMsgs();
+    })();
+};
+
+// 群聊表情包按钮
+if($(`btnGroupSticker`)) $(`btnGroupSticker`).onclick = () => {
+    // 如果有单聊的表情包系统，复用；否则选一个emoji
+    if(typeof showStickerPanel === `function`) {
+        // 暂存回调
+        window._stickerCallback = (stickerUrl) => {
+            let g = groupData[currentGroupId]; if(!g) return;
+            let uName = g.myNick||`我`;
+            (async()=>{
+                let uAva=null; try{uAva=await localforage.getItem(`myI_global`);}catch(e){}
+                g.messages.push({senderId:`user`,senderName:uName,avatar:uAva,content:`[表情包]`,img:stickerUrl,time:Date.now()});
+                await _saveGroupData(); _renderGroupMsgs();
+            })();
+        };
+        showStickerPanel();
+    } else {
+        let emoji = prompt(`输入要发送的表情（或表情包描述）：`);
+        if(!emoji) return;
+        let g = groupData[currentGroupId]; if(!g) return;
+        let uName = g.myNick||`我`;
+        (async()=>{
+            let uAva=null; try{uAva=await localforage.getItem(`myI_global`);}catch(e){}
+            g.messages.push({senderId:`user`,senderName:uName,avatar:uAva,content:emoji,time:Date.now()});
+            await _saveGroupData(); _renderGroupMsgs();
+        })();
+    }
+};
+
+// ===== 群聊消息长按菜单 =====
+// 重写 _renderGroupMsgs 增加长按菜单绑定 + 图片显示 + 气泡CSS + 头像心声
+const _origRenderGroupMsgsV2 = window._renderGroupMsgs;
+window._renderGroupMsgs = function() {
+    let g = groupData[currentGroupId], el = $(`groupMsgs`); if(!el) return;
+    el.innerHTML = ``;
+    if(!g||!g.messages||!g.messages.length) {
+        el.innerHTML = `<div style="text-align:center;color:#ccc;padding:30px;font-size:13px;">群聊开始，说点什么吧 👋</div>`; return;
+    }
+
+    let groupBubbleCss = g.bubbleCss || ``;
+
+    g.messages.forEach((msg, msgIdx) => {
+        let isMe = msg.senderId === `user`;
+        let wrap = document.createElement(`div`);
+        wrap.style.cssText = `display:flex;align-items:flex-start;gap:8px;${isMe?`flex-direction:row-reverse;`:``}`;
+
+        // 头像
+        let avaDiv = document.createElement(`div`);
+        avaDiv.style.cssText = `width:36px;height:36px;border-radius:50%;background:#e0d8ff;background-size:cover;background-position:center;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;${!isMe?`cursor:pointer;`:`cursor:default;`}`;
+        if(msg.avatar) avaDiv.style.backgroundImage = `url(${msg.avatar})`;
+        else avaDiv.innerText = isMe ? `😊` : `👤`;
+        if(!isMe) {
+            avaDiv.classList.add(`group-avatar-clickable`);
+            avaDiv.dataset.memberid = msg.senderId;
+            avaDiv.dataset.name = msg.senderName || ``;
+            avaDiv.title = `点击查看心声`;
+            avaDiv.onclick = async function() {
+                let memberId = this.dataset.memberid, memberName = this.dataset.name || `角色`;
+                let pxy=originalGetItem.call(ls,`pxy`)||``, key=originalGetItem.call(ls,`key`)||``, mod=originalGetItem.call(ls,`mod`)||``;
+                if(pxy&&!pxy.includes(`chat/completions`)) pxy=pxy.replace(/\/$/,``)+`/chat/completions`;
+                if(!pxy||!key) return;
+                let charAP=(originalGetItem.call(ls,`cAP_`+memberId)||``).slice(0,300);
+                let recentMsgs=(g.messages||[]).slice(-5).map(x=>`${x.senderName}：${x.content}`).join(`\n`);
+                let sysMsg=`你是${memberName}。${charAP?`【人设】${charAP}\n\n`:`\n\n`}根据群聊最近内容：\n${recentMsgs}\n\n用15字内说出你此刻内心真实想法（第一人称，直接输出）`;
+                try {
+                    let r=await fetch(pxy,{method:`POST`,headers:{[`Content-Type`]:`application/json`,Authorization:`Bearer `+key},body:JSON.stringify({model:mod,temperature:0.9,max_tokens:200,messages:[{role:`user`,content:sysMsg}]})});
+                    let d=await r.json();
+                    let t=(d.choices?.[0]?.message?.content||``).trim();
+                    if(t) alert(`💭 ${memberName}的心声：\n\n${t}`);
+                } catch(e){}
+            };
+        }
+
+        // 消息内容区
+        let inner = document.createElement(`div`);
+        inner.style.cssText = `display:flex;flex-direction:column;gap:2px;max-width:72%;${isMe?`align-items:flex-end;`:`align-items:flex-start;`}`;
+        let nm = document.createElement(`div`);
+        nm.style.cssText = `font-size:11px;color:#999;`;
+        nm.innerText = msg.senderName || ``;
+
+        // 气泡
+        let bub = document.createElement(`div`);
+        let baseBubStyle = `padding:9px 13px;border-radius:${isMe?`16px 4px 16px 16px`:`4px 16px 16px 16px`};font-size:14px;line-height:1.5;word-break:break-all;${isMe?`background:linear-gradient(135deg,#a29bfe,#6c5ce7);color:white;`:`background:white;color:#333;`}cursor:pointer;`;
+        bub.style.cssText = baseBubStyle;
+        if(groupBubbleCss) { try { bub.style.cssText += groupBubbleCss; } catch(e) {} }
+
+        // 引用显示
+        if(msg.quote) {
+            let qDiv = document.createElement(`div`);
+            qDiv.style.cssText = `background:rgba(0,0,0,0.08);border-radius:8px;padding:4px 8px;margin-bottom:4px;font-size:12px;color:${isMe?`rgba(255,255,255,0.8)`:`#888`};border-left:2px solid ${isMe?`rgba(255,255,255,0.5)`:`#a29bfe`};`;
+            qDiv.innerText = msg.quote.slice(0,30) + (msg.quote.length>30?`…`:``)
+            bub.appendChild(qDiv);
+        }
+
+        // 内容显示
+        if(msg.img) {
+            let img = document.createElement(`img`);
+            img.src = msg.img;
+            img.style.cssText = `max-width:180px;max-height:200px;border-radius:10px;display:block;`;
+            img.onclick = e => { e.stopPropagation(); let w=window.open(); w.document.write(`<img src="${msg.img}" style="max-width:100%;">`); };
+            bub.style.padding = `4px`;
+            bub.appendChild(img);
+        } else {
+            let textNode = document.createElement(`span`);
+            textNode.innerText = msg.content || ``;
+            bub.appendChild(textNode);
+        }
+
+        // 长按菜单
+        let pressTimer = null;
+        bub.oncontextmenu = e => { e.preventDefault(); showGroupCtxMenu(e.clientX, e.clientY, msg, msgIdx); };
+        bub.ontouchstart = e => { pressTimer = setTimeout(()=>{ let t=e.touches[0]; showGroupCtxMenu(t.clientX,t.clientY,msg,msgIdx); },500); };
+        bub.ontouchend = () => clearTimeout(pressTimer);
+        bub.ontouchmove = () => clearTimeout(pressTimer);
+
+        inner.appendChild(nm);
+        inner.appendChild(bub);
+        wrap.appendChild(avaDiv);
+        wrap.appendChild(inner);
+        el.appendChild(wrap);
+    });
+
+    el.scrollTop = el.scrollHeight;
+};
+
+// ===== 群聊长按消息菜单 =====
+// 创建群聊专属上下文菜单
+let _groupCtxMenu = null;
+function showGroupCtxMenu(x, y, msg, msgIdx) {
+    if(_groupCtxMenu) _groupCtxMenu.remove();
+    let menu = document.createElement(`div`);
+    menu.style.cssText = `position:fixed;background:white;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.15);z-index:9999;overflow:hidden;min-width:120px;`;
+    // 位置调整，避免超出屏幕
+    menu.style.left = Math.min(x, window.innerWidth-140) + `px`;
+    menu.style.top = Math.min(y, window.innerHeight-200) + `px`;
+
+    let items = [
+        {label:`复制`, action:()=>{ navigator.clipboard.writeText(msg.content||``).catch(()=>{}); }},
+        {label:`引用`, action:()=>{
+            window._groupQuoteContent = msg.content||``;
+            let qb=$(`groupQuoteBox`),qt=$(`groupQuoteText`);
+            if(qb) qb.style.display=`block`;
+            if(qt) qt.innerText=(msg.senderName||``)+`：`+(msg.content||``).slice(0,40);
+            $(`iptGroupMsg`)?.focus();
+        }},
+        {label:`收藏`, action:async()=>{
+            let favs=[]; try{let f=await localforage.getItem(`myFavs`); if(f) favs=Array.isArray(f)?f:JSON.parse(f);}catch(e){}
+            favs.push({id:Date.now(),text:msg.content,img:msg.img||null,from:msg.senderName||`群聊`,time:new Date().toLocaleString()});
+            await localforage.setItem(`myFavs`,favs).catch(()=>{});
+            alert(`✅ 已收藏`);
+        }},
+    ];
+    // 只有用户自己发的消息才能删除/编辑
+    if(msg.senderId===`user`) {
+        items.push({label:`编辑`, action:()=>{
+            let newText=prompt(`编辑消息：`,msg.content||``);
+            if(newText===null) return;
+            let g=groupData[currentGroupId]; if(!g) return;
+            g.messages[msgIdx].content = newText;
+            _saveGroupData().then(()=>_renderGroupMsgs());
+        }});
+        items.push({label:`删除`, color:`#ff4757`, action:()=>{
+            let g=groupData[currentGroupId]; if(!g) return;
+            g.messages.splice(msgIdx,1);
+            _saveGroupData().then(()=>_renderGroupMsgs());
+        }});
+    }
+
+    items.forEach(item=>{
+        let div=document.createElement(`div`);
+        div.innerText=item.label;
+        div.style.cssText=`padding:12px 20px;font-size:14px;cursor:pointer;color:${item.color||`#333`};border-bottom:1px solid #f5f5f5;`;
+        div.onmousedown=e=>e.stopPropagation();
+        div.onclick=()=>{ item.action(); menu.remove(); _groupCtxMenu=null; };
+        menu.appendChild(div);
+    });
+
+    document.body.appendChild(menu);
+    _groupCtxMenu = menu;
+    setTimeout(()=>{ document.addEventListener(`click`,()=>{ menu.remove(); _groupCtxMenu=null; },{once:true}); },100);
+}
+
+// ===== 群聊发送时支持引用 =====
+const _origGroupSendOnclick = $(`btnGroupSend`) ? $(`btnGroupSend`).onclick : null;
+if($(`btnGroupSend`)) {
+    $(`btnGroupSend`).onclick = async function() {
+        let txt = $(`iptGroupMsg`)?.value.trim()||``;
+        if(!txt && !window._groupQuoteContent) return;
+        let g = groupData[currentGroupId]; if(!g) return;
+        let uName=g.myNick||``; if(!uName) try{uName=await localforage.getItem(`myGlobalName`)||``;}catch(e){}; if(!uName) uName=`我`;
+        let uAva=null; try{uAva=await localforage.getItem(`myI_global`);}catch(e){}
+        let msgObj = {senderId:`user`,senderName:uName,avatar:uAva,content:txt,time:Date.now()};
+        if(window._groupQuoteContent) { msgObj.quote=window._groupQuoteContent; window._groupQuoteContent=``; if($(`groupQuoteBox`)) $(`groupQuoteBox`).style.display=`none`; }
+        if($(`iptGroupMsg`)) $(`iptGroupMsg`).value=``;
+        g.messages.push(msgObj);
+        await _saveGroupData(); _renderGroupMsgs(); renderGroupInMsgList().catch(()=>{});
+    };
+}
+
+// ===== Enter 键发送 =====
+if($(`iptGroupMsg`)) $(`iptGroupMsg`).addEventListener(`keydown`,e=>{ if(e.key===`Enter`){e.preventDefault(); $(`btnGroupSend`)?.click(); } });
+
+// 触发一次渲染，更新显示
+if(typeof _renderGroupMsgs === `function` && currentGroupId && groupData[currentGroupId]) {
+    _renderGroupMsgs();
+}
 
 
 
