@@ -2475,12 +2475,18 @@ function getPreviewText(histArray) {
     return txt.length > 15 ? txt.substring(0, 15) + `...` : (txt || `你们已成为好友，请开始聊天吧！`);
 }
 async function updateListPreview() {
-    // 记录最后聊天时间戳（仅在真正发送/收到消息时更新）
-    // 检查history是否有内容，避免单纯导航时刷新排序
-    if(history && history.length > 0) {
-        let _now = String(Date.now());
-        try { ls.setItem(`lastChatTime_`+currentChatId, _now); } catch(e){}
+       // 修复：只根据真实聊天记录提取最后时间，不盲目刷新
+    let _realLastTime = 0;
+    if (typeof history !== 'undefined' && history && history.length > 0) {
+        let _lastMsg = history[history.length - 1];
+        _realLastTime = _lastMsg.time || _lastMsg.ts || 0;
     }
+    if (_realLastTime) {
+        try {
+            ls.setItem(`lastChatTime_` + currentChatId, String(_realLastTime));
+        } catch(e){}
+    }
+
 
     let p = $(`chatPreview`);
     let savedHist = await localforage.getItem(`chatHistory_default`) || await localforage.getItem(`chatHistory`) || originalGetItem.call(ls, `chatHistory_default`);
@@ -10726,8 +10732,8 @@ if($(`btnGenCharMoments`)) $(`btnGenCharMoments`).onclick = async () => {
         }
 
         let _apMoment = charAP ? `【性格人设】${charAP.slice(0,400)}` : ``;
-        let sysMsg = `你是${name}。\n${_apMoment}\n${recentCtx}\n\n【必须】你发的朋友圈内容必须直接反映上方最近聊天记录的情绪状态：\n- 聊天甜蜜→朋友圈甜蜜，聊天冷淡→朋友圈疏离，刚发生重要事→围绕那件事发圈\n- 不写和聊天记录完全无关的内容\n- 用你自己的性格风格，长度自然，直接输出正文，不加前缀
-- 必须全程使用中文，绝对不能出现英文`;
+        let sysMsg = `你是${name}。\n${_apMoment}\n${recentCtx}\n\n【必须】你发的朋友圈内容必须直接反映上方最近聊天记录的情绪状态：\n- 聊天甜蜜→朋友圈甜蜜，聊天冷淡→朋友圈疏离，刚发生重要事→围绕那件事发圈\n- 不写和聊天记录完全无关的内容\n- 用你自己的性格风格，详细描述你的心理活动和事情经过，字数控制在50到150字左右，尽量把话说完整，绝对不要只有十几个字！直接输出正文`;
+
 
         try {
             let resp = await fetch(pxy, {
