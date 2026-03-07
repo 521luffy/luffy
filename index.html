@@ -3009,6 +3009,10 @@ async function triggerCaughtMessage() {
             if(msgs) msgs.scrollTop=msgs.scrollHeight;
             if(typeof renderContacts===`function`) renderContacts();
 renderContacts();
+            renderGroupInMsgList().catch(()=>{});
+        }, 200);
+
+    } catch(e){console.warn(`triggerCaughtMessage error:`,e);}
 
 // ================================================================
 // ▼▼▼ 联系人页 - 分组/好友/群聊 Tab 切换 + 分组管理 ▼▼▼
@@ -3181,13 +3185,8 @@ function renderContactGroups() {
     });
 }
 
-// 初始化: 确保好友tab先显示
+// 初始化: 确保好友tab先显示 (现在在全局作用域，tabs inline onclick可以正常访问)
 switchContactTab('friends');
-
-            renderGroupInMsgList().catch(()=>{});
-        }, 200);
-
-    } catch(e){console.warn(`triggerCaughtMessage error:`,e);}
     if($(`catchLoadingTip`)) $(`catchLoadingTip`).style.display=`none`;
     if($(`catchSwitch`)){$(`catchSwitch`).disabled=false;$(`catchSwitch`).checked=false;}
     await localforage.setItem(`catchTriggered_`+targetId,false).catch(()=>{});
@@ -4835,6 +4834,8 @@ if($(`btnConfirmPay`)) {
                 let uName=gp.myNick||`我`; let uAva=null; try{uAva=await localforage.getItem(`myI_global`);}catch(e){}
                 gp.messages.push({senderId:`user`,senderName:uName,avatar:uAva,content:msgText,time:Date.now()});
                 await _saveGroupData(); _renderGroupMsgs(); renderGroupInMsgList().catch(()=>{});
+                // 自动触发群聊成员AI回应user发出的红包/转账（对齐单聊行为）
+                _triggerGroupPaymentReaction(currentGroupId, msgText).catch(()=>{});
             }
             window._groupRedPacketPending=false; window._groupTransferPending=false;
         } else {
@@ -11253,6 +11254,94 @@ if($(`btnDoSearchChat`)) $(`btnDoSearchChat`).onclick = async () => {
 };
 
 // ================================================================
+
+// ===== 群聊：user发红包/转账后，自动触发char成员AI回应 =====
+async function _triggerGroupPaymentReaction(groupId, msgText) {
+    let g = groupData[groupId]; if(!g) return;
+    let charMembers = (g.members||[]).filter(m => m.id !== 'user' && m.id !== 'USER' && !m.isUser);
+    if(!charMembers.length) return;
+    let pxy = originalGetItem.call(ls,'pxy')||'';
+    let key = originalGetItem.call(ls,'key')||'';
+    let mod = originalGetItem.call(ls,'mod')||'';
+    if(pxy && !pxy.includes('chat/completions')) pxy = pxy.replace(/\/$/, '') + '/chat/completions';
+    if(!pxy || !key) return;
+    let tp = parseFloat(originalGetItem.call(ls,'temp')||'0.8')||0.8;
+    let uName = g.myNick || '我';
+
+    let isRedPacket = msgText.includes('[红包消息：');
+    let isTransfer = msgText.includes('[转账消息：');
+    if(!isRedPacket && !isTransfer) return;
+
+    let amt = '', note = '';
+    if(isRedPacket) {
+        let m = msgText.match(/\[红包消息：([\d\.]+)\|(.*?)\|/);
+        if(m) { amt = m[1]; note = m[2]; }
+    } else {
+        let m = msgText.match(/\[转账消息：([\d\.]+)\|(.*?)\|/);
+        if(m) { amt = m[1]; note = m[2]; }
+    }
+
+    // 找到对应的消息在数组中的位置（最后一条用户消息）
+    let msgIdx = -1;
+    for(let i = g.messages.length - 1; i >= 0; i--) {
+        if(g.messages[i].senderId === 'user' && g.messages[i].content === msgText) {
+            msgIdx = i; break;
+        }
+    }
+
+    for(let cm of charMembers) {
+        let cName = originalGetItem.call(ls,'cN_'+cm.id) || cm.name;
+        let cAP = originalGetItem.call(ls,'cAP_'+cm.id) || '';
+        let sys = '';
+        if(isRedPacket) {
+            sys = `你是${cName}。${cAP?'设定：'+cAP:''}\n${uName}在群里给大家发了一个¥${amt}的红包，留言是「${note}」，你要决定是否领取。如果领取，回复第一个字必须是"领"；如果拒绝，回复第一个字必须是"拒"，然后跟一句话说明。直接输出，不加任何前缀，50字以内。`;
+        } else {
+            sys = `你是${cName}。${cAP?'设定：'+cAP:''}\n${uName}给你转账了¥${amt}，备注是「${note}」，你要决定是否收款。如果收款，回复第一个字必须是"收"；如果拒绝，回复第一个字必须是"拒"，然后跟一句话说明。直接输出，不加任何前缀，50字以内。`;
+        }
+        try {
+            let res = await fetch(pxy, {method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer '+key}, body: JSON.stringify({model:mod, temperature:tp, max_tokens:150, messages:[{role:'user', content:sys}]})});
+            let dat = await res.json();
+            let reply = (dat.choices?.[0]?.message?.content||'').trim();
+            let ava = null; try{ava = await localforage.getItem('aiI_'+cm.id);}catch(e){}
+            if(isRedPacket) {
+                if(reply.startsWith('领')) {
+                    g.messages.push({senderId:cm.id, senderName:cName, avatar:ava, content:reply, time:Date.now()});
+                    // Update original red packet message status
+                    if(msgIdx >= 0 && g.messages[msgIdx]) {
+                        g.messages[msgIdx].content = g.messages[msgIdx].content.replace('|未领取|', '|已领取|');
+                    }
+                    // Update wallet
+                    let myWallet = JSON.parse(ls.getItem('myWallet')||'{"balance":0,"bank":0,"bills":[]}');
+                    myWallet.bills = myWallet.bills || [];
+                    ls.setItem('myWallet', JSON.stringify(myWallet));
+                } else {
+                    g.messages.push({senderId:cm.id, senderName:cName, avatar:ava, content:reply||`（${cName}拒收了红包）`, time:Date.now()});
+                }
+            } else {
+                if(reply.startsWith('收')) {
+                    g.messages.push({senderId:cm.id, senderName:cName, avatar:ava, content:reply, time:Date.now()});
+                    // Update transfer status
+                    if(msgIdx >= 0 && g.messages[msgIdx]) {
+                        g.messages[msgIdx].content = g.messages[msgIdx].content.replace('|未收款]', '|已收款]');
+                    }
+                    let myWallet = JSON.parse(ls.getItem('myWallet')||'{"balance":0,"bank":0,"bills":[]}');
+                    myWallet.bills = myWallet.bills || [];
+                    ls.setItem('myWallet', JSON.stringify(myWallet));
+                } else {
+                    g.messages.push({senderId:cm.id, senderName:cName, avatar:ava, content:reply||`（${cName}拒绝了收款）`, time:Date.now()});
+                    if(msgIdx >= 0 && g.messages[msgIdx]) {
+                        g.messages[msgIdx].content = g.messages[msgIdx].content.replace('|未收款]', '|对方已拒绝收款]');
+                    }
+                }
+            }
+        } catch(e) { console.warn('Payment reaction failed for', cName, e); }
+        await _saveGroupData();
+        _renderGroupMsgs();
+        await new Promise(r => setTimeout(r, 400));
+    }
+    renderGroupInMsgList().catch(()=>{});
+}
+
 // 5. 群聊功能
 // ================================================================
 let groupData = {};
@@ -13423,9 +13512,10 @@ async function _callAIConnect(type, isIncoming) {
         : (myName + '：' + m.content.slice(0,40))).join('\n');
     let callTypeName = type === 'voice' ? '语音通话' : '视频通话';
     let tp = parseFloat(originalGetItem.call(ls,'temp')||'0.8') || 0.8;
-    let connectSys = '你是' + charName + '。' + (charAP ? '你的设定：' + charAP : '') + '\n你当前面板状态：' + curStatus + '。\n近期聊天：\n' + recentHist + '\n\n【' + myName + '向你发起了' + callTypeName + '，正在等你接听】\n请根据你的性格和当前情绪状态决定是否接听！\n如接听（大多数情况下应该接）：回复最开头写 [接听通话]，随后用「」写出接起电话后的第一句话，配合相关听觉或视觉细节描写，内容要丰富完整，不要截断。\n如拒接（仅在正在吵架或心情极差时才拒接）：回复最开头写 [拒接通话]，随后发来一条文字消息（100字以内），说明你接不了的原因（比如在忙、不方便、或直接无视），但绝对不能说成是对方挂了你电话——是你主动选择不接' + myName + '的电话。\n注意：只要不是关系极度僵化或正在冷战，你都应该接听，通话时内容自然。【强制要求：你接起电话后的第一句话必须在150字内完整说完，以句号或感叹号结束，不得截断！】';
+    let connectSys = '你是' + charName + '。' + (charAP ? '你的设定：' + charAP : '') + '\n你当前面板状态：' + curStatus + '。\n近期聊天：\n' + recentHist + '\n\n【' + myName + '向你发起了' + callTypeName + '，正在等你接听】\n请根据你的性格和当前情绪状态决定是否接听！\n如接听（大多数情况下应该接）：回复最开头写 [接听通话]，随后用「」写出接起电话后的第一句话，配合相关听觉或视觉细节描写，内容要丰富完整，不要截断。\n如拒接（仅在正在吵架或心情极差时才拒接）：回复最开头写 [拒接通话]，随后发来一条文字消息（100字以内），说明你接不了的原因（比如在忙、不方便、或直接无视），但绝对不能说成是对方挂了你电话——是你主动选择不接' + myName + '的电话。\n注意：只要不是关系极度僵化或正在冷战，你都应该接听，通话时内容自然。【强制要求：你接起电话后的第一句话必须在150字内自然地说完，符合真实语境，不要截断！】';
+
     try {
-        let res = await fetch(pxy, { method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer '+key}, body:JSON.stringify({model:mod, temperature:tp, max_tokens:300, messages:[{role:'user', content:connectSys}]}) });
+        let res = await fetch(pxy, { method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer '+key}, body:JSON.stringify({model:mod, temperature:tp, max_tokens:1000, messages:[{role:'user', content:connectSys}]}) });
         let dat = await res.json();
         let reply = (dat.choices?.[0]?.message?.content || '').trim();
         if(reply.includes('[接听通话]')) {
@@ -13546,12 +13636,13 @@ async function _callSendMsg(txt) {
     let tp = parseFloat(originalGetItem.call(ls,'temp')||'0.8') || 0.8;
     let callLog = window._callState.msgs.slice(-6).map(m => (m.isUser ? myName : charName) + '：' + m.txt).join('\n');
     window._callState.msgs.push({isUser:true, txt});
-    let voiceRules = type === 'voice'
-        ? '【语音通话规则 - 极度重要】你们正在进行语音通话，双方看不到对方。你必须：\n1. 完全禁止描写任何视觉动作（如"瞪了一眼""我看着你"），只描写听觉和触觉（呼吸声、环境音、物体声响、衣物摩擦声等）。\n2. 像真实打电话一样自然说话，语气要有质感，【强制要求】你的每次回复必须在150字内说完整一段话，说到150字立刻以句号或感叹号收尾，绝不截断。\n3. 可以描写背景里的声音细节，让对方脑补环境。\n4. 【极其重要】你必须直接回应对方刚才说的话，不要自说自话，不要重复上一条内容。'
+    let voiceRules = type === 'voice' ? '【语音通话规则 - 极度重要】你们正在进行语音通话，双方看不到对方。你必须：\n1. 完全禁止描写任何视觉动作（如"瞪了一眼""我看着你"），只描写听觉和触觉（呼吸声、环境音、物体声响、衣物摩擦声等）。\n2. 像真实打电话一样自然说话，语气要有质感，【强制要求】你的每次回复必须在150字内说完整一段话，符合真实情绪，可以有省略号或停顿，绝不截断。\n3. 可以描写背景里的声音细节，让对方脑补环境。\n4. 【极其重要】你必须直接回应对方刚才说的话，不要自说自话，不要重复上一条内容。' : '【视频通话规则 - 极度重要】你们正在进行视频通话，可以看到彼此。你必须：\n1. 大量描写视觉细节：你穿了什么、头发状态、距离镜头的远近、眼神交互。\n2. 如果想展示周围的东西，可以用[发送照片：详细描述]指令翻转镜头。\n3. 如果网络卡了可以演戏说画面定格了，回复控制在150字以内。\n4. 【极其重要】你必须直接回应对方刚才说的话，不要自说自话，不要重复上一条内容。';
+
         : '【视频通话规则 - 极度重要】你们正在进行视频通话，可以看到彼此。你必须：\n1. 大量描写视觉细节：你穿了什么、头发状态、距离镜头的远近、眼神交互。\n2. 如果想展示周围的东西，可以用[发送照片：详细描述]指令翻转镜头。\n3. 如果网络卡了可以演戏说画面定格了，回复控制在150字以内。\n4. 【极其重要】你必须直接回应对方刚才说的话，不要自说自话，不要重复上一条内容。';
-    let callSys = '你是' + charName + '。' + (charAP ? '你的设定：' + charAP : '') + '\n\n' + voiceRules + '\n\n通话记录：\n' + callLog + '\n\n' + myName + '刚才说】：' + txt + '\n\n请直接针对' + myName + '说的内容回复，无需任何前缀。【强制要求：必须在150字内把这段话说完整，以句号或感叹号结束，不得截断！】';
+    let callSys = '你是' + charName + '。' + (charAP ? '你的设定：' + charAP : '') + '\n\n' + voiceRules + '\n\n通话记录：\n' + callLog + '\n\n' + myName + '刚才说】：' + txt + '\n\n请直接针对' + myName + '说的内容回复，无需任何前缀。【强制要求：必须在150字内把这段话说完整，符合真实沟通状态，不得截断！】';
+
     try {
-        let res = await fetch(pxy, { method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer '+key}, body:JSON.stringify({model:mod, temperature:tp, max_tokens:300, messages:[{role:'user', content:callSys}]}) });
+        let res = await fetch(pxy, { method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer '+key}, body:JSON.stringify({model:mod, temperature:tp, max_tokens:1000, messages:[{role:'user', content:callSys}]}) });
         let dat = await res.json();
         let reply = (dat.choices?.[0]?.message?.content || '').trim();
         // 处理发送照片指令（视频通话专属）
