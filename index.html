@@ -592,7 +592,19 @@ class=back-btn>＜</span>
                     <div class=menu-icon-text>红包</div>
                 </div>
 
+                <div id=btnVoiceCall class=menu-icon-btn>
+                    <div class=menu-icon-svg style="background:#f3e5f5;">
+                        <svg width=20 height=20 viewBox="0 0 24 24" fill=none stroke=#6c5ce7 stroke-width=2 stroke-linecap=round stroke-linejoin=round><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.44 2 2 0 0 1 3.59 1.27h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.82a16 16 0 0 0 6.06 6.06l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                    </div>
+                    <div class=menu-icon-text>语音通话</div>
+                </div>
 
+                <div id=btnVideoCall class=menu-icon-btn>
+                    <div class=menu-icon-svg style="background:#f3e5f5;">
+                        <svg width=20 height=20 viewBox="0 0 24 24" fill=none stroke=#6c5ce7 stroke-width=2 stroke-linecap=round stroke-linejoin=round><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                    </div>
+                    <div class=menu-icon-text>视频通话</div>
+                </div>
 
  
             </div>
@@ -1254,6 +1266,125 @@ class=back-btn>＜</span>
             <div class="me-menu-right">＞</div>
         </div>
     </div>
+</div>
+
+
+<!-- ===== 语音通话界面 ===== -->
+<div id="scrVoiceCall" style="display:none;position:fixed;inset:0;z-index:9990;flex-direction:column;background:linear-gradient(160deg,#0a0f1e 0%,#141b35 60%,#1a0a2e 100%);overflow:hidden;">
+  <style>
+    @keyframes vcBreath { 0%,100%{transform:scale(1);box-shadow:0 0 30px rgba(162,155,254,0.4),0 0 60px rgba(108,92,231,0.2)} 50%{transform:scale(1.06);box-shadow:0 0 50px rgba(162,155,254,0.7),0 0 100px rgba(108,92,231,0.4)} }
+    @keyframes vcWave { 0%,100%{height:8px} 20%{height:30px} 40%{height:18px} 60%{height:40px} 80%{height:14px} }
+    @keyframes typewriter { from{opacity:0} to{opacity:1} }
+    .vc-wave-bar { width:4px; border-radius:2px; background:linear-gradient(to top,#a29bfe,#6c5ce7); animation:vcWave 1.2s ease-in-out infinite; }
+    .vc-bubble { animation:typewriter 0.05s ease forwards; opacity:0; }
+  </style>
+  <div style="padding:50px 20px 10px;text-align:center;flex-shrink:0;">
+    <div id="vcCharName" style="font-size:20px;font-weight:bold;color:#fff;margin-bottom:6px;"></div>
+    <div id="vcStatus" style="font-size:13px;color:rgba(162,155,254,0.8);">正在拨号…</div>
+    <div id="vcTimer" style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:4px;display:none;">00:00</div>
+  </div>
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;">
+    <div id="vcAvatar" style="width:110px;height:110px;border-radius:50%;background:linear-gradient(135deg,#a29bfe,#6c5ce7);display:flex;align-items:center;justify-content:center;font-size:48px;animation:vcBreath 3s ease-in-out infinite;background-size:cover;background-position:center;"></div>
+    <div id="vcWaveContainer" style="display:none;align-items:flex-end;gap:5px;height:50px;">
+      <div class="vc-wave-bar" style="animation-delay:0s"></div>
+      <div class="vc-wave-bar" style="animation-delay:0.1s"></div>
+      <div class="vc-wave-bar" style="animation-delay:0.2s"></div>
+      <div class="vc-wave-bar" style="animation-delay:0.3s"></div>
+      <div class="vc-wave-bar" style="animation-delay:0.4s"></div>
+      <div class="vc-wave-bar" style="animation-delay:0.2s"></div>
+      <div class="vc-wave-bar" style="animation-delay:0.1s"></div>
+    </div>
+  </div>
+  <div id="vcMsgs" style="max-height:200px;overflow-y:auto;padding:0 20px 10px;display:flex;flex-direction:column;gap:8px;"></div>
+  <div style="padding:15px 20px 40px;flex-shrink:0;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+      <input id="vcInput" placeholder="说点什么…" style="flex:1;background:rgba(255,255,255,0.08);border:1px solid rgba(162,155,254,0.3);border-radius:24px;padding:10px 16px;color:#fff;font-size:14px;outline:none;" />
+      <button id="vcSend" style="width:40px;height:40px;border-radius:50%;background:#a29bfe;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+        <svg width=16 height=16 viewBox="0 0 24 24" fill=none stroke=white stroke-width=2.5><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+    <div style="display:flex;justify-content:space-around;align-items:center;">
+      <div id="vcSpeaker" style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;opacity:0.6;">
+        <div style="width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;">
+          <svg width=22 height=22 viewBox="0 0 24 24" fill=none stroke=white stroke-width=2><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+        </div>
+        <span style="font-size:11px;color:rgba(255,255,255,0.6);">免提</span>
+      </div>
+      <div id="vcHangup" style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;">
+        <div style="width:64px;height:64px;border-radius:50%;background:#ff4757;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(255,71,87,0.5);">
+          <svg width=28 height=28 viewBox="0 0 24 24" fill=white><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1l-2.3 2.2z"/></svg>
+        </div>
+        <span style="font-size:11px;color:rgba(255,255,255,0.6);">挂断</span>
+      </div>
+      <div style="width:50px;height:50px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 视频通话界面 ===== -->
+<div id="scrVideoCall" style="display:none;position:fixed;inset:0;z-index:9990;flex-direction:column;overflow:hidden;">
+  <div id="vdBg" style="position:absolute;inset:0;background:linear-gradient(135deg,#1a1a2e,#16213e);background-size:cover;background-position:center;filter:blur(8px) brightness(0.5);transform:scale(1.1);"></div>
+  <div style="position:absolute;inset:0;background:rgba(0,0,0,0.35);"></div>
+  <div id="vdPip" style="position:absolute;top:60px;right:15px;width:90px;height:120px;border-radius:16px;background:#333;border:2px solid rgba(255,255,255,0.3);z-index:10;overflow:hidden;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(0,0,0,0.5);background-size:cover;background-position:center;">
+    <span style="font-size:32px;">🤳</span>
+  </div>
+  <div style="position:relative;z-index:10;padding:50px 20px 0;text-align:center;flex-shrink:0;">
+    <div id="vdCharName" style="font-size:22px;font-weight:bold;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,0.5);"></div>
+    <div id="vdStatus" style="font-size:13px;color:rgba(255,255,255,0.7);margin-top:4px;">正在拨号…</div>
+    <div id="vdTimer" style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px;display:none;">00:00</div>
+  </div>
+  <div id="vdMsgs" style="position:relative;z-index:10;flex:1;overflow-y:auto;padding:10px 20px;display:flex;flex-direction:column;gap:8px;justify-content:flex-end;"></div>
+  <div style="position:relative;z-index:10;padding:15px 20px 40px;flex-shrink:0;backdrop-filter:blur(10px);background:rgba(0,0,0,0.3);">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+      <input id="vdInput" placeholder="说点什么…" style="flex:1;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);border-radius:24px;padding:10px 16px;color:#fff;font-size:14px;outline:none;" />
+      <button id="vdSend" style="width:40px;height:40px;border-radius:50%;background:#a29bfe;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+        <svg width=16 height=16 viewBox="0 0 24 24" fill=none stroke=white stroke-width=2.5><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+    <div style="display:flex;justify-content:space-around;">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;opacity:0.6;">
+        <div style="width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;">
+          <svg width=22 height=22 viewBox="0 0 24 24" fill=none stroke=white stroke-width=2><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+        </div>
+        <span style="font-size:11px;color:rgba(255,255,255,0.6);">关闭摄像</span>
+      </div>
+      <div id="vdHangup" style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;">
+        <div style="width:64px;height:64px;border-radius:50%;background:#ff4757;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(255,71,87,0.5);">
+          <svg width=28 height=28 viewBox="0 0 24 24" fill=white><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1l-2.3 2.2z"/></svg>
+        </div>
+        <span style="font-size:11px;color:rgba(255,255,255,0.6);">挂断</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;opacity:0.6;">
+        <div style="width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;">
+          <svg width=22 height=22 viewBox="0 0 24 24" fill=none stroke=white stroke-width=2><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.44 2 2 0 0 1 3.59 1.27h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.82a16 16 0 0 0 6.06 6.06l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        </div>
+        <span style="font-size:11px;color:rgba(255,255,255,0.6);">静音</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 来电界面 ===== -->
+<div id="scrIncomingCall" style="display:none;position:fixed;inset:0;z-index:9995;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(160deg,#0a0f1e,#1a0a2e);">
+  <div style="text-align:center;margin-bottom:40px;">
+    <div id="icAvatar" style="width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,#a29bfe,#6c5ce7);display:flex;align-items:center;justify-content:center;font-size:44px;margin:0 auto 16px;animation:vcBreath 2s ease-in-out infinite;background-size:cover;background-position:center;"></div>
+    <div id="icCharName" style="font-size:24px;font-weight:bold;color:#fff;margin-bottom:8px;"></div>
+    <div id="icCallType" style="font-size:14px;color:rgba(162,155,254,0.8);"></div>
+  </div>
+  <div style="display:flex;gap:60px;align-items:center;">
+    <div id="icDecline" style="display:flex;flex-direction:column;align-items:center;gap:10px;cursor:pointer;">
+      <div style="width:64px;height:64px;border-radius:50%;background:#ff4757;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(255,71,87,0.5);">
+        <svg width=28 height=28 viewBox="0 0 24 24" fill=white><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1l-2.3 2.2z"/></svg>
+      </div>
+      <span style="font-size:13px;color:rgba(255,255,255,0.7);">拒接</span>
+    </div>
+    <div id="icAccept" style="display:flex;flex-direction:column;align-items:center;gap:10px;cursor:pointer;">
+      <div style="width:64px;height:64px;border-radius:50%;background:#00b894;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(0,184,148,0.5);">
+        <svg width=28 height=28 viewBox="0 0 24 24" fill=white><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.44 2 2 0 0 1 3.59 1.27h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.82a16 16 0 0 0 6.06 6.06l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+      </div>
+      <span style="font-size:13px;color:rgba(255,255,255,0.7);">接听</span>
+    </div>
+  </div>
 </div>
 
 <div id="scrLogList"class="scr-flex">
@@ -2481,11 +2612,13 @@ async function updateListPreview() {
         let _lastMsg = history[history.length - 1];
         _realLastTime = _lastMsg.time || _lastMsg.ts || 0;
     }
-    if (_realLastTime) {
-        try {
-            ls.setItem(`lastChatTime_` + currentChatId, String(_realLastTime));
-        } catch(e){}
-    }
+            if (_realLastTime) {
+            try {
+                originalSetItem.call(ls, `lastChatTime_` + currentChatId, String(_realLastTime));
+                localforage.setItem(`lastChatTime_` + currentChatId, String(_realLastTime));
+            } catch(e){}
+        }
+
 
 
     let p = $(`chatPreview`);
@@ -2840,7 +2973,7 @@ async function triggerCaughtMessage() {
         let _recLine=recentCtx?`【最近私聊记录】\n${recentCtx}`:``;
         let sys=`你是${charName}。\n${_apLine}\n${_relLine}\n${_wbLine}\n${_recLine}\n\n${myNick}刚刚被你发现在偷翻你的手机，TA正在看你的【${section}】。\n请以你的第一人称、符合当前感情状态和性格直接回应。要求：请发送3条左右的连续消息（请用换行符分隔每一条），每条字数不限，务必把话完整说完。不加任何前缀或角色标记。`;
 
-        let resp=await fetch(pxy,{method:`POST`,headers:{[`Content-Type`]:`application/json`,Authorization:`Bearer `+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:1500,messages:[{role:`user`,content:sys}]})});
+        let resp=await fetch(pxy,{method:`POST`,headers:{[`Content-Type`]:`application/json`,Authorization:`Bearer `+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:2500,messages:[{role:`user`,content:sys}]})});
 
         let data=await resp.json();
         let reply=(data.choices?.[0]?.message?.content||``).trim();
@@ -4728,7 +4861,10 @@ if(charStickers.length > 0) {
 
 
 
-        let arr = sys ? [{role: `system`, content: sys}] : [];
+
+    // ===== 通话提示词注入 =====
+    if(window._callSysAddon) sys += window._callSysAddon;
+                let arr = sys ? [{role: `system`, content: sys}] : [];
     let ctxHist = history.slice(-(parseInt($(`cfgCtx`).value)||10));
         let mappedHist = ctxHist.map(m => {
         if (m.content.includes(`[红包消息：`) && m.content.includes(`|data:image`)) {
@@ -12169,7 +12305,7 @@ ${recentGroupMsgs}
 - 话少的人（高冷/内敛）：直接一句话或几个字
 - 话多的人（活泼/话唠）：分3-5条发送，每条换一行，每条一句话
 - 只输出要说的话，绝不加任何角色名
-格式固定：先写状态（第1行：【定位与天气】xxx；第2行：【当日服装】xxx；第3行：【表情与动作】xxx；第4行：【心声】xxx），然后空一行后正式发言内容`;
+直接输出你说的话，不要任何角色名前缀，不要输出【】格式标记行，全程中文，自然真实`;
 
             try{
                 let resp=await fetch(pxy,{method:`POST`,headers:{[`Content-Type`]:`application/json`,Authorization:`Bearer `+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:1500,messages:[{role:`user`,content:sysMsg}]})});
@@ -12664,7 +12800,7 @@ window._renderGroupMsgs = function() {
                 let p0 = document.createElementNS(`http://www.w3.org/2000/svg`,`svg`); p0.setAttribute(`width`,`16`); p0.setAttribute(`height`,`16`); p0.setAttribute(`viewBox`,`0 0 24 24`); let pp0=document.createElementNS(`http://www.w3.org/2000/svg`,`path`); pp0.setAttribute(`d`,`M5 3l14 9-14 9V3z`); pp0.setAttribute(`fill`,`#000`); p0.appendChild(pp0);
                 let p1 = document.createElementNS(`http://www.w3.org/2000/svg`,`svg`); p1.setAttribute(`width`,`24`); p1.setAttribute(`height`,`24`); p1.setAttribute(`viewBox`,`0 0 24 24`); p1.setAttribute(`fill`,`none`); p1.setAttribute(`stroke`,`#000`); p1.setAttribute(`stroke-width`,`2.5`); p1.setAttribute(`stroke-linecap`,`round`); [`M17 12h.01`,`M13 8a6 6 0 0 0 0 8`,`M9 4a12 12 0 0 0 0 16`].forEach(d=>{let pp=document.createElementNS(`http://www.w3.org/2000/svg`,`path`);pp.setAttribute(`d`,d);p1.appendChild(pp);});
                 voiceDiv.appendChild(p0); voiceDiv.appendChild(p1);
-                voiceDiv.onclick = () => showCustomText(`文字内容：\n` + pureText);
+                voiceDiv.onclick = (e) => { if(window._groupMultiSelectMode){e.stopPropagation();return;} showCustomText(`文字内容：\n` + pureText); };
                 bub.appendChild(voiceDiv);
                 bub.style.background = `transparent`;
                 bub.style.boxShadow = `none`;
@@ -12679,6 +12815,7 @@ window._renderGroupMsgs = function() {
             img.style.cssText = `max-width:180px;max-height:200px;border-radius:10px;display:block;cursor:pointer;`;
             img.onclick = e => { 
                 e.stopPropagation(); 
+                if(window._groupMultiSelectMode) return;
                 let ov=document.createElement(`div`); 
                 ov.style.cssText=`position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:pointer;`; 
                 let im2=document.createElement(`img`); 
@@ -12706,7 +12843,7 @@ window._renderGroupMsgs = function() {
                 camIcon.style.cssText = `font-size:40px;filter:grayscale(100%) opacity(50%);`;
                 camIcon.innerText = `📷`;
                 photoDiv.appendChild(camIcon);
-                photoDiv.onclick = () => showCustomText(`照片内容：\n` + desc);
+                photoDiv.onclick = (e) => { if(window._groupMultiSelectMode){e.stopPropagation();return;} showCustomText(`照片内容：\n` + desc); };
                 bub.style.cssText = `background:transparent;box-shadow:none;padding:0;border:none;`;
                 bub.appendChild(photoDiv);
             } else if(tfM) {
@@ -12949,6 +13086,8 @@ if($(`btnGroupSend`)) {
         if($(`iptGroupMsg`)) $(`iptGroupMsg`).value=``;
         g.messages.push(msgObj);
         await _saveGroupData(); _renderGroupMsgs(); renderGroupInMsgList().catch(()=>{});
+        // Bug1修复：自动触发AI回复
+        setTimeout(() => { if(typeof window._groupAiReply === 'function') window._groupAiReply(null); }, 300);
     };
 }
 
@@ -12959,6 +13098,323 @@ if($(`iptGroupMsg`)) $(`iptGroupMsg`).addEventListener(`keydown`,e=>{ if(e.key==
 if(typeof _renderGroupMsgs === `function` && currentGroupId && groupData[currentGroupId]) {
     _renderGroupMsgs();
 }
+
+
+// ===================================================
+// 语音通话 & 视频通话 完整功能
+// ===================================================
+
+window._callState = { active: false, type: null, startTime: null, timerInterval: null, msgs: [] };
+
+function _fmtCallTime(sec) {
+    let m = Math.floor(sec/60), s = sec%60;
+    return String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+}
+
+function _endCall(declined) {
+    let st = window._callState;
+    if(!st.active) return;
+    clearInterval(st.timerInterval);
+    let callType = st.type === 'voice' ? '语音通话' : '视频通话';
+    let duration = st.startTime ? Math.floor((Date.now() - st.startTime) / 1000) : 0;
+    let record = declined ? ('📵 已拒绝' + callType) : (duration < 3 ? ('📵 ' + callType + '未接通') : ('📞 ' + callType + '结束，时长 ' + _fmtCallTime(duration)));
+    history.push({ role: 'assistant', content: record, ts: Date.now() });
+    try { ls.setItem('chatHistory_' + currentChatId, JSON.stringify(history)); } catch(e) {}
+    try { localforage.setItem('chatHistory_' + currentChatId, JSON.stringify(history)).catch(()=>{}); } catch(e) {}
+    mkBub(record, 'l');
+    updateListPreview();
+    st.active = false; st.type = null; st.startTime = null; st.msgs = [];
+    let sv = $('scrVoiceCall'), svd = $('scrVideoCall');
+    if(sv) sv.style.display = 'none';
+    if(svd) svd.style.display = 'none';
+}
+
+async function _openCall(type, isIncoming) {
+    let charName = $('cfgName')?.value || '对方';
+    let charAvatar = window.currentLoadedAiI || '';
+    let myAvatar = window.currentLoadedMyI || '';
+    window._callState.active = true;
+    window._callState.type = type;
+    window._callState.startTime = null;
+    window._callState.msgs = [];
+    if(type === 'voice') {
+        let scr = $('scrVoiceCall'); if(!scr) return;
+        $('vcCharName').innerText = charName;
+        $('vcStatus').innerText = isIncoming ? '正在接通…' : '正在拨号…';
+        $('vcTimer').style.display = 'none';
+        $('vcWaveContainer').style.display = 'none';
+        $('vcMsgs').innerHTML = '';
+        let av = $('vcAvatar');
+        if(charAvatar) { av.style.backgroundImage = 'url(' + charAvatar + ')'; av.innerText = ''; }
+        else { av.style.backgroundImage = 'none'; av.innerText = '👤'; }
+        scr.style.display = 'flex';
+    } else {
+        let scr = $('scrVideoCall'); if(!scr) return;
+        $('vdCharName').innerText = charName;
+        $('vdStatus').innerText = isIncoming ? '正在接通…' : '正在拨号…';
+        $('vdTimer').style.display = 'none';
+        $('vdMsgs').innerHTML = '';
+        let bg = $('vdBg');
+        if(charAvatar) bg.style.backgroundImage = 'url(' + charAvatar + ')';
+        let pip = $('vdPip');
+        if(myAvatar) { pip.style.backgroundImage = 'url(' + myAvatar + ')'; let sp = pip.querySelector('span'); if(sp) sp.style.display='none'; }
+        scr.style.display = 'flex';
+    }
+    let drawer = $('newMenuDrawer');
+    if(drawer) drawer.classList.remove('show');
+    await _callAIConnect(type, isIncoming);
+}
+
+async function _callAIConnect(type, isIncoming) {
+    let pxy = originalGetItem.call(ls,'pxy') || '';
+    let key = originalGetItem.call(ls,'key') || '';
+    let mod = originalGetItem.call(ls,'mod') || '';
+    if(pxy && !pxy.includes('chat/completions')) pxy = pxy.replace(/\/$/, '') + '/chat/completions';
+    if(!pxy || !key) { _startCallConnected(type); return; }
+    let charName = $('cfgName')?.value || '对方';
+    let charAP = $('cfgAiP')?.value || '';
+    let myName = $('cfgMyName')?.value || '对方';
+    let curStatus = originalGetItem.call(ls, 'cStatusTxt_' + currentChatId) || '在线';
+    let recentHist = history.slice(-6).map(m => m.role === 'assistant'
+        ? (charName + '：' + m.content.replace(/【[\s\S]*?】[^\n]*/g,'').trim().slice(0,60))
+        : (myName + '：' + m.content.slice(0,40))).join('\n');
+    let callTypeName = type === 'voice' ? '语音通话' : '视频通话';
+    let tp = parseFloat(originalGetItem.call(ls,'temp')||'0.8') || 0.8;
+    let connectSys = '你是' + charName + '。' + (charAP ? '你的设定：' + charAP : '') + '\n你当前面板状态：' + curStatus + '。\n近期聊天：\n' + recentHist + '\n\n【' + myName + '向你发起了' + callTypeName + '】\n请根据你的性格和当前情绪状态决定是否接听！\n如接听：回复最开头写 [接听通话]，随后用「」写出接起电话后的第一句话，配合相关听觉或视觉细节描写。\n如拒接：回复最开头写 [拒接通话]，随后发来一条文字消息说明原因（可以找借口说在忙，或傲娇地表达不满）。\n注意：只有在氛围极佳或你十分思念' + myName + '时才选择接听，否则大概率拒接！';
+    try {
+        let res = await fetch(pxy, { method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer '+key}, body:JSON.stringify({model:mod, temperature:tp, max_tokens:600, messages:[{role:'user', content:connectSys}]}) });
+        let dat = await res.json();
+        let reply = (dat.choices?.[0]?.message?.content || '').trim();
+        if(reply.includes('[接听通话]')) {
+            reply = reply.replace('[接听通话]', '').trim();
+            _startCallConnected(type);
+            setTimeout(() => _addCallMsg(reply, false, true), 800);
+        } else if(reply.includes('[拒接通话]')) {
+            reply = reply.replace('[拒接通话]', '').trim();
+            let sv = $('scrVoiceCall'), svd = $('scrVideoCall');
+            if(sv) sv.style.display = 'none';
+            if(svd) svd.style.display = 'none';
+            window._callState.active = false;
+            let decRecord = '📵 对方拒绝了' + (type === 'voice' ? '语音通话' : '视频通话');
+            history.push({ role: 'assistant', content: decRecord + (reply ? '\n' + reply : ''), ts: Date.now() });
+            try { ls.setItem('chatHistory_' + currentChatId, JSON.stringify(history)); } catch(e) {}
+            mkBub(decRecord, 'l');
+            if(reply) setTimeout(() => mkBub(reply, 'l'), 800);
+            updateListPreview();
+        } else {
+            _startCallConnected(type);
+            if(reply) setTimeout(() => _addCallMsg(reply, false, true), 800);
+        }
+    } catch(e) { _startCallConnected(type); }
+}
+
+function _startCallConnected(type) {
+    window._callState.startTime = Date.now();
+    let statusEl = type === 'voice' ? $('vcStatus') : $('vdStatus');
+    let timerEl = type === 'voice' ? $('vcTimer') : $('vdTimer');
+    let waveEl = $('vcWaveContainer');
+    if(statusEl) statusEl.innerText = '通话中';
+    if(timerEl) timerEl.style.display = 'block';
+    if(waveEl && type === 'voice') waveEl.style.display = 'flex';
+    let sec = 0;
+    window._callState.timerInterval = setInterval(() => {
+        sec++;
+        if(timerEl) timerEl.innerText = _fmtCallTime(sec);
+    }, 1000);
+}
+
+// 打字机特效 (语音通话专属)
+function _typewriterEffect(container, text, isVoice) {
+    let bub = document.createElement('div');
+    bub.style.cssText = 'max-width:80%;padding:8px 14px;border-radius:4px 16px 16px 16px;font-size:14px;line-height:1.5;word-break:break-all;align-self:flex-start;background:rgba(255,255,255,0.15);color:#fff;backdrop-filter:blur(5px);';
+    container.appendChild(bub);
+    container.scrollTop = container.scrollHeight;
+    if(isVoice) {
+        // 打字机特效
+        let i = 0;
+        let iv = setInterval(() => {
+            bub.innerText = text.slice(0, i+1);
+            i++;
+            container.scrollTop = container.scrollHeight;
+            if(i >= text.length) clearInterval(iv);
+        }, 60);
+    } else {
+        bub.innerText = text;
+    }
+}
+
+function _addCallMsg(txt, isUser, typewriter) {
+    if(!window._callState.active) return;
+    let type = window._callState.type;
+    let container = type === 'voice' ? $('vcMsgs') : $('vdMsgs');
+    if(!container) return;
+    if(!isUser && !typewriter) {
+        let bub = document.createElement('div');
+        bub.style.cssText = 'max-width:80%;padding:8px 14px;border-radius:4px 16px 16px 16px;font-size:14px;line-height:1.5;word-break:break-all;align-self:flex-start;background:rgba(255,255,255,0.15);color:#fff;backdrop-filter:blur(5px);';
+        bub.innerText = txt;
+        container.appendChild(bub);
+        container.scrollTop = container.scrollHeight;
+    } else if(!isUser && typewriter && type === 'voice') {
+        _typewriterEffect(container, txt, true);
+    } else if(!isUser) {
+        // video - render photo card if needed
+        if(txt.startsWith('[照片消息：')) {
+            let desc = txt.match(/\[照片消息：([\s\S]+?)\]/)?.[1] || '';
+            let card = document.createElement('div');
+            card.style.cssText = 'width:130px;height:170px;background:#fce4ec;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;align-self:flex-start;';
+            card.innerHTML = '<span style="font-size:36px;filter:grayscale(50%)">📷</span><span style="font-size:11px;color:#888;text-align:center;padding:0 8px;">' + desc.slice(0,30) + '</span>';
+            card.onclick = () => showCustomText('视频里展示的画面：\n' + desc);
+            container.appendChild(card);
+        } else {
+            let bub = document.createElement('div');
+            bub.style.cssText = 'max-width:80%;padding:8px 14px;border-radius:4px 16px 16px 16px;font-size:14px;line-height:1.5;word-break:break-all;align-self:flex-start;background:rgba(255,255,255,0.15);color:#fff;backdrop-filter:blur(5px);';
+            bub.innerText = txt;
+            container.appendChild(bub);
+        }
+        container.scrollTop = container.scrollHeight;
+    } else {
+        let bub = document.createElement('div');
+        bub.style.cssText = 'max-width:80%;padding:8px 14px;border-radius:16px 4px 16px 16px;font-size:14px;line-height:1.5;word-break:break-all;align-self:flex-end;background:rgba(162,155,254,0.8);color:white;';
+        bub.innerText = txt;
+        container.appendChild(bub);
+        container.scrollTop = container.scrollHeight;
+    }
+    // Animate wave bars when char speaks in voice mode
+    if(!isUser && type === 'voice') {
+        let wc = $('vcWaveContainer');
+        if(wc && window._callState.startTime) {
+            wc.style.display = 'flex';
+        }
+    }
+}
+
+async function _callSendMsg(txt) {
+    if(!txt || !window._callState.active) return;
+    _addCallMsg(txt, true, false);
+    let pxy = originalGetItem.call(ls,'pxy') || '';
+    let key = originalGetItem.call(ls,'key') || '';
+    let mod = originalGetItem.call(ls,'mod') || '';
+    if(pxy && !pxy.includes('chat/completions')) pxy = pxy.replace(/\/$/, '') + '/chat/completions';
+    if(!pxy || !key) return;
+    let type = window._callState.type;
+    let charName = $('cfgName')?.value || '对方';
+    let charAP = $('cfgAiP')?.value || '';
+    let myName = $('cfgMyName')?.value || '对方';
+    let tp = parseFloat(originalGetItem.call(ls,'temp')||'0.8') || 0.8;
+    let callLog = window._callState.msgs.slice(-6).map(m => (m.isUser ? myName : charName) + '：' + m.txt).join('\n');
+    window._callState.msgs.push({isUser:true, txt});
+    let voiceRules = type === 'voice'
+        ? '【语音通话规则 - 极度重要】你们正在进行语音通话，双方看不到对方。你必须：\n1. 完全禁止描写任何视觉动作（如"瞪了一眼""我看着你"），只描写听觉和触觉（呼吸声、环境音、物体声响、衣物摩擦声等）。\n2. 像真实打电话一样自然说话，语气要有质感，字数30-80字。\n3. 可以描写背景里的声音细节，让对方脑补环境。'
+        : '【视频通话规则 - 极度重要】你们正在进行视频通话，可以看到彼此。你必须：\n1. 大量描写视觉细节：你穿了什么、头发状态、距离镜头的远近、眼神交互。\n2. 如果想展示周围的东西，可以用[发送照片：详细描述]指令翻转镜头。\n3. 如果网络卡了可以演戏说画面定格了，字数30-100字。';
+    let callSys = '你是' + charName + '。' + (charAP ? '你的设定：' + charAP : '') + '\n\n' + voiceRules + '\n\n通话记录：\n' + callLog + '\n\n' + myName + '说：' + txt + '\n\n请直接回复，无需任何前缀。';
+    try {
+        let res = await fetch(pxy, { method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer '+key}, body:JSON.stringify({model:mod, temperature:tp, max_tokens:400, messages:[{role:'user', content:callSys}]}) });
+        let dat = await res.json();
+        let reply = (dat.choices?.[0]?.message?.content || '').trim();
+        // 处理发送照片指令（视频通话专属）
+        let photoM = reply.match(/\[发送照片：([\s\S]*?)\]/);
+        if(photoM) {
+            reply = reply.replace(photoM[0], '').trim();
+            let photoCard = '[照片消息：' + photoM[1] + ']';
+            _addCallMsg(photoCard, false, false);
+            window._callState.msgs.push({isUser:false, txt: photoCard});
+        }
+        if(reply) {
+            _addCallMsg(reply, false, true);
+            window._callState.msgs.push({isUser:false, txt:reply});
+        }
+    } catch(e) { _addCallMsg('（信号不好，听不清…）', false, false); }
+}
+
+// 绑定通话界面按钮
+if($('vcSend')) {
+    let doVcSend = () => { let v = $('vcInput'); if(!v||!v.value.trim()) return; _callSendMsg(v.value.trim()); v.value = ''; };
+    $('vcSend').onclick = doVcSend;
+    if($('vcInput')) $('vcInput').addEventListener('keydown', e => { if(e.key==='Enter'){e.preventDefault();doVcSend();} });
+}
+if($('vdSend')) {
+    let doVdSend = () => { let v = $('vdInput'); if(!v||!v.value.trim()) return; _callSendMsg(v.value.trim()); v.value = ''; };
+    $('vdSend').onclick = doVdSend;
+    if($('vdInput')) $('vdInput').addEventListener('keydown', e => { if(e.key==='Enter'){e.preventDefault();doVdSend();} });
+}
+if($('vcHangup')) $('vcHangup').onclick = () => _endCall(false);
+if($('vdHangup')) $('vdHangup').onclick = () => _endCall(false);
+
+// 绑定来电界面
+if($('icAccept')) $('icAccept').onclick = () => {
+    let icType = window._callState._incomingType || 'voice';
+    let si = $('scrIncomingCall'); if(si) si.style.display = 'none';
+    _openCall(icType, true);
+};
+if($('icDecline')) $('icDecline').onclick = () => {
+    let si = $('scrIncomingCall'); if(si) si.style.display = 'none';
+    window._callState.active = false;
+    let icType = window._callState._incomingType || 'voice';
+    let decRecord = '📵 已拒绝' + (icType === 'voice' ? '语音' : '视频') + '通话';
+    history.push({ role: 'assistant', content: decRecord, ts: Date.now() });
+    try { ls.setItem('chatHistory_' + currentChatId, JSON.stringify(history)); } catch(e) {}
+    mkBub(decRecord, 'l');
+    // AI反应：被拒接后发消息
+    setTimeout(async () => {
+        let pxy=originalGetItem.call(ls,'pxy')||'', key=originalGetItem.call(ls,'key')||'', mod=originalGetItem.call(ls,'mod')||'';
+        if(pxy&&!pxy.includes('chat/completions')) pxy=pxy.replace(/\/$/, '')+'/chat/completions';
+        if(!pxy||!key) return;
+        let charName=$('cfgName')?.value||'对方', charAP=$('cfgAiP')?.value||'', myName=$('cfgMyName')?.value||'对方';
+        let sys = '你是' + charName + '。' + (charAP?'设定：'+charAP:'') + '\n你刚刚主动给' + myName + '打了电话但对方拒接了，请根据你的性格第一时间发来一条文字消息（可以生气、委屈、傲娇，或者追问原因）。直接输出，不加任何前缀。';
+        let tp = parseFloat(originalGetItem.call(ls,'temp')||'0.8')||0.8;
+        try {
+            let res = await fetch(pxy,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:300,messages:[{role:'user',content:sys}]})});
+            let dat = await res.json();
+            let reply = (dat.choices?.[0]?.message?.content||'').trim();
+            if(reply) { history.push({role:'assistant',content:reply,ts:Date.now()}); mkBub(reply,'l'); updateListPreview(); }
+        } catch(e) {}
+    }, 1200);
+};
+
+// 抽屉按钮点击
+if($('btnVoiceCall')) $('btnVoiceCall').onclick = () => {
+    let drawer = $('newMenuDrawer');
+    if(drawer) drawer.classList.remove('show');
+    _openCall('voice', false);
+};
+if($('btnVideoCall')) $('btnVideoCall').onclick = () => {
+    let drawer = $('newMenuDrawer');
+    if(drawer) drawer.classList.remove('show');
+    _openCall('video', false);
+};
+
+// 拦截AI回复中的主动发起通话指令（char主动打电话）
+const _origMkBubForCall = mkBub;
+window.mkBub = function(txt, side, isT) {
+    if(side === 'l' && !isT) {
+        let hasVoice = txt.includes('[发起语音通话]');
+        let hasVideo = txt.includes('[发起视频通话]');
+        if(hasVoice || hasVideo) {
+            txt = txt.replace('[发起语音通话]', '').replace('[发起视频通话]', '').trim();
+            let icType = hasVideo ? 'video' : 'voice';
+            setTimeout(() => {
+                if(window._callState.active) return;
+                window._callState._incomingType = icType;
+                window._callState.active = true;
+                let charName = $('cfgName')?.value || '对方';
+                let charAvatar = window.currentLoadedAiI || '';
+                let icName = $('icCharName'), icType2 = $('icCallType'), icAv = $('icAvatar'), si = $('scrIncomingCall');
+                if(!icName||!si) return;
+                icName.innerText = charName;
+                icType2.innerText = icType === 'video' ? '📹 视频通话邀请' : '📞 语音通话邀请';
+                if(charAvatar) { icAv.style.backgroundImage = 'url(' + charAvatar + ')'; icAv.innerText = ''; }
+                else { icAv.style.backgroundImage = 'none'; icAv.innerText = '👤'; }
+                si.style.display = 'flex';
+                if(navigator.vibrate) navigator.vibrate([300,100,300]);
+            }, 1000);
+        }
+    }
+    if(txt.trim()) _origMkBubForCall.call(this, txt, side, isT);
+};
+
+// 单聊系统提示注入：主动发起通话规则
+window._callSysAddon = '\n【主动发起通话规则 - 极度重要】如果你在当前剧情中情绪出现剧烈波动（极度生气、极其思念、遇到紧急情况，或者对方故意冷落/惹怒你），你拥有主动向对方拨打电话的绝对特权！请在情绪爆发的回复最后，单独起一行加入指令：[发起语音通话] 或者 [发起视频通话]。注意：一旦使用此指令，代表你已经迫不及待想要越过文字直接对峙或倾诉，请务必在前面的正文里铺垫好你此时急躁、迫切或愤怒的情绪。';
+
 
 
 
