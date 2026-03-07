@@ -3651,7 +3651,7 @@ $(`btnListToRoom`).onclick = async () => {
     if($(`cfgStatusBarOn`)) {
         let sbon = ls.getItem(`cStatusBarOn`) === `true`;
         $(`cfgStatusBarOn`).checked = sbon;
-        if($(`statusBarPanel`)) $(`statusBarPanel`).style.display = sbon ? `flex` : `none`;
+        // Panel is always visible - do NOT toggle display here
     }
     if($(`cfgStatusBar`) && ls.getItem(`cStatusBar`)) $(`cfgStatusBar`).value = ls.getItem(`cStatusBar`);
     $(`cfgAutoMem`).checked = ls.getItem(`cAMem`) === `true`;
