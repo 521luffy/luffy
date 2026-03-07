@@ -2813,17 +2813,17 @@ async function triggerCaughtMessage() {
     if($(`catchSwitch`)) $(`catchSwitch`).disabled=true;
 
     try {
-        let charAP=(originalGetItem.call(ls,`cAP_`+targetId)||originalGetItem.call(ls,`cAP`)||``).slice(0,500);
+        let charAP=(originalGetItem.call(ls,`cAP_`+targetId)||originalGetItem.call(ls,`cAP`)||``);
         let charRel=originalGetItem.call(ls,`cR_`+targetId)||``;
         let charName=originalGetItem.call(ls,`cN_`+targetId)||`对方`;
         let myNick=(await localforage.getItem(`cMyN_`+targetId).catch(()=>``))||originalGetItem.call(ls,`cMyN_`+targetId)||originalGetItem.call(ls,`cMyN`)||`对方`;
 
         let wbItems=[]; try{let wb=await localforage.getItem(`wbData`)||[]; wbItems=Array.isArray(wb)?wb:JSON.parse(wb||`[]`);}catch(e){}
-        let wbText=[...wbItems.filter(x=>x.type===`global`).map(x=>`${x.name}：${x.content}`),...(wbItems.filter(x=>x.type===`local`&&(x.charId===targetId||(x.charIds||[]).includes(targetId))).map(x=>`${x.name}：${x.content}`))].join(`\n`).slice(0,400)||``;
+        let wbText=[...wbItems.filter(x=>x.type===`global`).map(x=>`${x.name}：${x.content}`),...(wbItems.filter(x=>x.type===`local`&&(x.charId===targetId||(x.charIds||[]).includes(targetId))).map(x=>`${x.name}：${x.content}`))].join(`\n`)||``;
 
         let targetHist=[];
         try{let h=await localforage.getItem(`chatHistory_`+targetId)||originalGetItem.call(ls,`chatHistory_`+targetId); if(h) targetHist=typeof h===`string`?JSON.parse(h):(Array.isArray(h)?h:[]);}catch(e){}
-        let recentCtx=targetHist.slice(-10).map(m=>m.role===`assistant`?`${charName}：${String(m.content||``).replace(/【[\s\S]*?】[^\n]*/g,``).trim().slice(0,60)}`:`${myNick}：${String(m.content||``).slice(0,40)}`).join(`\n`);
+        let recentCtx=targetHist.slice(-10).map(m=>m.role===`assistant`?`${charName}：${String(m.content||``).replace(/【[\s\S]*?】[^\n]*/g,``).trim()}`:`${myNick}：${String(m.content||``)}`).join(`\n`);
 
         let _apLine=charAP?`【你的人设】${charAP}`:``;
         let _relLine=charRel?`【关系设定】${charRel}`:``;
@@ -2834,7 +2834,7 @@ async function triggerCaughtMessage() {
         let resp=await fetch(pxy,{method:`POST`,headers:{[`Content-Type`]:`application/json`,Authorization:`Bearer `+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:1500,messages:[{role:`user`,content:sys}]})});
         let data=await resp.json();
         let reply=(data.choices?.[0]?.message?.content||``).trim();
-        reply=reply.replace(/^【[^】]*】/g,``).replace(/^(我|说|答|回复)[:：]/,``).replace(/^\|[^\n]*\|[^\n]*$/gm,``).trim();
+        reply=reply.replace(/^【[^】]*】/g,``).replace(/^(我|说|答|回复)[:：]/,``).trim();
         if(!reply) return;
 
         // 存入该char独立历史
@@ -2842,11 +2842,13 @@ async function triggerCaughtMessage() {
         await localforage.setItem(`chatHistory_`+targetId,JSON.stringify(newHist)).catch(()=>{});
         ls.setItem(`chatHistory_`+targetId,JSON.stringify(newHist));
 
+        // 更新该char的最后聊天时间（用于消息列表排序）
+        ls.setItem(`lastChatTime_`+targetId, String(Date.now()));
+
         // === 使用全局 loadCharRoom 精确加载目标角色聊天室（不依赖DOM）===
         await window.loadCharRoom(targetId, newHist);
         setTimeout(()=>{
             if(msgs) msgs.scrollTop=msgs.scrollHeight;
-            if(typeof updateListPreview===`function`) updateListPreview();
             if(typeof renderContacts===`function`) renderContacts();
             renderGroupInMsgList().catch(()=>{});
         }, 200);
@@ -2986,6 +2988,12 @@ async function renderContacts() {
         let isBlk = originalGetItem.call(ls, `isBlocked_` + c.id) === 'true';
         if (isBlk) isoName += `<span style="color:#ff4757;font-size:10px;margin-left:4px;padding:0 2px;">已拉黑</span>`;
         div.innerHTML = avaHtml + `<div class=chat-info><div class=chat-name>` + isoName + `</div><div class=chat-preview>` + prevTxt + `</div></div>`;
+        // 设置最后聊天时间（用于消息列表排序）
+        let _lastTime = Number(originalGetItem.call(ls, `lastChatTime_`+c.id) || 0);
+        if(!_lastTime) {
+            try { let _h=typeof isoHist==='string'?JSON.parse(isoHist):isoHist; if(_h&&_h.length){let _lm=_h[_h.length-1]; _lastTime=_lm.ts||_lm.time||0;} } catch(e){}
+        }
+        div.dataset.lasttime = String(_lastTime);
                 div.onclick = async () => {
             currentChatId = c.id;
             $(`cfgName`).value = originalGetItem.call(ls, `cN_` + c.id) || c.name;
@@ -3023,13 +3031,6 @@ async function renderContacts() {
             showScreen(`scrRoom`);
             setTimeout(() => msgs.scrollTop = msgs.scrollHeight, 100);
         };
-        // 设置最后聊天时间用于消息列表排序
-        let _lastTs = 0;
-        if(isoHist && isoHist.length) {
-            let _lastMsg = isoHist[isoHist.length-1];
-            _lastTs = _lastMsg.ts || _lastMsg.time || 0;
-        }
-        div.dataset.lasttime = String(_lastTs);
         $(`listContent`).appendChild(div);
         if($(`contactContent`)) {
             let divC = document.createElement(`div`);
@@ -4101,9 +4102,7 @@ function redrawChat() {
             let rM = txt.match(/【回复】([\s\S]*)$/);
             let out = txt;
             if(rM) out = rM[1].trim();
-            // 过滤掉格式行：|日期|星期|学期| 等系统注入的时间行
-            out = out.replace(/^\|[^\n]*\|[^\n]*$/gm, ``).replace(/\n{3,}/g, `\n\n`).trim();
-            // 过滤掉 【】 状态行
+            // 过滤掉 【】 状态行（不再过滤竖线格式行，避免影响正常内容）
             out = out.replace(/^【[^】]*】[^\n]*$/gm, ``).replace(/^（[^）]*）$/gm, ``).trim();
             if(!out) return; // 整条消息如果全是格式就跳过
             
@@ -5308,8 +5307,8 @@ function mkBub(txt, side, isT=false) {
 }
 
 function mkBubSync(txt, side) {
-    // 过滤系统格式行
-    txt = String(txt||``).replace(/^\|[^\n]*\|[^\n]*$/gm,``).replace(/^【[^】]*】[^\n]*$/gm,``).replace(/\n{3,}/g,`\n\n`).trim();
+    // 过滤系统格式行（保留竖线内容，只去掉状态标记）
+    txt = String(txt||``).replace(/^【[^】]*】[^\n]*$/gm,``).replace(/\n{3,}/g,`\n\n`).trim();
     if(!txt) return;
     let row = document.createElement(`div`);
     row.className = `msg-row ` + (side===`l`?`row-left`:`row-right`);
@@ -7002,9 +7001,6 @@ try {
     if (!h) h = originalGetItem.call(ls, `chatHistory_` + charId);
     if (h) specHist = typeof h === `string` ? JSON.parse(h) : (Array.isArray(h) ? h : []);
 } catch(e) {}
-if (charId === currentChatId && typeof history !== `undefined`) {
-    specHist = history;
-}
 
     let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
 
@@ -10300,6 +10296,38 @@ if($(`momentList`)) {
             if(inp) inp.value=``;
             if(writeBox) writeBox.style.display=`none`;
             await saveMoments(); renderMoments();
+
+            // 如果该动态是char发的，触发char的AI回复
+            if(post.authorType===`char` && post.authorId) {
+                let pxy=originalGetItem.call(ls,`pxy`)||``;
+                let key=originalGetItem.call(ls,`key`)||``;
+                let mod=originalGetItem.call(ls,`mod`)||``;
+                if(pxy&&!pxy.includes(`chat/completions`)) pxy=pxy.replace(/\/$/,``)+`/chat/completions`;
+                let tp=parseFloat(originalGetItem.call(ls,`temp`)||`0.8`)||0.8;
+                if(pxy&&key) {
+                    showToast(`对方正在回复中...`);
+                    let charName=post.author;
+                    let charAP=(originalGetItem.call(ls,`cAP_`+post.authorId)||``).slice(0,300);
+                    let histStr=(post.comments||[]).map(c=>`${c.author}：${c.text}`).join(`\n`);
+                    let sysMsg=`你是${charName}。${charAP?`性格人设：${charAP}`:``}
+这是你在朋友圈发的动态：「${post.text}」
+目前评论区记录：
+${histStr}
+
+${uName}刚刚给你的动态写了评论，请以你的第一人称和性格自然回复TA，20-60字，直接输出不加任何前缀或标记。`;
+                    try {
+                        let resp=await fetch(pxy,{method:`POST`,headers:{[`Content-Type`]:`application/json`,Authorization:`Bearer `+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:200,messages:[{role:`user`,content:sysMsg}]})});
+                        let dat=await resp.json();
+                        hideToast();
+                        let reply=(dat.choices?.[0]?.message?.content||``).trim();
+                        if(reply) {
+                            reply=reply.replace(/^【[^】]*】/g,``).replace(/^(我|说|答|回复)[:：]/,``).trim();
+                            post.comments.push({author:charName,text:`回复 ${uName}：`+reply,time:new Date().toLocaleString()});
+                            await saveMoments(); renderMoments();
+                        }
+                    } catch(err){ hideToast(); }
+                }
+            }
             return;
         }
 
@@ -10489,120 +10517,8 @@ if($(`navMomentToMe`)) $(`navMomentToMe`).onclick = () => showScreen(`scrMe`);
 // ================================================================
 
 // ================================================================
-// 1. 被抓包修复：正确读取目标char历史，生成个性化质问
-//    关键：用 lastSpyCharId 而非 currentChatId
-//    用目标char专属历史（不碰全局history）
-//    用 pxy = originalGetItem.call(ls,'pxy') + 补全URL
+// 1. 被抓包修复：V9重复定义已删除，使用2798行的正确版本（调用window.loadCharRoom）
 // ================================================================
-async function triggerCaughtMessage() {
-    let section = window.currentSpySection || `手机界面`;
-    // 被抓包：从 spyCharSelect 读当前选中的char
-    let _spySel = $(`spyCharSelect`);
-    let targetId = (_spySel && _spySel.value) ? _spySel.value 
-                   : ((typeof lastSpyCharId !== `undefined` && lastSpyCharId) ? lastSpyCharId : ``);
-    if(!targetId) { 
-        alert(`请先在查手机页面右上角选择要查看的角色！`); 
-        return; 
-    }
-
-    let pxy = originalGetItem.call(ls, `pxy`) || ``;
-    let key = originalGetItem.call(ls, `key`) || ``;
-    let mod = originalGetItem.call(ls, `mod`) || ``;
-    if(pxy && !pxy.includes(`chat/completions`)) pxy = pxy.replace(/\/$/, ``) + `/chat/completions`;
-    let tp = parseFloat(originalGetItem.call(ls, `temp`) || `0.8`) || 0.8;
-    if(!pxy || !key) { alert(`被抓包需要先配置API！`); return; }
-    if($(`catchLoadingTip`)) $(`catchLoadingTip`).style.display = `block`;
-
-    // 读取 char 信息
-    let charName = originalGetItem.call(ls, `cN_`+targetId) || `对方`;
-    let charAP   = originalGetItem.call(ls, `cAP_`+targetId) || originalGetItem.call(ls, `cAP`) || ``;
-    let charRel  = originalGetItem.call(ls, `cR_`+targetId) || ``;
-    let myNick   = originalGetItem.call(ls, `cMyN_`+targetId) || `你`;
-
-    // 读取世界书
-    let wbGlobals = wbData.filter(x => x.type === `global`);
-    let wbLinked  = originalGetItem.call(ls, `linkedWb_`+targetId);
-    let charLinked = wbLinked ? JSON.parse(wbLinked) : linkedWb;
-    let wbLocals  = wbData.filter(x => x.type === `local` && charLinked.includes(x.id));
-    let wbText = ``;
-    wbGlobals.forEach(x => wbText += `【世界设定】` + x.content + `\n`);
-    wbLocals.forEach(x  => wbText += `【当前剧情】` + x.content + `\n`);
-
-    // 读取最近10条私聊记录
-    let targetHist = [];
-    try {
-        let lf = await localforage.getItem(`chatHistory_`+targetId);
-        if(!lf) lf = originalGetItem.call(ls, `chatHistory_`+targetId);
-        if(lf) targetHist = typeof lf===`string` ? JSON.parse(lf) : lf;
-    } catch(e) {}
-    let recentCtx = ``;
-    if(targetHist.length) {
-        recentCtx = `\n【最近10条私聊记录（决定当前感情状态和语气）】\n` +
-            targetHist.slice(-10).map(m => (m.role===`assistant`?charName:myNick) + `：` + String(m.content||``).replace(/【[\s\S]*?】/g,``).replace(/^\[.*?\]/,``).trim().slice(0,60)).join(`\n`);
-    }
-
-    // 极简系统提示词 - 完全依赖人设+世界书+聊天记录，不预设情绪
-    let sys = `你是${charName}。
-${charAP ? `【你的人设】${charAP}` : ``}
-${charRel ? `【关系设定】${charRel}` : ``}
-${wbText}${recentCtx}
-
-${myNick}刚刚被你发现在偷翻你的手机，TA正在看你的【${section}】。
-直接以你的第一人称反应，符合你当前的感情状态和性格。不加任何前缀或角色标记。`;
-
-    try {
-        let resp = await fetch(pxy, {
-            method: `POST`,
-            headers: {[`Content-Type`]: `application/json`, Authorization: `Bearer `+key},
-            body: JSON.stringify({model: mod, temperature: tp, max_tokens: 600, messages: [{role:`user`, content:sys}]})
-        });
-        let data = await resp.json();
-        let reply = (data.choices?.[0]?.message?.content || ``).trim();
-        reply = reply.replace(/^【[^】]*】/g,``).replace(/^(我|说|答|回复)[:：]/,``).trim();
-        if(!reply) { if($(`catchLoadingTip`)) $(`catchLoadingTip`).style.display=`none`; return; }
-
-        // 存入目标char独立历史
-        let newHist = [...targetHist, {role:`assistant`, content:reply}];
-        await localforage.setItem(`chatHistory_`+targetId, newHist).catch(()=>{});
-        // 渲染气泡（只有在当前对话就是targetId时才直接渲染）
-        if(currentChatId === targetId) {
-            mkBub(reply, `l`);
-            history = newHist;
-            ls.setItem(`chatHistory_`+targetId, JSON.stringify(newHist));
-        }
-        // 自动跳转到被抓包 char 的聊天室
-        currentChatId = targetId;
-        history = newHist;
-        // 加载 char 设置
-        if($(`cfgName`)) $(`cfgName`).value = originalGetItem.call(ls,`cN_`+targetId)||``;
-        if($(`cfgAiP`)) $(`cfgAiP`).value = originalGetItem.call(ls,`cAP_`+targetId)||``;
-        if($(`cfgMyName`)) $(`cfgMyName`).value = (await localforage.getItem(`cMyN_`+targetId).catch(()=>``))||originalGetItem.call(ls,`cMyN_`+targetId)||``;
-        if($(`cfgMyP`)) $(`cfgMyP`).value = originalGetItem.call(ls,`cMP_`+targetId)||``;
-        if($(`cfgRem`)) $(`cfgRem`).value = originalGetItem.call(ls,`cR_`+targetId)||``;
-        if($(`cfgBubbleCss`)) $(`cfgBubbleCss`).value = originalGetItem.call(ls,`cBubbleCss_`+targetId)||``;
-        let _charName = originalGetItem.call(ls,`cN_`+targetId)||``;
-        if($(`roomTitle`)) $(`roomTitle`).innerText = _charName;
-        ls.setItem(`chatHistory_`+targetId, JSON.stringify(newHist));
-        // 加载头像（异步，避免卡顿）
-        (async()=>{
-            try {
-                let _ava = await localforage.getItem(`aiI_`+targetId) || originalGetItem.call(ls,`aiI_`+targetId);
-                window.currentLoadedAiI = _ava || ``;
-                if($(`aiPreview`)) { $(`aiPreview`).style.backgroundImage=_ava?`url(${_ava})`:`none`; $(`aiPreview`).innerText=_ava?``:``; }
-                if($(`spyCharAvatar`)) { $(`spyCharAvatar`).style.backgroundImage=_ava?`url(${_ava})`:`none`; }
-            } catch(e){}
-        })();
-        if(typeof redrawChat === `function`) redrawChat();
-        showScreen(`scrRoom`);
-        setTimeout(()=>{ if(msgs) msgs.scrollTop=msgs.scrollHeight; },150);
-        updateListPreview();
-    } catch(e) {
-        console.warn(`triggerCaughtMessage error:`, e);
-    }
-    if($(`catchLoadingTip`)) $(`catchLoadingTip`).style.display = `none`;
-    if($(`catchSwitch`)) $(`catchSwitch`).checked = false;
-    await localforage.setItem(`catchTriggered_`+targetId, false).catch(()=>{});
-}
 
 // ================================================================
 // 2. 动态功能：填充 char/NPC 双栏多选列表
@@ -12351,12 +12267,10 @@ if($(`btnGroupMic`)) $(`btnGroupMic`).onclick = () => {
     };
 };
 
-// 群聊表情包按钮 - 复用单聊的表情包面板
+// 群聊表情包按钮 - 与单聊完全一致的样式（4列/搜索/最近全部tab）
 if($(`btnGroupSticker`)) $(`btnGroupSticker`).onclick = async () => {
-    // 直接显示群聊专用表情包选择器（避免单聊drawer定位问题）
     let existing=$(`groupStickerOverlay`); if(existing){existing.remove();return;}
     let stickers=[];
-    // 读取与单聊相同的表情包数据源 (myPhoneStickers)
     let _rawStickers=null;
     try{_rawStickers=await localforage.getItem(`myPhoneStickers`);}catch(e){}
     if(!_rawStickers) try{_rawStickers=await localforage.getItem(`stickerList`);}catch(e){}
@@ -12364,48 +12278,167 @@ if($(`btnGroupSticker`)) $(`btnGroupSticker`).onclick = async () => {
         let _parsed=typeof _rawStickers===`string`?JSON.parse(_rawStickers):_rawStickers;
         stickers=Array.isArray(_parsed)?_parsed:Object.values(_parsed||{}).flat();
     }
-    if(!stickers.length){
-        // 直接复用单聊的stickerDrawer
-        window._groupStickerPending=true;
-        if(typeof toggleStickerDrawer===`function`) toggleStickerDrawer(true);
-        return;
-    }
+    if(!stickers.length){ alert(`还没有表情包，请在单聊页面先上传表情包！`); return; }
+
+    let recentRaw=null; try{recentRaw=await localforage.getItem(`recentStickers`);}catch(e){}
+    let recentStickers=recentRaw?(typeof recentRaw===`string`?JSON.parse(recentRaw):recentRaw):[];
+
     let ov=document.createElement(`div`);
     ov.id=`groupStickerOverlay`;
     ov.style.cssText=`position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9000;display:flex;align-items:flex-end;justify-content:center;`;
+    
     let panel=document.createElement(`div`);
-    panel.style.cssText=`background:#f5f6f8;border-radius:20px 20px 0 0;padding:16px;width:100%;max-height:55vh;overflow-y:auto;`;
-    panel.innerHTML=`<div style="font-weight:bold;color:#555;margin-bottom:12px;text-align:center;">选择表情包</div>`;
+    panel.style.cssText=`background:#f5f6f8;border-radius:20px 20px 0 0;padding:0;width:100%;max-height:55vh;display:flex;flex-direction:column;`;
+    
+    // 顶部栏 - 与单聊完全一致
+    let header=document.createElement(`div`);
+    header.style.cssText=`display:flex;align-items:center;justify-content:space-between;padding:12px 16px 8px;border-bottom:1px solid #eee;flex-shrink:0;`;
+    header.innerHTML=`<span id=groupStickerCancel style="color:#666;cursor:pointer;font-size:14px;">取消</span><span style="font-weight:bold;font-size:14px;color:#333;">表情包</span><div style="display:flex;gap:10px;font-size:13px;color:#a29bfe;"><span id=gStkEditBtn style="cursor:pointer;">编辑</span><span id=gStkAddBtn style="cursor:pointer;">添加</span><span id=gStkUploadBtn style="cursor:pointer;">上传</span></div>`;
+    
+    // 搜索框
+    let searchWrap=document.createElement(`div`);
+    searchWrap.style.cssText=`padding:8px 16px;flex-shrink:0;`;
+    let searchInput=document.createElement(`input`);
+    searchInput.placeholder=`搜索表情包名称...`;
+    searchInput.style.cssText=`width:100%;padding:7px 12px;border:none;border-radius:20px;background:#efefef;font-size:13px;outline:none;box-sizing:border-box;`;
+    searchWrap.appendChild(searchInput);
+    
+    // Tab栏
+    let tabBar=document.createElement(`div`);
+    tabBar.style.cssText=`display:flex;gap:0;padding:0 16px;flex-shrink:0;border-bottom:1px solid #eee;`;
+    let tabRecent=document.createElement(`span`);
+    tabRecent.innerText=`最近`;
+    tabRecent.style.cssText=`padding:8px 16px;font-size:13px;cursor:pointer;color:#999;border-bottom:2px solid transparent;`;
+    let tabAll=document.createElement(`span`);
+    tabAll.innerText=`全部`;
+    tabAll.style.cssText=`padding:8px 16px;font-size:13px;cursor:pointer;color:#a29bfe;border-bottom:2px solid #a29bfe;font-weight:bold;`;
+    tabBar.appendChild(tabRecent); tabBar.appendChild(tabAll);
+    
+    // 网格区
+    let gridWrap=document.createElement(`div`);
+    gridWrap.style.cssText=`flex:1;overflow-y:auto;padding:12px 16px;`;
     let grid=document.createElement(`div`);
-    grid.style.cssText=`display:grid;grid-template-columns:repeat(3,1fr);gap:8px;`;
-    stickers.forEach(st=>{
-        let stickerUrl=st.url||st;
-        let stickerName=st.name||`表情包`;
-        if(!stickerUrl) return;
-        let item=document.createElement(`div`);
-        item.style.cssText=`cursor:pointer;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;align-items:center;gap:4px;`;
-        let img=document.createElement(`img`);
-        img.src=stickerUrl; img.style.cssText=`width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;pointer-events:none;`;
-        img.onerror=()=>{item.style.display=`none`;};
-        let nm=document.createElement(`div`);
-        nm.style.cssText=`font-size:10px;color:#666;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;`;
-        nm.innerText=stickerName;
-        item.appendChild(img); item.appendChild(nm);
-        item.onclick=async(e)=>{
-            e.stopPropagation();
-            ov.remove();
-            let g=groupData[currentGroupId]; if(!g) return;
-            let uName=g.myNick||`我`; let uAva=null; try{uAva=await localforage.getItem(`myI_global`);}catch(e){}
-            let stickerText=`[图片消息：${stickerUrl}]\n(系统提示：我发送了一个名为"${stickerName}"的表情包)`;
-            g.messages.push({senderId:`user`,senderName:uName,avatar:uAva,content:stickerText,img:stickerUrl,time:Date.now()});
-            await _saveGroupData(); _renderGroupMsgs(); renderGroupInMsgList().catch(()=>{});
-        };
-        grid.appendChild(item);
-    });
-    panel.appendChild(grid);
+    grid.style.cssText=`display:grid;grid-template-columns:repeat(4,1fr);gap:8px;`;
+    gridWrap.appendChild(grid);
+    
+    panel.appendChild(header); panel.appendChild(searchWrap); panel.appendChild(tabBar); panel.appendChild(gridWrap);
     ov.appendChild(panel);
     ov.onclick=(e)=>{if(e.target===ov) ov.remove();};
     document.body.appendChild(ov);
+    
+    let currTab=`all`, currSearch=``;
+    
+    function renderGroupStickerGrid() {
+        grid.innerHTML=``;
+        let list = currTab===`recent` ? recentStickers : stickers;
+        let filtered = currSearch ? list.filter(s=>(s.name||``).includes(currSearch)) : list;
+        if(!filtered.length){ grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;color:#bbb;padding:20px;font-size:13px;">${currTab===`recent`?`还没有最近使用的表情`:`没有找到匹配的表情包`}</div>`; return; }
+        filtered.forEach(st=>{
+            let stickerUrl=st.url||st; let stickerName=st.name||`表情包`; if(!stickerUrl) return;
+            let item=document.createElement(`div`);
+            item.style.cssText=`cursor:pointer;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;align-items:center;gap:4px;padding:4px;background:#fff;border-radius:10px;`;
+            let img=document.createElement(`img`);
+            img.src=stickerUrl; img.style.cssText=`width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;pointer-events:none;`;
+            img.onerror=()=>{item.style.display=`none`;};
+            let nm=document.createElement(`div`);
+            nm.style.cssText=`font-size:10px;color:#666;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;`;
+            nm.innerText=stickerName;
+            item.appendChild(img); item.appendChild(nm);
+            item.onclick=async(e)=>{
+                e.stopPropagation();
+                ov.remove();
+                // 更新最近使用
+                recentStickers=recentStickers.filter(s=>(s.url||s)!==stickerUrl);
+                recentStickers.unshift({url:stickerUrl,name:stickerName});
+                recentStickers=recentStickers.slice(0,20);
+                localforage.setItem(`recentStickers`,recentStickers).catch(()=>{});
+                let g=groupData[currentGroupId]; if(!g) return;
+                let uName=g.myNick||`我`; let uAva=null; try{uAva=await localforage.getItem(`myI_global`);}catch(e){}
+                let stickerText=`[图片消息：${stickerUrl}]\n(系统提示：我发送了一个名为"${stickerName}"的表情包)`;
+                g.messages.push({senderId:`user`,senderName:uName,avatar:uAva,content:stickerText,img:stickerUrl,time:Date.now()});
+                await _saveGroupData(); _renderGroupMsgs(); renderGroupInMsgList().catch(()=>{});
+            };
+            grid.appendChild(item);
+        });
+    }
+    
+    header.querySelector(`#groupStickerCancel`).onclick=()=>ov.remove();
+
+    // 编辑按钮 - 切换编辑模式（显示删除按钮）
+    let groupStickerEditMode = false;
+    header.querySelector(`#gStkEditBtn`).onclick=()=>{
+        groupStickerEditMode = !groupStickerEditMode;
+        header.querySelector(`#gStkEditBtn`).innerText = groupStickerEditMode ? `完成` : `编辑`;
+        header.querySelector(`#gStkAddBtn`).style.display = groupStickerEditMode ? `none` : ``;
+        header.querySelector(`#gStkUploadBtn`).style.display = groupStickerEditMode ? `none` : ``;
+        renderGroupStickerGrid();
+    };
+
+    // 添加按钮 - 复用单聊的批量添加弹窗
+    header.querySelector(`#gStkAddBtn`).onclick=()=>{
+        ov.remove();
+        if(typeof toggleBatchModal===`function`) toggleBatchModal(true);
+    };
+
+    // 上传按钮 - 复用单聊的上传input
+    header.querySelector(`#gStkUploadBtn`).onclick=()=>{
+        ov.remove();
+        let upInput = $(`stickerUploadInput`);
+        if(upInput) upInput.click();
+    };
+
+    // 更新renderGroupStickerGrid支持编辑模式
+    let _origRender = renderGroupStickerGrid;
+    renderGroupStickerGrid = function() {
+        grid.innerHTML=``;
+        let list = currTab===`recent` ? recentStickers : stickers;
+        let filtered = currSearch ? list.filter(s=>(s.name||``).includes(currSearch)) : list;
+        if(!filtered.length){ grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;color:#bbb;padding:20px;font-size:13px;">${currTab===`recent`?`还没有最近使用的表情`:`没有找到匹配的表情包`}</div>`; return; }
+        filtered.forEach((st,si)=>{
+            let stickerUrl=st.url||st; let stickerName=st.name||`表情包`; if(!stickerUrl) return;
+            let item=document.createElement(`div`);
+            item.style.cssText=`cursor:pointer;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;align-items:center;gap:4px;padding:4px;background:#fff;border-radius:10px;position:relative;`;
+            let img=document.createElement(`img`);
+            img.src=stickerUrl; img.style.cssText=`width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;pointer-events:none;`;
+            img.onerror=()=>{item.style.display=`none`;};
+            let nm=document.createElement(`div`);
+            nm.style.cssText=`font-size:10px;color:#666;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;`;
+            nm.innerText=stickerName;
+            item.appendChild(img); item.appendChild(nm);
+            if(groupStickerEditMode) {
+                let delBtn=document.createElement(`div`);
+                delBtn.innerText=`✕`;
+                delBtn.style.cssText=`position:absolute;top:2px;right:2px;width:18px;height:18px;background:rgba(255,60,60,0.85);color:#fff;border-radius:50%;font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;font-weight:bold;`;
+                delBtn.onclick=async(e)=>{
+                    e.stopPropagation();
+                    let realIdx = stickers.findIndex(s=>(s.url||s)===stickerUrl);
+                    if(realIdx>-1) { stickers.splice(realIdx,1); await localforage.setItem(`myPhoneStickers`,stickers).catch(()=>{}); }
+                    renderGroupStickerGrid();
+                };
+                item.appendChild(delBtn);
+                item.onclick=()=>{};
+            } else {
+                item.onclick=async(e)=>{
+                    e.stopPropagation();
+                    ov.remove();
+                    recentStickers=recentStickers.filter(s=>(s.url||s)!==stickerUrl);
+                    recentStickers.unshift({url:stickerUrl,name:stickerName});
+                    recentStickers=recentStickers.slice(0,20);
+                    localforage.setItem(`recentStickers`,recentStickers).catch(()=>{});
+                    let g=groupData[currentGroupId]; if(!g) return;
+                    let uName=g.myNick||`我`; let uAva=null; try{uAva=await localforage.getItem(`myI_global`);}catch(e){}
+                    let stickerText=`[图片消息：${stickerUrl}]\n(系统提示：我发送了一个名为"${stickerName}"的表情包)`;
+                    g.messages.push({senderId:`user`,senderName:uName,avatar:uAva,content:stickerText,img:stickerUrl,time:Date.now()});
+                    await _saveGroupData(); _renderGroupMsgs(); renderGroupInMsgList().catch(()=>{});
+                };
+            }
+            grid.appendChild(item);
+        });
+    };
+    tabRecent.onclick=()=>{ currTab=`recent`; tabRecent.style.cssText=`padding:8px 16px;font-size:13px;cursor:pointer;color:#a29bfe;border-bottom:2px solid #a29bfe;font-weight:bold;`; tabAll.style.cssText=`padding:8px 16px;font-size:13px;cursor:pointer;color:#999;border-bottom:2px solid transparent;`; renderGroupStickerGrid(); };
+    tabAll.onclick=()=>{ currTab=`all`; tabAll.style.cssText=`padding:8px 16px;font-size:13px;cursor:pointer;color:#a29bfe;border-bottom:2px solid #a29bfe;font-weight:bold;`; tabRecent.style.cssText=`padding:8px 16px;font-size:13px;cursor:pointer;color:#999;border-bottom:2px solid transparent;`; renderGroupStickerGrid(); };
+    searchInput.oninput=()=>{ currSearch=searchInput.value.trim(); renderGroupStickerGrid(); };
+    renderGroupStickerGrid();
 };
 
 // ===== 群聊消息长按菜单 =====
@@ -12502,17 +12535,101 @@ window._renderGroupMsgs = function() {
         }
 
         // 内容显示
-        if(msg.img) {
+        if((msg.content||``).match(/^\[语音消息[：:]/)) {
+            // 语音消息 - 与单聊完全一致的播放按钮样式
+            let voiceTxt = msg.content||``;
+            let vm = voiceTxt.match(/^\[语音消息[：:](\d+)秒?\]?\s*([\s\S]*)$/);
+            if(vm) {
+                let sec = vm[1], pureText = vm[2]||``;
+                let calcW = Math.min(70 + parseInt(sec)*3, 220);
+                let voiceDiv = document.createElement(`div`);
+                voiceDiv.style.cssText = `display:flex;align-items:center;justify-content:space-between;width:${calcW}px;padding:8px 15px;background:#fff;border:2px solid #000;border-radius:25px;color:#000;font-weight:bold;cursor:pointer;`;
+                let p0 = document.createElementNS(`http://www.w3.org/2000/svg`,`svg`); p0.setAttribute(`width`,`16`); p0.setAttribute(`height`,`16`); p0.setAttribute(`viewBox`,`0 0 24 24`); let pp0=document.createElementNS(`http://www.w3.org/2000/svg`,`path`); pp0.setAttribute(`d`,`M5 3l14 9-14 9V3z`); pp0.setAttribute(`fill`,`#000`); p0.appendChild(pp0);
+                let p1 = document.createElementNS(`http://www.w3.org/2000/svg`,`svg`); p1.setAttribute(`width`,`24`); p1.setAttribute(`height`,`24`); p1.setAttribute(`viewBox`,`0 0 24 24`); p1.setAttribute(`fill`,`none`); p1.setAttribute(`stroke`,`#000`); p1.setAttribute(`stroke-width`,`2.5`); p1.setAttribute(`stroke-linecap`,`round`); [`M17 12h.01`,`M13 8a6 6 0 0 0 0 8`,`M9 4a12 12 0 0 0 0 16`].forEach(d=>{let pp=document.createElementNS(`http://www.w3.org/2000/svg`,`path`);pp.setAttribute(`d`,d);p1.appendChild(pp);});
+                voiceDiv.appendChild(p0); voiceDiv.appendChild(p1);
+                voiceDiv.onclick = () => showCustomText(`文字内容：\n` + pureText);
+                bub.appendChild(voiceDiv);
+                bub.style.background = `transparent`;
+                bub.style.boxShadow = `none`;
+                bub.style.padding = `0`;
+                bub.style.border = `none`;
+            } else {
+                bub.innerText = voiceTxt;
+            }
+        } else if(msg.img) {
             let img = document.createElement(`img`);
             img.src = msg.img;
-            img.style.cssText = `max-width:180px;max-height:200px;border-radius:10px;display:block;`;
-            img.onclick = e => { e.stopPropagation(); let w=window.open(); w.document.write(`<img src="${msg.img}" style="max-width:100%;">`); };
+            img.style.cssText = `max-width:180px;max-height:200px;border-radius:10px;display:block;cursor:pointer;`;
+            img.onclick = e => { 
+                e.stopPropagation(); 
+                let ov=document.createElement(`div`); 
+                ov.style.cssText=`position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:pointer;`; 
+                let im2=document.createElement(`img`); 
+                im2.src=msg.img; 
+                im2.style.cssText=`max-width:90vw;max-height:90vh;border-radius:8px;`; 
+                ov.appendChild(im2); 
+                ov.onclick=()=>ov.remove(); 
+                document.body.appendChild(ov); 
+            };
             bub.style.padding = `4px`;
             bub.appendChild(img);
         } else {
-            let textNode = document.createElement(`span`);
-            textNode.innerText = msg.content || ``;
-            bub.appendChild(textNode);
+            let txt = msg.content || ``;
+            // 转账消息卡片
+            let tfM = txt.match(/^\[转账消息：([\d\.]+)\|(.*?)\|(未收款|已收款|对方已拒绝收款|已拒绝收款)\]$/);
+            // 红包消息卡片
+            let rpM = txt.match(/^\[红包消息：([\d\.]+)\|(.*?)\|(未领取|已打开|已领取|对方已退回红包)\|([\s\S]*?)\]$/);
+            if(tfM) {
+                let amt=tfM[1], note=tfM[2], status=tfM[3];
+                let tfCard=document.createElement(`div`);
+                tfCard.style.cssText=`width:200px;background:#f3e5f5;border-radius:12px;overflow:hidden;border:1px solid #e1bee7;${status===`未收款`?`cursor:pointer;`:`cursor:default;`}`;
+                tfCard.innerHTML=`<div style="padding:15px;display:flex;align-items:center;gap:12px;"><div style="width:36px;height:36px;background:#6c5ce7;border-radius:50%;display:flex;justify-content:center;align-items:center;color:white;font-size:18px;font-weight:bold;flex-shrink:0;">¥</div><div style="display:flex;flex-direction:column;overflow:hidden;"><span style="font-size:15px;color:#333;font-weight:bold;">¥ ${amt}</span><span style="font-size:12px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${note}</span></div></div><div style="padding:4px 15px;background:rgba(255,255,255,0.6);font-size:11px;color:#888;border-top:1px solid rgba(0,0,0,0.05);">专属转账 · ${status}</div>`;
+                if(status===`未收款`) {
+                    tfCard.onclick = async () => {
+                        let g2=groupData[currentGroupId]; if(!g2) return;
+                        let msgToUpdate = g2.messages[msgIdx];
+                        if(!msgToUpdate) return;
+                        let choice = confirm(`收款 ¥${amt}？\n确定=收款  取消=拒收`);
+                        let newStatus = choice ? `已收款` : `已拒绝收款`;
+                        msgToUpdate.content = `[转账消息：${amt}|${note}|${newStatus}]`;
+                        await _saveGroupData(); _renderGroupMsgs();
+                    };
+                }
+                bub.style.cssText=`background:transparent;box-shadow:none;padding:0;border:none;`;
+                bub.appendChild(tfCard);
+            } else if(rpM) {
+                let amt=rpM[1], note=rpM[2], status=rpM[3], cover=rpM[4];
+                let bgStyle=cover&&cover.startsWith(`data:`)?`background:url(${cover}) center/cover no-repeat;`:`background:#f25542;`;
+                let maskStyle=cover&&cover.startsWith(`data:`)?`background:linear-gradient(to bottom,rgba(242,85,66,0.8) 0%,rgba(242,85,66,0) 60%,rgba(0,0,0,0.6) 100%);`:`background:transparent;`;
+                let opacity=status===`未领取`?`1`:`0.6`;
+                let rpCard=document.createElement(`div`);
+                rpCard.style.cssText=`width:150px;height:200px;${bgStyle}border-radius:12px;overflow:hidden;border:1px solid #ffcccc;position:relative;opacity:${opacity};display:flex;flex-direction:column;${status===`未领取`?`cursor:pointer;`:``}`;
+                rpCard.innerHTML=`<div style="${maskStyle}flex:1;padding:15px;display:flex;flex-direction:column;gap:8px;"><div style="width:30px;height:30px;background:white;border-radius:5px;display:flex;justify-content:center;align-items:center;color:#f25542;font-size:16px;font-weight:bold;">🧧</div><div style="display:flex;flex-direction:column;overflow:hidden;"><span style="font-size:14px;color:white;font-weight:bold;word-wrap:break-word;">${note}</span><span style="font-size:11px;color:rgba(255,255,255,0.9);margin-top:4px;">${status===`未领取`?`专属红包`:status}</span></div></div><div style="padding:6px 12px;background:white;font-size:11px;color:#888;">专属红包</div>`;
+                if(status===`未领取`) {
+                    rpCard.onclick = async () => {
+                        let g2=groupData[currentGroupId]; if(!g2) return;
+                        let msgToUpdate = g2.messages[msgIdx];
+                        if(!msgToUpdate) return;
+                        let choice = confirm(`领取红包 ¥${amt}？\n确定=领取  取消=退回`);
+                        let newStatus = choice ? `已领取` : `对方已退回红包`;
+                        msgToUpdate.content = `[红包消息：${amt}|${note}|${newStatus}|${cover}]`;
+                        if(choice) {
+                            let myWallet = JSON.parse(ls.getItem(`myWallet`)||`{"balance":0,"bank":0,"bills":[]}`);
+                            myWallet.balance = (myWallet.balance||0) + parseFloat(amt);
+                            myWallet.bills = myWallet.bills||[];
+                            myWallet.bills.unshift({title:`群聊红包-收到红包`,time:new Date().toLocaleString(),amount:parseFloat(amt),type:`income`,isUser:false});
+                            ls.setItem(`myWallet`, JSON.stringify(myWallet));
+                        }
+                        await _saveGroupData(); _renderGroupMsgs();
+                    };
+                }
+                bub.style.cssText=`background:transparent;box-shadow:none;padding:0;border:none;`;
+                bub.appendChild(rpCard);
+            } else {
+                let textNode = document.createElement(`span`);
+                textNode.innerText = txt;
+                bub.appendChild(textNode);
+            }
         }
 
         // 长按菜单
