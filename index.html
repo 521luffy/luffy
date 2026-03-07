@@ -1104,6 +1104,13 @@ class=back-btn>＜</span>
                 </div>
             </div>
 
+            <!-- 新增：上下文记忆条数 -->
+            <div style="background:white;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+                <div style="font-size:13px;color:#6c5ce7;font-weight:bold;margin-bottom:10px;">🧠 上下文记忆条数</div>
+                <div style="font-size:12px;color:#999;margin-bottom:8px;">AI回复时参考的群聊历史条数（数字越大记忆越长，但可能影响速度）</div>
+                <input type=number id=groupCtxCount style="width:100%;padding:9px 12px;border:1.5px solid #e0d8ff;border-radius:10px;font-size:14px;box-sizing:border-box;outline:none;" value="30" min="1" max="9999" placeholder="默认30条">
+            </div>
+
             <!-- 新增：时间感知 -->
             <div style="background:white;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
                 <div style="font-size:13px;color:#6c5ce7;font-weight:bold;margin-bottom:10px;">🕐 时间感知</div>
@@ -12153,6 +12160,7 @@ window.openGroupSettings = async function(gid) {
         });
         if($(`groupMemRefCount`)) $(`groupMemRefCount`).value = g.memRefCount || 10;
     }
+    if($(`groupCtxCount`)) $(`groupCtxCount`).value = g.groupCtxCount || 30;
 
     // 时间设置
     if($(`groupTimeOn`)) $(`groupTimeOn`).checked = g.timeOn !== false;
@@ -12188,6 +12196,9 @@ if($(`btnSaveGroupSettings`)) {
         let memChecks = document.querySelectorAll(`#groupMemRefList input[type=checkbox]`);
         g.memRef = [...memChecks].filter(cb=>cb.checked).map(cb=>cb.dataset.charid);
         g.memRefCount = parseInt($(`groupMemRefCount`)?.value || `10`) || 10;
+
+        // 上下文记忆条数
+        g.groupCtxCount = parseInt($(`groupCtxCount`)?.value || `30`) || 30;
 
         // 时间设置
         g.timeOn = $(`groupTimeOn`)?.checked !== false;
@@ -12261,7 +12272,7 @@ setTimeout(() => {
         let wbItems=[]; try{let wb=await localforage.getItem(`wbData`)||[]; wbItems=Array.isArray(wb)?wb:JSON.parse(wb||`[]`);}catch(e){}
         let timeCtx=``;
         if(g.timeOn){let t=g.customTime||new Date().toLocaleDateString(`zh-CN`,{year:`numeric`,month:`long`,day:`numeric`,weekday:`long`});timeCtx=`\n【当前时间】${t}`;}
-        let recentGroupMsgs=(g.messages||[]).slice(-12).map(x=>`${x.senderName}：${String(x.content||``).slice(0,60)}`).join(`\n`);
+        let recentGroupMsgs=(g.messages||[]).slice(-(g.groupCtxCount||30)).map(x=>`${x.senderName}：${String(x.content||``).slice(0,60)}`).join(`\n`);
         
         // ===== 并行生成所有成员的回复 =====
         let pendingReplies = await Promise.all(respondingMembers.map(async m => {
@@ -12329,31 +12340,43 @@ ${recentGroupMsgs}
         // 隐藏输入中提示
         if(typingTip) typingTip.style.display=`none`;
 
-        // ===== 收集所有有效回复，一起推入messages，然后一次性渲染 =====
+        // ===== 收集所有有效回复，逐条延迟显示（模拟逐个发消息效果） =====
         let validReplies = pendingReplies.filter(r=>r!==null);
-        for(let {m, charName, reply, ava, cachedStatus} of validReplies) {
-            // 缓存状态（用于头像点击立即显示）
+        // 先把状态缓存写入
+        for(let {m, cachedStatus} of validReplies) {
             if(cachedStatus) {
                 if(!g.memberStatus) g.memberStatus={};
                 g.memberStatus[m.id]=cachedStatus;
             }
-            // 多行拆分成多条消息
+        }
+        // 展开所有行成扁平列表
+        let allMsgLines = [];
+        for(let {m, charName, reply, ava} of validReplies) {
             let lines=reply.split(/\n+/).filter(x=>x.trim());
             if(lines.length===1&&reply.length>30) {
                 lines=reply.replace(/([。！？!?…]+)/g,`$1\n`).split(/\n+/).filter(x=>x.trim());
             }
             for(let line of lines) {
-                if(line.trim()) g.messages.push({senderId:m.id,senderName:charName,avatar:ava,content:line.trim(),time:Date.now()});
+                if(line.trim()) allMsgLines.push({senderId:m.id,senderName:charName,avatar:ava,content:line.trim(),time:Date.now()});
             }
         }
-        
-        if(validReplies.length>0) {
-            await _saveGroupData();
-            _renderGroupMsgs();
-            let gc=$(`groupMsgs`); if(gc) gc.scrollTop=gc.scrollHeight;
+        // 逐条显示，每条间隔400ms
+        if(allMsgLines.length>0) {
+            for(let i=0; i<allMsgLines.length; i++) {
+                setTimeout(async()=>{
+                    g.messages.push(allMsgLines[i]);
+                    _renderGroupMsgs();
+                    let gc=$(`groupMsgs`); if(gc) gc.scrollTop=gc.scrollHeight;
+                    if(i===allMsgLines.length-1) {
+                        await _saveGroupData();
+                        renderGroupInMsgList().catch(()=>{});
+                        if(lemon) lemon.style.opacity=`1`;
+                    }
+                }, i*420);
+            }
+        } else {
+            if(lemon) lemon.style.opacity=`1`;
         }
-        renderGroupInMsgList().catch(()=>{});
-        if(lemon) lemon.style.opacity=`1`;
     }
 
     $(`btnGroupLemon`).onclick = () => _groupAiReplyV2(null);
@@ -12366,32 +12389,20 @@ ${recentGroupMsgs}
 const _origRenderGroupMsgs = window._renderGroupMsgs;
 window._renderGroupMsgs = function() {
     if(typeof _origRenderGroupMsgs === 'function') _origRenderGroupMsgs();
-    // 绑定头像点击 -> 显示心声
+    // 绑定头像点击 -> @提及
     let groupMsgsEl = $(`groupMsgs`);
     if(!groupMsgsEl) return;
     groupMsgsEl.querySelectorAll(`.group-avatar-clickable`).forEach(ava => {
         if(ava._bound) return;
         ava._bound = true;
-        ava.onclick = async function() {
-            let memberId = this.dataset.memberid;
-            let memberName = this.dataset.name || `角色`;
-            if(!memberId || memberId === `user`) return;
-            let pxy = originalGetItem.call(ls,`pxy`)||``;
-            let key = originalGetItem.call(ls,`key`)||``;
-            let mod = originalGetItem.call(ls,`mod`)||``;
-            if(pxy&&!pxy.includes(`chat/completions`)) pxy=pxy.replace(/\/$/,``)+`/chat/completions`;
-            if(!pxy||!key) return;
-            let charAP=(originalGetItem.call(ls,`cAP_`+memberId)||``).slice(0,300);
-            let recentGroupMsgs=(groupData[currentGroupId]?.messages||[]).slice(-5).map(x=>`${x.senderName}：${x.content}`).join(`\n`);
-            let sysMsg=`你是${memberName}。${charAP?`【人设】${charAP}`:`[`}
-
-根据最近群聊内容：\n${recentGroupMsgs}\n\n用20字内说出你此刻的内心真实想法（第一人称，不加前缀）`;
-            try {
-                let r=await fetch(pxy,{method:`POST`,headers:{[`Content-Type`]:`application/json`,Authorization:`Bearer `+key},body:JSON.stringify({model:mod,temperature:0.9,max_tokens:200,messages:[{role:`user`,content:sysMsg}]})});
-                let d=await r.json();
-                let thought=(d.choices?.[0]?.message?.content||``).trim();
-                alert(`💭 ${memberName}的心声：\n\n${thought}`);
-            } catch(e) {}
+        ava.onclick = function() {
+            let memberName = this.dataset.name || ``;
+            if(!memberName) return;
+            let ipt = $(`iptGroupMsg`); if(!ipt) return;
+            let cur = ipt.value;
+            let mention = `@${memberName} `;
+            if(!cur.endsWith(mention)) ipt.value = cur + mention;
+            ipt.focus();
         };
     });
 };
@@ -12720,49 +12731,15 @@ window._renderGroupMsgs = function() {
             avaDiv.classList.add(`group-avatar-clickable`);
             avaDiv.dataset.memberid = msg.senderId;
             avaDiv.dataset.name = msg.senderName || ``;
-            avaDiv.title = `点击查看心声`;
-            avaDiv.onclick = async function() {
-                let memberId=this.dataset.memberid, memberName=this.dataset.name||`角色`;
-                let pxy=originalGetItem.call(ls,`pxy`)||``, key=originalGetItem.call(ls,`key`)||``, mod=originalGetItem.call(ls,`mod`)||``;
-                if(pxy&&!pxy.includes(`chat/completions`)) pxy=pxy.replace(/\/$/,``)+`/chat/completions`;
-                let statusModal=$(`modal`); if(!statusModal) return;
-                let stWEl=$(`stW`),stCEl=$(`stC`),stAEl=$(`stA`),stTEl=$(`stT`);
-                let hdrSpan=statusModal.querySelector(`.modal-hdr span:first-child`);
-                if(hdrSpan) hdrSpan.innerText=`${memberName}当前状态`;
-                // 先检查是否有缓存状态（AI回复时已生成）
-                let cachedSt=(g.memberStatus&&g.memberStatus[memberId])||null;
-                if(cachedSt) {
-                    if(stWEl) stWEl.innerText=cachedSt.weather||`暂无`;
-                    if(stCEl) stCEl.innerText=cachedSt.clothing||`暂无`;
-                    if(stAEl) stAEl.innerText=cachedSt.action||`暂无`;
-                    if(stTEl) stTEl.innerText=cachedSt.thought||`暂无`;
-                    statusModal.style.display=`flex`;
-                    return; // 有缓存直接返回，无需等待
-                }
-                // 无缓存则实时生成
-                if(stWEl) stWEl.innerText=`生成中…`; if(stCEl) stCEl.innerText=`生成中…`;
-                if(stAEl) stAEl.innerText=`生成中…`; if(stTEl) stTEl.innerText=`生成中…`;
-                statusModal.style.display=`flex`;
-                if(!pxy||!key){ if(stWEl) stWEl.innerText=`请先配置API`; return; }
-                let charAP=(originalGetItem.call(ls,`cAP_`+memberId)||``).slice(0,400);
-                let charRel=originalGetItem.call(ls,`cR_`+memberId)||``;
-                let recentMsgs=(g.messages||[]).slice(-8).map(x=>`${x.senderName}：${String(x.content||``).slice(0,40)}`).join(`\n`);
-                let privHist=[]; try{let ph=await localforage.getItem(`chatHistory_`+memberId); if(ph) privHist=typeof ph===`string`?JSON.parse(ph):ph;}catch(e){}
-                let privCtx=privHist.slice(-5).map(m=>m.role===`assistant`?`${memberName}：${String(m.content||``).replace(/【[\s\S]*?】[^\n]*/g,``).trim().slice(0,50)}`:`我：${String(m.content||``).slice(0,30)}`).join(`\n`);
-                let _ap=charAP?`【人设】${charAP}`:``;
-                let _rel=charRel?`【关系】${charRel}`:``;
-                let _priv=privCtx?`【与主人私聊】\n${privCtx}`:``;
-                let sysMsg=`你是${memberName}。\n${_ap}\n${_rel}\n${_priv}\n\n群聊最近内容：\n${recentMsgs}\n\n分别写四个状态（每段30字以内）：\n【定位与天气】当前地点天气氛围\n【当日服装】当前穿着\n【表情与动作】当前表情动作\n【隐秘心声】内心真实独白`;
-                try{
-                    let r=await fetch(pxy,{method:`POST`,headers:{[`Content-Type`]:`application/json`,Authorization:`Bearer `+key},body:JSON.stringify({model:mod,temperature:0.85,max_tokens:400,messages:[{role:`user`,content:sysMsg}]})});
-                    let d=await r.json();
-                    let txt=(d.choices?.[0]?.message?.content||``).trim();
-                    let wM=txt.match(/【定位与天气】([\s\S]*?)(?=【|$)/),cM=txt.match(/【当日服装】([\s\S]*?)(?=【|$)/),aM=txt.match(/【表情与动作】([\s\S]*?)(?=【|$)/),tM=txt.match(/【隐秘心声】([\s\S]*?)(?=【|$)/);
-                    if(stWEl) stWEl.innerText=wM?wM[1].trim():`暂无`;
-                    if(stCEl) stCEl.innerText=cM?cM[1].trim():`暂无`;
-                    if(stAEl) stAEl.innerText=aM?aM[1].trim():`暂无`;
-                    if(stTEl) stTEl.innerText=tM?tM[1].trim():`暂无`;
-                }catch(e){if(stWEl) stWEl.innerText=`生成失败`;}
+            avaDiv.title = `点击@提及`;
+            avaDiv.onclick = function() {
+                let memberName = this.dataset.name || ``;
+                if(!memberName) return;
+                let ipt = $(`iptGroupMsg`); if(!ipt) return;
+                let cur = ipt.value;
+                let mention = `@${memberName} `;
+                if(!cur.endsWith(mention)) ipt.value = cur + mention;
+                ipt.focus();
             };
         }
 
@@ -13086,8 +13063,7 @@ if($(`btnGroupSend`)) {
         if($(`iptGroupMsg`)) $(`iptGroupMsg`).value=``;
         g.messages.push(msgObj);
         await _saveGroupData(); _renderGroupMsgs(); renderGroupInMsgList().catch(()=>{});
-        // Bug1修复：自动触发AI回复
-        setTimeout(() => { if(typeof window._groupAiReply === 'function') window._groupAiReply(null); }, 300);
+        // 用户发送消息后不自动触发AI，等待用户点击🐕按钮
     };
 }
 
@@ -13180,9 +13156,9 @@ async function _callAIConnect(type, isIncoming) {
         : (myName + '：' + m.content.slice(0,40))).join('\n');
     let callTypeName = type === 'voice' ? '语音通话' : '视频通话';
     let tp = parseFloat(originalGetItem.call(ls,'temp')||'0.8') || 0.8;
-    let connectSys = '你是' + charName + '。' + (charAP ? '你的设定：' + charAP : '') + '\n你当前面板状态：' + curStatus + '。\n近期聊天：\n' + recentHist + '\n\n【' + myName + '向你发起了' + callTypeName + '】\n请根据你的性格和当前情绪状态决定是否接听！\n如接听：回复最开头写 [接听通话]，随后用「」写出接起电话后的第一句话，配合相关听觉或视觉细节描写。\n如拒接：回复最开头写 [拒接通话]，随后发来一条文字消息说明原因（可以找借口说在忙，或傲娇地表达不满）。\n注意：只有在氛围极佳或你十分思念' + myName + '时才选择接听，否则大概率拒接！';
+    let connectSys = '你是' + charName + '。' + (charAP ? '你的设定：' + charAP : '') + '\n你当前面板状态：' + curStatus + '。\n近期聊天：\n' + recentHist + '\n\n【' + myName + '向你发起了' + callTypeName + '，正在等你接听】\n请根据你的性格和当前情绪状态决定是否接听！\n如接听（大多数情况下应该接）：回复最开头写 [接听通话]，随后用「」写出接起电话后的第一句话，配合相关听觉或视觉细节描写，内容要丰富完整，不要截断。\n如拒接（仅在正在吵架或心情极差时才拒接）：回复最开头写 [拒接通话]，随后发来一条文字消息，说明你接不了的原因（比如在忙、不方便、或直接无视），但绝对不能说成是对方挂了你电话——是你主动选择不接' + myName + '的电话。\n注意：只要不是关系极度僵化或正在冷战，你都应该接听，通话时内容要完整自然，不要突然截断。';
     try {
-        let res = await fetch(pxy, { method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer '+key}, body:JSON.stringify({model:mod, temperature:tp, max_tokens:600, messages:[{role:'user', content:connectSys}]}) });
+        let res = await fetch(pxy, { method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer '+key}, body:JSON.stringify({model:mod, temperature:tp, max_tokens:1200, messages:[{role:'user', content:connectSys}]}) });
         let dat = await res.json();
         let reply = (dat.choices?.[0]?.message?.content || '').trim();
         if(reply.includes('[接听通话]')) {
@@ -13304,11 +13280,11 @@ async function _callSendMsg(txt) {
     let callLog = window._callState.msgs.slice(-6).map(m => (m.isUser ? myName : charName) + '：' + m.txt).join('\n');
     window._callState.msgs.push({isUser:true, txt});
     let voiceRules = type === 'voice'
-        ? '【语音通话规则 - 极度重要】你们正在进行语音通话，双方看不到对方。你必须：\n1. 完全禁止描写任何视觉动作（如"瞪了一眼""我看着你"），只描写听觉和触觉（呼吸声、环境音、物体声响、衣物摩擦声等）。\n2. 像真实打电话一样自然说话，语气要有质感，字数30-80字。\n3. 可以描写背景里的声音细节，让对方脑补环境。'
-        : '【视频通话规则 - 极度重要】你们正在进行视频通话，可以看到彼此。你必须：\n1. 大量描写视觉细节：你穿了什么、头发状态、距离镜头的远近、眼神交互。\n2. 如果想展示周围的东西，可以用[发送照片：详细描述]指令翻转镜头。\n3. 如果网络卡了可以演戏说画面定格了，字数30-100字。';
-    let callSys = '你是' + charName + '。' + (charAP ? '你的设定：' + charAP : '') + '\n\n' + voiceRules + '\n\n通话记录：\n' + callLog + '\n\n' + myName + '说：' + txt + '\n\n请直接回复，无需任何前缀。';
+        ? '【语音通话规则 - 极度重要】你们正在进行语音通话，双方看不到对方。你必须：\n1. 完全禁止描写任何视觉动作（如"瞪了一眼""我看着你"），只描写听觉和触觉（呼吸声、环境音、物体声响、衣物摩擦声等）。\n2. 像真实打电话一样自然说话，语气要有质感，内容完整，不要截断。\n3. 可以描写背景里的声音细节，让对方脑补环境。\n4. 【极其重要】你必须直接回应对方刚才说的话，不要自说自话，不要重复上一条内容。'
+        : '【视频通话规则 - 极度重要】你们正在进行视频通话，可以看到彼此。你必须：\n1. 大量描写视觉细节：你穿了什么、头发状态、距离镜头的远近、眼神交互。\n2. 如果想展示周围的东西，可以用[发送照片：详细描述]指令翻转镜头。\n3. 如果网络卡了可以演戏说画面定格了，内容要完整自然，不要截断。\n4. 【极其重要】你必须直接回应对方刚才说的话，不要自说自话，不要重复上一条内容。';
+    let callSys = '你是' + charName + '。' + (charAP ? '你的设定：' + charAP : '') + '\n\n' + voiceRules + '\n\n通话记录：\n' + callLog + '\n\n' + myName + '刚才说】：' + txt + '\n\n请直接针对' + myName + '说的内容回复，无需任何前缀，内容完整，不要截断。';
     try {
-        let res = await fetch(pxy, { method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer '+key}, body:JSON.stringify({model:mod, temperature:tp, max_tokens:400, messages:[{role:'user', content:callSys}]}) });
+        let res = await fetch(pxy, { method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer '+key}, body:JSON.stringify({model:mod, temperature:tp, max_tokens:1200, messages:[{role:'user', content:callSys}]}) });
         let dat = await res.json();
         let reply = (dat.choices?.[0]?.message?.content || '').trim();
         // 处理发送照片指令（视频通话专属）
@@ -13339,6 +13315,19 @@ if($('vdSend')) {
 }
 if($('vcHangup')) $('vcHangup').onclick = () => _endCall(false);
 if($('vdHangup')) $('vdHangup').onclick = () => _endCall(false);
+
+// 免提按钮切换（亮/暗）
+if($('vcSpeaker')) {
+    let speakerOn = false;
+    $('vcSpeaker').onclick = () => {
+        speakerOn = !speakerOn;
+        $('vcSpeaker').style.opacity = speakerOn ? '1' : '0.4';
+        let inner = $('vcSpeaker').querySelector('div');
+        if(inner) inner.style.background = speakerOn ? 'rgba(162,155,254,0.5)' : 'rgba(255,255,255,0.1)';
+        let lbl = $('vcSpeaker').querySelector('span');
+        if(lbl) lbl.style.color = speakerOn ? '#a29bfe' : 'rgba(255,255,255,0.6)';
+    };
+}
 
 // 绑定来电界面
 if($('icAccept')) $('icAccept').onclick = () => {
@@ -13401,7 +13390,7 @@ window.mkBub = function(txt, side, isT) {
                 let icName = $('icCharName'), icType2 = $('icCallType'), icAv = $('icAvatar'), si = $('scrIncomingCall');
                 if(!icName||!si) return;
                 icName.innerText = charName;
-                icType2.innerText = icType === 'video' ? '📹 视频通话邀请' : '📞 语音通话邀请';
+                icType2.innerText = charName + (icType === 'video' ? ' 发来了视频通话邀请' : ' 发来了语音通话邀请');
                 if(charAvatar) { icAv.style.backgroundImage = 'url(' + charAvatar + ')'; icAv.innerText = ''; }
                 else { icAv.style.backgroundImage = 'none'; icAv.innerText = '👤'; }
                 si.style.display = 'flex';
