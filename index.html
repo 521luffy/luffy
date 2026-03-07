@@ -2475,9 +2475,12 @@ function getPreviewText(histArray) {
     return txt.length > 15 ? txt.substring(0, 15) + `...` : (txt || `你们已成为好友，请开始聊天吧！`);
 }
 async function updateListPreview() {
-    // 记录最后聊天时间戳（用于消息列表排序）
-    let _now = String(Date.now());
-    try { ls.setItem(`lastChatTime_`+currentChatId, _now); } catch(e){}
+    // 记录最后聊天时间戳（仅在真正发送/收到消息时更新）
+    // 检查history是否有内容，避免单纯导航时刷新排序
+    if(history && history.length > 0) {
+        let _now = String(Date.now());
+        try { ls.setItem(`lastChatTime_`+currentChatId, _now); } catch(e){}
+    }
 
     let p = $(`chatPreview`);
     let savedHist = await localforage.getItem(`chatHistory_default`) || await localforage.getItem(`chatHistory`) || originalGetItem.call(ls, `chatHistory_default`);
@@ -2831,7 +2834,7 @@ async function triggerCaughtMessage() {
         let _recLine=recentCtx?`【最近私聊记录】\n${recentCtx}`:``;
         let sys=`你是${charName}。\n${_apLine}\n${_relLine}\n${_wbLine}\n${_recLine}\n\n${myNick}刚刚被你发现在偷翻你的手机，TA正在看你的【${section}】。\n请以你的第一人称、符合当前感情状态和性格直接回应。不加任何前缀或角色标记，字数不限，完整表达。`;
 
-        let resp=await fetch(pxy,{method:`POST`,headers:{[`Content-Type`]:`application/json`,Authorization:`Bearer `+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:1500,messages:[{role:`user`,content:sys}]})});
+        let resp=await fetch(pxy,{method:`POST`,headers:{[`Content-Type`]:`application/json`,Authorization:`Bearer `+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:4096,messages:[{role:`user`,content:sys}]})});
         let data=await resp.json();
         let reply=(data.choices?.[0]?.message?.content||``).trim();
         reply=reply.replace(/^【[^】]*】/g,``).replace(/^(我|说|答|回复)[:：]/,``).trim();
@@ -2918,7 +2921,7 @@ originalGetItem.call(ls, `chatHistory_` + currentChatId);
     showScreen(`scrRoom`); 
     setTimeout(() => msgs.scrollTop = msgs.scrollHeight, 100);
 };
-$(`btnRoomBack`).onclick = () =>{ showScreen(`scrList`); updateListPreview(); };
+$(`btnRoomBack`).onclick = () =>{ showScreen(`scrList`); renderContacts(); };
 
 $(`btnRoomSet`).onclick = () =>showScreen(`scrSetChat`);
 $(`btnSetChatBack`).onclick = () =>showScreen(`scrRoom`);
@@ -2945,15 +2948,13 @@ async function renderContacts() {
     if(contactItems) {
         for(let i=1; i<contactItems.length; i++) contactItems[i].remove();
     }
-    // 按最近聊天时间排序：读取每个char的最后一条消息时间
-    let contactsSorted = [...contacts];
-    // 同步读取 localStorage 中的最后消息时间戳
-    contactsSorted.sort((a, b) => {
+    // 消息列表（listContent）按聊天时间排序，联系人页（contactContent）按添加顺序
+    let contactsSorted = [...contacts]; // 保持添加顺序（最新添加在前）
+    // 消息列表用的排序版本
+    let contactsByTime = [...contacts].sort((a, b) => {
         let getLastTime = (id) => {
-            // 优先使用专门的lastChatTime_时间戳（每次发消息时更新）
             let t = Number(originalGetItem.call(ls, `lastChatTime_`+id) || 0);
             if(t) return t;
-            // 回退：读history中最后一条消息的时间
             let h = originalGetItem.call(ls, `chatHistory_`+id);
             if(!h) return 0;
             try {
@@ -2966,7 +2967,8 @@ async function renderContacts() {
         return getLastTime(b.id) - getLastTime(a.id);
     });
 
-    for (let c of contactsSorted) {
+    // listContent按聊天时间排序的顺序构建
+    for (let c of contactsByTime) {
         let div = document.createElement(`div`);
         div.className = `chat-item`;
         let savedHist = await localforage.getItem(`chatHistory_` + c.id) || originalGetItem.call(ls, `chatHistory_` + c.id);
@@ -3032,14 +3034,43 @@ async function renderContacts() {
             setTimeout(() => msgs.scrollTop = msgs.scrollHeight, 100);
         };
         $(`listContent`).appendChild(div);
-        if($(`contactContent`)) {
+    }
+    // 联系人页（contactContent）按添加顺序单独渲染（newest first）
+    if($(`contactContent`)) {
+        for (let c of contactsSorted) {
+            let savedHist2 = await localforage.getItem(`chatHistory_` + c.id) || originalGetItem.call(ls, `chatHistory_` + c.id);
+            let isoHist2 = savedHist2 ? (typeof savedHist2 === 'string' ? JSON.parse(savedHist2) : savedHist2) : [];
+            let isoAiA2 = originalGetItem.call(ls, `aiI_` + c.id);
+            let avaHtml2 = isoAiA2 ? `<div class=avatar-list style=background-image:url(${isoAiA2});font-size:0;></div>` : `<div class=avatar-list>👤</div>`;
+            let isoName2 = originalGetItem.call(ls, `cN_` + c.id) || c.name;
+            let isBlk2 = originalGetItem.call(ls, `isBlocked_` + c.id) === 'true';
+            if(isBlk2) isoName2 += `<span style="color:#ff4757;font-size:10px;margin-left:4px;padding:0 2px;">已拉黑</span>`;
             let divC = document.createElement(`div`);
             divC.className = `chat-item`;
-            let charStatusText = originalGetItem.call(ls, `cStatusTxt_` + c.id) || "在线";
-            let charStatusColorClass = originalGetItem.call(ls, `cStatusColor_` + c.id) || "status-online";
-            let charSign = originalGetItem.call(ls, `cSign_` + c.id) || "（该角色还在思考个性签名...）";
-            divC.innerHTML = avaHtml + `<div class=chat-info> <div class=role-header-row> <div class=role-name>` + isoName + `</div> <div class=role-status><div class="status-dot ` + charStatusColorClass + `"></div>` + charStatusText + `</div> </div> <div class=role-signature>` + charSign + `</div> </div>`;
-            divC.onclick = div.onclick;
+            let charStatusText2 = originalGetItem.call(ls, `cStatusTxt_` + c.id) || "在线";
+            let charStatusColorClass2 = originalGetItem.call(ls, `cStatusColor_` + c.id) || "status-online";
+            let charSign2 = originalGetItem.call(ls, `cSign_` + c.id) || "（该角色还在思考个性签名...）";
+            divC.innerHTML = avaHtml2 + `<div class=chat-info> <div class=role-header-row> <div class=role-name>` + isoName2 + `</div> <div class=role-status><div class="status-dot ` + charStatusColorClass2 + `"></div>` + charStatusText2 + `</div> </div> <div class=role-signature>` + charSign2 + `</div> </div>`;
+            // 复用onclick：点击加载该char聊天室
+            divC.onclick = async () => {
+                currentChatId = c.id;
+                $(`cfgName`).value = originalGetItem.call(ls, `cN_` + c.id) || c.name;
+                $(`cfgRem`).value = originalGetItem.call(ls, `cR_` + c.id) || ``;
+                let _cMyN_c2 = (window._nameCache && window._nameCache[c.id]) || await localforage.getItem(`cMyN_` + c.id) || originalGetItem.call(ls, `cMyN_` + c.id) || ``;
+                $(`cfgMyName`).value = _cMyN_c2;
+                if(_cMyN_c2) { if(!window._nameCache) window._nameCache={}; window._nameCache[c.id]=_cMyN_c2; }
+                $(`cfgAiP`).value = originalGetItem.call(ls, `cAP_` + c.id) || c.prompt;
+                $(`cfgMyP`).value = originalGetItem.call(ls, `cMP_` + c.id) || ``;
+                let savedHistC = await localforage.getItem(`chatHistory_` + c.id) || originalGetItem.call(ls, `chatHistory_` + c.id);
+                history = savedHistC ? (typeof savedHistC === 'string' ? JSON.parse(savedHistC) : savedHistC) : [];
+                let savedAiStatusC = await localforage.getItem(`aiStatus_` + c.id) || ls.getItem(`aiStatus_` + c.id);
+                aiStatus = savedAiStatusC ? (typeof savedAiStatusC === `string` ? JSON.parse(savedAiStatusC) : savedAiStatusC) : {weather:`等待连接...`,clothing:`等待连接...`,action:`等待连接...`,thought:`等待连接...`};
+                await applyVis();
+                if(typeof msgs !== `undefined` && msgs) msgs.innerHTML = ``;
+                redrawChat();
+                showScreen(`scrRoom`);
+                setTimeout(() => msgs.scrollTop = msgs.scrollHeight, 100);
+            };
             $(`contactContent`).appendChild(divC);
         }
     }
@@ -10854,7 +10885,7 @@ function _renderGroupMsgs() {
     if(!g||!g.messages||!g.messages.length){
         el.innerHTML=`<div style="text-align:center;color:#ccc;padding:30px;font-size:13px;">群聊开始，说点什么吧 👋</div>`; return;
     }
-    g.messages.forEach(msg=>{
+    g.messages.forEach((msg, idx)=>{
         let isMe=msg.senderId===`user`;
         let wrap=document.createElement(`div`);
         wrap.style.cssText=`display:flex;align-items:flex-start;gap:8px;${isMe?`flex-direction:row-reverse;`:`flex-direction:row;`};position:relative;`;
@@ -12456,9 +12487,28 @@ window._renderGroupMsgs = function() {
     g.messages.forEach((msg, msgIdx) => {
         let isMe = msg.senderId === `user`;
         let wrap = document.createElement(`div`);
-        wrap.style.cssText = `display:flex;align-items:flex-start;gap:8px;${isMe?`flex-direction:row-reverse;`:``}`;
+        wrap.style.cssText = `display:flex;align-items:flex-start;gap:8px;${isMe?`flex-direction:row-reverse;`:``}position:relative;`;
 
-        // 头像
+        // 多选模式支持
+        if(window._groupMultiSelectMode) {
+            let isSelected = window._groupMultiSelect && window._groupMultiSelect.has(msgIdx);
+            wrap.style.background = isSelected ? `rgba(162,155,254,0.2)` : `transparent`;
+            wrap.style.borderRadius = `8px`;
+            wrap.style.cursor = `pointer`;
+            let chk=document.createElement(`div`);
+            chk.style.cssText=`width:20px;height:20px;border-radius:50%;border:2px solid ${isSelected?`#a29bfe`:`#ccc`};background:${isSelected?`#a29bfe`:`white`};display:flex;align-items:center;justify-content:center;flex-shrink:0;align-self:center;`;
+            if(isSelected) chk.innerHTML=`<svg width=12 height=12 viewBox="0 0 24 24" fill=none stroke=white stroke-width=3><polyline points="20 6 9 17 4 12"/></svg>`;
+            if(!isMe) wrap.prepend(chk); else wrap.appendChild(chk);
+            wrap.onclick=(e)=>{
+                e.stopPropagation();
+                if(!window._groupMultiSelect) window._groupMultiSelect=new Set();
+                if(window._groupMultiSelect.has(msgIdx)) window._groupMultiSelect.delete(msgIdx);
+                else window._groupMultiSelect.add(msgIdx);
+                _renderGroupMsgs();
+            };
+        }
+
+
         let avaDiv = document.createElement(`div`);
         avaDiv.style.cssText = `width:36px;height:36px;border-radius:50%;background:#e0d8ff;background-size:cover;background-position:center;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;${!isMe?`cursor:pointer;`:`cursor:default;`}`;
         if(msg.avatar) avaDiv.style.backgroundImage = `url(${msg.avatar})`;
@@ -12575,24 +12625,60 @@ window._renderGroupMsgs = function() {
             bub.appendChild(img);
         } else {
             let txt = msg.content || ``;
+            // 照片消息卡片（粉色背景+相机图标）
+            let photoM = txt.match(/^\[照片消息：([\s\S]*?)\]$/);
             // 转账消息卡片
             let tfM = txt.match(/^\[转账消息：([\d\.]+)\|(.*?)\|(未收款|已收款|对方已拒绝收款|已拒绝收款)\]$/);
             // 红包消息卡片
             let rpM = txt.match(/^\[红包消息：([\d\.]+)\|(.*?)\|(未领取|已打开|已领取|对方已退回红包)\|([\s\S]*?)\]$/);
-            if(tfM) {
+            if(photoM) {
+                let desc = photoM[1];
+                let photoDiv = document.createElement(`div`);
+                photoDiv.style.cssText = `width:130px;height:170px;background:#fce4ec;border-radius:12px;display:flex;justify-content:center;align-items:center;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.05);`;
+                let camIcon = document.createElement(`div`);
+                camIcon.style.cssText = `font-size:40px;filter:grayscale(100%) opacity(50%);`;
+                camIcon.innerText = `📷`;
+                photoDiv.appendChild(camIcon);
+                photoDiv.onclick = () => showCustomText(`照片内容：\n` + desc);
+                bub.style.cssText = `background:transparent;box-shadow:none;padding:0;border:none;`;
+                bub.appendChild(photoDiv);
+            } else if(tfM) {
                 let amt=tfM[1], note=tfM[2], status=tfM[3];
                 let tfCard=document.createElement(`div`);
-                tfCard.style.cssText=`width:200px;background:#f3e5f5;border-radius:12px;overflow:hidden;border:1px solid #e1bee7;${status===`未收款`?`cursor:pointer;`:`cursor:default;`}`;
+                tfCard.style.cssText=`width:200px;background:#f3e5f5;border-radius:12px;overflow:hidden;border:1px solid #e1bee7;cursor:default;`;
                 tfCard.innerHTML=`<div style="padding:15px;display:flex;align-items:center;gap:12px;"><div style="width:36px;height:36px;background:#6c5ce7;border-radius:50%;display:flex;justify-content:center;align-items:center;color:white;font-size:18px;font-weight:bold;flex-shrink:0;">¥</div><div style="display:flex;flex-direction:column;overflow:hidden;"><span style="font-size:15px;color:#333;font-weight:bold;">¥ ${amt}</span><span style="font-size:12px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${note}</span></div></div><div style="padding:4px 15px;background:rgba(255,255,255,0.6);font-size:11px;color:#888;border-top:1px solid rgba(0,0,0,0.05);">专属转账 · ${status}</div>`;
-                if(status===`未收款`) {
+                // 只有char发给user的转账（senderId!='user'）且未收款才可点击
+                if(!isMe && status===`未收款`) {
+                    tfCard.style.cursor = `pointer`;
                     tfCard.onclick = async () => {
                         let g2=groupData[currentGroupId]; if(!g2) return;
                         let msgToUpdate = g2.messages[msgIdx];
                         if(!msgToUpdate) return;
-                        let choice = confirm(`收款 ¥${amt}？\n确定=收款  取消=拒收`);
-                        let newStatus = choice ? `已收款` : `已拒绝收款`;
-                        msgToUpdate.content = `[转账消息：${amt}|${note}|${newStatus}]`;
-                        await _saveGroupData(); _renderGroupMsgs();
+                        // 使用单聊同款弹窗样式
+                        let ov=document.createElement(`div`); ov.style.cssText=`position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;`;
+                        let box=document.createElement(`div`); box.style.cssText=`background:white;border-radius:20px;padding:28px 24px;max-width:320px;width:90%;`;
+                        box.innerHTML=`<div style="font-size:18px;font-weight:bold;margin-bottom:16px;">💸 来自群聊的转账</div><div style="color:#555;margin-bottom:8px;">金额：<b>¥${amt}</b></div><div style="color:#555;margin-bottom:20px;">说明：${note}</div>`;
+                        let btn1=document.createElement(`div`); btn1.style.cssText=`padding:14px;border-radius:12px;background:#ede7f6;color:#6c5ce7;font-weight:bold;text-align:center;cursor:pointer;margin-bottom:10px;`; btn1.innerText=`1. 确认收款 💸`;
+                        let btn2=document.createElement(`div`); btn2.style.cssText=`padding:14px;border-radius:12px;background:#fff0f0;color:#e74c3c;font-weight:bold;text-align:center;cursor:pointer;margin-bottom:10px;`; btn2.innerText=`2. 立即退还 ❌`;
+                        let btn3=document.createElement(`div`); btn3.style.cssText=`padding:14px;border-radius:12px;background:#f5f5f5;color:#666;font-weight:bold;text-align:center;cursor:pointer;`; btn3.innerText=`取消`;
+                        btn1.onclick=async()=>{
+                            ov.remove();
+                            let myWallet=JSON.parse(ls.getItem(`myWallet`)||`{"balance":0,"bank":0,"bills":[]}`);
+                            myWallet.balance=(myWallet.balance||0)+parseFloat(amt);
+                            myWallet.bills=myWallet.bills||[];
+                            myWallet.bills.unshift({title:`群聊转账-收到转账`,time:new Date().toLocaleString(),amount:parseFloat(amt),type:`income`,isUser:false});
+                            ls.setItem(`myWallet`,JSON.stringify(myWallet));
+                            msgToUpdate.content=`[转账消息：${amt}|${note}|已收款]`;
+                            await _saveGroupData(); _renderGroupMsgs();
+                        };
+                        btn2.onclick=async()=>{
+                            ov.remove();
+                            msgToUpdate.content=`[转账消息：${amt}|${note}|已拒绝收款]`;
+                            await _saveGroupData(); _renderGroupMsgs();
+                        };
+                        btn3.onclick=()=>ov.remove();
+                        box.appendChild(btn1); box.appendChild(btn2); box.appendChild(btn3);
+                        ov.appendChild(box); document.body.appendChild(ov);
                     };
                 }
                 bub.style.cssText=`background:transparent;box-shadow:none;padding:0;border:none;`;
@@ -12603,24 +12689,40 @@ window._renderGroupMsgs = function() {
                 let maskStyle=cover&&cover.startsWith(`data:`)?`background:linear-gradient(to bottom,rgba(242,85,66,0.8) 0%,rgba(242,85,66,0) 60%,rgba(0,0,0,0.6) 100%);`:`background:transparent;`;
                 let opacity=status===`未领取`?`1`:`0.6`;
                 let rpCard=document.createElement(`div`);
-                rpCard.style.cssText=`width:150px;height:200px;${bgStyle}border-radius:12px;overflow:hidden;border:1px solid #ffcccc;position:relative;opacity:${opacity};display:flex;flex-direction:column;${status===`未领取`?`cursor:pointer;`:``}`;
+                rpCard.style.cssText=`width:150px;height:200px;${bgStyle}border-radius:12px;overflow:hidden;border:1px solid #ffcccc;position:relative;opacity:${opacity};display:flex;flex-direction:column;cursor:default;`;
                 rpCard.innerHTML=`<div style="${maskStyle}flex:1;padding:15px;display:flex;flex-direction:column;gap:8px;"><div style="width:30px;height:30px;background:white;border-radius:5px;display:flex;justify-content:center;align-items:center;color:#f25542;font-size:16px;font-weight:bold;">🧧</div><div style="display:flex;flex-direction:column;overflow:hidden;"><span style="font-size:14px;color:white;font-weight:bold;word-wrap:break-word;">${note}</span><span style="font-size:11px;color:rgba(255,255,255,0.9);margin-top:4px;">${status===`未领取`?`专属红包`:status}</span></div></div><div style="padding:6px 12px;background:white;font-size:11px;color:#888;">专属红包</div>`;
-                if(status===`未领取`) {
+                // 只有char发给user的红包（senderId!='user'）且未领取才可点击
+                if(!isMe && status===`未领取`) {
+                    rpCard.style.cursor = `pointer`;
                     rpCard.onclick = async () => {
                         let g2=groupData[currentGroupId]; if(!g2) return;
                         let msgToUpdate = g2.messages[msgIdx];
                         if(!msgToUpdate) return;
-                        let choice = confirm(`领取红包 ¥${amt}？\n确定=领取  取消=退回`);
-                        let newStatus = choice ? `已领取` : `对方已退回红包`;
-                        msgToUpdate.content = `[红包消息：${amt}|${note}|${newStatus}|${cover}]`;
-                        if(choice) {
-                            let myWallet = JSON.parse(ls.getItem(`myWallet`)||`{"balance":0,"bank":0,"bills":[]}`);
-                            myWallet.balance = (myWallet.balance||0) + parseFloat(amt);
-                            myWallet.bills = myWallet.bills||[];
+                        let ov=document.createElement(`div`); ov.style.cssText=`position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;`;
+                        let box=document.createElement(`div`); box.style.cssText=`background:white;border-radius:20px;padding:28px 24px;max-width:320px;width:90%;`;
+                        let senderName = msg.senderName || `对方`;
+                        box.innerHTML=`<div style="font-size:18px;font-weight:bold;margin-bottom:16px;">🧧 来自 ${senderName} 的红包</div><div style="color:#555;margin-bottom:8px;">金额：<b>¥${amt}</b></div><div style="color:#555;margin-bottom:20px;">留言：${note}</div>`;
+                        let btn1=document.createElement(`div`); btn1.style.cssText=`padding:14px;border-radius:12px;background:#fff3e0;color:#e65100;font-weight:bold;text-align:center;cursor:pointer;margin-bottom:10px;`; btn1.innerText=`1. 开心收下 🧧`;
+                        let btn2=document.createElement(`div`); btn2.style.cssText=`padding:14px;border-radius:12px;background:#fff0f0;color:#e74c3c;font-weight:bold;text-align:center;cursor:pointer;margin-bottom:10px;`; btn2.innerText=`2. 狠心拒收 ❌`;
+                        let btn3=document.createElement(`div`); btn3.style.cssText=`padding:14px;border-radius:12px;background:#f5f5f5;color:#666;font-weight:bold;text-align:center;cursor:pointer;`; btn3.innerText=`取消`;
+                        btn1.onclick=async()=>{
+                            ov.remove();
+                            let myWallet=JSON.parse(ls.getItem(`myWallet`)||`{"balance":0,"bank":0,"bills":[]}`);
+                            myWallet.balance=(myWallet.balance||0)+parseFloat(amt);
+                            myWallet.bills=myWallet.bills||[];
                             myWallet.bills.unshift({title:`群聊红包-收到红包`,time:new Date().toLocaleString(),amount:parseFloat(amt),type:`income`,isUser:false});
-                            ls.setItem(`myWallet`, JSON.stringify(myWallet));
-                        }
-                        await _saveGroupData(); _renderGroupMsgs();
+                            ls.setItem(`myWallet`,JSON.stringify(myWallet));
+                            msgToUpdate.content=`[红包消息：${amt}|${note}|已领取|${cover}]`;
+                            await _saveGroupData(); _renderGroupMsgs();
+                        };
+                        btn2.onclick=async()=>{
+                            ov.remove();
+                            msgToUpdate.content=`[红包消息：${amt}|${note}|对方已退回红包|${cover}]`;
+                            await _saveGroupData(); _renderGroupMsgs();
+                        };
+                        btn3.onclick=()=>ov.remove();
+                        box.appendChild(btn1); box.appendChild(btn2); box.appendChild(btn3);
+                        ov.appendChild(box); document.body.appendChild(ov);
                     };
                 }
                 bub.style.cssText=`background:transparent;box-shadow:none;padding:0;border:none;`;
