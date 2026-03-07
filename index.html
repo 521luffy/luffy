@@ -728,11 +728,18 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
             </div>
 
             <!-- 强制状态栏功能 -->
-            <div class=flex-row style="margin-top:8px;align-items:center;"><label style="font-size:13px;color:#6c5ce7;font-weight:bold;flex:1;">✦ 强制状态栏设置</label><input type=checkbox id=cfgStatusBarOn style="width:20px;height:20px;accent-color:#6c5ce7;"></div>
-            <div id=statusBarPanel style="display:none;flex-direction:column;gap:12px;margin-top:10px;background:#f8f5ff;padding:16px;border-radius:14px;border:1px solid #e0d8ff;">
-                <div style="font-size:12px;color:#999;line-height:1.6;">在每次AI回复最开头，强制输出你指定的状态格式。指令自动拼接到提示词最末尾，大模型优先执行。</div>
+            <div style="margin-top:8px;background:#f8f5ff;border-radius:14px;border:1.5px solid #e0d8ff;overflow:hidden;">
+                <div style="display:flex;align-items:center;padding:12px 14px;background:#ede8ff;">
+                    <label style="font-size:13px;color:#6c5ce7;font-weight:bold;flex:1;">✦ 强制状态栏设置</label>
+                    <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#6c5ce7;cursor:pointer;">
+                        <span>启用</span>
+                        <input type=checkbox id=cfgStatusBarOn style="width:18px;height:18px;accent-color:#6c5ce7;">
+                    </label>
+                </div>
+            <div id=statusBarPanel style="display:flex;flex-direction:column;gap:12px;padding:14px;">
+                <div style="font-size:12px;color:#999;line-height:1.6;">在每次AI回复最开头，强制输出你指定的状态格式。指令自动拼接到提示词末尾，提高大模型执行率。</div>
                 <textarea id=cfgStatusBar rows=5 style="width:100%;padding:12px;border:1.5px solid #d8d0ff;border-radius:12px;font-size:13px;line-height:1.6;resize:vertical;box-sizing:border-box;outline:none;background:white;color:#333;" placeholder="请在此输入你希望角色在每次回复前必须输出的客观状态格式，例如：日期、天气、心情等。"></textarea>
-                <div style="font-size:12px;color:#6c5ce7;font-weight:bold;">⚡ 快捷模板（点击选择，可直接编辑内容）</div>
+                <div style="font-size:12px;color:#6c5ce7;font-weight:bold;">⚡ 快捷模板（点击后内容自动填入上方输入框，可再次编辑）</div>
                 <div style="display:flex;flex-direction:column;gap:8px;">
                     <!-- 模板A：日常陪伴型 -->
                     <div style="border:1.5px solid #a29bfe;border-radius:12px;overflow:hidden;">
@@ -772,7 +779,8 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
                     </div>
                 </div>
                 <input type=hidden id=cfgStatusBarFmt value="">
-                <div style="font-size:11px;color:#bbb;line-height:1.5;">💡 选择模板后，格式内容会同步到上方输入框；也可跳过模板直接在上方自定义。系统指令由代码自动添加，无需手动填写。</div>
+                <div style="font-size:11px;color:#bbb;line-height:1.5;">💡 选择任意模板后，格式内容自动填入上方输入框；也可不用模板，直接自定义。勾选"启用"后系统指令自动拼接到提示词末尾，玩家不可见。</div>
+            </div>
             </div>
 
                         <style>
@@ -2612,7 +2620,7 @@ function initCustomTimeUI() {
     
     $(`cfgCustomTime`).onchange = e => {
         $(`customTimePanel`).style.display = e.target.checked ? `flex` : `none`;
-    if($(`cfgStatusBarOn`)) $(`cfgStatusBarOn`).onchange = e => { if($(`statusBarPanel`)) $(`statusBarPanel`).style.display = e.target.checked ? `flex` : `none`; };
+    // cfgStatusBarOn now just enables/disables injection - panel is always visible
 // Sync template format into main textarea (called when user edits template sub-textarea)
 window.syncStatusBarTpl = function() {
     let fmtEl = $(`cfgStatusBarFmt`);
@@ -3494,13 +3502,49 @@ async function renderContacts() {
             let isBlk2 = originalGetItem.call(ls, `isBlocked_` + c.id) === 'true';
             if(isBlk2) isoName2 += `<span style="color:#ff4757;font-size:10px;margin-left:4px;padding:0 2px;">已拉黑</span>`;
             let divC = document.createElement(`div`);
+            // Build swipe-to-delete structure: outer wrapper (clip) + inner sliding row + delete btn
             divC.className = `chat-item`;
+            divC.style.cssText += `;padding:0;overflow:hidden;position:relative;`;
             let charStatusText2 = originalGetItem.call(ls, `cStatusTxt_` + c.id) || "在线";
             let charStatusColorClass2 = originalGetItem.call(ls, `cStatusColor_` + c.id) || "status-online";
             let charSign2 = originalGetItem.call(ls, `cSign_` + c.id) || "（该角色还在思考个性签名...）";
-            divC.innerHTML = avaHtml2 + `<div class=chat-info> <div class=role-header-row> <div class=role-name>` + isoName2 + `</div> <div class=role-status><div class="status-dot ` + charStatusColorClass2 + `"></div>` + charStatusText2 + `</div> </div> <div class=role-signature>` + charSign2 + `</div> </div>`;
-            // 复用onclick：点击加载该char聊天室
-            divC.onclick = async () => {
+            // Inner sliding row (holds avatar + info)
+            let rowInner = document.createElement('div');
+            rowInner.style.cssText = 'display:flex;align-items:center;padding:15px 20px;width:100%;box-sizing:border-box;transition:transform 0.22s cubic-bezier(0.4,0,0.2,1);will-change:transform;background:white;';
+            rowInner.innerHTML = avaHtml2 + `<div class=chat-info> <div class=role-header-row> <div class=role-name>` + isoName2 + `</div> <div class=role-status><div class="status-dot ` + charStatusColorClass2 + `"></div>` + charStatusText2 + `</div> </div> <div class=role-signature>` + charSign2 + `</div> </div>`;
+            // Delete button (hidden to the right)
+            let delBtn2 = document.createElement('div');
+            delBtn2.style.cssText = 'position:absolute;right:0;top:0;bottom:0;width:80px;background:#ff4757;display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:bold;cursor:pointer;transform:translateX(80px);transition:transform 0.22s cubic-bezier(0.4,0,0.2,1);';
+            delBtn2.innerText = '删除好友';
+            divC.appendChild(rowInner);
+            divC.appendChild(delBtn2);
+            let swipeOpen2 = false;
+            const closeSwipe2 = () => {
+                rowInner.style.transform = 'translateX(0)';
+                delBtn2.style.transform = 'translateX(80px)';
+                swipeOpen2 = false;
+            };
+            const openSwipe2 = () => {
+                rowInner.style.transform = 'translateX(-80px)';
+                delBtn2.style.transform = 'translateX(0)';
+                swipeOpen2 = true;
+            };
+            // Swipe detection
+            let swTouchStartX2 = 0, swTouchStartY2 = 0;
+            divC.addEventListener('touchstart', e => {
+                swTouchStartX2 = e.touches[0].clientX;
+                swTouchStartY2 = e.touches[0].clientY;
+            }, {passive:true});
+            divC.addEventListener('touchend', e => {
+                let dx = swTouchStartX2 - e.changedTouches[0].clientX;
+                let dy = Math.abs(swTouchStartY2 - e.changedTouches[0].clientY);
+                if(dy > 30) return; // vertical scroll, ignore
+                if(dx > 40 && !swipeOpen2) { openSwipe2(); }
+                else if(dx < -20 && swipeOpen2) { closeSwipe2(); }
+            }, {passive:true});
+            // Tap on row closes swipe; tap on delete triggers action
+            rowInner.onclick = async () => {
+                if(swipeOpen2) { closeSwipe2(); return; }
                 window._prevScreen = 'scrContact'; window._prevContactTab = 'friends';
                 currentChatId = c.id;
                 $(`cfgName`).value = originalGetItem.call(ls, `cN_` + c.id) || c.name;
@@ -3520,45 +3564,19 @@ async function renderContacts() {
                 showScreen(`scrRoom`);
                 setTimeout(() => msgs.scrollTop = msgs.scrollHeight, 100);
             };
-            // Add swipe-left to delete
-            let swipeStartX2 = 0, swipeEl2 = null;
-            divC.addEventListener('touchstart', e => {
-                swipeStartX2 = e.touches[0].clientX;
-                swipeEl2 = e.currentTarget;
-            }, {passive:true});
-            divC.addEventListener('touchend', e => {
-                let dx = swipeStartX2 - e.changedTouches[0].clientX;
-                if(dx > 60) {
-                    // Show delete overlay
-                    let existing = divC.querySelector('.delete-swipe-btn');
-                    if(existing) return;
-                    let delBtn = document.createElement('div');
-                    delBtn.className = 'delete-swipe-btn';
-                    delBtn.style.cssText = 'position:absolute;right:0;top:0;bottom:0;width:80px;background:#ff4757;display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:bold;cursor:pointer;border-radius:0 10px 10px 0;z-index:10;';
-                    delBtn.innerText = '删除好友';
-                    delBtn.onclick = async (ev) => {
-                        ev.stopPropagation();
-                        let confirmed = await window._customConfirm('你确定删除该好友吗？\n此操作不可恢复！');
-                        if(!confirmed) { delBtn.remove(); return; }
-                        // Remove from contacts array
-                        contacts = contacts.filter(x => String(x.id) !== String(c.id));
-                        // Remove all stored data for this char
-                        originalSetItem.call(ls, 'myContacts', JSON.stringify(contacts));
-                        await localforage.setItem('myContacts', JSON.stringify(contacts));
-                        // Clear chat history etc (optional but clean)
-                        ['chatHistory_','cN_','cR_','cMyN_','cAP_','cMP_','cBubbleCss_','cCtx_','cT_','cCTon_','cStatusBarOn_','cStatusBar_','cSign_','cStatusTxt_','cStatusColor_','isBlocked_','aiStatus_','lastChatTime_'].forEach(k => {
-                            try { ls.removeItem(k+String(c.id)); } catch(e) {}
-                        });
-                        divC.remove();
-                        if(typeof renderContactGroups === 'function') renderContactGroups();
-                    };
-                    divC.style.position = 'relative';
-                    divC.style.overflow = 'hidden';
-                    divC.appendChild(delBtn);
-                    // Tap elsewhere to close
-                    setTimeout(()=>{ document.addEventListener('touchstart', function rmDel(e2){ if(!divC.contains(e2.target)){delBtn.remove();document.removeEventListener('touchstart',rmDel);} }, {once:false, passive:true}); delBtn._cleanup=()=>delBtn.remove(); }, 50);
-                }
-            }, {passive:true});
+            delBtn2.onclick = async (ev) => {
+                ev.stopPropagation();
+                let confirmed = await window._customConfirm('你确定删除该好友吗？\n此操作不可恢复！');
+                if(!confirmed) { closeSwipe2(); return; }
+                contacts = contacts.filter(x => String(x.id) !== String(c.id));
+                originalSetItem.call(ls, 'myContacts', JSON.stringify(contacts));
+                await localforage.setItem('myContacts', JSON.stringify(contacts));
+                ['chatHistory_','cN_','cR_','cMyN_','cAP_','cMP_','cBubbleCss_','cCtx_','cT_','cCTon_','cStatusBarOn_','cStatusBar_','cSign_','cStatusTxt_','cStatusColor_','isBlocked_','aiStatus_','lastChatTime_'].forEach(k => {
+                    try { ls.removeItem(k+String(c.id)); } catch(e2) {}
+                });
+                divC.remove();
+                if(typeof renderContactGroups === 'function') renderContactGroups();
+            };
             $(`contactContent`).appendChild(divC);
         }
     }
