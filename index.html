@@ -2832,9 +2832,10 @@ async function triggerCaughtMessage() {
         let _relLine=charRel?`【关系设定】${charRel}`:``;
         let _wbLine=wbText?`【世界设定】${wbText}`:``;
         let _recLine=recentCtx?`【最近私聊记录】\n${recentCtx}`:``;
-        let sys=`你是${charName}。\n${_apLine}\n${_relLine}\n${_wbLine}\n${_recLine}\n\n${myNick}刚刚被你发现在偷翻你的手机，TA正在看你的【${section}】。\n请以你的第一人称、符合当前感情状态和性格直接回应。不加任何前缀或角色标记，字数不限，完整表达。`;
+        let sys=`你是${charName}。\n${_apLine}\n${_relLine}\n${_wbLine}\n${_recLine}\n\n${myNick}刚刚被你发现在偷翻你的手机，TA正在看你的【${section}】。\n请以你的第一人称、符合当前感情状态和性格直接回应。要求：请发送3条左右的连续消息（请用换行符分隔每一条），每条字数不限，务必把话完整说完。不加任何前缀或角色标记。`;
 
-        let resp=await fetch(pxy,{method:`POST`,headers:{[`Content-Type`]:`application/json`,Authorization:`Bearer `+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:4096,messages:[{role:`user`,content:sys}]})});
+        let resp=await fetch(pxy,{method:`POST`,headers:{[`Content-Type`]:`application/json`,Authorization:`Bearer `+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:1500,messages:[{role:`user`,content:sys}]})});
+
         let data=await resp.json();
         let reply=(data.choices?.[0]?.message?.content||``).trim();
         reply=reply.replace(/^【[^】]*】/g,``).replace(/^(我|说|答|回复)[:：]/,``).trim();
@@ -7278,8 +7279,13 @@ if($(`btnGenSpyZhihu`)) $(`btnGenSpyZhihu`).onclick = async () => {
     let charP = originalGetItem.call(ls, `cP_` + charId) || ``;
     let charCtx = originalGetItem.call(ls, `cCtx_` + charId) || originalGetItem.call(ls, `cCtx`) || ``;
     
-    let specHistStr = originalGetItem.call(ls, `chatHistory_` + charId) || `[]`;
-    let specHist = JSON.parse(specHistStr);
+    let specHist = [];
+try {
+    let h = await localforage.getItem(`chatHistory_` + charId);
+    if (!h) h = originalGetItem.call(ls, `chatHistory_` + charId);
+    if (h) specHist = typeof h === `string` ? JSON.parse(h) : (Array.isArray(h) ? h : []);
+} catch(e) {}
+
     if(charId === `default` && typeof history !== `undefined`) specHist = history;
     let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : cName) + `：` + m.content).join(`\n`);
     
@@ -7658,8 +7664,13 @@ async function fetchSpySecretData(targetTab) {
     let charP = originalGetItem.call(ls, `cP_` + charId) || ``;
     let charCtx = originalGetItem.call(ls, `cCtx_` + charId) || originalGetItem.call(ls, `cCtx`) || ``;
     
-    let specHistStr = originalGetItem.call(ls, `chatHistory_` + charId) || `[]`;
-    let specHist = JSON.parse(specHistStr);
+    let specHist = [];
+try {
+    let h = await localforage.getItem(`chatHistory_` + charId);
+    if (!h) h = originalGetItem.call(ls, `chatHistory_` + charId);
+    if (h) specHist = typeof h === `string` ? JSON.parse(h) : (Array.isArray(h) ? h : []);
+} catch(e) {}
+
     if(charId === `default` && typeof history !== `undefined`) specHist = history;
     let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
     
@@ -8029,8 +8040,13 @@ async function generateSpyWechat(isAdvance) {
     let charP = originalGetItem.call(ls, `cP_` + charId) || ``;
     let charCtx = originalGetItem.call(ls, `cCtx_` + charId) || originalGetItem.call(ls, `cCtx`) || ``;
     
-    let specHistStr = originalGetItem.call(ls, `chatHistory_` + charId) || `[]`;
-    let specHist = JSON.parse(specHistStr);
+    let specHist = [];
+try {
+    let h = await localforage.getItem(`chatHistory_` + charId);
+    if (!h) h = originalGetItem.call(ls, `chatHistory_` + charId);
+    if (h) specHist = typeof h === `string` ? JSON.parse(h) : (Array.isArray(h) ? h : []);
+} catch(e) {}
+
     if(charId === `default` && typeof history !== 'undefined') specHist = history;
     let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
 
@@ -8223,8 +8239,13 @@ async function generateSpyCall() {
     let charP = originalGetItem.call(ls, `cP_` + charId) || ``; 
     let charCtx = originalGetItem.call(ls, `cCtx_` + charId) || originalGetItem.call(ls, `cCtx`) || ``;
     
-    let specHistStr = originalGetItem.call(ls, `chatHistory_` + charId) || `[]`;
-    let specHist = JSON.parse(specHistStr);
+   let specHist = [];
+try {
+    let h = await localforage.getItem(`chatHistory_` + charId);
+    if (!h) h = originalGetItem.call(ls, `chatHistory_` + charId);
+    if (h) specHist = typeof h === `string` ? JSON.parse(h) : (Array.isArray(h) ? h : []);
+} catch(e) {}
+
     if(charId === `default` && typeof history !== 'undefined') specHist = history;
     let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
     
@@ -8395,8 +8416,13 @@ async function generateSpyAlbum() {
     pmt += `3. 文字描述要充满画面感，能反映出${charN}在不同时期的心境、经历或周围的人事物。\n`;
     
     let myN = $(`cfgMyName`) ? $(`cfgMyName`).value : `我`;
-    let specHistStr = originalGetItem.call(ls, `chatHistory_` + charId) || `[]`;
-    let specHist = JSON.parse(specHistStr);
+    let specHist = [];
+try {
+    let h = await localforage.getItem(`chatHistory_` + charId);
+    if (!h) h = originalGetItem.call(ls, `chatHistory_` + charId);
+    if (h) specHist = typeof h === `string` ? JSON.parse(h) : (Array.isArray(h) ? h : []);
+} catch(e) {}
+
     if(charId === `default` && typeof history !== 'undefined') specHist = history;
     let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
     if(recentChat) pmt += `\n【近期聊天记录参考（用于构思近期的4张照片，看看TA最近经历了什么、去过哪里、见过谁，拍下与之相关的照片）】：\n${recentChat}\n`;
@@ -8567,8 +8593,13 @@ async function generateSpyMemo() {
     if(charP) pmt += `【${charN}的专属人设档案】：${charP}\n`; 
     if(charCtx) pmt += `【当前世界背景与剧情设定】：${charCtx}\n`;
     
-    let specHistStr = originalGetItem.call(ls, `chatHistory_` + charId) || `[]`;
-    let specHist = JSON.parse(specHistStr);
+    let specHist = [];
+try {
+    let h = await localforage.getItem(`chatHistory_` + charId);
+    if (!h) h = originalGetItem.call(ls, `chatHistory_` + charId);
+    if (h) specHist = typeof h === `string` ? JSON.parse(h) : (Array.isArray(h) ? h : []);
+} catch(e) {}
+
     if(charId === `default` && typeof history !== 'undefined') specHist = history;
     let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
     
@@ -8760,8 +8791,13 @@ async function generateSpyMusic() {
     // 世界书提示强对齐：重点强调整治土味情歌问题，羽肿的受众通常偏好纯音乐、后摇或电子乐
     pmt += `【极其重要审美警告：严禁生成抖音爆款神曲或烂大街的伤感流行乐！如果TA的设定中有小众审美或特殊爱好（如羽肿等纯音乐艺人），必须生成匹配的高级歌单！】\n`;
 
-    let specHistStr = originalGetItem.call(ls, `chatHistory_` + charId) || `[]`;
-    let specHist = JSON.parse(specHistStr);
+    let specHist = [];
+try {
+    let h = await localforage.getItem(`chatHistory_` + charId);
+    if (!h) h = originalGetItem.call(ls, `chatHistory_` + charId);
+    if (h) specHist = typeof h === `string` ? JSON.parse(h) : (Array.isArray(h) ? h : []);
+} catch(e) {}
+
     if(charId === `default` && typeof history !== 'undefined') specHist = history;
     let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
     if(recentChat) pmt += `\n【近期聊天剧情参考（重点用于推测近期的情绪歌单及TA对你隐藏的隐秘心思批注）】：\n${recentChat}\n`;
@@ -8943,8 +8979,13 @@ async function generateSpyMeituan() {
     if(charP) pmt += `【${charN}的专属人设档案】：${charP}\n`; 
     if(charCtx) pmt += `【当前世界背景与剧情设定】：${charCtx}\n`;
     
-    let specHistStr = originalGetItem.call(ls, `chatHistory_` + charId) || `[]`;
-    let specHist = JSON.parse(specHistStr);
+    let specHist = [];
+try {
+    let h = await localforage.getItem(`chatHistory_` + charId);
+    if (!h) h = originalGetItem.call(ls, `chatHistory_` + charId);
+    if (h) specHist = typeof h === `string` ? JSON.parse(h) : (Array.isArray(h) ? h : []);
+} catch(e) {}
+
     if(charId === `default` && typeof history !== 'undefined') specHist = history;
     let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
     
@@ -9113,8 +9154,13 @@ async function generateSpyFootprint() {
     if(charP) pmt += `【${charN}的专属人设档案（务必逐字仔细阅读并严格遵守）】：${charP}\n`; 
     if(charCtx) pmt += `【当前世界背景与剧情设定（包含常驻城市和关键地点）】：${charCtx}\n`;
 
-    let specHistStr = originalGetItem.call(ls, `chatHistory_` + charId) || `[]`;
-    let specHist = JSON.parse(specHistStr);
+    let specHist = [];
+try {
+    let h = await localforage.getItem(`chatHistory_` + charId);
+    if (!h) h = originalGetItem.call(ls, `chatHistory_` + charId);
+    if (h) specHist = typeof h === `string` ? JSON.parse(h) : (Array.isArray(h) ? h : []);
+} catch(e) {}
+
     if(charId === `default` && typeof history !== 'undefined') specHist = history;
     let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
     if(recentChat) pmt += `\n【近期聊天剧情参考（绝对核心：重点用于推断当前正在发生的事情和最终位置）：\n${recentChat}\n`;
@@ -9300,8 +9346,13 @@ async function generateSpyWallet() {
     if(charP) pmt += `【${charN}的专属人设档案】：${charP}\n`; 
     if(charCtx) pmt += `【当前世界背景与剧情设定】：${charCtx}\n`;
 
-    let specHistStr = originalGetItem.call(ls, `chatHistory_` + charId) || `[]`;
-    let specHist = JSON.parse(specHistStr);
+    let specHist = [];
+try {
+    let h = await localforage.getItem(`chatHistory_` + charId);
+    if (!h) h = originalGetItem.call(ls, `chatHistory_` + charId);
+    if (h) specHist = typeof h === `string` ? JSON.parse(h) : (Array.isArray(h) ? h : []);
+} catch(e) {}
+
     if(charId === `default` && typeof history !== 'undefined') specHist = history;
     let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
     
@@ -9551,8 +9602,13 @@ async function generateSpyShop() {
     if(charP) pmt += `【${charN}的专属人设档案（务必逐字阅读并严格遵守消费水平）】：${charP}\n`; 
     if(charCtx) pmt += `【当前世界背景与剧情设定】：${charCtx}\n`;
 
-    let specHistStr = originalGetItem.call(ls, `chatHistory_` + charId) || `[]`;
-    let specHist = JSON.parse(specHistStr);
+    let specHist = [];
+try {
+    let h = await localforage.getItem(`chatHistory_` + charId);
+    if (!h) h = originalGetItem.call(ls, `chatHistory_` + charId);
+    if (h) specHist = typeof h === `string` ? JSON.parse(h) : (Array.isArray(h) ? h : []);
+} catch(e) {}
+
     if(charId === `default` && typeof history !== 'undefined') specHist = history;
     let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
     if(recentChat) pmt += `\n【近期聊天剧情参考（最高优先级：用于推测TA近期想买什么或者暗中为你准备什么惊喜）：\n${recentChat}\n`;
@@ -9751,8 +9807,13 @@ async function generateSpyIqiyi() {
     let charP = originalGetItem.call(ls, `cP_` + charId) || ``;
     let charCtx = originalGetItem.call(ls, `cCtx_` + charId) || originalGetItem.call(ls, `cCtx`) || ``;
     
-    let specHistStr = originalGetItem.call(ls, `chatHistory_` + charId) || `[]`;
-    let specHist = JSON.parse(specHistStr);
+    let specHist = [];
+try {
+    let h = await localforage.getItem(`chatHistory_` + charId);
+    if (!h) h = originalGetItem.call(ls, `chatHistory_` + charId);
+    if (h) specHist = typeof h === `string` ? JSON.parse(h) : (Array.isArray(h) ? h : []);
+} catch(e) {}
+
     if(charId === `default` && typeof history !== 'undefined') specHist = history;
     let recentChat = specHist.slice(-20).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
 
