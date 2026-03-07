@@ -478,35 +478,43 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 
     <div id=scrContact class=scr-list>
         <div class=chat-header>
-                        <span id=btnContactBack 
-class=back-btn>＜</span>
+            <span id=btnContactBack class=back-btn>＜</span>
             <span class=header-center>联系人</span>
-
-            <div style="display:flex; align-items:center; gap:15px;">
+            <div style="display:flex;align-items:center;gap:12px;position:relative;">
                 <span id=btnRoleHelp class=plus-btn style="font-size:20px;">❓</span>
-                <span id=btnAddContact class=plus-btn title="新增好友" style="font-size:14px;">+👤</span>
+                <div style="position:relative;">
+                    <span id=btnAddContact class=plus-btn title="新增好友" style="font-size:14px;">+👤</span>
+                    <div id=contactAddDropdown style="display:none;position:absolute;top:34px;right:0;background:white;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.15);z-index:999;min-width:120px;overflow:hidden;">
+                        <div id=ddAddFriend style="padding:12px 18px;font-size:14px;color:#333;cursor:pointer;border-bottom:1px solid #f0f0f0;">👤 新增好友</div>
+                        <div id=ddAddGroup style="padding:12px 18px;font-size:14px;color:#6c5ce7;cursor:pointer;">🗂 新增分组</div>
+                    </div>
+                </div>
                 <span id=btnAddGroup class=plus-btn title="新建群聊" style="font-size:14px;">+👥</span>
             </div>
         </div>
-
-        
-                <div id=contactContent class=list-content>
-                        
- <div id=btnContactToRoom class=chat-item style="display:none;">
+        <!-- Tabs -->
+        <div id=contactTabs style="display:flex;background:white;border-bottom:1px solid #f0f0f0;flex-shrink:0;">
+            <div id=tabBtnGroups onclick="switchContactTab('groups')" style="flex:1;padding:10px 0;text-align:center;font-size:14px;color:#999;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;">分组</div>
+            <div id=tabBtnFriends onclick="switchContactTab('friends')" style="flex:1;padding:10px 0;text-align:center;font-size:14px;color:#6c5ce7;font-weight:bold;cursor:pointer;border-bottom:2px solid #6c5ce7;transition:all 0.2s;">好友</div>
+            <div id=tabBtnGroupChats onclick="switchContactTab('groupchats')" style="flex:1;padding:10px 0;text-align:center;font-size:14px;color:#999;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;">群聊</div>
+        </div>
+        <!-- 好友 panel -->
+        <div id=contactContent class=list-content style="display:flex;flex-direction:column;">
+            <div id=btnContactToRoom class=chat-item style="display:none;">
                 <div id=contactAva class=avatar-list>👤</div>
                 <div class=chat-info>
-                                        <div class=role-header-row>
-                      
-   <div id=contactName class=role-name>专属恋人</div>
-
-                                                <div class=role-status><div class="status-dot status-online"></div>在线</div>
+                    <div class=role-header-row>
+                        <div id=contactName class=role-name>专属恋人</div>
+                        <div class=role-status><div class="status-dot status-online"></div>在线</div>
                     </div>
                     <div class=role-signature>（暂无个性签名）</div>
                 </div>
             </div>
-
-
         </div>
+        <!-- 分组 panel -->
+        <div id=contactGroupsPanel style="display:none;flex:1;overflow-y:auto;background:#f8f9fa;"></div>
+        <!-- 群聊 panel -->
+        <div id=contactGroupChatsPanel style="display:none;flex:1;overflow-y:auto;background:#f8f9fa;"></div>
         
         <div class=bottom-nav>
             <div id=navContactToMsg class=nav-item><div class=nav-icon>💬</div><div class=nav-text>消息</div></div>
@@ -3000,6 +3008,182 @@ async function triggerCaughtMessage() {
         setTimeout(()=>{
             if(msgs) msgs.scrollTop=msgs.scrollHeight;
             if(typeof renderContacts===`function`) renderContacts();
+renderContacts();
+
+// ================================================================
+// ▼▼▼ 联系人页 - 分组/好友/群聊 Tab 切换 + 分组管理 ▼▼▼
+// ================================================================
+
+// 当前激活的 Tab
+window._contactActiveTab = 'friends';
+
+function switchContactTab(tab) {
+    window._contactActiveTab = tab;
+    let panels = {friends:'contactContent', groups:'contactGroupsPanel', groupchats:'contactGroupChatsPanel'};
+    let tabs = {friends:'tabBtnFriends', groups:'tabBtnGroups', groupchats:'tabBtnGroupChats'};
+    Object.keys(panels).forEach(t => {
+        let p = $(panels[t]); if(p) p.style.display = (t===tab) ? (t==='friends'?'flex':'block') : 'none';
+        let tb = $(tabs[t]); if(tb) {
+            tb.style.color = t===tab ? '#6c5ce7' : '#999';
+            tb.style.fontWeight = t===tab ? 'bold' : 'normal';
+            tb.style.borderBottom = t===tab ? '2px solid #6c5ce7' : '2px solid transparent';
+        }
+    });
+    if(tab==='groupchats') { if(typeof renderGroupList==='function') renderGroupList(); }
+    if(tab==='groups') { renderContactGroups(); }
+}
+
+// 点击 +👤 显示/隐藏下拉
+let _ddOpen = false;
+if($('btnAddContact')) {
+    $('btnAddContact').onclick = (e) => {
+        e.stopPropagation();
+        let dd = $('contactAddDropdown');
+        if(!dd) return;
+        _ddOpen = !_ddOpen;
+        dd.style.display = _ddOpen ? 'block' : 'none';
+    };
+}
+document.addEventListener('click', () => { let dd=$('contactAddDropdown'); if(dd) dd.style.display='none'; _ddOpen=false; });
+
+// 下拉选项: 新增好友 (原有逻辑)
+if($('ddAddFriend')) {
+    $('ddAddFriend').onclick = (e) => {
+        e.stopPropagation();
+        let dd=$('contactAddDropdown'); if(dd) dd.style.display='none'; _ddOpen=false;
+        let m=$('addFriendModal');
+        if(m) m.style.display='flex';
+    };
+}
+
+// 下拉选项: 新增分组
+if($('ddAddGroup')) {
+    $('ddAddGroup').onclick = (e) => {
+        e.stopPropagation();
+        let dd=$('contactAddDropdown'); if(dd) dd.style.display='none'; _ddOpen=false;
+        showAddGroupModal();
+    };
+}
+
+// ---- 分组数据结构 ----
+function _loadContactGroups() {
+    try { return JSON.parse(ls.getItem('contactGroups')||'[]'); } catch(e){ return []; }
+}
+function _saveContactGroups(groups) {
+    ls.setItem('contactGroups', JSON.stringify(groups));
+}
+
+// ---- 新增分组 Modal ----
+function showAddGroupModal(editId) {
+    let existing = $('addContactGroupModal'); if(existing) existing.remove();
+    let groups = _loadContactGroups();
+    let editGroup = editId ? groups.find(g=>g.id===editId) : null;
+    
+    let ov = document.createElement('div');
+    ov.id = 'addContactGroupModal';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+    
+    // Build member checkboxes from contacts
+    let memberHtml = contacts.map(c => {
+        let n = originalGetItem.call(ls,'cN_'+c.id)||c.name;
+        let checked = editGroup && editGroup.memberIds.includes(c.id) ? 'checked' : '';
+        return `<label style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f0f0f0;cursor:pointer;"><input type=checkbox data-cid="${c.id}" ${checked} style="width:18px;height:18px;accent-color:#6c5ce7;"> <span style="font-size:14px;color:#333;">${n}</span></label>`;
+    }).join('');
+    
+    ov.innerHTML = `<div style="background:white;border-radius:20px;padding:24px;width:88%;max-width:360px;max-height:80vh;display:flex;flex-direction:column;">
+        <div style="font-size:17px;font-weight:bold;margin-bottom:16px;color:#333;">${editGroup?'编辑分组':'新建分组'}</div>
+        <input id=cgNameInput placeholder="输入分组名称" style="width:100%;padding:10px 14px;border:1.5px solid #e0d8ff;border-radius:12px;font-size:14px;box-sizing:border-box;outline:none;margin-bottom:14px;" value="${editGroup?editGroup.name:''}">
+        <div style="font-size:13px;color:#888;margin-bottom:8px;">选择组员：</div>
+        <div style="overflow-y:auto;flex:1;max-height:260px;">${memberHtml}</div>
+        <div style="display:flex;gap:10px;margin-top:16px;">
+            ${editGroup?`<button id=cgDeleteBtn style="flex:1;padding:11px;border:none;border-radius:12px;background:#fff0f0;color:#e74c3c;font-size:14px;font-weight:bold;cursor:pointer;">删除分组</button>`:''}
+            <button onclick="this.closest('#addContactGroupModal').remove()" style="flex:1;padding:11px;border:none;border-radius:12px;background:#f0f0f0;color:#666;font-size:14px;cursor:pointer;">取消</button>
+            <button id=cgSaveBtn style="flex:1;padding:11px;border:none;border-radius:12px;background:linear-gradient(135deg,#a29bfe,#6c5ce7);color:white;font-size:14px;font-weight:bold;cursor:pointer;">保存</button>
+        </div>
+    </div>`;
+    document.body.appendChild(ov);
+    
+    if($('cgDeleteBtn')) $('cgDeleteBtn').onclick = () => {
+        let gs = _loadContactGroups();
+        _saveContactGroups(gs.filter(g=>g.id!==editId));
+        ov.remove();
+        renderContactGroups();
+    };
+    $('cgSaveBtn').onclick = () => {
+        let name = $('cgNameInput').value.trim();
+        if(!name) { alert('请输入分组名称'); return; }
+        let memberIds = [...ov.querySelectorAll('input[data-cid]:checked')].map(cb=>cb.dataset.cid);
+        let gs = _loadContactGroups();
+        if(editGroup) {
+            let idx = gs.findIndex(g=>g.id===editId);
+            if(idx>=0) { gs[idx].name=name; gs[idx].memberIds=memberIds; }
+        } else {
+            gs.push({id:'cg_'+Date.now(), name, memberIds});
+        }
+        _saveContactGroups(gs);
+        ov.remove();
+        switchContactTab('groups');
+    };
+}
+
+// ---- 渲染分组列表 ----
+function renderContactGroups() {
+    let panel = $('contactGroupsPanel'); if(!panel) return;
+    panel.innerHTML = '';
+    let groups = _loadContactGroups();
+    if(!groups.length) {
+        panel.innerHTML = '<div style="text-align:center;padding:40px;color:#ccc;font-size:14px;">暂无分组<br><span style="font-size:12px;">点击右上角 +👤 → 新增分组</span></div>';
+        return;
+    }
+    groups.forEach(grp => {
+        let card = document.createElement('div');
+        card.style.cssText = 'margin:10px 12px;background:white;border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,0.06);overflow:hidden;';
+        let memberCount = grp.memberIds ? grp.memberIds.length : 0;
+        let hdr = document.createElement('div');
+        hdr.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;';
+        hdr.innerHTML = `<div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:14px;color:#6c5ce7;">▶</span>
+            <span style="font-size:15px;font-weight:bold;color:#333;">${grp.name}</span>
+            <span style="font-size:12px;color:#aaa;">(${memberCount}人)</span>
+        </div>
+        <span onclick="event.stopPropagation();showAddGroupModal('${grp.id}')" style="font-size:12px;color:#a29bfe;cursor:pointer;padding:4px 8px;">编辑</span>`;
+        let body = document.createElement('div');
+        body.style.cssText = 'display:none;border-top:1px solid #f0f0f0;';
+        // Render members
+        (grp.memberIds||[]).forEach(cid => {
+            let c = contacts.find(x=>x.id===cid); if(!c) return;
+            let n = originalGetItem.call(ls,'cN_'+cid)||c.name;
+            let ava = originalGetItem.call(ls,'aiI_'+cid)||'';
+            let sign = originalGetItem.call(ls,'cSign_'+cid)||'（暂无个性签名）';
+            let row = document.createElement('div');
+            row.style.cssText = 'display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid #fafafa;cursor:pointer;';
+            row.innerHTML = `${ava?`<div style="width:40px;height:40px;border-radius:50%;background:url(${ava}) center/cover no-repeat;flex-shrink:0;"></div>`:`<div style="width:40px;height:40px;border-radius:50%;background:#e0d8ff;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">👤</div>`}
+            <div style="flex:1;min-width:0;">
+                <div style="font-size:14px;font-weight:bold;color:#333;">${n}</div>
+                <div style="font-size:12px;color:#aaa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${sign}</div>
+            </div>`;
+            row.onclick = async () => {
+                // Navigate to that char's chat
+                if(window.loadCharRoom) await window.loadCharRoom(cid);
+            };
+            body.appendChild(row);
+        });
+        // Toggle collapse
+        let collapsed = true;
+        hdr.onclick = () => {
+            collapsed = !collapsed;
+            body.style.display = collapsed ? 'none' : 'block';
+            let arrow = hdr.querySelector('span');
+            if(arrow) arrow.style.transform = collapsed ? '' : 'rotate(90deg)';
+        };
+        card.appendChild(hdr); card.appendChild(body);
+        panel.appendChild(card);
+    });
+}
+
+// 初始化: 确保好友tab先显示
+switchContactTab('friends');
+
             renderGroupInMsgList().catch(()=>{});
         }, 200);
 
@@ -11179,7 +11363,8 @@ async function openGroupRoom(gid) {
 // 渲染联系人页面群聊区（始终在底部，避免跑到顶部）
 async function renderGroupList() {
     await _loadGroupData();
-    let container=$(`contactContent`); if(!container) return;
+    // Render to 群聊 panel if exists, else fallback to contactContent
+    let container=$(`contactGroupChatsPanel`)||$(`contactContent`); if(!container) return;
     // 清除旧群聊条目
     container.querySelectorAll(`.group-item`).forEach(el=>el.remove());
 
@@ -12316,6 +12501,7 @@ ${recentGroupMsgs}
 - 话少的人（高冷/内敛）：直接一句话或几个字
 - 话多的人（活泼/话唠）：分3-5条发送，每条换一行，每条一句话
 - 只输出要说的话，绝不加任何角色名
+【红包与转账指令】若你想给对方发红包，输出单独一行：[红包消息：金额|祝福语|未领取|]（例：[红包消息：100.00|拿着花|未领取|]）；若你想给对方转账，输出单独一行：[转账消息：金额|备注|未收款]（例：[转账消息：200.00|生活费|未收款]）。这两种格式必须完整保留，不能修改任何字段顺序。
 直接输出你说的话，不要任何角色名前缀，不要输出【】格式标记行，全程中文，自然真实`;
 
             try{
@@ -12812,6 +12998,7 @@ window._renderGroupMsgs = function() {
             let tfM = txt.match(/^\[转账消息：([\d\.]+)\|(.*?)\|(未收款|已收款|对方已拒绝收款|已拒绝收款)\]$/);
             // 红包消息卡片
             let rpM = txt.match(/^\[红包消息：([\d\.]+)\|(.*?)\|(未领取|已打开|已领取|对方已退回红包)\|([\s\S]*?)\]$/);
+            if(!rpM) { let rpM2=txt.match(/^\[红包消息：([\d\.]+)\|(.*?)(?:\|([^|]*)(?:\|([^\]]*))?)\]$/); if(rpM2) rpM=[txt,rpM2[1],rpM2[2]||'恭喜发财',rpM2[3]||'未领取',rpM2[4]||'']; }
             if(photoM) {
                 let desc = photoM[1];
                 let photoDiv = document.createElement(`div`);
@@ -12904,6 +13091,45 @@ window._renderGroupMsgs = function() {
                         btn3.onclick=()=>ov.remove();
                         box.appendChild(btn1); box.appendChild(btn2); box.appendChild(btn3);
                         ov.appendChild(box); document.body.appendChild(ov);
+                    };
+                }
+                // User-sent red packet: add "触发领取" click
+                if(isMe && status===`未领取`) {
+                    rpCard.style.cursor=`pointer`;
+                    // Add "等待领取" overlay
+                    let waitLbl=document.createElement(`div`);
+                    waitLbl.style.cssText=`position:absolute;bottom:30px;left:0;right:0;text-align:center;font-size:10px;color:rgba(255,255,255,0.7);`;
+                    waitLbl.innerText=`点击触发角色领取`;
+                    rpCard.appendChild(waitLbl);
+                    rpCard.onclick=async()=>{
+                        let g2=groupData[currentGroupId]; if(!g2) return;
+                        let msgToUpdate=g2.messages[msgIdx]; if(!msgToUpdate) return;
+                        let pxy=originalGetItem.call(ls,`pxy`)||``, key=originalGetItem.call(ls,`key`)||``, mod=originalGetItem.call(ls,`mod`)||``;
+                        if(pxy&&!pxy.includes(`chat/completions`)) pxy=pxy.replace(/\/$/,``)+`/chat/completions`;
+                        if(!pxy||!key){alert(`请先配置API`); return;}
+                        let charMembers=(g2.members||[]).filter(m=>m.id!==`user`&&m.type!==`user`);
+                        let uName=g2.myNick||`我`;
+                        // Each char decides to accept/decline
+                        for(let cm of charMembers){
+                            let cName=originalGetItem.call(ls,`cN_`+cm.id)||cm.name;
+                            let cAP=originalGetItem.call(ls,`cAP_`+cm.id)||``;
+                            let sys=`你是${cName}。${cAP?`设定：${cAP}`:``}
+${uName}在群里给大家发了一个¥${amt}的红包，留言是「${note}」，你要决定是否领取。如果领取，回复第一个字是"领"；如果拒绝，回复第一个字是"拒"，然后跟一句话说明。直接输出，不加任何前缀，50字以内。`;
+                            let tp=parseFloat(originalGetItem.call(ls,`temp`)||`0.8`)||0.8;
+                            try{
+                                let res=await fetch(pxy,{method:`POST`,headers:{[`Content-Type`]:`application/json`,Authorization:`Bearer `+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:200,messages:[{role:`user`,content:sys}]})});
+                                let dat=await res.json();
+                                let reply=(dat.choices?.[0]?.message?.content||``).trim();
+                                let ava=null; try{ava=await localforage.getItem(`aiI_`+cm.id);}catch(e){}
+                                if(reply.startsWith(`领`)){
+                                    g2.messages.push({senderId:cm.id,senderName:cName,avatar:ava,content:reply,time:Date.now()});
+                                    msgToUpdate.content=`[红包消息：${amt}|${note}|已领取|${cover}]`;
+                                } else {
+                                    g2.messages.push({senderId:cm.id,senderName:cName,avatar:ava,content:reply||`（${cName}拒收了红包）`,time:Date.now()});
+                                }
+                            }catch(e){}
+                        }
+                        await _saveGroupData(); _renderGroupMsgs();
                     };
                 }
                 bub.style.cssText=`background:transparent;box-shadow:none;padding:0;border:none;`;
@@ -13156,7 +13382,7 @@ async function _callAIConnect(type, isIncoming) {
         : (myName + '：' + m.content.slice(0,40))).join('\n');
     let callTypeName = type === 'voice' ? '语音通话' : '视频通话';
     let tp = parseFloat(originalGetItem.call(ls,'temp')||'0.8') || 0.8;
-    let connectSys = '你是' + charName + '。' + (charAP ? '你的设定：' + charAP : '') + '\n你当前面板状态：' + curStatus + '。\n近期聊天：\n' + recentHist + '\n\n【' + myName + '向你发起了' + callTypeName + '，正在等你接听】\n请根据你的性格和当前情绪状态决定是否接听！\n如接听（大多数情况下应该接）：回复最开头写 [接听通话]，随后用「」写出接起电话后的第一句话，配合相关听觉或视觉细节描写，内容要丰富完整，不要截断。\n如拒接（仅在正在吵架或心情极差时才拒接）：回复最开头写 [拒接通话]，随后发来一条文字消息，说明你接不了的原因（比如在忙、不方便、或直接无视），但绝对不能说成是对方挂了你电话——是你主动选择不接' + myName + '的电话。\n注意：只要不是关系极度僵化或正在冷战，你都应该接听，通话时内容要完整自然，不要突然截断。';
+    let connectSys = '你是' + charName + '。' + (charAP ? '你的设定：' + charAP : '') + '\n你当前面板状态：' + curStatus + '。\n近期聊天：\n' + recentHist + '\n\n【' + myName + '向你发起了' + callTypeName + '，正在等你接听】\n请根据你的性格和当前情绪状态决定是否接听！\n如接听（大多数情况下应该接）：回复最开头写 [接听通话]，随后用「」写出接起电话后的第一句话，配合相关听觉或视觉细节描写，内容要丰富完整，不要截断。\n如拒接（仅在正在吵架或心情极差时才拒接）：回复最开头写 [拒接通话]，随后发来一条文字消息（100字以内），说明你接不了的原因（比如在忙、不方便、或直接无视），但绝对不能说成是对方挂了你电话——是你主动选择不接' + myName + '的电话。\n注意：只要不是关系极度僵化或正在冷战，你都应该接听，通话时内容自然，回复请控制在150字以内，不要截断。';
     try {
         let res = await fetch(pxy, { method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer '+key}, body:JSON.stringify({model:mod, temperature:tp, max_tokens:1200, messages:[{role:'user', content:connectSys}]}) });
         let dat = await res.json();
@@ -13280,9 +13506,9 @@ async function _callSendMsg(txt) {
     let callLog = window._callState.msgs.slice(-6).map(m => (m.isUser ? myName : charName) + '：' + m.txt).join('\n');
     window._callState.msgs.push({isUser:true, txt});
     let voiceRules = type === 'voice'
-        ? '【语音通话规则 - 极度重要】你们正在进行语音通话，双方看不到对方。你必须：\n1. 完全禁止描写任何视觉动作（如"瞪了一眼""我看着你"），只描写听觉和触觉（呼吸声、环境音、物体声响、衣物摩擦声等）。\n2. 像真实打电话一样自然说话，语气要有质感，内容完整，不要截断。\n3. 可以描写背景里的声音细节，让对方脑补环境。\n4. 【极其重要】你必须直接回应对方刚才说的话，不要自说自话，不要重复上一条内容。'
-        : '【视频通话规则 - 极度重要】你们正在进行视频通话，可以看到彼此。你必须：\n1. 大量描写视觉细节：你穿了什么、头发状态、距离镜头的远近、眼神交互。\n2. 如果想展示周围的东西，可以用[发送照片：详细描述]指令翻转镜头。\n3. 如果网络卡了可以演戏说画面定格了，内容要完整自然，不要截断。\n4. 【极其重要】你必须直接回应对方刚才说的话，不要自说自话，不要重复上一条内容。';
-    let callSys = '你是' + charName + '。' + (charAP ? '你的设定：' + charAP : '') + '\n\n' + voiceRules + '\n\n通话记录：\n' + callLog + '\n\n' + myName + '刚才说】：' + txt + '\n\n请直接针对' + myName + '说的内容回复，无需任何前缀，内容完整，不要截断。';
+        ? '【语音通话规则 - 极度重要】你们正在进行语音通话，双方看不到对方。你必须：\n1. 完全禁止描写任何视觉动作（如"瞪了一眼""我看着你"），只描写听觉和触觉（呼吸声、环境音、物体声响、衣物摩擦声等）。\n2. 像真实打电话一样自然说话，语气要有质感，回复控制在150字以内。\n3. 可以描写背景里的声音细节，让对方脑补环境。\n4. 【极其重要】你必须直接回应对方刚才说的话，不要自说自话，不要重复上一条内容。'
+        : '【视频通话规则 - 极度重要】你们正在进行视频通话，可以看到彼此。你必须：\n1. 大量描写视觉细节：你穿了什么、头发状态、距离镜头的远近、眼神交互。\n2. 如果想展示周围的东西，可以用[发送照片：详细描述]指令翻转镜头。\n3. 如果网络卡了可以演戏说画面定格了，回复控制在150字以内。\n4. 【极其重要】你必须直接回应对方刚才说的话，不要自说自话，不要重复上一条内容。';
+    let callSys = '你是' + charName + '。' + (charAP ? '你的设定：' + charAP : '') + '\n\n' + voiceRules + '\n\n通话记录：\n' + callLog + '\n\n' + myName + '刚才说】：' + txt + '\n\n请直接针对' + myName + '说的内容回复，无需任何前缀，回复控制在150字以内。';
     try {
         let res = await fetch(pxy, { method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer '+key}, body:JSON.stringify({model:mod, temperature:tp, max_tokens:1200, messages:[{role:'user', content:callSys}]}) });
         let dat = await res.json();
@@ -13349,7 +13575,7 @@ if($('icDecline')) $('icDecline').onclick = () => {
         if(pxy&&!pxy.includes('chat/completions')) pxy=pxy.replace(/\/$/, '')+'/chat/completions';
         if(!pxy||!key) return;
         let charName=$('cfgName')?.value||'对方', charAP=$('cfgAiP')?.value||'', myName=$('cfgMyName')?.value||'对方';
-        let sys = '你是' + charName + '。' + (charAP?'设定：'+charAP:'') + '\n你刚刚主动给' + myName + '打了电话但对方拒接了，请根据你的性格第一时间发来一条文字消息（可以生气、委屈、傲娇，或者追问原因）。直接输出，不加任何前缀。';
+        let sys = '你是' + charName + '。' + (charAP?'设定：'+charAP:'') + '\n你刚刚主动给' + myName + '打了电话但对方拒接了，请根据你的性格第一时间发来一条文字消息（可以生气、委屈、傲娇，或者追问原因）。直接输出，不加任何前缀，控制在100字以内。';
         let tp = parseFloat(originalGetItem.call(ls,'temp')||'0.8')||0.8;
         try {
             let res = await fetch(pxy,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:300,messages:[{role:'user',content:sys}]})});
