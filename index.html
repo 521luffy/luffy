@@ -728,19 +728,51 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
             </div>
 
             <!-- 强制状态栏功能 -->
-            <div class=flex-row style="margin-top:8px;align-items:center;"><label style="font-size:12px;color:#6c5ce7;font-weight:bold;flex:1;">✦ 强制状态栏</label><input type=checkbox id=cfgStatusBarOn style=width:20px;height:20px;></div>
-            <div id=statusBarPanel style="display:none;flex-direction:column;gap:10px;margin-top:10px;background:#f8f5ff;padding:14px;border-radius:12px;border:1px solid #e0d8ff;">
-                <div style="font-size:12px;color:#888;line-height:1.5;">在每次回复最开头强制输出你指定的状态格式。适合沉浸式角色扮演，指令放末尾让大模型优先执行。</div>
-                <textarea id=cfgStatusBar rows=4 style="width:100%;padding:10px;border:1.5px solid #d8d0ff;border-radius:10px;font-size:13px;resize:vertical;box-sizing:border-box;outline:none;background:white;" placeholder="请输入你希望角色在每次回复前必须输出的客观状态格式..."></textarea>
-                <div style="font-size:12px;color:#6c5ce7;font-weight:bold;margin-bottom:2px;">⚡ 快捷模板</div>
-                <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                    <button onclick="document.getElementById('cfgStatusBar').value='【系统最高指令】：在接下来的每次回复的最开头，你必须严格按照以下一行格式输出当前的客观环境，不可遗漏，随后换行开始正文。
-格式范例：📅 日期：填入剧情日期 年月日| 🌤️ 天气：填入当前天气 | 📍 地点：填入所处位置';" style="flex:1;padding:8px;border-radius:8px;border:1px solid #a29bfe;background:#f0eeff;color:#6c5ce7;font-size:11px;cursor:pointer;min-width:80px;">📅 日常陪伴型</button>
-                    <button onclick="document.getElementById('cfgStatusBar').value='【系统最高指令】：在接下来的每次回复的最开头，你必须严格按照以下一行格式评估并输出你当前的状态数值，不可遗漏，随后换行开始正文。
-格式范例：❤️ 好感度：1-100 | 🔋 精力值：当前体力状态 | 😠 情绪状态：用两个字概括当前心情';" style="flex:1;padding:8px;border-radius:8px;border:1px solid #fd79a8;background:#fff5f9;color:#fd79a8;font-size:11px;cursor:pointer;min-width:80px;">🎮 RPG数值型</button>
-                    <button onclick="document.getElementById('cfgStatusBar').value='【系统最高指令】：在接下来的每次回复的最开头，你必须严格按照以下一行格式输出你的隐藏心理活动，不可遗漏，随后换行开始正文。
-格式范例：👁️ 视线落点：你现在正看着哪里 | 🧠 真实想法：用一句话写出你没说出口的潜台词';" style="flex:1;padding:8px;border-radius:8px;border:1px solid #00b894;background:#f0fff8;color:#00b894;font-size:11px;cursor:pointer;min-width:80px;">👁️ 内心窥探型</button>
+            <div class=flex-row style="margin-top:8px;align-items:center;"><label style="font-size:13px;color:#6c5ce7;font-weight:bold;flex:1;">✦ 强制状态栏设置</label><input type=checkbox id=cfgStatusBarOn style="width:20px;height:20px;accent-color:#6c5ce7;"></div>
+            <div id=statusBarPanel style="display:none;flex-direction:column;gap:12px;margin-top:10px;background:#f8f5ff;padding:16px;border-radius:14px;border:1px solid #e0d8ff;">
+                <div style="font-size:12px;color:#999;line-height:1.6;">在每次AI回复最开头，强制输出你指定的状态格式。指令自动拼接到提示词最末尾，大模型优先执行。</div>
+                <textarea id=cfgStatusBar rows=5 style="width:100%;padding:12px;border:1.5px solid #d8d0ff;border-radius:12px;font-size:13px;line-height:1.6;resize:vertical;box-sizing:border-box;outline:none;background:white;color:#333;" placeholder="请在此输入你希望角色在每次回复前必须输出的客观状态格式，例如：日期、天气、心情等。"></textarea>
+                <div style="font-size:12px;color:#6c5ce7;font-weight:bold;">⚡ 快捷模板（点击选择，可直接编辑内容）</div>
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                    <!-- 模板A：日常陪伴型 -->
+                    <div style="border:1.5px solid #a29bfe;border-radius:12px;overflow:hidden;">
+                        <label style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#f0eeff;cursor:pointer;">
+                            <input type=radio name=statusBarTpl id=tplRadioA value=A style="accent-color:#6c5ce7;width:16px;height:16px;" onchange="document.getElementById('tplPanelA').style.display='flex';document.getElementById('tplPanelB').style.display='none';document.getElementById('tplPanelC').style.display='none';document.getElementById('cfgStatusBarFmt').value='📅 日期：填入剧情日期 年月日| 🌤️ 天气：填入当前天气 | 📍 地点：填入所处位置';">
+                            <span style="font-size:13px;font-weight:bold;color:#6c5ce7;">📅 日常陪伴型</span>
+                            <span style="font-size:11px;color:#aaa;margin-left:auto;">适合沉浸式生活流</span>
+                        </label>
+                        <div id=tplPanelA style="display:none;flex-direction:column;gap:6px;padding:10px 14px;background:white;border-top:1px solid #e0d8ff;">
+                            <div style="font-size:11px;color:#999;">自定义格式内容（可直接编辑）：</div>
+                            <textarea id=cfgStatusBarFmt rows=2 style="width:100%;padding:8px;border:1px solid #e0d8ff;border-radius:8px;font-size:12px;resize:none;box-sizing:border-box;outline:none;line-height:1.5;" oninput="syncStatusBarTpl()">📅 日期：填入剧情日期 年月日| 🌤️ 天气：填入当前天气 | 📍 地点：填入所处位置</textarea>
+                        </div>
+                    </div>
+                    <!-- 模板B：RPG数值型 -->
+                    <div style="border:1.5px solid #fd79a8;border-radius:12px;overflow:hidden;">
+                        <label style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff5f9;cursor:pointer;">
+                            <input type=radio name=statusBarTpl id=tplRadioB value=B style="accent-color:#fd79a8;width:16px;height:16px;" onchange="document.getElementById('tplPanelA').style.display='none';document.getElementById('tplPanelB').style.display='flex';document.getElementById('tplPanelC').style.display='none';document.getElementById('cfgStatusBarFmt').value='❤️ 好感度：1-100 | 🔋 精力值：当前体力状态 | 😠 情绪状态：用两个字概括当前心情';">
+                            <span style="font-size:13px;font-weight:bold;color:#fd79a8;">🎮 RPG数值型</span>
+                            <span style="font-size:11px;color:#aaa;margin-left:auto;">适合攻略向玩法</span>
+                        </label>
+                        <div id=tplPanelB style="display:none;flex-direction:column;gap:6px;padding:10px 14px;background:white;border-top:1px solid #fde0ee;">
+                            <div style="font-size:11px;color:#999;">自定义格式内容（可直接编辑）：</div>
+                            <textarea rows=2 style="width:100%;padding:8px;border:1px solid #fde0ee;border-radius:8px;font-size:12px;resize:none;box-sizing:border-box;outline:none;line-height:1.5;" oninput="document.getElementById('cfgStatusBarFmt').value=this.value;syncStatusBarTpl()">❤️ 好感度：1-100 | 🔋 精力值：当前体力状态 | 😠 情绪状态：用两个字概括当前心情</textarea>
+                        </div>
+                    </div>
+                    <!-- 模板C：内心窥探型 -->
+                    <div style="border:1.5px solid #00b894;border-radius:12px;overflow:hidden;">
+                        <label style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#f0fff8;cursor:pointer;">
+                            <input type=radio name=statusBarTpl id=tplRadioC value=C style="accent-color:#00b894;width:16px;height:16px;" onchange="document.getElementById('tplPanelA').style.display='none';document.getElementById('tplPanelB').style.display='none';document.getElementById('tplPanelC').style.display='flex';document.getElementById('cfgStatusBarFmt').value='👁️ 视线落点：你现在正看着哪里 | 🧠 真实想法：用一句话写出你没说出口的潜台词';">
+                            <span style="font-size:13px;font-weight:bold;color:#00b894;">👁️ 内心窥探型</span>
+                            <span style="font-size:11px;color:#aaa;margin-left:auto;">适合感情细腻推拉</span>
+                        </label>
+                        <div id=tplPanelC style="display:none;flex-direction:column;gap:6px;padding:10px 14px;background:white;border-top:1px solid #d0f0e8;">
+                            <div style="font-size:11px;color:#999;">自定义格式内容（可直接编辑）：</div>
+                            <textarea rows=2 style="width:100%;padding:8px;border:1px solid #d0f0e8;border-radius:8px;font-size:12px;resize:none;box-sizing:border-box;outline:none;line-height:1.5;" oninput="document.getElementById('cfgStatusBarFmt').value=this.value;syncStatusBarTpl()">👁️ 视线落点：你现在正看着哪里 | 🧠 真实想法：用一句话写出你没说出口的潜台词</textarea>
+                        </div>
+                    </div>
                 </div>
+                <input type=hidden id=cfgStatusBarFmt value="">
+                <div style="font-size:11px;color:#bbb;line-height:1.5;">💡 选择模板后，格式内容会同步到上方输入框；也可跳过模板直接在上方自定义。系统指令由代码自动添加，无需手动填写。</div>
             </div>
 
                         <style>
@@ -2581,6 +2613,12 @@ function initCustomTimeUI() {
     $(`cfgCustomTime`).onchange = e => {
         $(`customTimePanel`).style.display = e.target.checked ? `flex` : `none`;
     if($(`cfgStatusBarOn`)) $(`cfgStatusBarOn`).onchange = e => { if($(`statusBarPanel`)) $(`statusBarPanel`).style.display = e.target.checked ? `flex` : `none`; };
+// Sync template format into main textarea (called when user edits template sub-textarea)
+window.syncStatusBarTpl = function() {
+    let fmtEl = $(`cfgStatusBarFmt`);
+    let mainEl = $(`cfgStatusBar`);
+    if(fmtEl && mainEl) mainEl.value = fmtEl.value;
+};
         if(e.target.checked) $(`cfgTime`).checked = false; 
     };
     $(`cfgTime`).onchange = e => {
@@ -3123,12 +3161,33 @@ function showAddGroupModal(editId) {
     ov.id = 'addContactGroupModal';
     ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
     
-    // Build member checkboxes from contacts
-    let memberHtml = contacts.map(c => {
+    // Build member checkboxes from contacts + NPCs
+    let memberHtml = '';
+    // Contacts
+    memberHtml += contacts.map(c => {
         let n = originalGetItem.call(ls,'cN_'+c.id)||c.name;
-        let checked = editGroup && editGroup.memberIds.includes(c.id) ? 'checked' : '';
-        return `<label style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f0f0f0;cursor:pointer;"><input type=checkbox data-cid="${c.id}" ${checked} style="width:18px;height:18px;accent-color:#6c5ce7;"> <span style="font-size:14px;color:#333;">${n}</span></label>`;
+        let cid = 'c_'+String(c.id);
+        let checked = editGroup && editGroup.memberIds.includes(cid) ? 'checked' : '';
+        return `<label style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f0f0f0;cursor:pointer;"><input type=checkbox data-cid="${cid}" ${checked} style="width:18px;height:18px;accent-color:#6c5ce7;"> <span style="font-size:14px;color:#333;">${n}</span><span style="font-size:11px;color:#bbb;margin-left:4px;">角色</span></label>`;
     }).join('');
+    // NPCs from all contacts' 专属社交圈
+    let npcHtmlParts = [];
+    contacts.forEach(c => {
+        let cid = String(c.id);
+        let charName = originalGetItem.call(ls,'cN_'+cid)||c.name;
+        let npcRaw = originalGetItem.call(ls,'npcList_'+cid);
+        if(!npcRaw) return;
+        let npcs = []; try { npcs = JSON.parse(npcRaw); } catch(e) {}
+        npcs.forEach((npc, idx) => {
+            if(!npc.name) return;
+            let npcId = 'npc_'+cid+'_'+idx;
+            let checked = editGroup && editGroup.memberIds.includes(npcId) ? 'checked' : '';
+            npcHtmlParts.push(`<label style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f0f0f0;cursor:pointer;"><input type=checkbox data-cid="${npcId}" ${checked} style="width:18px;height:18px;accent-color:#a29bfe;"> <span style="font-size:14px;color:#555;">${npc.name}</span><span style="font-size:11px;color:#bbb;margin-left:4px;">NPC·来自${charName}</span></label>`);
+        });
+    });
+    if(npcHtmlParts.length > 0) {
+        memberHtml += `<div style="font-size:12px;color:#a29bfe;font-weight:bold;padding:8px 0 4px;">✦ 专属社交圈 NPC</div>` + npcHtmlParts.join('');
+    }
     
     ov.innerHTML = `<div style="background:white;border-radius:20px;padding:24px;width:88%;max-width:360px;max-height:80vh;display:flex;flex-direction:column;">
         <div style="font-size:17px;font-weight:bold;margin-bottom:16px;color:#333;">${editGroup?'编辑分组':'新建分组'}</div>
@@ -3191,10 +3250,27 @@ function renderContactGroups() {
         body.style.cssText = 'display:none;border-top:1px solid #f0f0f0;';
         // Render members
         (grp.memberIds||[]).forEach(cid => {
-            let c = contacts.find(x=>String(x.id)===String(cid)); if(!c) return;
-            let n = originalGetItem.call(ls,'cN_'+cid)||c.name;
-            let ava = originalGetItem.call(ls,'aiI_'+cid)||'';
-            let sign = originalGetItem.call(ls,'cSign_'+cid)||'（暂无个性签名）';
+            // Handle NPC members (id starts with 'npc_')
+            if(String(cid).startsWith('npc_')) {
+                let parts = cid.split('_'); // npc_<charId>_<idx>
+                let charId = parts[1], npcIdx = parseInt(parts[2]||0);
+                let npcRaw = originalGetItem.call(ls,'npcList_'+charId);
+                if(!npcRaw) return;
+                let npcs = []; try { npcs = JSON.parse(npcRaw); } catch(e) {}
+                let npc = npcs[npcIdx]; if(!npc) return;
+                let charName = originalGetItem.call(ls,'cN_'+charId)||'?';
+                let row = document.createElement('div');
+                row.style.cssText = 'display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid #fafafa;';
+                row.innerHTML = `<div style="width:40px;height:40px;border-radius:50%;background:#e8e4ff;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🎭</div><div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:bold;color:#333;">${npc.name}</div><div style="font-size:12px;color:#aaa;">NPC · 来自${charName}的社交圈</div></div>`;
+                body.appendChild(row);
+                return;
+            }
+            // Handle contact members - support both 'c_<id>' prefix and raw id
+            let rawCid = String(cid).startsWith('c_') ? cid.slice(2) : String(cid);
+            let c = contacts.find(x=>String(x.id)===rawCid); if(!c) return;
+            let n = originalGetItem.call(ls,'cN_'+rawCid)||c.name;
+            let ava = originalGetItem.call(ls,'aiI_'+rawCid)||'';
+            let sign = originalGetItem.call(ls,'cSign_'+rawCid)||'（暂无个性签名）';
             let row = document.createElement('div');
             row.style.cssText = 'display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid #fafafa;cursor:pointer;';
             row.innerHTML = `${ava?`<div style="width:40px;height:40px;border-radius:50%;background:url(${ava}) center/cover no-repeat;flex-shrink:0;"></div>`:`<div style="width:40px;height:40px;border-radius:50%;background:#e0d8ff;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">👤</div>`}
@@ -3203,8 +3279,9 @@ function renderContactGroups() {
                 <div style="font-size:12px;color:#aaa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${sign}</div>
             </div>`;
             row.onclick = async () => {
-                // Navigate to that char's chat
-                if(window.loadCharRoom) await window.loadCharRoom(cid);
+                // Navigate to that char's chat (only for real chars)
+                window._prevScreen = 'scrContact'; window._prevContactTab = 'groups';
+                if(window.loadCharRoom) await window.loadCharRoom(rawCid);
             };
             body.appendChild(row);
         });
@@ -3284,7 +3361,15 @@ originalGetItem.call(ls, `chatHistory_` + currentChatId);
     showScreen(`scrRoom`); 
     setTimeout(() => msgs.scrollTop = msgs.scrollHeight, 100);
 };
-$(`btnRoomBack`).onclick = () =>{ showScreen(`scrList`); renderContacts(); };
+$(`btnRoomBack`).onclick = () =>{
+    if(window._prevScreen === 'scrContact') {
+        showScreen('scrContact');
+        if(typeof switchContactTab === 'function') switchContactTab(window._prevContactTab || 'friends');
+        window._prevScreen = null; window._prevContactTab = null;
+    } else {
+        showScreen(`scrList`); renderContacts();
+    }
+};
 
 $(`btnRoomSet`).onclick = () =>showScreen(`scrSetChat`);
 $(`btnSetChatBack`).onclick = () =>showScreen(`scrRoom`);
@@ -3416,6 +3501,7 @@ async function renderContacts() {
             divC.innerHTML = avaHtml2 + `<div class=chat-info> <div class=role-header-row> <div class=role-name>` + isoName2 + `</div> <div class=role-status><div class="status-dot ` + charStatusColorClass2 + `"></div>` + charStatusText2 + `</div> </div> <div class=role-signature>` + charSign2 + `</div> </div>`;
             // 复用onclick：点击加载该char聊天室
             divC.onclick = async () => {
+                window._prevScreen = 'scrContact'; window._prevContactTab = 'friends';
                 currentChatId = c.id;
                 $(`cfgName`).value = originalGetItem.call(ls, `cN_` + c.id) || c.name;
                 $(`cfgRem`).value = originalGetItem.call(ls, `cR_` + c.id) || ``;
@@ -3434,6 +3520,45 @@ async function renderContacts() {
                 showScreen(`scrRoom`);
                 setTimeout(() => msgs.scrollTop = msgs.scrollHeight, 100);
             };
+            // Add swipe-left to delete
+            let swipeStartX2 = 0, swipeEl2 = null;
+            divC.addEventListener('touchstart', e => {
+                swipeStartX2 = e.touches[0].clientX;
+                swipeEl2 = e.currentTarget;
+            }, {passive:true});
+            divC.addEventListener('touchend', e => {
+                let dx = swipeStartX2 - e.changedTouches[0].clientX;
+                if(dx > 60) {
+                    // Show delete overlay
+                    let existing = divC.querySelector('.delete-swipe-btn');
+                    if(existing) return;
+                    let delBtn = document.createElement('div');
+                    delBtn.className = 'delete-swipe-btn';
+                    delBtn.style.cssText = 'position:absolute;right:0;top:0;bottom:0;width:80px;background:#ff4757;display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:bold;cursor:pointer;border-radius:0 10px 10px 0;z-index:10;';
+                    delBtn.innerText = '删除好友';
+                    delBtn.onclick = async (ev) => {
+                        ev.stopPropagation();
+                        let confirmed = await window._customConfirm('你确定删除该好友吗？\n此操作不可恢复！');
+                        if(!confirmed) { delBtn.remove(); return; }
+                        // Remove from contacts array
+                        contacts = contacts.filter(x => String(x.id) !== String(c.id));
+                        // Remove all stored data for this char
+                        originalSetItem.call(ls, 'myContacts', JSON.stringify(contacts));
+                        await localforage.setItem('myContacts', JSON.stringify(contacts));
+                        // Clear chat history etc (optional but clean)
+                        ['chatHistory_','cN_','cR_','cMyN_','cAP_','cMP_','cBubbleCss_','cCtx_','cT_','cCTon_','cStatusBarOn_','cStatusBar_','cSign_','cStatusTxt_','cStatusColor_','isBlocked_','aiStatus_','lastChatTime_'].forEach(k => {
+                            try { ls.removeItem(k+String(c.id)); } catch(e) {}
+                        });
+                        divC.remove();
+                        if(typeof renderContactGroups === 'function') renderContactGroups();
+                    };
+                    divC.style.position = 'relative';
+                    divC.style.overflow = 'hidden';
+                    divC.appendChild(delBtn);
+                    // Tap elsewhere to close
+                    setTimeout(()=>{ document.addEventListener('touchstart', function rmDel(e2){ if(!divC.contains(e2.target)){delBtn.remove();document.removeEventListener('touchstart',rmDel);} }, {once:false, passive:true}); delBtn._cleanup=()=>delBtn.remove(); }, 50);
+                }
+            }, {passive:true});
             $(`contactContent`).appendChild(divC);
         }
     }
