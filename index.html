@@ -3682,7 +3682,6 @@ async function renderContacts() {
             aiStatus = savedAiStatus ? (typeof savedAiStatus === `string` ? JSON.parse(savedAiStatus) : savedAiStatus) : {weather:`等待连接...`,clothing:`等待连接...`,action:`等待连接...`,thought:`等待连接...`};
             await applyVis();
             if (typeof msgs !== `undefined` && msgs) msgs.innerHTML = ``;
-            if(typeof _restoreFoodOrdersFromHistory === 'function') _restoreFoodOrdersFromHistory();
             redrawChat();
             showScreen(`scrRoom`);
             setTimeout(() => msgs.scrollTop = msgs.scrollHeight, 100);
@@ -3771,7 +3770,6 @@ async function renderContacts() {
                 aiStatus = savedAiStatusC ? (typeof savedAiStatusC === `string` ? JSON.parse(savedAiStatusC) : savedAiStatusC) : {weather:`等待连接...`,clothing:`等待连接...`,action:`等待连接...`,thought:`等待连接...`};
                 await applyVis();
                 if(typeof msgs !== `undefined` && msgs) msgs.innerHTML = ``;
-                if(typeof _restoreFoodOrdersFromHistory === 'function') _restoreFoodOrdersFromHistory();
                 redrawChat();
                 showScreen(`scrRoom`);
                 setTimeout(() => msgs.scrollTop = msgs.scrollHeight, 100);
@@ -5500,15 +5498,7 @@ if(charStickers.length > 0) {
 
 
     // ===== 外卖&代付系统提示词注入 =====
-    sys += `\n【主动投喂规则 - 外卖系统】当察觉到玩家没按时吃饭、生病、心情不好、或者想给玩家惊喜时，你可以主动给玩家点外卖！在回复最后另起一行加：[发送外卖：食物名称|留言备注]（例：[发送外卖：三文鱼刺身|趁热吃，乖]）。切记不要每次都用，只在情绪合适的节点自然触发！\n【代付请求规则】如果你想向玩家请求代付某样东西，在回复最后另起一行加：[发起代付：商品名称|金额|备注]（例：[发起代付：最新款游戏|98|我们一起玩]）。`;
-    // 注入当前外卖配送状态，让AI实时感知
-    if(window._activeFoodOrders && window._activeFoodOrders.length > 0) {
-        const _stLabel = ['骑手接单中', '骑手到店取餐中', '骑手配送中', '订单已送达'];
-        let _foodStatusLines = window._activeFoodOrders.map(o =>
-            `「${o.foodName}」— 当前状态：${_stLabel[o.status] || '处理中'}`
-        ).join('；');
-        sys += `\n【外卖实时状态 - 必须感知】目前有外卖订单正在进行中：${_foodStatusLines}。当对方询问"外卖到哪了""快到了吗"等问题时，你必须根据上述真实状态来回答，不得编造或猜测！`;
-    }
+    sys += `\n【主动投喂规则 - 外卖系统】当察觉到玩家没按时吃饭、生病、心情不好、或者想给玩家惊喜时，你可以主动给玩家点外卖！在回复最后另起一行加：[发送外卖：食物名称|留言备注]（例：[发送外卖：三文鱼刺身|趁热吃，乖]）。切记不要每次都用，只在情绪合适的节点自然触发！\n【代付请求规则】如果你想向玩家请求代付某样东西，在回复最后另起一行加：[发起代付：商品名称|金额|备注]（例：[发起代付：最新款游戏|98|我们一起玩]）。\n【玩家代付请求规则】如果历史记录中有玩家发送的[代付消息：...pending|user]卡片，说明玩家请求你帮她代付。你可以根据角色性格和当时情绪自然地决定是否同意。如果同意代付，在回复最后另起一行加：[同意代付]。如果拒绝，正常回复即可，无需加指令。`;
     // ===== 定位系统提示词注入 =====
     window._locSysAddon = `
 【空间互动规则 - 定位系统】你拥有主动向对方发送位置的权力！遇到以下情况时，你必须在回复最后单独一行加入定位指令：
@@ -5644,8 +5634,6 @@ let hasAccept = txt.includes(`[收取转账]`);
             
             history.push({role: `assistant`, content: txt});
             ls.setItem(`chatHistory`, JSON.stringify(history));
-            // 每次AI回复后推进外卖配送轮次
-            if(typeof _onConversationRound === 'function') _onConversationRound();
 
 
             
@@ -6136,8 +6124,7 @@ function renderQuoteBlock(b, txt, _side) {
 
 // ===== 定位卡片渲染 =====
 // ===== 外卖卡片渲染 =====
-// 格式: [外卖消息：食物名称|备注|状态]
-// 状态: 0=骑手接单中 1=骑手到店取餐中 2=骑手配送中 3=订单已送达
+// 格式: [外卖消息：食物名称|备注|状态] 状态: 0=骑手接单 1=配送中 2=已送达
 function renderFoodCard(b, txt) {
     let inner = txt.replace(/^\[外卖消息：/, '').replace(/\]$/, '');
     let parts = inner.split('|');
@@ -6146,9 +6133,8 @@ function renderFoodCard(b, txt) {
     let status = parseInt(parts[2] || '0');
     const statusCfg = [
         { text:'骑手接单中...', color:'#f59e0b', dot:true },
-        { text:'骑手到店取餐中...', color:'#ff9800', dot:true },
-        { text:'骑手配送中 🛵', color:'#2ecc71', dot:true, rider:false },
-        { text:'✅ 订单已送达！', color:'#10ac84', dot:false },
+        { text:'骑手配送中', color:'#2ecc71', dot:true, rider:true },
+        { text:'✅ 已送达！', color:'#10ac84', dot:false },
     ];
     let cfg = statusCfg[status] || statusCfg[0];
     const emojiMap = {'三文鱼':'🍣','刺身':'🍱','寿喜':'🫕','炸鸡':'🍗','奶茶':'🧋','果茶':'🍹','拿铁':'☕','粥':'🍚','布洛芬':'💊','退烧':'🌡️','消炎':'💊','珍珠':'🧋','冰淇淋':'🍦','披萨':'🍕','汉堡':'🍔','面':'🍜','饺子':'🥟','火锅':'🫕','茶':'🍵','咖啡':'☕','蛋糕':'🎂','寿司':'🍣','酸辣':'🌶️'};
@@ -6172,19 +6158,45 @@ function renderFoodCard(b, txt) {
 // ===== 代付卡片渲染 =====
 // 格式: [代付消息：商品名|金额|备注|状态|发起方]  状态: pending/paid/refused  发起方: user/char
 function renderPayCard(b, txt, side) {
+    // 格式: [代付消息：商品名|金额|备注|状态|发起方]
+    // from=user: user请求char代付 → 卡片只显示状态文字，char(AI)自行决定
+    // from=char: char请求user代付 → 卡片内嵌两个操作按钮
     let inner = txt.replace(/^\[代付消息：/, '').replace(/\]$/, '');
     let parts = inner.split('|');
     let item = parts[0] || '商品';
     let amt = parseFloat(parts[1] || '0').toFixed(2);
     let note = parts[2] || '';
     let status = parts[3] || 'pending';
-    let from = parts[4] || 'user'; // user=玩家请求char付, char=char请求玩家付
-    const statusMap = { pending:'待付款', paid:'已代付 ✅', refused:'已拒绝 ✕' };
-    const statusColors = { pending:'#e91e63', paid:'#10ac84', refused:'#bbb' };
-    let stText = statusMap[status] || '待付款';
-    let stColor = statusColors[status] || '#e91e63';
-    let labelText = from === 'char' ? '对方的代付请求' : '我的代付请求';
-    let showBtn = (status === 'pending' && from === 'char');
+    let from = parts[4] || 'user';
+
+    let labelText, footerHTML;
+    // 安全转义raw消息（用于按钮onclick属性）
+    let safeRaw = txt.replace(/\\/g,'\\\\').replace(/'/g,"\'");
+
+    if (from === 'user') {
+        // 情况1: user→char代付请求，char(AI)决定，user只看状态
+        labelText = '我的代付请求';
+        if (status === 'pending') {
+            footerHTML = `<span class="pay-card-status" style="color:#e91e63;font-weight:bold;">待付款</span>`;
+        } else if (status === 'paid') {
+            footerHTML = `<span class="pay-card-status" style="color:#10ac84;font-weight:bold;">已代付 ✅</span>`;
+        } else {
+            footerHTML = `<span class="pay-card-status" style="color:#bbb;">已拒绝</span>`;
+        }
+    } else {
+        // 情况2: char→user代付请求，user自己决定（卡片内嵌按钮）
+        labelText = '对方的代付请求';
+        if (status === 'pending') {
+            footerHTML = `
+                <button class="pay-card-action-btn" style="flex:1;margin-right:6px;background:linear-gradient(135deg,#6c5ce7,#a29bfe);" onclick="window._userPayForChar(this)">帮TA代付</button>
+                <button class="pay-card-action-btn" style="flex:1;background:#f5f5f5;color:#666;" onclick="window._userRefuseCharPay(this)">拒绝代付</button>`;
+        } else if (status === 'paid') {
+            footerHTML = `<span class="pay-card-status" style="color:#10ac84;font-weight:bold;">已帮TA代付 ✅</span>`;
+        } else {
+            footerHTML = `<span class="pay-card-status" style="color:#bbb;">已拒绝代付</span>`;
+        }
+    }
+
     b.innerHTML = `<div class="pay-card">
         <div class="pay-card-header">
             <div class="pay-card-label">${labelText}</div>
@@ -6192,9 +6204,8 @@ function renderPayCard(b, txt, side) {
             <div class="pay-card-amt">¥ ${amt}</div>
             ${note ? `<div class="pay-card-note-txt">${note}</div>` : ''}
         </div>
-        <div class="pay-card-footer">
-            <span class="pay-card-status" style="color:${stColor};">${stText}</span>
-            ${showBtn ? `<button class="pay-card-action-btn" onclick="window._openCharPayModal('${item.replace(/'/g,'\\x27')}','${amt}','${note.replace(/'/g,'\\x27')}')">去支付</button>` : ''}
+        <div class="pay-card-footer" style="display:flex;align-items:center;gap:6px;">
+            ${footerHTML}
         </div>
     </div>`;
     b.style.cssText += 'background:transparent;box-shadow:none;padding:0;border:none;';
@@ -14477,7 +14488,26 @@ function _startLiveLocationShare(locText) {
     history.push({role:'user', content: msgContent, ts: Date.now()});
     ls.setItem('chatHistory', JSON.stringify(history));
     updateListPreview();
-    // 不触发AI自动回复，实时位置会自然注入下次对话上下文
+
+    // AI 回应
+    setTimeout(async () => {
+        let pxy = $('apiPxy').value, key = $('apiK').value, mod = $('apiMod').value;
+        if(!pxy || !key || !mod) return;
+        if(!pxy.includes('chat/completions')) pxy = pxy.replace(/\/$/, '') + '/chat/completions';
+        let charName = $('cfgName')?.value || '对方';
+        let myName = $('cfgMyName')?.value || '你';
+        let charAP = $('cfgAiP')?.value || '';
+        let tp = parseFloat(originalGetItem.call(ls,'temp')||'0.8')||0.8;
+        let sys = `你是${charName}。${charAP ? '性格设定：' + charAP : ''}
+${myName}刚刚开启了与你的实时位置共享，对方目前在：${locText}。
+请根据你的性格对这件事作出第一反应（可以是好奇、甜蜜、查岗、担心等情绪）。直接输出对话内容，控制在80字以内，不加任何前缀。`;
+        try {
+            let res = await fetch(pxy, {method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:300,messages:[{role:'user',content:sys}]})});
+            let dat = await res.json();
+            let reply = (dat.choices?.[0]?.message?.content||'').trim();
+            if(reply) { history.push({role:'assistant',content:reply,ts:Date.now()}); mkBub(reply,'l'); updateListPreview(); }
+        } catch(e) {}
+    }, 800);
 }
 
 // 发送定位
@@ -14590,10 +14620,10 @@ window.mkBub = function(txt, side, isT) {
             window._origMkBubForLoc.call(this, foodMsg, 'l', false);
             _startFoodDeliveryTimer(foodMsg, foodName, foodNote, 'assistant');
             txt = ''; // 只显示外卖卡片，不显示附带文字
-            return; // char点外卖时不再输出额外文字气泡
         }
         if(payMatch) {
-            let payRaw = payMatch[1].trim(); // 格式: 商品名|金额|备注
+            // 情况2: char→user代付请求，卡片内嵌按钮，不再弹窗
+            let payRaw = payMatch[1].trim();
             txt = txt.replace(payMatch[0], '').trim();
             let parts = payRaw.split('|');
             let payItem = (parts[0]||'商品').trim();
@@ -14603,8 +14633,33 @@ window.mkBub = function(txt, side, isT) {
             history.push({role:'assistant', content: payMsg, ts: Date.now()});
             ls.setItem('chatHistory', JSON.stringify(history));
             window._origMkBubForLoc.call(this, payMsg, 'l', false);
-            // 弹出支付决策弹窗
-            setTimeout(() => window._openCharPayModal(payItem, parseFloat(payAmt).toFixed(2), payNote), 500);
+            // 不弹窗，按钮已内嵌在卡片中
+        }
+        // 情况1: char同意user的代付请求 → 拦截[同意代付]指令
+        let agreePayMatch = txt.match(/\[同意代付\]/);
+        if(agreePayMatch) {
+            txt = txt.replace(agreePayMatch[0], '').trim();
+            // 找history中最后一条 pending|user 的代付消息并更新为paid
+            for(let i = history.length - 1; i >= 0; i--) {
+                let c = history[i].content || '';
+                if(c.startsWith('[代付消息：') && c.includes('|pending|user]')) {
+                    let newMsg = c.replace('|pending|user]', '|paid|user]');
+                    history[i].content = newMsg;
+                    ls.setItem('chatHistory', JSON.stringify(history));
+                    // 原地更新DOM
+                    if(msgs) {
+                        let bs = msgs.querySelectorAll('[data-raw]');
+                        for(let bub of bs) {
+                            if(bub.dataset.raw === c) {
+                                bub.dataset.raw = newMsg;
+                                renderPayCard(bub, newMsg, 'r');
+                                break;
+                            }
+                        }
+                    }
+                    break;
+                }
+            }
         }
     }
     if(txt && txt.trim()) window._origMkBubForLoc.call(this, txt, side, isT);
@@ -14621,105 +14676,38 @@ const FOOD_MENU = [
 const FOOD_EMOJI_MAP = {'三文鱼':'🍣','刺身':'🍱','寿喜':'🫕','炸鸡':'🍗','奶茶':'🧋','果茶':'🍹','拿铁':'☕','粥':'🍚','布洛芬':'💊','退烧':'🌡️','消炎':'💊','珍珠':'🧋','冰淇淋':'🍦','披萨':'🍕','汉堡':'🍔','面':'🍜','饺子':'🥟','火锅':'🫕','茶':'🍵','咖啡':'☕','蛋糕':'🎂','寿司':'🍣'};
 function _getFoodEmoji(name) { for(let [k,v] of Object.entries(FOOD_EMOJI_MAP)) { if(name.includes(k)) return v; } return '🍱'; }
 
-// ============================================================
-// ===== 外卖配送进度 - 对话轮次驱动 =====
-// 状态: 0=骑手接单中 1=骑手到店取餐中(1轮后) 2=骑手配送中(4轮后) 3=已送达(14轮后)
-// ============================================================
-window._activeFoodOrders = window._activeFoodOrders || [];
-
-// 从history恢复进行中的外卖订单（切换聊天/刷新后重建）
-function _restoreFoodOrdersFromHistory() {
-    window._activeFoodOrders = [];
-    if(!history) return;
-    for(let i = 0; i < history.length; i++) {
-        let c = history[i].content || '';
-        let m = c.match(/^\[外卖消息：([^|]+)\|([^|]*)\|(\d)\]$/);
-        if(m) {
-            let st = parseInt(m[3]);
-            if(st < 3) { // 未送达的才恢复
-                // 检查是否已在列表（避免重复）
-                let already = window._activeFoodOrders.some(o => o.foodName === m[1] && o.currentMsg === c);
-                if(!already) {
-                    window._activeFoodOrders.push({
-                        currentMsg: c,
-                        foodName: m[1],
-                        foodNote: m[2],
-                        rounds: 0,  // 恢复后轮次重置（继续从当前状态推进）
-                        status: st,
-                    });
-                }
-            }
-        }
-    }
-}
-
-// 找到history中外卖消息的index（精确）
-function _findFoodMsgIdx(msg) {
-    for(let i = history.length - 1; i >= 0; i--) {
-        if(history[i].content && history[i].content === msg) return i;
-    }
-    // 兜底：includes匹配
-    for(let i = history.length - 1; i >= 0; i--) {
-        if(history[i].content && history[i].content.includes(msg)) return i;
-    }
-    return -1;
-}
-
-// 启动外卖订单（用轮次而非时间）
+// 外卖状态自动流转
 function _startFoodDeliveryTimer(originalMsg, foodName, foodNote, _role) {
-    window._activeFoodOrders.push({
-        currentMsg: originalMsg,
-        foodName: foodName,
-        foodNote: foodNote,
-        rounds: 0,   // 已过对话轮次
-        status: 0,   // 当前状态
-    });
+    // 2分钟后→配送中
+    let t1 = setTimeout(() => {
+        let msg1 = `[外卖消息：${foodName}|${foodNote}|1]`;
+        _replaceFoodMsgInHistory(originalMsg, msg1);
+        // 再3分钟→已送达
+        let t2 = setTimeout(() => {
+            let msg2 = `[外卖消息：${foodName}|${foodNote}|2]`;
+            _replaceFoodMsgInHistory(msg1, msg2);
+        }, 180000);
+    }, 120000);
 }
-
-// 替换history中外卖消息并重绘（不插入_sys消息，改由sys prompt实时注入）
 function _replaceFoodMsgInHistory(oldMsg, newMsg) {
-    for(let i = history.length - 1; i >= 0; i--) {
+    for(let i = history.length-1; i >= 0; i--) {
         if(history[i].content && history[i].content.includes(oldMsg)) {
             history[i].content = history[i].content.replace(oldMsg, newMsg);
+            // 提取外卖状态，插入系统感知消息让AI知晓
+            let _statusMatch = newMsg.match(/\[外卖消息：([^|]+)\|[^|]*\|(\d)\]/);
+            if(_statusMatch) {
+                let _foodName = _statusMatch[1];
+                let _st = parseInt(_statusMatch[2]);
+                let _stTxt = ['骑手已接单，正在赶往商家', '骑手已取餐，正在配送途中', '外卖已送达！'][_st] || '';
+                if(_stTxt) {
+                    // 在history末尾追加系统感知消息（不渲染为气泡，仅供AI上下文感知）
+                    history.push({role:'user', content: `[系统状态更新：「${_foodName}」的外卖 — ${_stTxt}]`, ts: Date.now(), _sys: true});
+                }
+            }
             ls.setItem('chatHistory', JSON.stringify(history));
             if(typeof redrawChat === 'function') redrawChat();
             break;
         }
-    }
-}
-
-// 每完成一轮对话（AI回复后）调用，推进所有外卖进度
-function _onConversationRound() {
-    if(!window._activeFoodOrders || window._activeFoodOrders.length === 0) return;
-    const thresholds = [0, 1, 4, 14]; // 各状态所需最小轮次
-    let updated = false;
-    window._activeFoodOrders = window._activeFoodOrders.filter(order => {
-        order.rounds++;
-        let newStatus = order.status;
-        // 确定新状态
-        if(order.rounds >= 14 && order.status < 3) newStatus = 3;
-        else if(order.rounds >= 4 && order.status < 2) newStatus = 2;
-        else if(order.rounds >= 1 && order.status < 1) newStatus = 1;
-
-        if(newStatus !== order.status) {
-            let oldMsg = order.currentMsg;
-            let newMsg = `[外卖消息：${order.foodName}|${order.foodNote}|${newStatus}]`;
-            order.status = newStatus;
-            order.currentMsg = newMsg;
-            // 直接替换history并重绘
-            for(let i = history.length - 1; i >= 0; i--) {
-                if(history[i].content && history[i].content === oldMsg) {
-                    history[i].content = newMsg;
-                    break;
-                }
-            }
-            updated = true;
-        }
-        return order.status < 3; // 已送达则从列表移除
-    });
-    if(updated) {
-        ls.setItem('chatHistory', JSON.stringify(history));
-        if(typeof redrawChat === 'function') redrawChat();
     }
 }
 
@@ -14812,92 +14800,78 @@ if($('btnPayForMeConfirm')) {
 }
 if($('payForMeModal')) $('payForMeModal').onclick=e=>{ if(e.target===$('payForMeModal')) $('payForMeModal').style.display='none'; };
 
-// char请求user代付 — 打开决策弹窗
-window._openCharPayModal = function(item, amt, note) {
-    // 直接从history中定位原始消息索引，确保后续替换精确匹配
-    let rawIdx = -1, rawContent = null;
-    for(let i = history.length-1; i >= 0; i--) {
-        let c = history[i].content || '';
-        if(c.startsWith('[代付消息：') && c.includes('|pending|char]')) {
-            rawIdx = i;
-            rawContent = c;
-            break;
-        }
+// ==============================================================
+// 情况2: char→user代付请求，卡片内嵌按钮处理
+// ==============================================================
+
+// user点"帮TA代付"
+window._userPayForChar = function(btn) {
+    let bub = btn.closest('[data-raw]');
+    if(!bub) return;
+    let oldMsg = bub.dataset.raw;
+    if(!oldMsg || !oldMsg.includes('|pending|char]')) return;
+    let newMsg = oldMsg.replace('|pending|char]', '|paid|char]');
+    // 更新history
+    for(let i = history.length - 1; i >= 0; i--) {
+        if(history[i].content === oldMsg) { history[i].content = newMsg; break; }
     }
-    window._pendingCharPay = {item, amt, note, rawIdx, rawContent};
-    let m=$('charPayRequestModal');
-    if($('charPayRequestItem')) $('charPayRequestItem').innerText=item;
-    if($('charPayRequestAmt')) $('charPayRequestAmt').innerText=`¥ ${parseFloat(amt).toFixed(2)}`;
-    if($('charPayRequestNote')) $('charPayRequestNote').innerText=note||'';
-    if(m) m.style.display='flex';
+    ls.setItem('chatHistory', JSON.stringify(history));
+    // 原地更新DOM
+    bub.dataset.raw = newMsg;
+    renderPayCard(bub, newMsg, 'l');
+    // 解析商品信息
+    let inner = oldMsg.replace(/^\[代付消息：/, '').replace(/\]$/, '');
+    let pts = inner.split('|');
+    let pdItem = pts[0]||'商品', pdAmt = pts[1]||'0';
+    // AI甜蜜感谢
+    setTimeout(async()=>{
+        let pxy=$('apiPxy').value,key=$('apiK').value,mod=$('apiMod').value;
+        if(!pxy||!key||!mod) return;
+        if(!pxy.includes('chat/completions')) pxy=pxy.replace(/\/$/,'')+'/chat/completions';
+        let charName=$('cfgName')?.value||'对方',myName=$('cfgMyName')?.value||'你',charAP=$('cfgAiP')?.value||'';
+        let tp=parseFloat(originalGetItem.call(ls,'temp')||'0.8')||0.8;
+        let sys=`你是${charName}。${charAP?'性格：'+charAP:''}\n${myName}刚刚帮你付了「${pdItem}」¥${pdAmt}！请立刻做出真实反应，可以甜蜜感谢、傲娇地假装淡定、或者宠溺地说当然。控制在60字以内，直接输出。`;
+        try{
+            let res=await fetch(pxy,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:200,messages:[{role:'user',content:sys}]})});
+            let dat=await res.json();
+            let reply=(dat.choices?.[0]?.message?.content||'').trim();
+            if(reply){history.push({role:'assistant',content:reply,ts:Date.now()});mkBub(reply,'l');updateListPreview();}
+        }catch(e){}
+    }, 600);
 };
 
-// 拒绝char代付
-if($('btnCharPayRefuse')) {
-    $('btnCharPayRefuse').onclick = () => {
-        $('charPayRequestModal').style.display='none';
-        let pd=window._pendingCharPay; if(!pd) return;
-        window._pendingCharPay=null;
-        // 用rawIdx精确替换，避免金额格式不一致导致匹配失败
-        if(pd.rawIdx >= 0 && pd.rawIdx < history.length && history[pd.rawIdx].content === pd.rawContent) {
-            history[pd.rawIdx].content = pd.rawContent.replace('|pending|char]', '|refused|char]');
-            ls.setItem('chatHistory', JSON.stringify(history));
-            redrawChat();
-        } else {
-            // 兜底：字符串搜索
-            let old = pd.rawContent || `[代付消息：${pd.item}|${pd.amt}|${pd.note}|pending|char]`;
-            _replaceFoodMsgInHistory(old, old.replace('|pending|char]', '|refused|char]'));
-        }
-        // AI被拒后反应
-        setTimeout(async()=>{
-            let pxy=$('apiPxy').value,key=$('apiK').value,mod=$('apiMod').value;
-            if(!pxy||!key||!mod) return;
-            if(!pxy.includes('chat/completions')) pxy=pxy.replace(/\/$/,'')+'/chat/completions';
-            let charName=$('cfgName')?.value||'对方',myName=$('cfgMyName')?.value||'你',charAP=$('cfgAiP')?.value||'';
-            let tp=parseFloat(originalGetItem.call(ls,'temp')||'0.8')||0.8;
-            let sys=`你是${charName}。${charAP?'性格：'+charAP:''}\n你刚才向${myName}发起代付「${pd.item}」¥${pd.amt}的请求，但对方拒绝了！请立刻做出第一反应，可以委屈、生气、傲娇吐槽或质问。控制在60字以内，直接输出。`;
-            try{
-                let res=await fetch(pxy,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:200,messages:[{role:'user',content:sys}]})});
-                let dat=await res.json();
-                let reply=(dat.choices?.[0]?.message?.content||'').trim();
-                if(reply){history.push({role:'assistant',content:reply,ts:Date.now()});mkBub(reply,'l');updateListPreview();}
-            }catch(e){}
-        }, 700);
-    };
-}
-
-// 同意帮char付款
-if($('btnCharPayConfirm')) {
-    $('btnCharPayConfirm').onclick = () => {
-        $('charPayRequestModal').style.display='none';
-        let pd=window._pendingCharPay; if(!pd) return;
-        window._pendingCharPay=null;
-        // 用rawIdx精确替换，避免金额格式不一致导致匹配失败
-        if(pd.rawIdx >= 0 && pd.rawIdx < history.length && history[pd.rawIdx].content === pd.rawContent) {
-            history[pd.rawIdx].content = pd.rawContent.replace('|pending|char]', '|paid|char]');
-            ls.setItem('chatHistory', JSON.stringify(history));
-            redrawChat();
-        } else {
-            let old = pd.rawContent || `[代付消息：${pd.item}|${pd.amt}|${pd.note}|pending|char]`;
-            _replaceFoodMsgInHistory(old, old.replace('|pending|char]', '|paid|char]'));
-        }
-        // AI收到付款后的甜蜜反应
-        setTimeout(async()=>{
-            let pxy=$('apiPxy').value,key=$('apiK').value,mod=$('apiMod').value;
-            if(!pxy||!key||!mod) return;
-            if(!pxy.includes('chat/completions')) pxy=pxy.replace(/\/$/,'')+'/chat/completions';
-            let charName=$('cfgName')?.value||'对方',myName=$('cfgMyName')?.value||'你',charAP=$('cfgAiP')?.value||'';
-            let tp=parseFloat(originalGetItem.call(ls,'temp')||'0.8')||0.8;
-            let sys=`你是${charName}。${charAP?'性格：'+charAP:''}\n${myName}刚刚帮你付了「${pd.item}」¥${pd.amt}的款！请立刻做出真实反应，可以甜蜜感谢、傲娇地假装淡定、或者宠溺地说当然。控制在60字以内，直接输出。`;
-            try{
-                let res=await fetch(pxy,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:200,messages:[{role:'user',content:sys}]})});
-                let dat=await res.json();
-                let reply=(dat.choices?.[0]?.message?.content||'').trim();
-                if(reply){history.push({role:'assistant',content:reply,ts:Date.now()});mkBub(reply,'l');updateListPreview();}
-            }catch(e){}
-        }, 600);
-    };
-}
+// user点"拒绝代付"
+window._userRefuseCharPay = function(btn) {
+    let bub = btn.closest('[data-raw]');
+    if(!bub) return;
+    let oldMsg = bub.dataset.raw;
+    if(!oldMsg || !oldMsg.includes('|pending|char]')) return;
+    let newMsg = oldMsg.replace('|pending|char]', '|refused|char]');
+    for(let i = history.length - 1; i >= 0; i--) {
+        if(history[i].content === oldMsg) { history[i].content = newMsg; break; }
+    }
+    ls.setItem('chatHistory', JSON.stringify(history));
+    bub.dataset.raw = newMsg;
+    renderPayCard(bub, newMsg, 'l');
+    let inner = oldMsg.replace(/^\[代付消息：/, '').replace(/\]$/, '');
+    let pts = inner.split('|');
+    let pdItem = pts[0]||'商品', pdAmt = pts[1]||'0';
+    // AI委屈/生气反应
+    setTimeout(async()=>{
+        let pxy=$('apiPxy').value,key=$('apiK').value,mod=$('apiMod').value;
+        if(!pxy||!key||!mod) return;
+        if(!pxy.includes('chat/completions')) pxy=pxy.replace(/\/$/,'')+'/chat/completions';
+        let charName=$('cfgName')?.value||'对方',myName=$('cfgMyName')?.value||'你',charAP=$('cfgAiP')?.value||'';
+        let tp=parseFloat(originalGetItem.call(ls,'temp')||'0.8')||0.8;
+        let sys=`你是${charName}。${charAP?'性格：'+charAP:''}\n你刚才向${myName}发起代付「${pdItem}」¥${pdAmt}的请求，但对方拒绝了！请立刻做出第一反应，可以委屈、生气、傲娇吐槽或质问。控制在60字以内，直接输出。`;
+        try{
+            let res=await fetch(pxy,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:200,messages:[{role:'user',content:sys}]})});
+            let dat=await res.json();
+            let reply=(dat.choices?.[0]?.message?.content||'').trim();
+            if(reply){history.push({role:'assistant',content:reply,ts:Date.now()});mkBub(reply,'l');updateListPreview();}
+        }catch(e){}
+    }, 700);
+};
 
 // 拦截AI回复中的主动发起通话指令（char主动打电话）
 const _origMkBubForCall = mkBub;
