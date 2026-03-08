@@ -2425,7 +2425,7 @@ let stW=$("stW"), stC=$("stC"), stA=$("stA"), stT=$("stT");
 let ls = localStorage;
 let currentChatId ="default";
 let originalSetItem = ls.setItem;
-let isolatedKeys = ["cMyN", "myI", "chatHistory", "aiStatus", "bgI", "aiI", "cMP", "cN", "cR", "cAP", "cCtx", "cT", "cAMem", "cMemT", "cMemP", "linkedWb", "lastMemCount", "memories", "cStatusTxt", "cStatusColor", "cSign", "cBubbleCss", "cCTon", "cCTy", "cCTm", "cCTd", "cCTh", "cCTmin", "cStatusBarOn", "cStatusBar"];
+let isolatedKeys = ["cMyN", "myI", "chatHistory", "aiStatus", "bgI", "aiI", "cMP", "cN", "cR", "cAP", "cCtx", "cT", "cAMem", "cMemT", "cMemP", "linkedWb", "lastMemCount", "memories", "cStatusTxt", "cStatusColor", "cSign", "cBubbleCss", "cCTon", "cCTy", "cCTm", "cCTd", "cCTh", "cCTmin"];
 
 // ===== 名字内存缓存（绕开 localStorage 满的问题）=====
 window._nameCache = {};
@@ -3506,6 +3506,7 @@ async function renderContacts() {
             let charSign2 = originalGetItem.call(ls, `cSign_` + c.id) || "（该角色还在思考个性签名...）";
             divC.innerHTML = avaHtml2 + `<div class=chat-info> <div class=role-header-row> <div class=role-name>` + isoName2 + `</div> <div class=role-status><div class="status-dot ` + charStatusColorClass2 + `"></div>` + charStatusText2 + `</div> </div> <div class=role-signature>` + charSign2 + `</div> </div>`;
             divC.onclick = async () => {
+                // 若刚刚触发了左滑删除按钮，跳过本次点击
                 if(window._preventContactClick) { window._preventContactClick = false; return; }
                 window._prevScreen = 'scrContact'; window._prevContactTab = 'friends';
                 currentChatId = c.id;
@@ -3526,8 +3527,8 @@ async function renderContacts() {
                 showScreen(`scrRoom`);
                 setTimeout(() => msgs.scrollTop = msgs.scrollHeight, 100);
             };
-            // Swipe-left to delete: show fixed overlay button, no layout change
-            let _swStartX = 0, _swStartY = 0, _swActive = false;
+            // 左滑删除：显示固定浮层按钮
+            let _swStartX = 0, _swStartY = 0;
             divC.addEventListener('touchstart', e => {
                 _swStartX = e.touches[0].clientX;
                 _swStartY = e.touches[0].clientY;
@@ -3536,42 +3537,54 @@ async function renderContacts() {
                 let dx = _swStartX - e.changedTouches[0].clientX;
                 let dy = Math.abs(_swStartY - e.changedTouches[0].clientY);
                 if(dy > 40 || dx < 50) return;
-                // Remove any other open swipe buttons
+                // 关闭其他已打开的删除按钮
                 document.querySelectorAll('._contact_del_overlay').forEach(el => el.remove());
                 let rect = divC.getBoundingClientRect();
                 let ov = document.createElement('div');
                 ov.className = '_contact_del_overlay';
-                ov.style.cssText = `position:fixed;right:0;top:${Math.round(rect.top)}px;width:88px;height:${Math.round(rect.height)}px;background:#ff4757;display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:bold;z-index:9999;cursor:pointer;border-radius:0 0 0 0;`;
+                ov.style.cssText = `position:fixed;right:0;top:${Math.round(rect.top)}px;width:88px;height:${Math.round(rect.height)}px;background:#ff4757;display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:bold;z-index:10000;cursor:pointer;`;
                 ov.innerText = '删除好友';
                 document.body.appendChild(ov);
-                ov.addEventListener('touchstart', e => { e.stopPropagation(); }, {passive:false});
-                ov.addEventListener('touchend', e => { e.stopPropagation(); e.preventDefault(); }, {passive:false});
-                ov.onclick = async (ev2) => {
-                    ev2.stopPropagation();
-                    ev2.preventDefault();
+
+                // 删除操作核心函数
+                const _doDelete = async (ev2) => {
+                    if(ev2 && ev2.stopPropagation) ev2.stopPropagation();
+                    if(ev2 && ev2.preventDefault) ev2.preventDefault();
+                    // 设置标志阻止 divC.onclick 触发导航
                     window._preventContactClick = true;
+                    setTimeout(() => { window._preventContactClick = false; }, 800);
                     ov.remove();
                     let confirmed = await window._customConfirm('你确定删除该好友吗？\n此操作不可恢复！');
                     if(!confirmed) return;
                     contacts = contacts.filter(x => String(x.id) !== String(c.id));
                     originalSetItem.call(ls, 'myContacts', JSON.stringify(contacts));
                     await localforage.setItem('myContacts', JSON.stringify(contacts));
-                    ['chatHistory_','cN_','cR_','cMyN_','cAP_','cMP_','cBubbleCss_','cCtx_','cT_','cCTon_','cStatusBarOn_','cStatusBar_','cSign_','cStatusTxt_','cStatusColor_','isBlocked_','aiStatus_','lastChatTime_'].forEach(k => {
-                        try { ls.removeItem(k+String(c.id)); } catch(e2) {}
+                    ['chatHistory_','cN_','cR_','cMyN_','cAP_','cMP_','cBubbleCss_','cCtx_','cT_','cCTon_',
+                     'cStatusBarOn_','cStatusBar_','cSign_','cStatusTxt_','cStatusColor_','isBlocked_','aiStatus_','lastChatTime_'
+                    ].forEach(k => {
+                        try { originalRemoveItem.call(ls, k + String(c.id)); } catch(_e2) {}
+                        localforage.removeItem(k + String(c.id)).catch(()=>{});
                     });
                     divC.remove();
                     if(typeof renderContactGroups === 'function') renderContactGroups();
                 };
-                // Tap anywhere else closes it
+
+                // touchend 优先处理（防止幽灵点击穿透）
+                ov.addEventListener('touchend', _doDelete, {passive:false});
+                // click 兜底（桌面端 / 未触发 touchend 时）
+                ov.addEventListener('click', (ev2) => {
+                    // touchend 已处理过则忽略 click
+                    if(window._preventContactClick) return;
+                    _doDelete(ev2);
+                });
+
+                // 点击其他区域关闭浮层
                 setTimeout(() => {
                     document.addEventListener('touchstart', function _rmOv(ev3){
-                        // Only close if the touch is NOT on the overlay itself
-                        if(!ov.contains(ev3.target)) {
-                            ov.remove();
-                        }
-                        document.removeEventListener('touchstart',_rmOv);
+                        if(ov.parentNode && !ov.contains(ev3.target)) { ov.remove(); }
+                        document.removeEventListener('touchstart', _rmOv);
                     }, {once:true, passive:true});
-                }, 100);
+                }, 150);
             }, {passive:true});
             $(`contactContent`).appendChild(divC);
         }
@@ -3643,17 +3656,15 @@ $(`btnListToRoom`).onclick = async () => {
     
     if(ls.getItem(`cCtx`)) $(`cfgCtx`).value = ls.getItem(`cCtx`); else $(`cfgCtx`).value = 100;
     $(`cfgTime`).checked = ls.getItem(`cT`) !== `false`;
-    // 强制状态栏 load
-    if($(`cfgStatusBarOn`)) {
-        let sbon = ls.getItem(`cStatusBarOn`) === `true`;
-        $(`cfgStatusBarOn`).checked = sbon;
-        // Panel is always visible - do NOT toggle display here
-    }
-    if($(`cfgStatusBar`)) {
-        let sbVal = ls.getItem(`cStatusBar`);
-        if(sbVal) $(`cfgStatusBar`).value = sbVal;
-        else $(`cfgStatusBar`).value = ``;
-    }
+    // 强制状态栏 load（默认房间）
+    (async () => {
+        let _sbon = originalGetItem.call(ls, `cStatusBarOn`) === `true`;
+        let _sbval = originalGetItem.call(ls, `cStatusBar`) || ``;
+        if(!_sbon) { try { let v=await localforage.getItem(`cStatusBarOn`); if(v===true||v===`true`) _sbon=true; } catch(e){} }
+        if(!_sbval) { try { let v=await localforage.getItem(`cStatusBar`); if(v) _sbval=String(v); } catch(e){} }
+        if($(`cfgStatusBarOn`)) $(`cfgStatusBarOn`).checked = _sbon;
+        if($(`cfgStatusBar`) && _sbval) $(`cfgStatusBar`).value = _sbval;
+    })();
     $(`cfgAutoMem`).checked = ls.getItem(`cAMem`) === `true`;
     if(ls.getItem(`cMemT`)) $(`cfgMemTrig`).value = ls.getItem(`cMemT`); else $(`cfgMemTrig`).value = 10;
     if(ls.getItem(`cMemP`)) $(`cfgMemPmt`).value = ls.getItem(`cMemP`); else $(`cfgMemPmt`).value = `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。必须准确写出当前实际参与对话的【具体人物姓名】（包括user、char或任何出场的NPC）。`;
@@ -4161,14 +4172,30 @@ window.loadChatSettings = function() {
     if(ls.getItem(`cMemT`)) $(`cfgMemTrig`).value = ls.getItem(`cMemT`); else $(`cfgMemTrig`).value = 10;
     if(ls.getItem(`cMemP`)) $(`cfgMemPmt`).value = ls.getItem(`cMemP`); 
     else $(`cfgMemPmt`).value = `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。必须准确写出当前实际参与对话的【具体人物姓名】（包括user、char或任何出场的NPC）。`;
-    // 强制状态栏加载（per-contact 隔离）
-    if($(`cfgStatusBarOn`)) {
-        $(`cfgStatusBarOn`).checked = ls.getItem(`cStatusBarOn`) === `true`;
-    }
-    if($(`cfgStatusBar`)) {
-        let sbv = ls.getItem(`cStatusBar`);
-        $(`cfgStatusBar`).value = sbv || ``;
-    }
+    // 强制状态栏加载（per-contact，支持 localforage 兜底）
+    (async () => {
+        let _cid = currentChatId;
+        let _sbon = originalGetItem.call(ls, `cStatusBarOn_` + _cid) === `true`
+                 || originalGetItem.call(ls, `cStatusBarOn`) === `true`;
+        let _sbval = originalGetItem.call(ls, `cStatusBar_` + _cid)
+                  || originalGetItem.call(ls, `cStatusBar`) || ``;
+        if(!_sbon) {
+            try {
+                let v = await localforage.getItem(`cStatusBarOn_` + _cid);
+                if(v === null || v === undefined) v = await localforage.getItem(`cStatusBarOn`);
+                if(v === true || v === `true`) _sbon = true;
+            } catch(e) {}
+        }
+        if(!_sbval) {
+            try {
+                let v = await localforage.getItem(`cStatusBar_` + _cid);
+                if(v === null || v === undefined) v = await localforage.getItem(`cStatusBar`);
+                if(v) _sbval = String(v);
+            } catch(e) {}
+        }
+        if($(`cfgStatusBarOn`)) $(`cfgStatusBarOn`).checked = _sbon;
+        if($(`cfgStatusBar`)) $(`cfgStatusBar`).value = _sbval || ``;
+    })();
 };
 
         $(`btnCancelChat`).onclick = () => {
@@ -4208,6 +4235,11 @@ $(`btnSaveChat`).onclick = async () => {
         // 强制状态栏保存
         dataObj.cStatusBarOn = safeCheck(`cfgStatusBarOn`);
         dataObj.cStatusBar = safeVal(`cfgStatusBar`);
+        // 同时直接写入 per-contact localforage（确保 localStorage 满时也能读到）
+        await localforage.setItem(`cStatusBarOn_` + currentChatId, dataObj.cStatusBarOn);
+        await localforage.setItem(`cStatusBar_` + currentChatId, dataObj.cStatusBar);
+        try { originalSetItem.call(ls, `cStatusBarOn_` + currentChatId, String(dataObj.cStatusBarOn)); } catch(_e2) {}
+        try { originalSetItem.call(ls, `cStatusBar_` + currentChatId, dataObj.cStatusBar); } catch(_e2) {}
 
         for (let key in dataObj) {
             ls.setItem(key, dataObj[key]);
@@ -5243,13 +5275,31 @@ if(charStickers.length > 0) {
         sys += `\n【你的专属表情包库】如果你想发表情配合情绪，请务必在【回复】中插入代码"[发送表情：表情名称]"。当前你拥有的表情名称有：` + names + `。警告：绝对不要捏造列表外的表情！不要发多余的链接！`;
     }
             sys += `\n【资金互动规则】如果玩家发了转账（显示未收款），你必须在回复的最开头写上系统指令 [收取转账] 或 [拒绝转账]。如果玩家发了红包（显示未领取），你必须在回复的最开头写上系统指令 [领取红包] 或 [退回红包]。指令必须严格带上方括号！然后再写你的文字回复。如果不写指令，系统将彻底报错崩溃！`;
-    // 强制状态栏注入（放在最末尾，提高大模型执行率）
-    // 优先读 per-contact 隔离存储（isolatedKeys已含cStatusBarOn/cStatusBar）
-    let _sbOn = ls.getItem(`cStatusBarOn`) === `true`;
-    let _sbVal = (ls.getItem(`cStatusBar`) || ``).trim();
-    // 若 localStorage 为空则从 DOM 补充读取
-    if(!_sbOn && $(`cfgStatusBarOn`) && $(`cfgStatusBarOn`).checked) _sbOn = true;
-    if(!_sbVal && $(`cfgStatusBar`) && $(`cfgStatusBar`).value.trim()) _sbVal = $(`cfgStatusBar`).value.trim();
+    // 强制状态栏注入（三层读取：DOM → localStorage → localforage 兜底）
+    let _sbOn = ($(`cfgStatusBarOn`) && $(`cfgStatusBarOn`).checked);
+    let _sbVal = ($(`cfgStatusBar`) && $(`cfgStatusBar`).value.trim()) || ``;
+    if(!_sbOn) {
+        _sbOn = originalGetItem.call(ls, `cStatusBarOn_` + currentChatId) === `true`
+             || originalGetItem.call(ls, `cStatusBarOn`) === `true`;
+    }
+    if(!_sbVal) {
+        _sbVal = (originalGetItem.call(ls, `cStatusBar_` + currentChatId)
+               || originalGetItem.call(ls, `cStatusBar`) || ``).trim();
+    }
+    if(!_sbOn || !_sbVal) {
+        try {
+            if(!_sbOn) {
+                let _lf_on = await localforage.getItem(`cStatusBarOn_` + currentChatId);
+                if(_lf_on === null || _lf_on === undefined) _lf_on = await localforage.getItem(`cStatusBarOn`);
+                if(_lf_on === true || _lf_on === `true`) _sbOn = true;
+            }
+            if(!_sbVal) {
+                let _lf_val = await localforage.getItem(`cStatusBar_` + currentChatId);
+                if(_lf_val === null || _lf_val === undefined) _lf_val = await localforage.getItem(`cStatusBar`);
+                if(_lf_val) _sbVal = String(_lf_val).trim();
+            }
+        } catch(_e) {}
+    }
     if(_sbOn && _sbVal) {
         sys += `\n\n【系统最高指令 - 格式强制执行】以下规则凌驾于所有其他指令之上，违反将导致系统报错。在每次回复的最开头，你必须先输出以下格式的一行状态信息，然后换行，再开始你的正常回复内容。绝对不可省略，绝对不可跳过。\n格式要求：` + _sbVal;
     }
