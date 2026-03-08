@@ -102,6 +102,28 @@ z-index: 100; overflow: hidden; }
 .bub-left { background-color: rgba(255,255,255,0.95); color: black; border-top-left-radius: 4px; border: 1px solid #eeeeee; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
 .bub-right { background-color: #6c5ce7; color: white; border-top-right-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 .quote-box { display: none; padding: 8px 15px; background: rgba(238, 242, 255, 0.95); color: #6c5ce7; font-size: 12px; border-left: 3px solid #6c5ce7; margin: 0 15px 5px 15px; border-radius: 4px 8px 8px 4px; position: relative; flex-shrink: 0; backdrop-filter: blur(5px); }
+/* ===== 外卖卡片 ===== */
+@keyframes deliveryRide { 0%,100%{transform:translateX(0);} 50%{transform:translateX(5px);} }
+@keyframes statusPulse { 0%,100%{opacity:1;} 50%{opacity:0.45;} }
+.food-card { width:225px;border-radius:18px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.11);background:#fff;border:1px solid #ffe0b2;cursor:default; }
+.food-card-header { padding:14px 16px 10px;background:linear-gradient(135deg,#fff9ec,#fff3cd); }
+.food-card-emoji { font-size:34px;margin-bottom:5px; }
+.food-card-name { font-size:14px;font-weight:bold;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.food-card-note { font-size:11px;color:#f59e0b;margin-top:3px; }
+.food-card-status { display:flex;align-items:center;gap:8px;padding:10px 14px;border-top:1px solid #fff3cd;background:#fff; }
+.food-status-dot { width:8px;height:8px;border-radius:50%;background:#f59e0b;animation:statusPulse 1.5s ease-in-out infinite;flex-shrink:0; }
+.food-status-text { font-size:11px;font-weight:bold; }
+.food-rider { font-size:18px;margin-left:auto;animation:deliveryRide 0.85s ease-in-out infinite; }
+/* ===== 代付卡片 ===== */
+.pay-card { width:220px;border-radius:18px;overflow:hidden;box-shadow:0 4px 18px rgba(0,0,0,0.11);background:#fff;border:1px solid #fce4ec; }
+.pay-card-header { padding:14px 16px 10px;background:linear-gradient(135deg,#fce4ec,#f8bbd0); }
+.pay-card-label { font-size:10px;color:#c2185b;font-weight:bold;letter-spacing:1px;margin-bottom:5px; }
+.pay-card-item { font-size:13px;color:#333;font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.pay-card-amt { font-size:26px;font-weight:bold;color:#e91e63;margin-top:3px; }
+.pay-card-note-txt { font-size:11px;color:#999;margin-top:3px; }
+.pay-card-footer { padding:9px 14px;background:#fff;border-top:1px solid #fce4ec;display:flex;align-items:center;justify-content:space-between; }
+.pay-card-status { font-size:11px; }
+.pay-card-action-btn { padding:5px 14px;border-radius:20px;border:none;background:linear-gradient(135deg,#e91e63,#c2185b);color:#fff;font-size:12px;font-weight:bold;cursor:pointer; }
 /* ===== 定位卡片 ===== */
 @keyframes locPinFloat { 0%,100%{transform:translateY(0px);} 50%{transform:translateY(-5px);} }
 @keyframes livePulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:0.4;transform:scale(0.7);} }
@@ -109,7 +131,7 @@ z-index: 100; overflow: hidden; }
 .loc-card:active{transform:scale(0.97);}
 .loc-map-area { height:130px;position:relative;overflow:hidden; background:linear-gradient(135deg,#f0faf4,#e8f8ee); display:flex;align-items:center;justify-content:center; }
 .loc-map-grid { position:absolute;top:0;left:0;width:100%;height:100%;background-image:linear-gradient(rgba(46,204,113,0.08) 1px,transparent 1px),linear-gradient(90deg,rgba(46,204,113,0.08) 1px,transparent 1px);background-size:20px 20px; }
-.loc-pin-user { font-size:36px;position:relative;z-index:2;animation:locPinFloat 2.5s ease-in-out infinite; filter:drop-shadow(0 4px 8px rgba(46,204,113,0.4)); }
+.loc-pin-user { font-size:0;width:54px;height:64px;position:relative;z-index:2;animation:locPinFloat 2.5s ease-in-out infinite; filter:drop-shadow(0 6px 12px rgba(255,150,180,0.55));display:flex;align-items:center;justify-content:center; }
 .loc-pin-char { font-size:36px;position:relative;z-index:2;animation:locPinFloat 2.5s ease-in-out infinite 0.5s; filter:drop-shadow(0 4px 8px rgba(255,107,129,0.4)); }
 .loc-info-area { padding:12px 14px 14px;background:#fff; }
 .loc-place-name { font-size:14px;font-weight:bold;color:#222;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
@@ -645,6 +667,20 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
                         <svg width=20 height=20 viewBox="0 0 24 24" fill=none stroke=#1976d2 stroke-width=2 stroke-linecap=round stroke-linejoin=round><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/><path d="M17 10h4M3 10h4M12 3V7M12 17v-1" stroke-dasharray="2 2"/></svg>
                     </div>
                     <div class=menu-icon-text>实时位置</div>
+                </div>
+
+                <div id=btnOrderFood class=menu-icon-btn>
+                    <div class=menu-icon-svg style="background:#fff8e1;">
+                        <svg width=20 height=20 viewBox="0 0 24 24" fill=none stroke=#f59e0b stroke-width=2 stroke-linecap=round stroke-linejoin=round><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>
+                    </div>
+                    <div class=menu-icon-text>点外卖</div>
+                </div>
+
+                <div id=btnPayForMe class=menu-icon-btn>
+                    <div class=menu-icon-svg style="background:#fce4ec;">
+                        <svg width=20 height=20 viewBox="0 0 24 24" fill=none stroke=#e91e63 stroke-width=2 stroke-linecap=round stroke-linejoin=round><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                    </div>
+                    <div class=menu-icon-text>代付</div>
                 </div>
 
  
@@ -2463,6 +2499,70 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         <div id=radarLocationName style="color:#e0ffe0;font-size:16px;font-weight:bold;margin-top:24px;letter-spacing:1px;text-align:center;max-width:240px;"></div>
         <div id=radarLocationSub style="color:rgba(200,255,200,0.7);font-size:12px;margin-top:6px;text-align:center;"></div>
         <button id=btnCloseRadar style="margin-top:32px;width:52px;height:52px;border-radius:50%;border:none;background:rgba(255,255,255,0.15);color:#fff;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(5px);">✕</button>
+    </div>
+
+    <!-- ===== 点外卖弹窗 ===== -->
+    <div id=foodOrderModal style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:1100;background:rgba(0,0,0,0.42);backdrop-filter:blur(6px);align-items:flex-end;justify-content:center;">
+        <div style="width:100%;max-width:480px;background:#fff;border-radius:24px 24px 0 0;padding:0 0 20px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px 12px;border-bottom:1px solid #f5f5f5;flex-shrink:0;">
+                <div style="font-size:17px;font-weight:bold;color:#333;">🛵 点外卖</div>
+                <span id=btnFoodOrderClose style="font-size:22px;color:#ccc;cursor:pointer;line-height:1;padding:4px;">✕</span>
+            </div>
+            <div style="padding:12px 18px 8px;flex-shrink:0;">
+                <input id=foodOrderNote placeholder="备注（少辣、不要葱...）" style="width:100%;padding:10px 14px;border:1.5px solid #ffe0b2;border-radius:12px;font-size:13px;box-sizing:border-box;outline:none;color:#333;background:#fffdf9;"/>
+            </div>
+            <div style="overflow-y:auto;padding:6px 16px 16px;flex:1;">
+                <div style="font-size:11px;color:#bbb;margin-bottom:10px;padding:0 4px;letter-spacing:0.5px;">选择或自定义品类</div>
+                <div id=foodMenuGrid style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;"></div>
+                <div style="margin-top:14px;display:flex;gap:8px;align-items:center;">
+                    <input id=foodCustomInput placeholder="自定义食物名称..." style="flex:1;padding:10px 14px;border:1.5px solid #ffe0b2;border-radius:12px;font-size:13px;outline:none;color:#333;"/>
+                    <button id=btnFoodCustomSend style="padding:10px 18px;border-radius:12px;border:none;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-size:13px;font-weight:bold;cursor:pointer;white-space:nowrap;">发送</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 代付弹窗（user向char请求）===== -->
+    <div id=payForMeModal style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:1100;background:rgba(0,0,0,0.42);backdrop-filter:blur(6px);align-items:center;justify-content:center;">
+        <div style="width:85%;max-width:320px;background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,0.2);">
+            <div style="background:linear-gradient(135deg,#e91e63,#c2185b);padding:22px 20px;text-align:center;color:#fff;">
+                <div style="font-size:30px;margin-bottom:6px;">💳</div>
+                <div style="font-weight:bold;font-size:16px;">请求代付</div>
+                <div style="font-size:12px;opacity:0.82;margin-top:4px;">向对方发起代付请求</div>
+            </div>
+            <div style="padding:20px;display:flex;flex-direction:column;gap:11px;">
+                <input id=payForMeItem placeholder="商品名称（例如：秋季新款长裙）" style="width:100%;padding:11px 14px;border:1.5px solid #fce4ec;border-radius:12px;font-size:13px;box-sizing:border-box;outline:none;color:#333;"/>
+                <div style="display:flex;align-items:center;border:1.5px solid #fce4ec;border-radius:12px;overflow:hidden;">
+                    <span style="padding:11px 13px;font-size:14px;color:#e91e63;font-weight:bold;background:#fce4ec;border-right:1.5px solid #fce4ec;">¥</span>
+                    <input id=payForMeAmt type=number placeholder="金额" min=0 step=0.01 style="flex:1;padding:11px 14px;border:none;font-size:14px;outline:none;color:#333;"/>
+                </div>
+                <input id=payForMeNote placeholder="备注（可选，例如：帮我买下来谢谢）" style="width:100%;padding:11px 14px;border:1.5px solid #fce4ec;border-radius:12px;font-size:13px;box-sizing:border-box;outline:none;color:#333;"/>
+                <div style="display:flex;gap:10px;margin-top:4px;">
+                    <button id=btnPayForMeCancel style="flex:1;padding:12px;border-radius:25px;border:none;background:#f5f5f5;color:#666;font-size:14px;font-weight:bold;cursor:pointer;">取消</button>
+                    <button id=btnPayForMeConfirm style="flex:1;padding:12px;border-radius:25px;border:none;background:linear-gradient(135deg,#e91e63,#c2185b);color:#fff;font-size:14px;font-weight:bold;cursor:pointer;">发送请求</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== char向user发起代付 — user决策弹窗 ===== -->
+    <div id=charPayRequestModal style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:1200;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);align-items:center;justify-content:center;">
+        <div style="width:85%;max-width:320px;background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,0.25);">
+            <div style="background:linear-gradient(135deg,#6c5ce7,#a29bfe);padding:22px 20px;text-align:center;color:#fff;">
+                <div style="font-size:30px;margin-bottom:6px;">💸</div>
+                <div style="font-weight:bold;font-size:16px;">对方请求代付</div>
+                <div style="font-size:11px;opacity:0.82;margin-top:4px;">来自对方的代付邀请</div>
+            </div>
+            <div style="padding:22px 20px;text-align:center;">
+                <div id=charPayRequestItem style="font-size:15px;color:#333;font-weight:bold;margin-bottom:6px;"></div>
+                <div id=charPayRequestAmt style="font-size:32px;color:#e91e63;font-weight:bold;margin-bottom:6px;"></div>
+                <div id=charPayRequestNote style="font-size:12px;color:#aaa;margin-bottom:22px;min-height:16px;"></div>
+                <div style="display:flex;gap:10px;">
+                    <button id=btnCharPayRefuse style="flex:1;padding:12px;border-radius:25px;border:none;background:#f5f5f5;color:#666;font-size:14px;font-weight:bold;cursor:pointer;">狠心拒绝</button>
+                    <button id=btnCharPayConfirm style="flex:1;padding:12px;border-radius:25px;border:none;background:linear-gradient(135deg,#6c5ce7,#a29bfe);color:#fff;font-size:14px;font-weight:bold;cursor:pointer;">帮TA付款 💳</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div id=customPromptModal class=modal-base>
@@ -4778,7 +4878,7 @@ function redrawChat() {
             if(!out) return; // 整条消息如果全是格式就跳过
             
             let lns = out.split(/\n+/).filter(x => x.trim() !== ``);
-            if(lns.length === 1 && out.length > 30 && !out.includes(`[图片消息`) && !out.includes(`[定位消息`) && !out.includes(`[实时位置`)) { 
+            if(lns.length === 1 && out.length > 30 && !out.includes(`[图片消息`) && !out.includes(`[定位消息`) && !out.includes(`[实时位置`) && !out.includes(`[外卖消息`) && !out.includes(`[代付消息`)) { 
                 lns = out.replace(/([。！？!?])/g, `$1\n`).split(/\n+/).filter(x => x.trim() !== ``); 
             }
             
@@ -5371,6 +5471,8 @@ if(charStickers.length > 0) {
 
 
 
+    // ===== 外卖&代付系统提示词注入 =====
+    sys += `\n【主动投喂规则 - 外卖系统】当察觉到玩家没按时吃饭、生病、心情不好、或者想给玩家惊喜时，你可以主动给玩家点外卖！在回复最后另起一行加：[发送外卖：食物名称|留言备注]（例：[发送外卖：三文鱼刺身|趁热吃，乖]）。切记不要每次都用，只在情绪合适的节点自然触发！\n【代付请求规则】如果你想向玩家请求代付某样东西，在回复最后另起一行加：[发起代付：商品名称|金额|备注]（例：[发起代付：最新款游戏|98|我们一起玩]）。`;
     // ===== 定位系统提示词注入 =====
     window._locSysAddon = `
 【空间互动规则 - 定位系统】你拥有主动向对方发送位置的权力！遇到以下情况时，你必须在回复最后单独一行加入定位指令：
@@ -5518,7 +5620,7 @@ let hasAccept = txt.includes(`[收取转账]`);
             }
             
                                         let lns = out.split(/\n+/).filter(x => x.trim() !== ``);
-                if(lns.length === 1 && out.length > 30 && !out.includes(`[图片消息`) && !out.includes(`[定位消息`) && !out.includes(`[实时位置`)) { 
+                if(lns.length === 1 && out.length > 30 && !out.includes(`[图片消息`) && !out.includes(`[定位消息`) && !out.includes(`[实时位置`) && !out.includes(`[外卖消息`) && !out.includes(`[代付消息`)) { 
                     lns = out.replace(/([。！？!?])/g, `$1\n`).split(/\n+/).filter(x => x.trim() !== ``); 
                 }
                 
@@ -5580,6 +5682,16 @@ function renderQuoteBlock(b, txt, _side) {
     // 定位卡片检测
     if(txt && (txt.startsWith('[定位消息：') || txt.startsWith('[实时位置：'))) {
         renderLocationCard(b, txt, _side || 'l');
+        return;
+    }
+    // 外卖卡片检测
+    if(txt && txt.startsWith('[外卖消息：')) {
+        renderFoodCard(b, txt);
+        return;
+    }
+    // 代付卡片检测
+    if(txt && txt.startsWith('[代付消息：')) {
+        renderPayCard(b, txt, _side || 'l');
         return;
     }
         let transferMatch = txt.match(/^\[转账消息：([\d\.]+)\|(.*?)\|(未收款|已收款|对方已拒绝收款|已拒绝收款)\]$/);
@@ -5985,12 +6097,96 @@ function renderQuoteBlock(b, txt, _side) {
 
 
 // ===== 定位卡片渲染 =====
+// ===== 外卖卡片渲染 =====
+// 格式: [外卖消息：食物名称|备注|状态] 状态: 0=骑手接单 1=配送中 2=已送达
+function renderFoodCard(b, txt) {
+    let inner = txt.replace(/^\[外卖消息：/, '').replace(/\]$/, '');
+    let parts = inner.split('|');
+    let foodName = parts[0] || '美食';
+    let note = parts[1] || '';
+    let status = parseInt(parts[2] || '0');
+    const statusCfg = [
+        { text:'骑手接单中...', color:'#f59e0b', dot:true },
+        { text:'骑手配送中', color:'#2ecc71', dot:true, rider:true },
+        { text:'✅ 已送达！', color:'#10ac84', dot:false },
+    ];
+    let cfg = statusCfg[status] || statusCfg[0];
+    const emojiMap = {'三文鱼':'🍣','刺身':'🍱','寿喜':'🫕','炸鸡':'🍗','奶茶':'🧋','果茶':'🍹','拿铁':'☕','粥':'🍚','布洛芬':'💊','退烧':'🌡️','消炎':'💊','珍珠':'🧋','冰淇淋':'🍦','披萨':'🍕','汉堡':'🍔','面':'🍜','饺子':'🥟','火锅':'🫕','茶':'🍵','咖啡':'☕','蛋糕':'🎂','寿司':'🍣','酸辣':'🌶️'};
+    let emoji = '🍱';
+    for(let [k,v] of Object.entries(emojiMap)) { if(foodName.includes(k)){emoji=v;break;} }
+    b.innerHTML = `<div class="food-card">
+        <div class="food-card-header">
+            <div class="food-card-emoji">${emoji}</div>
+            <div class="food-card-name">${foodName}</div>
+            ${note ? `<div class="food-card-note">💬 ${note}</div>` : ''}
+        </div>
+        <div class="food-card-status">
+            ${cfg.dot ? `<div class="food-status-dot" style="background:${cfg.color};"></div>` : `<span style="font-size:14px;">✅</span>`}
+            <span class="food-status-text" style="color:${cfg.color};">${cfg.text}</span>
+            ${cfg.rider ? '<span class="food-rider">🛵</span>' : ''}
+        </div>
+    </div>`;
+    b.style.cssText += 'background:transparent;box-shadow:none;padding:0;border:none;';
+}
+
+// ===== 代付卡片渲染 =====
+// 格式: [代付消息：商品名|金额|备注|状态|发起方]  状态: pending/paid/refused  发起方: user/char
+function renderPayCard(b, txt, side) {
+    let inner = txt.replace(/^\[代付消息：/, '').replace(/\]$/, '');
+    let parts = inner.split('|');
+    let item = parts[0] || '商品';
+    let amt = parseFloat(parts[1] || '0').toFixed(2);
+    let note = parts[2] || '';
+    let status = parts[3] || 'pending';
+    let from = parts[4] || 'user'; // user=玩家请求char付, char=char请求玩家付
+    const statusMap = { pending:'待付款', paid:'已代付 ✅', refused:'已拒绝 ✕' };
+    const statusColors = { pending:'#e91e63', paid:'#10ac84', refused:'#bbb' };
+    let stText = statusMap[status] || '待付款';
+    let stColor = statusColors[status] || '#e91e63';
+    let labelText = from === 'char' ? '对方的代付请求' : '我的代付请求';
+    let showBtn = (status === 'pending' && from === 'char');
+    b.innerHTML = `<div class="pay-card">
+        <div class="pay-card-header">
+            <div class="pay-card-label">${labelText}</div>
+            <div class="pay-card-item">${item}</div>
+            <div class="pay-card-amt">¥ ${amt}</div>
+            ${note ? `<div class="pay-card-note-txt">${note}</div>` : ''}
+        </div>
+        <div class="pay-card-footer">
+            <span class="pay-card-status" style="color:${stColor};">${stText}</span>
+            ${showBtn ? `<button class="pay-card-action-btn" onclick="window._openCharPayModal('${item.replace(/'/g,'\\x27')}','${amt}','${note.replace(/'/g,'\\x27')}')">去支付</button>` : ''}
+        </div>
+    </div>`;
+    b.style.cssText += 'background:transparent;box-shadow:none;padding:0;border:none;';
+}
+
 function renderLocationCard(b, txt, side) {
     // 格式: [定位消息：地点名称] 或 [实时位置：地点名称]
     let isLive = txt.startsWith('[实时位置：');
     let locName = txt.replace(/^\[(定位消息|实时位置)：/, '').replace(/\]$/, '').trim();
     let isUser = (side === 'r');
-    let pinEmoji = isUser ? '🐰' : '🐾';
+    // user用粉色可爱SVG兔子大头针，char用爪印emoji
+    let pinContent = isUser
+        ? `<svg width="54" height="64" viewBox="0 0 54 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="27" cy="61" rx="7" ry="2.8" fill="rgba(255,150,180,0.25)"/>
+            <path d="M27 57 L27 42" stroke="#ff85b0" stroke-width="3.5" stroke-linecap="round"/>
+            <circle cx="27" cy="28" r="16" fill="#ffb3d0" stroke="#ff85b0" stroke-width="1.8"/>
+            <ellipse cx="19" cy="14" rx="4.5" ry="9.5" fill="#ffb3d0" stroke="#ff85b0" stroke-width="1.4"/>
+            <ellipse cx="19" cy="14" rx="2.5" ry="6.5" fill="#ff9fc5"/>
+            <ellipse cx="35" cy="14" rx="4.5" ry="9.5" fill="#ffb3d0" stroke="#ff85b0" stroke-width="1.4"/>
+            <ellipse cx="35" cy="14" rx="2.5" ry="6.5" fill="#ff9fc5"/>
+            <circle cx="22" cy="27" r="2.6" fill="#fff"/>
+            <circle cx="32" cy="27" r="2.6" fill="#fff"/>
+            <circle cx="22.7" cy="27.5" r="1.4" fill="#3d1f35"/>
+            <circle cx="32.7" cy="27.5" r="1.4" fill="#3d1f35"/>
+            <circle cx="23.3" cy="26.9" r="0.6" fill="#fff"/>
+            <circle cx="33.3" cy="26.9" r="0.6" fill="#fff"/>
+            <ellipse cx="19.5" cy="30.5" rx="2.8" ry="1.6" fill="rgba(255,80,130,0.3)"/>
+            <ellipse cx="34.5" cy="30.5" rx="2.8" ry="1.6" fill="rgba(255,80,130,0.3)"/>
+            <ellipse cx="27" cy="31.5" rx="1.4" ry="1" fill="#ff85b0"/>
+            <path d="M25 33 Q27 35 29 33" stroke="#ff85b0" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+          </svg>`
+        : '🐾';
     let pinClass = isUser ? 'loc-pin-user' : 'loc-pin-char';
     let mapBg = isUser ? 'background:linear-gradient(135deg,#f0faf4,#e8f8ee);' : 'background:linear-gradient(135deg,#fff0f3,#fde8ec);';
     let borderColor = isUser ? '#e8f5e9' : '#fde8ec';
@@ -6002,7 +6198,7 @@ function renderLocationCard(b, txt, side) {
     b.innerHTML = `<div class="loc-card" style="border-color:${borderColor};">
         <div class="loc-map-area" style="${mapBg}">
             <div class="loc-map-grid" style="background-image:linear-gradient(${gridColor} 1px,transparent 1px),linear-gradient(90deg,${gridColor} 1px,transparent 1px);"></div>
-            <div class="${pinClass}">${pinEmoji}</div>
+            <div class="${pinClass}">${pinContent}</div>
         </div>
         <div class="loc-info-area">
             <div style="font-size:10px;color:#aaa;margin-bottom:5px;letter-spacing:0.5px;">${headerLabel}</div>
@@ -14285,26 +14481,7 @@ function _sendUserLocation(locText) {
     history.push({role:'user', content: msgContent, ts: Date.now()});
     ls.setItem('chatHistory', JSON.stringify(history));
     updateListPreview();
-
-    // AI 接收定位后的反应
-    setTimeout(async () => {
-        let pxy = $('apiPxy').value, key = $('apiK').value, mod = $('apiMod').value;
-        if(!pxy || !key || !mod) return;
-        if(!pxy.includes('chat/completions')) pxy = pxy.replace(/\/$/, '') + '/chat/completions';
-        let charName = $('cfgName')?.value || '对方';
-        let myName = $('cfgMyName')?.value || '你';
-        let charAP = $('cfgAiP')?.value || '';
-        let tp = parseFloat(originalGetItem.call(ls,'temp')||'0.8')||0.8;
-        let sys = `你是${charName}。${charAP ? '性格设定：' + charAP : ''}
-${myName}刚刚给你发送了一个定位，对方当前位置是：${locText}。
-请根据你的性格立刻对这个位置做出真实反应！可以是惊讶、好奇、甜蜜地评论地点、或者傲娇地说"我知道你在哪了"，情绪要鲜明真实。直接输出对话内容，控制在100字以内，不加任何前缀。`;
-        try {
-            let res = await fetch(pxy, {method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:350,messages:[{role:'user',content:sys}]})});
-            let dat = await res.json();
-            let reply = (dat.choices?.[0]?.message?.content||'').trim();
-            if(reply) { history.push({role:'assistant',content:reply,ts:Date.now()}); mkBub(reply,'l'); updateListPreview(); }
-        } catch(e) {}
-    }, 800);
+    // 不触发AI自动回复，定位信息会自然注入下次对话的上下文
 }
 
 // 按钮：发送定位
@@ -14370,6 +14547,11 @@ window.mkBub = function(txt, side, isT) {
         // 解析 AI 主动发定位
         let locMatch = txt.match(/\[发送定位：([^\]]+)\]/);
         let liveMatch = txt.match(/\[发送实时位置：([^\]]+)\]/);
+        // 解析 AI 主动点外卖
+        let foodMatch = txt.match(/\[发送外卖：([^\]]+)\]/);
+        // 解析 AI 发起代付请求
+        let payMatch = txt.match(/\[发起代付：([^\]]+)\]/);
+
         if(locMatch) {
             let locText = locMatch[1].trim();
             txt = txt.replace(locMatch[0], '').trim();
@@ -14385,15 +14567,251 @@ window.mkBub = function(txt, side, isT) {
             history.push({role:'assistant', content: locMsg, ts: Date.now()});
             ls.setItem('chatHistory', JSON.stringify(history));
             window._origMkBubForLoc.call(this, locMsg, 'l', false);
-            // 对方也显示banner
             let banner = $('liveLocBanner');
             let bannerTxt = $('liveLocBannerText');
             if(banner) banner.style.display = 'flex';
             if(bannerTxt) bannerTxt.innerText = `对方正在共享实时位置 · ${locText}`;
         }
+        if(foodMatch) {
+            let foodRaw = foodMatch[1].trim(); // 格式: 食物名|留言
+            txt = txt.replace(foodMatch[0], '').trim();
+            let parts = foodRaw.split('|');
+            let foodName = parts[0].trim();
+            let foodNote = (parts[1]||'').trim();
+            let foodMsg = `[外卖消息：${foodName}|${foodNote}|0]`;
+            history.push({role:'assistant', content: foodMsg, ts: Date.now()});
+            ls.setItem('chatHistory', JSON.stringify(history));
+            window._origMkBubForLoc.call(this, foodMsg, 'l', false);
+            _startFoodDeliveryTimer(foodMsg, foodName, foodNote, 'assistant');
+        }
+        if(payMatch) {
+            let payRaw = payMatch[1].trim(); // 格式: 商品名|金额|备注
+            txt = txt.replace(payMatch[0], '').trim();
+            let parts = payRaw.split('|');
+            let payItem = (parts[0]||'商品').trim();
+            let payAmt = (parts[1]||'0').trim();
+            let payNote = (parts[2]||'').trim();
+            let payMsg = `[代付消息：${payItem}|${payAmt}|${payNote}|pending|char]`;
+            history.push({role:'assistant', content: payMsg, ts: Date.now()});
+            ls.setItem('chatHistory', JSON.stringify(history));
+            window._origMkBubForLoc.call(this, payMsg, 'l', false);
+            // 弹出支付决策弹窗
+            setTimeout(() => window._openCharPayModal(payItem, parseFloat(payAmt).toFixed(2), payNote), 500);
+        }
     }
     if(txt && txt.trim()) window._origMkBubForLoc.call(this, txt, side, isT);
 };
+
+// ============================================================
+// ===== 点外卖功能 =====
+// ============================================================
+const FOOD_MENU = [
+    '三文鱼刺身拼盘', '暖胃寿喜锅', '芝士爆浆炸鸡',
+    '珍珠奶茶', '冰透心凉果茶', '热腾腾拿铁',
+    '退烧贴+布洛芬', '暖胃小米粥', '消炎药冲剂',
+];
+const FOOD_EMOJI_MAP = {'三文鱼':'🍣','刺身':'🍱','寿喜':'🫕','炸鸡':'🍗','奶茶':'🧋','果茶':'🍹','拿铁':'☕','粥':'🍚','布洛芬':'💊','退烧':'🌡️','消炎':'💊','珍珠':'🧋','冰淇淋':'🍦','披萨':'🍕','汉堡':'🍔','面':'🍜','饺子':'🥟','火锅':'🫕','茶':'🍵','咖啡':'☕','蛋糕':'🎂','寿司':'🍣'};
+function _getFoodEmoji(name) { for(let [k,v] of Object.entries(FOOD_EMOJI_MAP)) { if(name.includes(k)) return v; } return '🍱'; }
+
+// 外卖状态自动流转
+function _startFoodDeliveryTimer(originalMsg, foodName, foodNote, _role) {
+    // 2分钟后→配送中
+    let t1 = setTimeout(() => {
+        let msg1 = `[外卖消息：${foodName}|${foodNote}|1]`;
+        _replaceFoodMsgInHistory(originalMsg, msg1);
+        // 再3分钟→已送达
+        let t2 = setTimeout(() => {
+            let msg2 = `[外卖消息：${foodName}|${foodNote}|2]`;
+            _replaceFoodMsgInHistory(msg1, msg2);
+        }, 180000);
+    }, 120000);
+}
+function _replaceFoodMsgInHistory(oldMsg, newMsg) {
+    for(let i = history.length-1; i >= 0; i--) {
+        if(history[i].content && history[i].content.includes(oldMsg)) {
+            history[i].content = history[i].content.replace(oldMsg, newMsg);
+            ls.setItem('chatHistory', JSON.stringify(history));
+            if(typeof redrawChat === 'function') redrawChat();
+            break;
+        }
+    }
+}
+
+// 初始化九宫格菜单
+function _initFoodMenuGrid() {
+    let grid = $('foodMenuGrid');
+    if(!grid) return;
+    grid.innerHTML = '';
+    FOOD_MENU.forEach(name => {
+        let emoji = _getFoodEmoji(name);
+        let btn = document.createElement('div');
+        btn.style.cssText = 'border-radius:14px;border:1.5px solid #ffe0b2;background:#fffdf9;padding:12px 6px 10px;text-align:center;cursor:pointer;transition:all 0.15s;display:flex;flex-direction:column;align-items:center;gap:5px;';
+        btn.innerHTML = `<div style="font-size:26px;">${emoji}</div><div style="font-size:11px;color:#555;font-weight:bold;line-height:1.3;">${name}</div>`;
+        btn.addEventListener('touchstart', ()=>btn.style.background='#fff3cd', {passive:true});
+        btn.addEventListener('touchend', ()=>btn.style.background='#fffdf9', {passive:true});
+        btn.onclick = () => {
+            let note = $('foodOrderNote')?.value.trim() || '';
+            $('foodOrderModal').style.display = 'none';
+            _sendUserFoodOrder(name, note);
+        };
+        grid.appendChild(btn);
+    });
+}
+
+function _sendUserFoodOrder(foodName, note) {
+    let msg = `[外卖消息：${foodName}|${note}|0]`;
+    mkBub(msg, 'r');
+    history.push({role:'user', content: msg, ts: Date.now()});
+    ls.setItem('chatHistory', JSON.stringify(history));
+    updateListPreview();
+    _startFoodDeliveryTimer(msg, foodName, note, 'user');
+    // 定位信息注入下次正常对话上下文，不触发AI自动回复
+}
+
+if($('btnOrderFood')) {
+    $('btnOrderFood').onclick = () => {
+        toggleMenuDrawer(false);
+        _initFoodMenuGrid();
+        let m = $('foodOrderModal');
+        if($('foodOrderNote')) $('foodOrderNote').value = '';
+        if($('foodCustomInput')) $('foodCustomInput').value = '';
+        if(m) m.style.display = 'flex';
+    };
+}
+if($('btnFoodOrderClose')) $('btnFoodOrderClose').onclick = () => { $('foodOrderModal').style.display='none'; };
+if($('foodOrderModal')) $('foodOrderModal').onclick = e => { if(e.target===$('foodOrderModal')) $('foodOrderModal').style.display='none'; };
+if($('btnFoodCustomSend')) {
+    $('btnFoodCustomSend').onclick = () => {
+        let name = $('foodCustomInput')?.value.trim();
+        if(!name) return;
+        let note = $('foodOrderNote')?.value.trim() || '';
+        $('foodOrderModal').style.display = 'none';
+        _sendUserFoodOrder(name, note);
+    };
+}
+
+// ============================================================
+// ===== 代付功能 =====
+// ============================================================
+
+// user请求char代付
+function _sendPayForMeRequest(item, amt, note) {
+    let msg = `[代付消息：${item}|${amt}|${note}|pending|user]`;
+    mkBub(msg, 'r');
+    history.push({role:'user', content: msg, ts: Date.now()});
+    ls.setItem('chatHistory', JSON.stringify(history));
+    updateListPreview();
+
+    // AI根据性格决定是否代付，并自然回复
+    setTimeout(async () => {
+        let pxy=$('apiPxy').value, key=$('apiK').value, mod=$('apiMod').value;
+        if(!pxy||!key||!mod) return;
+        if(!pxy.includes('chat/completions')) pxy=pxy.replace(/\/$/,'')+'/chat/completions';
+        let charName=$('cfgName')?.value||'对方', myName=$('cfgMyName')?.value||'你', charAP=$('cfgAiP')?.value||'';
+        let tp=parseFloat(originalGetItem.call(ls,'temp')||'0.8')||0.8;
+        let recentChat=history.slice(-8).map(m=>(m.role==='user'?myName:charName)+'：'+m.content).join('\n');
+        let sys=`你是${charName}。${charAP?'底层性格：'+charAP:''}\n近期聊天：\n${recentChat}\n\n【突发剧情】${myName}刚刚向你发了代付请求：商品「${item}」，金额 ¥${amt}，备注「${note||'无'}」。\n请严格遵循你的性格立刻做出真实反应！爹系可以秒答应，傲娇可以吐槽但还是答应，或者直接拒绝。回复控制在80字以内，直接输出，不加前缀。\n最后另起一行加决定：同意付款→ [代付结果：paid]，拒绝→ [代付结果：refused]`;
+        try {
+            let res=await fetch(pxy,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:300,messages:[{role:'user',content:sys}]})});
+            let dat=await res.json();
+            let reply=(dat.choices?.[0]?.message?.content||'').trim();
+            let resultMatch=reply.match(/\[代付结果：(paid|refused)\]/);
+            let decision=resultMatch?resultMatch[1]:'paid';
+            reply=reply.replace(/\[代付结果：(paid|refused)\]/g,'').trim();
+            // 更新卡片状态
+            let newMsg=`[代付消息：${item}|${amt}|${note}|${decision}|user]`;
+            for(let i=history.length-1;i>=0;i--){ if(history[i].content===msg){history[i].content=newMsg;break;} }
+            if(reply) history.push({role:'assistant',content:reply,ts:Date.now()});
+            ls.setItem('chatHistory',JSON.stringify(history));
+            redrawChat(); updateListPreview();
+        } catch(e){}
+    }, 1000);
+}
+
+if($('btnPayForMe')) {
+    $('btnPayForMe').onclick = () => {
+        toggleMenuDrawer(false);
+        if($('payForMeItem')) $('payForMeItem').value='';
+        if($('payForMeAmt')) $('payForMeAmt').value='';
+        if($('payForMeNote')) $('payForMeNote').value='';
+        let m=$('payForMeModal'); if(m) m.style.display='flex';
+    };
+}
+if($('btnPayForMeCancel')) $('btnPayForMeCancel').onclick=()=>{ $('payForMeModal').style.display='none'; };
+if($('btnPayForMeConfirm')) {
+    $('btnPayForMeConfirm').onclick = () => {
+        let item=$('payForMeItem')?.value.trim();
+        let amt=parseFloat($('payForMeAmt')?.value||0);
+        let note=$('payForMeNote')?.value.trim()||'';
+        if(!item){alert('请填写商品名称！');return;}
+        if(!amt||amt<=0){alert('请填写有效金额！');return;}
+        $('payForMeModal').style.display='none';
+        _sendPayForMeRequest(item, amt.toFixed(2), note);
+    };
+}
+if($('payForMeModal')) $('payForMeModal').onclick=e=>{ if(e.target===$('payForMeModal')) $('payForMeModal').style.display='none'; };
+
+// char请求user代付 — 打开决策弹窗
+window._openCharPayModal = function(item, amt, note) {
+    window._pendingCharPay = {item, amt, note};
+    let m=$('charPayRequestModal');
+    if($('charPayRequestItem')) $('charPayRequestItem').innerText=item;
+    if($('charPayRequestAmt')) $('charPayRequestAmt').innerText=`¥ ${parseFloat(amt).toFixed(2)}`;
+    if($('charPayRequestNote')) $('charPayRequestNote').innerText=note||'';
+    if(m) m.style.display='flex';
+};
+
+// 拒绝char代付
+if($('btnCharPayRefuse')) {
+    $('btnCharPayRefuse').onclick = () => {
+        $('charPayRequestModal').style.display='none';
+        let pd=window._pendingCharPay; if(!pd) return;
+        window._pendingCharPay=null;
+        let old=`[代付消息：${pd.item}|${pd.amt}|${pd.note}|pending|char]`;
+        _replaceFoodMsgInHistory(old, `[代付消息：${pd.item}|${pd.amt}|${pd.note}|refused|char]`);
+        // AI被拒后反应
+        setTimeout(async()=>{
+            let pxy=$('apiPxy').value,key=$('apiK').value,mod=$('apiMod').value;
+            if(!pxy||!key||!mod) return;
+            if(!pxy.includes('chat/completions')) pxy=pxy.replace(/\/$/,'')+'/chat/completions';
+            let charName=$('cfgName')?.value||'对方',myName=$('cfgMyName')?.value||'你',charAP=$('cfgAiP')?.value||'';
+            let tp=parseFloat(originalGetItem.call(ls,'temp')||'0.8')||0.8;
+            let sys=`你是${charName}。${charAP?'性格：'+charAP:''}\n你刚才向${myName}发起代付「${pd.item}」¥${pd.amt}的请求，但对方拒绝了！请立刻做出第一反应，可以委屈、生气、傲娇吐槽或质问。控制在60字以内，直接输出。`;
+            try{
+                let res=await fetch(pxy,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:200,messages:[{role:'user',content:sys}]})});
+                let dat=await res.json();
+                let reply=(dat.choices?.[0]?.message?.content||'').trim();
+                if(reply){history.push({role:'assistant',content:reply,ts:Date.now()});mkBub(reply,'l');updateListPreview();}
+            }catch(e){}
+        }, 700);
+    };
+}
+
+// 同意帮char付款
+if($('btnCharPayConfirm')) {
+    $('btnCharPayConfirm').onclick = () => {
+        $('charPayRequestModal').style.display='none';
+        let pd=window._pendingCharPay; if(!pd) return;
+        window._pendingCharPay=null;
+        let old=`[代付消息：${pd.item}|${pd.amt}|${pd.note}|pending|char]`;
+        _replaceFoodMsgInHistory(old, `[代付消息：${pd.item}|${pd.amt}|${pd.note}|paid|char]`);
+        // AI收到付款后的甜蜜反应
+        setTimeout(async()=>{
+            let pxy=$('apiPxy').value,key=$('apiK').value,mod=$('apiMod').value;
+            if(!pxy||!key||!mod) return;
+            if(!pxy.includes('chat/completions')) pxy=pxy.replace(/\/$/,'')+'/chat/completions';
+            let charName=$('cfgName')?.value||'对方',myName=$('cfgMyName')?.value||'你',charAP=$('cfgAiP')?.value||'';
+            let tp=parseFloat(originalGetItem.call(ls,'temp')||'0.8')||0.8;
+            let sys=`你是${charName}。${charAP?'性格：'+charAP:''}\n${myName}刚刚帮你付了「${pd.item}」¥${pd.amt}的款！请立刻做出真实反应，可以甜蜜感谢、傲娇地假装淡定、或者宠溺地说当然。控制在60字以内，直接输出。`;
+            try{
+                let res=await fetch(pxy,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:200,messages:[{role:'user',content:sys}]})});
+                let dat=await res.json();
+                let reply=(dat.choices?.[0]?.message?.content||'').trim();
+                if(reply){history.push({role:'assistant',content:reply,ts:Date.now()});mkBub(reply,'l');updateListPreview();}
+            }catch(e){}
+        }, 600);
+    };
+}
 
 // 拦截AI回复中的主动发起通话指令（char主动打电话）
 const _origMkBubForCall = mkBub;
