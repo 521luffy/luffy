@@ -2425,7 +2425,7 @@ let stW=$("stW"), stC=$("stC"), stA=$("stA"), stT=$("stT");
 let ls = localStorage;
 let currentChatId ="default";
 let originalSetItem = ls.setItem;
-let isolatedKeys = ["cMyN", "myI", "chatHistory", "aiStatus", "bgI", "aiI", "cMP", "cN", "cR", "cAP", "cCtx", "cT", "cAMem", "cMemT", "cMemP", "linkedWb", "lastMemCount", "memories", "cStatusTxt", "cStatusColor", "cSign", "cBubbleCss", "cCTon", "cCTy", "cCTm", "cCTd", "cCTh", "cCTmin"];
+let isolatedKeys = ["cMyN", "myI", "chatHistory", "aiStatus", "bgI", "aiI", "cMP", "cN", "cR", "cAP", "cCtx", "cT", "cAMem", "cMemT", "cMemP", "linkedWb", "lastMemCount", "memories", "cStatusTxt", "cStatusColor", "cSign", "cBubbleCss", "cCTon", "cCTy", "cCTm", "cCTd", "cCTh", "cCTmin", "cStatusBarOn", "cStatusBar"];
 
 // ===== 名字内存缓存（绕开 localStorage 满的问题）=====
 window._nameCache = {};
@@ -3506,6 +3506,7 @@ async function renderContacts() {
             let charSign2 = originalGetItem.call(ls, `cSign_` + c.id) || "（该角色还在思考个性签名...）";
             divC.innerHTML = avaHtml2 + `<div class=chat-info> <div class=role-header-row> <div class=role-name>` + isoName2 + `</div> <div class=role-status><div class="status-dot ` + charStatusColorClass2 + `"></div>` + charStatusText2 + `</div> </div> <div class=role-signature>` + charSign2 + `</div> </div>`;
             divC.onclick = async () => {
+                if(window._preventContactClick) { window._preventContactClick = false; return; }
                 window._prevScreen = 'scrContact'; window._prevContactTab = 'friends';
                 currentChatId = c.id;
                 $(`cfgName`).value = originalGetItem.call(ls, `cN_` + c.id) || c.name;
@@ -3543,8 +3544,12 @@ async function renderContacts() {
                 ov.style.cssText = `position:fixed;right:0;top:${Math.round(rect.top)}px;width:88px;height:${Math.round(rect.height)}px;background:#ff4757;display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:bold;z-index:9999;cursor:pointer;border-radius:0 0 0 0;`;
                 ov.innerText = '删除好友';
                 document.body.appendChild(ov);
+                ov.addEventListener('touchstart', e => { e.stopPropagation(); }, {passive:false});
+                ov.addEventListener('touchend', e => { e.stopPropagation(); e.preventDefault(); }, {passive:false});
                 ov.onclick = async (ev2) => {
                     ev2.stopPropagation();
+                    ev2.preventDefault();
+                    window._preventContactClick = true;
                     ov.remove();
                     let confirmed = await window._customConfirm('你确定删除该好友吗？\n此操作不可恢复！');
                     if(!confirmed) return;
@@ -3559,7 +3564,13 @@ async function renderContacts() {
                 };
                 // Tap anywhere else closes it
                 setTimeout(() => {
-                    document.addEventListener('touchstart', function _rmOv(){ ov.remove(); document.removeEventListener('touchstart',_rmOv); }, {once:true, passive:true});
+                    document.addEventListener('touchstart', function _rmOv(ev3){
+                        // Only close if the touch is NOT on the overlay itself
+                        if(!ov.contains(ev3.target)) {
+                            ov.remove();
+                        }
+                        document.removeEventListener('touchstart',_rmOv);
+                    }, {once:true, passive:true});
                 }, 100);
             }, {passive:true});
             $(`contactContent`).appendChild(divC);
@@ -4150,6 +4161,14 @@ window.loadChatSettings = function() {
     if(ls.getItem(`cMemT`)) $(`cfgMemTrig`).value = ls.getItem(`cMemT`); else $(`cfgMemTrig`).value = 10;
     if(ls.getItem(`cMemP`)) $(`cfgMemPmt`).value = ls.getItem(`cMemP`); 
     else $(`cfgMemPmt`).value = `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。必须准确写出当前实际参与对话的【具体人物姓名】（包括user、char或任何出场的NPC）。`;
+    // 强制状态栏加载（per-contact 隔离）
+    if($(`cfgStatusBarOn`)) {
+        $(`cfgStatusBarOn`).checked = ls.getItem(`cStatusBarOn`) === `true`;
+    }
+    if($(`cfgStatusBar`)) {
+        let sbv = ls.getItem(`cStatusBar`);
+        $(`cfgStatusBar`).value = sbv || ``;
+    }
 };
 
         $(`btnCancelChat`).onclick = () => {
@@ -5225,9 +5244,12 @@ if(charStickers.length > 0) {
     }
             sys += `\n【资金互动规则】如果玩家发了转账（显示未收款），你必须在回复的最开头写上系统指令 [收取转账] 或 [拒绝转账]。如果玩家发了红包（显示未领取），你必须在回复的最开头写上系统指令 [领取红包] 或 [退回红包]。指令必须严格带上方括号！然后再写你的文字回复。如果不写指令，系统将彻底报错崩溃！`;
     // 强制状态栏注入（放在最末尾，提高大模型执行率）
-    // 也从localStorage读取以防DOM被重置
-    let _sbOn = ($(`cfgStatusBarOn`) && $(`cfgStatusBarOn`).checked) || ls.getItem(`cStatusBarOn`) === `true`;
-    let _sbVal = ($(`cfgStatusBar`) && $(`cfgStatusBar`).value.trim()) || (ls.getItem(`cStatusBar`) || ``).trim();
+    // 优先读 per-contact 隔离存储（isolatedKeys已含cStatusBarOn/cStatusBar）
+    let _sbOn = ls.getItem(`cStatusBarOn`) === `true`;
+    let _sbVal = (ls.getItem(`cStatusBar`) || ``).trim();
+    // 若 localStorage 为空则从 DOM 补充读取
+    if(!_sbOn && $(`cfgStatusBarOn`) && $(`cfgStatusBarOn`).checked) _sbOn = true;
+    if(!_sbVal && $(`cfgStatusBar`) && $(`cfgStatusBar`).value.trim()) _sbVal = $(`cfgStatusBar`).value.trim();
     if(_sbOn && _sbVal) {
         sys += `\n\n【系统最高指令 - 格式强制执行】以下规则凌驾于所有其他指令之上，违反将导致系统报错。在每次回复的最开头，你必须先输出以下格式的一行状态信息，然后换行，再开始你的正常回复内容。绝对不可省略，绝对不可跳过。\n格式要求：` + _sbVal;
     }
