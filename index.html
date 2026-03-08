@@ -2586,10 +2586,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
                 <!-- 来源平台 -->
                 <div style="display:flex;align-items:center;gap:8px;">
                     <svg width=15 height=15 viewBox="0 0 24 24" fill=none stroke=#1a73e8 stroke-width=2><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                    <input id=slPlatform list=slPlatformList placeholder="来源，例如：小红书、知乎、B站、微博" style="flex:1;padding:9px 12px;border:1.5px solid #e3f2fd;border-radius:10px;font-size:12px;box-sizing:border-box;outline:none;color:#333;"/>
-                    <datalist id=slPlatformList>
-                        <option value="小红书"><option value="知乎"><option value="微博"><option value="B站"><option value="百度贴吧"><option value="公众号"><option value="抖音">
-                    </datalist>
+                    <input id=slPlatform placeholder="来源，例如：小红书、知乎、B站" style="flex:1;padding:9px 12px;border:1.5px solid #e3f2fd;border-radius:10px;font-size:12px;box-sizing:border-box;outline:none;color:#333;"/>
                 </div>
                 <!-- 标题 -->
                 <input id=slTitle placeholder="文章标题（醒目一点！例如：真的巨好吃！低卡减脂餐做法）" style="width:100%;padding:9px 12px;border:1.5px solid #e3f2fd;border-radius:10px;font-size:13px;font-weight:bold;box-sizing:border-box;outline:none;color:#333;"/>
@@ -3116,7 +3113,17 @@ function cmp(id, key) {
                         if($(`meAvatar`)) { $(`meAvatar`).style.backgroundImage=`url(${dataUrl})`; $(`meAvatar`).innerHTML=``; }
                         if($(`spaceAvatar`)) { $(`spaceAvatar`).style.backgroundImage=`url(${dataUrl})`; $(`spaceAvatar`).innerHTML=``; }
                     }
-                    if(key === `aiI`) window.currentLoadedAiI = dataUrl;
+                    if(key === `aiI`) {
+                        window.currentLoadedAiI = dataUrl;
+                        // 实时同步查手机头像
+                        if($(`spyCharAvatar`)) {
+                            let spySel = $(`spyCharSelect`);
+                            if(spySel && spySel.value === currentChatId) {
+                                $(`spyCharAvatar`).style.backgroundImage = `url(${dataUrl})`;
+                                $(`spyCharAvatar`).innerText = ``;
+                            }
+                        }
+                    }
                     applyVis().catch(()=>{});
                 }).catch(err => {
                     console.warn(`大仓库写入失败：`, err);
@@ -3192,13 +3199,20 @@ function updateSpyPhoneUI(charId) {
         let c = contacts.find(x => String(x.id) === String(charId));
         if(c) charName = originalGetItem.call(ls, `cN_` + c.id) || c.name;
 
-        let isoAiA = originalGetItem.call(ls, `aiI_` + charId);
-        if($("spyCharAvatar")) {
-            if(isoAiA) { $("spyCharAvatar").style.backgroundImage = `url(${isoAiA})`;
-            $("spyCharAvatar").innerText = ""; }
-            else { $("spyCharAvatar").style.backgroundImage = "none";
-            $("spyCharAvatar").innerHTML = `<div style="width:100%; height:100%; display:flex; justify-content:center; align-items:center; font-size:35px;">👤</div>`; }
-        }
+        // 优先从 localforage 读取头像（头像存储在 localforage 的 aiI_charId 中）
+        localforage.getItem(`aiI_` + charId).then(lfAva => {
+            let isoAiA = lfAva || originalGetItem.call(ls, `aiI_` + charId);
+            if($("spyCharAvatar")) {
+                if(isoAiA) { $("spyCharAvatar").style.backgroundImage = `url(${isoAiA})`; $("spyCharAvatar").innerText = ""; }
+                else { $("spyCharAvatar").style.backgroundImage = "none"; $("spyCharAvatar").innerHTML = `<div style="width:100%; height:100%; display:flex; justify-content:center; align-items:center; font-size:35px;">👤</div>`; }
+            }
+        }).catch(() => {
+            let isoAiA = originalGetItem.call(ls, `aiI_` + charId);
+            if($("spyCharAvatar")) {
+                if(isoAiA) { $("spyCharAvatar").style.backgroundImage = `url(${isoAiA})`; $("spyCharAvatar").innerText = ""; }
+                else { $("spyCharAvatar").style.backgroundImage = "none"; $("spyCharAvatar").innerHTML = `<div style="width:100%; height:100%; display:flex; justify-content:center; align-items:center; font-size:35px;">👤</div>`; }
+            }
+        });
         if($("spyCharName")) { $("spyCharName").innerText = charName;
         $("spyCharName").style.color = "#333"; }
     }
@@ -6151,7 +6165,13 @@ function renderQuoteBlock(b, txt, _side) {
     }
     let imgMatch = txt.match(/\[图片消息：(.*?)\]/);
     if(imgMatch) {
-        b.innerHTML = `<img src="${imgMatch[1]}" style="max-width:150px;border-radius:10px;display:block;">`;
+        let _imgUrl = imgMatch[1];
+        // 如果是外部URL（char发的破图），转为粉色相机卡片
+        if(_imgUrl.match(/^https?:\/\//)) {
+            b.innerHTML = `<div style="width:130px; height:170px; background:#fce4ec; border-radius:12px; display:flex; flex-direction:column; justify-content:center; align-items:center; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.05);" onclick="showCustomText('📸 图片')"><div style="font-size:40px; filter:grayscale(100%) opacity(50%);">📷</div><div style="font-size:11px;color:#aaa;margin-top:6px;">点击查看</div></div>`;
+        } else {
+            b.innerHTML = `<img src="${_imgUrl}" style="max-width:150px;border-radius:10px;display:block;">`;
+        }
         b.style.background = "transparent";
         b.style.boxShadow = "none";
         b.style.padding = "0";
@@ -6270,6 +6290,7 @@ function renderLinkCard(b, txt, side) {
     let platform = parts[0] || '网页';
     let title = parts[1] || '分享的链接';
     let preview = parts[2] || '';
+    let fullContent = parts.slice(3).join('|') || preview;  // 完整内容（第4字段）
 
     // 平台主题色和图标
     const platformThemes = {
@@ -6284,7 +6305,10 @@ function renderLinkCard(b, txt, side) {
     let theme = platformThemes[platform] || { color:'#1a73e8', bg:'#f0f6ff', logo:'🔗', logoBg:'#1a73e8', logoColor:'#fff', border:'#c5deff' };
     let logoIsEmoji = theme.logo === '🔗';
 
-    b.innerHTML = `<div style="width:220px;border-radius:14px;overflow:hidden;background:#fff;border:1px solid ${theme.border};box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+    let _linkFullEnc = encodeURIComponent(fullContent || preview);
+    let _linkTitleEnc = encodeURIComponent(title);
+    let _linkPlatformEnc = encodeURIComponent(platform);
+    b.innerHTML = `<div style="width:220px;border-radius:14px;overflow:hidden;background:#fff;border:1px solid ${theme.border};box-shadow:0 2px 12px rgba(0,0,0,0.08);cursor:pointer;" onclick="(function(){let p=decodeURIComponent('${_linkPlatformEnc}'),t=decodeURIComponent('${_linkTitleEnc}'),c=decodeURIComponent('${_linkFullEnc}');showCustomText('【'+p+'】'+t+'\\n\\n'+c);})()">
         <div style="padding:12px 13px 10px;background:${theme.bg};">
             <div style="display:flex;align-items:flex-start;gap:9px;">
                 <div style="width:36px;height:36px;border-radius:8px;background:${theme.logoBg};display:flex;align-items:center;justify-content:center;flex-shrink:0;color:${theme.logoColor};font-size:${logoIsEmoji?'18px':'14px'};font-weight:bold;">${theme.logo}</div>
@@ -15021,7 +15045,8 @@ if($('btnShareLinkConfirm')) {
         // 构建链接消息（展示在聊天界面）
         let safeTitle = title.replace(/\|/g, '｜').replace(/\]/g, '】');
         let safePreview = preview.replace(/\|/g, '｜').replace(/\]/g, '】');
-        let linkMsg = `[链接消息：${platform}|${safeTitle}|${safePreview}]`;
+        let safeFullContent = summary.replace(/\|/g, '｜').replace(/\]/g, '】');
+        let linkMsg = `[链接消息：${platform}|${safeTitle}|${safePreview}|${safeFullContent}]`;
 
         // 渲染链接卡片（user侧）
         mkBub(linkMsg, 'r');
