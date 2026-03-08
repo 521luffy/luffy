@@ -2634,6 +2634,96 @@ window.showCustomText = function(text) {
     if($(`customTextContent`)) $(`customTextContent`).innerText = text;
     if($(`customTextModal`)) $(`customTextModal`).style.display = `flex`;
 };
+
+// ── 分享链接阅读面板 ──────────────────────────────────────────
+window.showLinkReader = function(platform, title, fullContent) {
+    var _themes = {
+        '小红书': {color:'#ff2442', tagBg:'rgba(255,36,66,0.12)', navBg:'linear-gradient(135deg,#fff4f5 0%,#ffe9ec 100%)', divLine:'rgba(255,36,66,0.25)'},
+        '知乎':   {color:'#0084ff', tagBg:'rgba(0,132,255,0.12)', navBg:'linear-gradient(135deg,#f0f7ff 0%,#e2efff 100%)', divLine:'rgba(0,132,255,0.25)'},
+        '微博':   {color:'#e6162d', tagBg:'rgba(230,22,45,0.12)', navBg:'linear-gradient(135deg,#fff5f5 0%,#ffe5e7 100%)', divLine:'rgba(230,22,45,0.25)'},
+        'B站':    {color:'#00a1d6', tagBg:'rgba(0,161,214,0.12)', navBg:'linear-gradient(135deg,#f0faff 0%,#dcf3fb 100%)', divLine:'rgba(0,161,214,0.25)'},
+        '百度贴吧':{color:'#4e6ef2',tagBg:'rgba(78,110,242,0.12)',navBg:'linear-gradient(135deg,#f4f5ff 0%,#e8eaff 100%)', divLine:'rgba(78,110,242,0.25)'},
+        '公众号': {color:'#07c160', tagBg:'rgba(7,193,96,0.12)', navBg:'linear-gradient(135deg,#f0fff6 0%,#d9ffe9 100%)', divLine:'rgba(7,193,96,0.25)'},
+        '抖音':   {color:'#161823', tagBg:'rgba(22,24,35,0.10)', navBg:'linear-gradient(135deg,#f5f5f5 0%,#ebebeb 100%)', divLine:'rgba(22,24,35,0.18)'},
+    };
+    var t = _themes[platform] || {color:'#1a73e8', tagBg:'rgba(26,115,232,0.12)', navBg:'linear-gradient(135deg,#f0f6ff 0%,#e2eeff 100%)', divLine:'rgba(26,115,232,0.25)'};
+
+    // ── backdrop ──
+    var bd = document.createElement('div');
+    bd.style.cssText = 'position:fixed;inset:0;z-index:10800;background:rgba(0,0,0,0.35);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;transition:opacity 0.3s ease;';
+
+    // ── panel ──
+    var pn = document.createElement('div');
+    pn.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:10801;background:rgba(250,250,253,0.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:24px 24px 0 0;max-height:90vh;display:flex;flex-direction:column;transform:translateY(100%);transition:transform 0.38s cubic-bezier(0.32,1.25,0.55,1);box-shadow:0 -4px 32px rgba(0,0,0,0.16);';
+
+    // ── drag pill ──
+    var pill = document.createElement('div');
+    pill.style.cssText = 'width:38px;height:4px;background:rgba(0,0,0,0.13);border-radius:2px;margin:11px auto 0;flex-shrink:0;';
+
+    // ── nav bar ──
+    var nav = document.createElement('div');
+    nav.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:12px 16px 11px;background:'+t.navBg+';border-radius:24px 24px 0 0;flex-shrink:0;margin-top:6px;';
+    nav.innerHTML = '<button id="_lr_close" style="background:rgba(255,255,255,0.75);border:1px solid rgba(0,0,0,0.08);border-radius:20px;padding:6px 16px;font-size:13px;color:#555;cursor:pointer;font-family:inherit;font-weight:500;box-shadow:0 1px 4px rgba(0,0,0,0.08);white-space:nowrap;">← 关闭</button>'
+        + '<span style="background:'+t.tagBg+';color:'+t.color+';font-size:12px;font-weight:700;padding:5px 14px;border-radius:20px;letter-spacing:0.5px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+platform+'</span>'
+        + '<span style="font-size:18px;color:#bbb;letter-spacing:4px;cursor:default;user-select:none;">···</span>';
+
+    // ── scrollable body ──
+    var body = document.createElement('div');
+    body.style.cssText = 'flex:1;overflow-y:auto;padding:26px 22px 48px;-webkit-overflow-scrolling:touch;';
+
+    var safeTitle = title.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    var safeContent = fullContent.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').split('\n').join('<br>');
+
+    body.innerHTML = '<h2 style="font-size:22px;font-weight:900;color:#111;text-align:center;line-height:1.45;margin:0 0 20px;letter-spacing:-0.5px;font-family:-apple-system,BlinkMacSystemFont,PingFang SC,Noto Serif SC,serif;">'+safeTitle+'</h2>'
+        + '<div style="position:relative;height:1px;margin:0 0 22px;background:linear-gradient(to right,transparent,'+t.color+'66,transparent);"><div style="position:absolute;inset:0;background:repeating-linear-gradient(to right,transparent,transparent 6px,rgba(255,255,255,0.8) 6px,rgba(255,255,255,0.8) 10px);"></div></div>'
+        + '<div style="font-size:15.5px;color:#4a433c;line-height:1.85;font-family:-apple-system,BlinkMacSystemFont,PingFang SC,sans-serif;letter-spacing:0.2px;word-break:break-word;">'+safeContent+'</div>'
+        + '<div style="margin-top:40px;text-align:center;padding-bottom:8px;"><button id="_lr_orig" style="background:rgba(0,0,0,0.05);border:1px solid rgba(0,0,0,0.09);border-radius:22px;padding:10px 28px;font-size:13px;color:#aaa;cursor:pointer;font-family:inherit;letter-spacing:0.5px;">查看完整原文</button></div>';
+
+    pn.appendChild(pill);
+    pn.appendChild(nav);
+    pn.appendChild(body);
+
+    function closePanel() {
+        pn.style.transform = 'translateY(100%)';
+        bd.style.opacity = '0';
+        setTimeout(function(){ if(pn.parentNode) pn.remove(); if(bd.parentNode) bd.remove(); }, 400);
+    }
+
+    document.body.appendChild(bd);
+    document.body.appendChild(pn);
+
+    // animate in
+    requestAnimationFrame(function(){
+        requestAnimationFrame(function(){
+            pn.style.transform = 'translateY(0)';
+            bd.style.opacity = '1';
+        });
+    });
+
+    bd.addEventListener('click', function(e){ if(e.target===bd) closePanel(); });
+
+    setTimeout(function(){
+        var cb = pn.querySelector('#_lr_close');
+        if(cb) cb.addEventListener('click', closePanel);
+
+        var ob = pn.querySelector('#_lr_orig');
+        if(ob) ob.addEventListener('click', function(){
+            // "沉浸模式" toast popup
+            var m = document.createElement('div');
+            m.style.cssText = 'position:fixed;inset:0;z-index:11000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);';
+            m.innerHTML = '<div style="background:rgba(255,255,255,0.97);border-radius:20px;padding:28px 28px 22px;text-align:center;max-width:260px;box-shadow:0 8px 36px rgba(0,0,0,0.22);">'
+                + '<div style="font-size:36px;margin-bottom:12px;">🔒</div>'
+                + '<div style="font-size:16px;font-weight:800;color:#222;margin-bottom:8px;letter-spacing:-0.2px;">沉浸阅读模式</div>'
+                + '<div style="font-size:13.5px;color:#888;line-height:1.65;">当前处于沉浸模式，<br>已为您提取核心摘要</div>'
+                + '<button id="_lr_imm_ok" style="margin-top:20px;background:#f0f0f0;border:none;border-radius:22px;padding:10px 30px;font-size:14px;cursor:pointer;font-weight:600;color:#555;font-family:inherit;">知道了</button>'
+                + '</div>';
+            document.body.appendChild(m);
+            m.addEventListener('click', function(e){ if(e.target===m) m.remove(); });
+            var ib = m.querySelector('#_lr_imm_ok');
+            if(ib) ib.addEventListener('click', function(){ m.remove(); });
+        });
+    }, 60);
+};
 if($(`btnCustomTextClose`)) $(`btnCustomTextClose`).onclick = () => $(`customTextModal`).style.display = `none`;
 window.alert = function(msg) { if(typeof showCustomText === 'function') { showCustomText(String(msg||'')); } };
 // Async confirm replacement - use window._customConfirm(msg) instead of confirm()
@@ -3867,9 +3957,14 @@ async function renderContacts() {
                     divC.remove();
                     if(typeof renderContactGroups === 'function') renderContactGroups();
                 };
-                // Tap anywhere else closes it
+                // Tap anywhere else closes it; but ignore touches ON the button itself
+                // (otherwise ov gets removed before the click fires, causing ghost-click on divC)
                 setTimeout(() => {
-                    document.addEventListener('touchstart', function _rmOv(){ ov.remove(); document.removeEventListener('touchstart',_rmOv); }, {once:true, passive:true});
+                    document.addEventListener('touchstart', function _rmOv(e){
+                        if(ov && ov.contains(e.target)) return; // touching the button — let onclick handle it
+                        if(ov && ov.parentNode) ov.remove();
+                        document.removeEventListener('touchstart', _rmOv);
+                    }, {passive:true});
                 }, 100);
             }, {passive:true});
             $(`contactContent`).appendChild(divC);
@@ -5515,7 +5610,8 @@ $(`btnLemon`).onclick = async () =>{
             }
                                 let curStatus = originalGetItem.call(ls, `cStatusTxt_` + currentChatId) || `在线`;
         let curSign = originalGetItem.call(ls, `cSign_` + currentChatId) || `（暂无个性签名）`;
-        sys += `你当前的面板状态是：${curStatus}，个性签名是：${curSign}。\n【状态主动更新规则】你有绝对自主权修改面板状态和签名，发生情绪环境变化时必须立即在回复最开头加指令：[更新状态：状态文字|状态颜色|个性签名]（状态文字请填简短中文如在线/忙碌/睡觉等；状态颜色限选: status-online代表活跃，status-busy代表忙碌，status-offline代表冷漠）。如果不改则不写。\n【主动资金互动规则 - 极度重要】如果你想给玩家钱表达心意，请在回复中加入以下其一指令：\n1. 发红包（限200元内）：[发送红包：金额|留言语]\n2. 发起转账（无上限，完全符合你人设的财力）：[发起转账：金额|转账说明]\n（例如 [发起转账：5200.00|给你买衣服]）。如果玩家一直没领/没收，你可以在后续聊天里催促。\n【主动发送照片规则】如果你想给玩家发照片分享当前状态（如自拍、风景、物品等），请在回复中单独起一行加入指令：[发送照片：这里写图片画面的详细描述]（例如 [发送照片：我穿着白衬衫对着镜头微笑，背景是阳光明媚的咖啡厅]）。\n`;
+        Sys += `你当前的面板状态是：${curStatus}，个性签名是：${curSign}。\n【状态主动更新规则】你有绝对自主权修改面板状态和签名，发生情绪环境变化时必须立即在回复最开头加指令：[更新状态：状态文字|状态颜色|个性签名]（状态文字请填简短中文如在线/忙碌/睡觉等；状态颜色限选: status-online代表活跃，status-busy代表忙碌，status-offline代表冷漠）。如果不改则不写。\n【主动资金互动规则 - 极度重要】如果你想给玩家钱表达心意，请在回复中加入以下其一指令：\n1. 发红包（限200元内）：[发送红包：金额|留言语]\n2. 发起转账（无上限，完全符合你人设的财力）：[发起转账：金额|转账说明]\n（例如 [发起转账：5200.00|给你买衣服]）。如果玩家一直没领/没收，你可以在后续聊天里催促。\n【主动发送照片规则】如果你想给玩家发照片分享当前状态（如自拍、风景、物品等），请在回复中单独起一行加入指令：[发送照片：这里写图片画面的详细描述]（例如 [发送照片：我穿着白衬衫对着镜头微笑，背景是阳光明媚的咖啡厅]）。\n`;
+
 
 
 
@@ -6166,7 +6262,7 @@ function renderQuoteBlock(b, txt, _side) {
     let imgMatch = txt.match(/\[图片消息：(.*?)\]/);
     if(imgMatch) {
         let _imgUrl = imgMatch[1];
-                // 恢复正常渲染，直接显示图片和表情包
+        // 恢复正常渲染，直接显示图片和表情包
         if(_imgUrl.match(/^https?:\/\//)) {
             b.innerHTML = `<img src="${_imgUrl}" style="max-width: 200px; border-radius: 12px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">`;
         } else {
@@ -6309,7 +6405,7 @@ function renderLinkCard(b, txt, side) {
     let _linkFullEnc = encodeURIComponent(fullContent || preview);
     let _linkTitleEnc = encodeURIComponent(title);
     let _linkPlatformEnc = encodeURIComponent(platform);
-    b.innerHTML = `<div style="width:220px;border-radius:14px;overflow:hidden;background:#fff;border:1px solid ${theme.border};box-shadow:0 2px 12px rgba(0,0,0,0.08);cursor:pointer;" onclick="(function(){let p=decodeURIComponent('${_linkPlatformEnc}'),t=decodeURIComponent('${_linkTitleEnc}'),c=decodeURIComponent('${_linkFullEnc}');showCustomText('【'+p+'】'+t+'\\n\\n'+c);})()">
+    b.innerHTML = `<div style="width:220px;border-radius:14px;overflow:hidden;background:#fff;border:1px solid ${theme.border};box-shadow:0 2px 12px rgba(0,0,0,0.08);cursor:pointer;" onclick="(function(){let p=decodeURIComponent('${_linkPlatformEnc}'),t=decodeURIComponent('${_linkTitleEnc}'),c=decodeURIComponent('${_linkFullEnc}');showLinkReader(p,t,c);})()">
         <div style="padding:12px 13px 10px;background:${theme.bg};">
             <div style="display:flex;align-items:flex-start;gap:9px;">
                 <div style="width:36px;height:36px;border-radius:8px;background:${theme.logoBg};display:flex;align-items:center;justify-content:center;flex-shrink:0;color:${theme.logoColor};font-size:${logoIsEmoji?'18px':'14px'};font-weight:bold;">${theme.logo}</div>
