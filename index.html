@@ -683,7 +683,13 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
                     <div class=menu-icon-text>代付</div>
                 </div>
 
- 
+                <div id=btnShareLink class=menu-icon-btn>
+                    <div class=menu-icon-svg style="background:#e8f4fd;">
+                        <svg width=20 height=20 viewBox="0 0 24 24" fill=none stroke=#1a73e8 stroke-width=2 stroke-linecap=round stroke-linejoin=round><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                    </div>
+                    <div class=menu-icon-text>分享链接</div>
+                </div>
+
             </div>
         </div>
 
@@ -1254,12 +1260,15 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
                     <input type=checkbox id=groupCustomTimeOn style="width:20px;height:20px;" onchange="document.getElementById('groupCustomTimePanel').style.display=this.checked?'flex':'none'">
                 </div>
                 <div id=groupCustomTimePanel style="display:none;flex-direction:column;gap:8px;margin-top:10px;background:#fcfcfc;padding:12px;border-radius:10px;border:1px solid #eee;">
-                    <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
-                        <input type=number id=groupCtYear style="width:60px;padding:6px;border:1.5px solid #e0d8ff;border-radius:8px;font-size:12px;text-align:center;outline:none;"><span style="font-size:12px;">年</span>
-                        <select id=groupCtMonth style="padding:6px;border:1.5px solid #e0d8ff;border-radius:8px;font-size:12px;outline:none;"><option>1月</option><option>2月</option><option>3月</option><option>4月</option><option>5月</option><option>6月</option><option>7月</option><option>8月</option><option>9月</option><option>10月</option><option>11月</option><option>12月</option></select>
-                        <input type=number id=groupCtDay style="width:50px;padding:6px;border:1.5px solid #e0d8ff;border-radius:8px;font-size:12px;text-align:center;outline:none;"><span style="font-size:12px;">日</span>
-                        <input type=number id=groupCtHour style="width:45px;padding:6px;border:1.5px solid #e0d8ff;border-radius:8px;font-size:12px;text-align:center;outline:none;"><span style="font-size:12px;">:</span>
-                        <input type=number id=groupCtMin style="width:45px;padding:6px;border:1.5px solid #e0d8ff;border-radius:8px;font-size:12px;text-align:center;outline:none;">
+                    <div style="display:flex;gap:5px;align-items:center;">
+                        <input type="number" id="groupCtYear" class="input-field" style="width:60px;flex-shrink:0;padding:6px;font-size:12px;text-align:center;"><span style="font-size:12px;color:#666;">年</span>
+                        <select id=groupCtMonth class=input-field style="flex:1;padding:6px;font-size:12px;"></select><span style="font-size:12px;color:#666;">月</span>
+                        <select id=groupCtDay class=input-field style="flex:1;padding:6px;font-size:12px;"></select><span style="font-size:12px;color:#666;">日</span>
+                    </div>
+                    <div style="display:flex;gap:5px;align-items:center;margin-top:5px;">
+                        <select id=groupCtHour class=input-field style="flex:1;padding:6px;font-size:12px;"></select><span style="font-size:12px;color:#666;">时</span>
+                        <select id=groupCtMin class=input-field style="flex:1;padding:6px;font-size:12px;"></select><span style="font-size:12px;color:#666;">分</span>
+                        <span id=groupCtWeekday style="font-size:12px;color:#fd79a8;font-weight:bold;margin-left:10px;min-width:40px;">星期几</span>
                     </div>
                 </div>
             </div>
@@ -2560,6 +2569,35 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
                 <div style="display:flex;gap:10px;">
                     <button id=btnCharPayRefuse style="flex:1;padding:12px;border-radius:25px;border:none;background:#f5f5f5;color:#666;font-size:14px;font-weight:bold;cursor:pointer;">狠心拒绝</button>
                     <button id=btnCharPayConfirm style="flex:1;padding:12px;border-radius:25px;border:none;background:linear-gradient(135deg,#6c5ce7,#a29bfe);color:#fff;font-size:14px;font-weight:bold;cursor:pointer;">帮TA付款 💳</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 分享链接弹窗 ===== -->
+    <div id=shareLinkModal style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:1100;background:rgba(0,0,0,0.45);backdrop-filter:blur(6px);align-items:center;justify-content:center;">
+        <div style="width:88%;max-width:340px;background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,0.22);">
+            <div style="background:linear-gradient(135deg,#1a73e8,#4285f4);padding:20px 20px 16px;text-align:center;color:#fff;">
+                <div style="font-size:28px;margin-bottom:4px;">🔗</div>
+                <div style="font-weight:bold;font-size:15px;">分享链接</div>
+                <div style="font-size:11px;opacity:0.85;margin-top:3px;">发送真实感链接卡片，TA会收到内容摘要</div>
+            </div>
+            <div style="padding:18px;display:flex;flex-direction:column;gap:11px;">
+                <!-- 来源平台 -->
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <svg width=15 height=15 viewBox="0 0 24 24" fill=none stroke=#1a73e8 stroke-width=2><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                    <input id=slPlatform list=slPlatformList placeholder="来源，例如：小红书、知乎、B站、微博" style="flex:1;padding:9px 12px;border:1.5px solid #e3f2fd;border-radius:10px;font-size:12px;box-sizing:border-box;outline:none;color:#333;"/>
+                    <datalist id=slPlatformList>
+                        <option value="小红书"><option value="知乎"><option value="微博"><option value="B站"><option value="百度贴吧"><option value="公众号"><option value="抖音">
+                    </datalist>
+                </div>
+                <!-- 标题 -->
+                <input id=slTitle placeholder="文章标题（醒目一点！例如：真的巨好吃！低卡减脂餐做法）" style="width:100%;padding:9px 12px;border:1.5px solid #e3f2fd;border-radius:10px;font-size:13px;font-weight:bold;box-sizing:border-box;outline:none;color:#333;"/>
+                <!-- 摘要 -->
+                <textarea id=slSummary rows=4 placeholder="悄悄写下内容重点或金句～这段会直接传入对方脑海，让TA精准接上你的话茬 (ฅ´ω`ฅ)" style="width:100%;padding:9px 12px;border:1.5px solid #e3f2fd;border-radius:10px;font-size:12px;resize:none;box-sizing:border-box;outline:none;color:#333;line-height:1.6;"></textarea>
+                <div style="display:flex;gap:10px;margin-top:2px;">
+                    <button id=btnShareLinkCancel style="flex:1;padding:11px;border-radius:22px;border:none;background:#f5f5f5;color:#666;font-size:13px;font-weight:bold;cursor:pointer;">取消</button>
+                    <button id=btnShareLinkConfirm style="flex:1;padding:11px;border-radius:22px;border:none;background:linear-gradient(135deg,#1a73e8,#4285f4);color:#fff;font-size:13px;font-weight:bold;cursor:pointer;">发送链接 🔗</button>
                 </div>
             </div>
         </div>
@@ -4904,7 +4942,7 @@ function redrawChat() {
             if(!out) return; // 整条消息如果全是格式就跳过
             
             let lns = out.split(/\n+/).filter(x => x.trim() !== ``);
-            if(lns.length === 1 && out.length > 30 && !out.includes(`[图片消息`) && !out.includes(`[定位消息`) && !out.includes(`[实时位置`) && !out.includes(`[外卖消息`) && !out.includes(`[代付消息`)) { 
+            if(lns.length === 1 && out.length > 30 && !out.includes(`[图片消息`) && !out.includes(`[定位消息`) && !out.includes(`[实时位置`) && !out.includes(`[外卖消息`) && !out.includes(`[代付消息`) && !out.includes(`[链接消息`)) { 
                 lns = out.replace(/([。！？!?])/g, `$1\n`).split(/\n+/).filter(x => x.trim() !== ``); 
             }
             
@@ -5646,7 +5684,7 @@ let hasAccept = txt.includes(`[收取转账]`);
             }
             
                                         let lns = out.split(/\n+/).filter(x => x.trim() !== ``);
-                if(lns.length === 1 && out.length > 30 && !out.includes(`[图片消息`) && !out.includes(`[定位消息`) && !out.includes(`[实时位置`) && !out.includes(`[外卖消息`) && !out.includes(`[代付消息`)) { 
+                if(lns.length === 1 && out.length > 30 && !out.includes(`[图片消息`) && !out.includes(`[定位消息`) && !out.includes(`[实时位置`) && !out.includes(`[外卖消息`) && !out.includes(`[代付消息`) && !out.includes(`[链接消息`)) { 
                     lns = out.replace(/([。！？!?])/g, `$1\n`).split(/\n+/).filter(x => x.trim() !== ``); 
                 }
                 
@@ -5705,6 +5743,14 @@ let hasAccept = txt.includes(`[收取转账]`);
 
 function renderQuoteBlock(b, txt, _side) {
     b.dataset.raw = txt;
+    // 抑制AI功能指令标签（这些只应渲染为卡片，不应渲染为文字气泡）
+    if(txt && (txt.startsWith('[发送外卖：') || txt.startsWith('[发起代付：'))) {
+        b.dataset.suppress = '1'; return;
+    }
+    // [同意代付] 或 整行只有这个标签（去除前后空白）
+    if(txt && /^\[同意代付\]$/.test(txt.trim())) {
+        b.dataset.suppress = '1'; return;
+    }
     // 定位卡片检测
     if(txt && (txt.startsWith('[定位消息：') || txt.startsWith('[实时位置：'))) {
         renderLocationCard(b, txt, _side || 'l');
@@ -5718,6 +5764,11 @@ function renderQuoteBlock(b, txt, _side) {
     // 代付卡片检测
     if(txt && txt.startsWith('[代付消息：')) {
         renderPayCard(b, txt, _side || 'l');
+        return;
+    }
+    // 链接卡片检测
+    if(txt && txt.startsWith('[链接消息：')) {
+        renderLinkCard(b, txt, _side || 'r');
         return;
     }
         let transferMatch = txt.match(/^\[转账消息：([\d\.]+)\|(.*?)\|(未收款|已收款|对方已拒绝收款|已拒绝收款)\]$/);
@@ -6211,6 +6262,46 @@ function renderPayCard(b, txt, side) {
     b.style.cssText += 'background:transparent;box-shadow:none;padding:0;border:none;';
 }
 
+// ===== 链接卡片渲染 =====
+// 格式: [链接消息：平台|标题|摘要前两行预览]
+function renderLinkCard(b, txt, side) {
+    let inner = txt.replace(/^\[链接消息：/, '').replace(/\]$/, '');
+    let parts = inner.split('|');
+    let platform = parts[0] || '网页';
+    let title = parts[1] || '分享的链接';
+    let preview = parts[2] || '';
+
+    // 平台主题色和图标
+    const platformThemes = {
+        '小红书': { color:'#ff2442', bg:'#fff0f2', logo:'薯', logoBg:'#ff2442', logoColor:'#fff', border:'#ffc0cb' },
+        '知乎':   { color:'#0084ff', bg:'#f0f8ff', logo:'知', logoBg:'#0084ff', logoColor:'#fff', border:'#b3d9ff' },
+        '微博':   { color:'#e6162d', bg:'#fff5f5', logo:'微', logoBg:'#e6162d', logoColor:'#fff', border:'#ffcccc' },
+        'B站':    { color:'#00a1d6', bg:'#f0fbff', logo:'B', logoBg:'#00a1d6', logoColor:'#fff', border:'#b3eaff' },
+        '百度贴吧':{ color:'#4e6ef2', bg:'#f4f5ff', logo:'贴', logoBg:'#4e6ef2', logoColor:'#fff', border:'#c5caf9' },
+        '公众号': { color:'#07c160', bg:'#f0fff7', logo:'公', logoBg:'#07c160', logoColor:'#fff', border:'#b3f0d2' },
+        '抖音':   { color:'#161823', bg:'#f5f5f5', logo:'抖', logoBg:'#161823', logoColor:'#fff', border:'#ddd' },
+    };
+    let theme = platformThemes[platform] || { color:'#1a73e8', bg:'#f0f6ff', logo:'🔗', logoBg:'#1a73e8', logoColor:'#fff', border:'#c5deff' };
+    let logoIsEmoji = theme.logo === '🔗';
+
+    b.innerHTML = `<div style="width:220px;border-radius:14px;overflow:hidden;background:#fff;border:1px solid ${theme.border};box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+        <div style="padding:12px 13px 10px;background:${theme.bg};">
+            <div style="display:flex;align-items:flex-start;gap:9px;">
+                <div style="width:36px;height:36px;border-radius:8px;background:${theme.logoBg};display:flex;align-items:center;justify-content:center;flex-shrink:0;color:${theme.logoColor};font-size:${logoIsEmoji?'18px':'14px'};font-weight:bold;">${theme.logo}</div>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-size:13px;font-weight:bold;color:#222;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${title}</div>
+                    ${preview ? `<div style="font-size:11px;color:#888;margin-top:4px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${preview}</div>` : ''}
+                </div>
+            </div>
+        </div>
+        <div style="padding:6px 13px;background:#f9f9f9;border-top:1px solid ${theme.border};display:flex;align-items:center;gap:5px;">
+            <svg width=11 height=11 viewBox="0 0 24 24" fill=none stroke="${theme.color}" stroke-width=2.5><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            <span style="font-size:10px;color:${theme.color};font-weight:bold;">${platform}</span>
+        </div>
+    </div>`;
+    b.style.cssText += 'background:transparent;box-shadow:none;padding:0;border:none;';
+}
+
 function renderLocationCard(b, txt, side) {
     // 格式: [定位消息：地点名称] 或 [实时位置：地点名称]
     let isLive = txt.startsWith('[实时位置：');
@@ -6302,7 +6393,9 @@ function mkBubSync(txt, side) {
     let row = document.createElement(`div`);
     row.className = `msg-row ` + (side===`l`?`row-left`:`row-right`);
     let b = document.createElement(`div`); b.className = `bubble ` + (side===`l`?`bub-left`:`bub-right`); 
-    renderQuoteBlock(b, txt, side); bindPress(b);
+    renderQuoteBlock(b, txt, side);
+    if(b.dataset.suppress) return; // 抑制AI命令标签，不渲染为文字气泡
+    bindPress(b);
     if(side===`l`) {
         let a = document.createElement(`div`); a.className = `ava-sm ava-l`;
         let img = window.currentLoadedAiI || ``;
@@ -13109,13 +13202,35 @@ window.openGroupSettings = async function(gid) {
     if($(`groupCustomTimeOn`)) {
         $(`groupCustomTimeOn`).checked = !!g.customTime;
         if($(`groupCustomTimePanel`)) $(`groupCustomTimePanel`).style.display = g.customTime ? `flex` : `none`;
+        // 初始化群聊时间下拉（仿好友设置）
+        (function initGroupTimeDropdowns() {
+            let gy=$(`groupCtYear`),gm=$(`groupCtMonth`),gd=$(`groupCtDay`),gh=$(`groupCtHour`),gmin=$(`groupCtMin`);
+            if(!gy||gm.options.length>0) return; // 已初始化过
+            for(let i=1;i<=12;i++) gm.add(new Option(i+'月',i));
+            for(let i=1;i<=31;i++) gd.add(new Option(i,i));
+            for(let i=0;i<=23;i++) gh.add(new Option(i,i));
+            for(let i=0;i<=59;i++) gmin.add(new Option(i,i));
+            let now = new Date();
+            gy.value = now.getFullYear(); gm.value = now.getMonth()+1;
+            gd.value = now.getDate(); gh.value = now.getHours(); gmin.value = now.getMinutes();
+            function updateGroupWeekday(){
+                let y=parseInt(gy.value)||2024,m=parseInt(gm.value)-1,d=parseInt(gd.value);
+                let dt=new Date(); dt.setFullYear(y,m,d);
+                let days=[`星期日`,`星期一`,`星期二`,`星期三`,`星期四`,`星期五`,`星期六`];
+                if($(`groupCtWeekday`)) $(`groupCtWeekday`).innerText=days[dt.getDay()];
+            }
+            gy.oninput=updateGroupWeekday; gm.onchange=updateGroupWeekday; gd.onchange=updateGroupWeekday;
+            updateGroupWeekday();
+        })();
         if(g.customTime) {
             let d = new Date(g.customTime);
             if($(`groupCtYear`)) $(`groupCtYear`).value = d.getFullYear();
-            if($(`groupCtMonth`)) $(`groupCtMonth`).selectedIndex = d.getMonth();
+            if($(`groupCtMonth`)) $(`groupCtMonth`).value = d.getMonth()+1;
             if($(`groupCtDay`)) $(`groupCtDay`).value = d.getDate();
             if($(`groupCtHour`)) $(`groupCtHour`).value = d.getHours();
             if($(`groupCtMin`)) $(`groupCtMin`).value = d.getMinutes();
+            // 更新星期显示
+            (function(){ let days=[`星期日`,`星期一`,`星期二`,`星期三`,`星期四`,`星期五`,`星期六`]; let dt=new Date(g.customTime); if($(`groupCtWeekday`)) $(`groupCtWeekday`).innerText=days[dt.getDay()]; })();
         }
     }
 
@@ -13145,7 +13260,7 @@ if($(`btnSaveGroupSettings`)) {
         // 时间设置
         g.timeOn = $(`groupTimeOn`)?.checked !== false;
         if($(`groupCustomTimeOn`)?.checked && $(`groupCtYear`)?.value) {
-            let yr=$(`groupCtYear`).value, mo=($(`groupCtMonth`).selectedIndex||0)+1, d=$(`groupCtDay`).value||1, h=$(`groupCtHour`).value||0, min=$(`groupCtMin`).value||0;
+            let yr=$(`groupCtYear`).value, mo=$(`groupCtMonth`).value||1, d=$(`groupCtDay`).value||1, h=$(`groupCtHour`).value||0, min=$(`groupCtMin`).value||0;
             g.customTime = new Date(`${yr}-${String(mo).padStart(2,`0`)}-${String(d).padStart(2,`0`)}T${String(h).padStart(2,`0`)}:${String(min).padStart(2,`0`)}:00`).getTime();
         } else {
             g.customTime = null;
@@ -14872,6 +14987,59 @@ window._userRefuseCharPay = function(btn) {
         }catch(e){}
     }, 700);
 };
+
+// ==========================================
+// ===== 分享链接功能 =====
+// ==========================================
+if($('btnShareLink')) {
+    $('btnShareLink').onclick = () => {
+        toggleMenuDrawer(false);
+        if($('slPlatform')) $('slPlatform').value = '';
+        if($('slTitle')) $('slTitle').value = '';
+        if($('slSummary')) $('slSummary').value = '';
+        let m = $('shareLinkModal'); if(m) m.style.display = 'flex';
+    };
+}
+if($('btnShareLinkCancel')) {
+    $('btnShareLinkCancel').onclick = () => { $('shareLinkModal').style.display = 'none'; };
+}
+if($('shareLinkModal')) {
+    $('shareLinkModal').onclick = e => { if(e.target === $('shareLinkModal')) $('shareLinkModal').style.display = 'none'; };
+}
+if($('btnShareLinkConfirm')) {
+    $('btnShareLinkConfirm').onclick = () => {
+        let platform = ($('slPlatform')?.value || '').trim() || '网页';
+        let title = ($('slTitle')?.value || '').trim();
+        let summary = ($('slSummary')?.value || '').trim();
+        if(!title) { alert('请填写链接标题！'); return; }
+        $('shareLinkModal').style.display = 'none';
+
+        // 取前两行作为卡片预览
+        let previewLines = summary.split('\n').filter(l => l.trim()).slice(0, 2).join(' ');
+        let preview = previewLines.length > 60 ? previewLines.slice(0, 60) + '…' : previewLines;
+
+        // 构建链接消息（展示在聊天界面）
+        let safeTitle = title.replace(/\|/g, '｜').replace(/\]/g, '】');
+        let safePreview = preview.replace(/\|/g, '｜').replace(/\]/g, '】');
+        let linkMsg = `[链接消息：${platform}|${safeTitle}|${safePreview}]`;
+
+        // 渲染链接卡片（user侧）
+        mkBub(linkMsg, 'r');
+        history.push({ role: 'user', content: linkMsg, ts: Date.now() });
+
+        // 悄悄把完整摘要注入为系统感知消息（AI能看到，但不渲染为气泡）
+        if(summary) {
+            let charName = $('cfgName')?.value || '对方';
+            let sysMsg = `[系统]：${history.filter(h=>h.role==='user'&&!h._sys).length > 0 ? '我' : '玩家'}刚刚给你分享了一篇来自【${platform}】的文章，标题是《${title}》。文章核心内容如下：
+${summary}
+请基于这些内容自然地与玩家交流，就像你真的点开了这个链接。`;
+            history.push({ role: 'user', content: sysMsg, _sys: true, ts: Date.now() });
+        }
+
+        ls.setItem('chatHistory', JSON.stringify(history));
+        updateListPreview();
+    };
+}
 
 // 拦截AI回复中的主动发起通话指令（char主动打电话）
 const _origMkBubForCall = mkBub;
