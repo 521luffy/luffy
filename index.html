@@ -2676,8 +2676,7 @@ window.showLinkReader = function(platform, title, fullContent) {
 
     body.innerHTML = '<h2 style="font-size:22px;font-weight:900;color:#111;text-align:center;line-height:1.45;margin:0 0 20px;letter-spacing:-0.5px;font-family:-apple-system,BlinkMacSystemFont,PingFang SC,Noto Serif SC,serif;">'+safeTitle+'</h2>'
         + '<div style="position:relative;height:1px;margin:0 0 22px;background:linear-gradient(to right,transparent,'+t.color+'66,transparent);"><div style="position:absolute;inset:0;background:repeating-linear-gradient(to right,transparent,transparent 6px,rgba(255,255,255,0.8) 6px,rgba(255,255,255,0.8) 10px);"></div></div>'
-        + '<div style="font-size:15.5px;color:#4a433c;line-height:1.85;font-family:-apple-system,BlinkMacSystemFont,PingFang SC,sans-serif;letter-spacing:0.2px;word-break:break-word;">'+safeContent+'</div>'
-        + '<div style="margin-top:40px;text-align:center;padding-bottom:8px;"><button id="_lr_orig" style="background:rgba(0,0,0,0.05);border:1px solid rgba(0,0,0,0.09);border-radius:22px;padding:10px 28px;font-size:13px;color:#aaa;cursor:pointer;font-family:inherit;letter-spacing:0.5px;">查看完整原文</button></div>';
+        + '<div style="font-size:15.5px;color:#4a433c;line-height:1.85;font-family:-apple-system,BlinkMacSystemFont,PingFang SC,sans-serif;letter-spacing:0.2px;word-break:break-word;padding-bottom:32px;">'+safeContent+'<span id="_lr_orig" style="display:inline;margin-left:6px;font-size:13px;color:'+t.color+';opacity:0.75;cursor:pointer;font-family:inherit;letter-spacing:0.3px;white-space:nowrap;font-weight:500;">查看完整原文 &rsaquo;</span></div>';
 
     pn.appendChild(pill);
     pn.appendChild(nav);
@@ -5864,6 +5863,7 @@ function renderQuoteBlock(b, txt, _side) {
     // 定位卡片检测
     if(txt && (txt.startsWith('[定位消息：') || txt.startsWith('[实时位置：'))) {
         renderLocationCard(b, txt, _side || 'l');
+        bindPress(b);
         return;
     }
     // 外卖卡片检测
@@ -12846,16 +12846,26 @@ if($(`btnGenCharMoments`)) $(`btnGenCharMoments`).onclick = async () => {
             let relRaw = relCharId.startsWith(`char_`) ? relCharId.slice(5) : relCharId;
             try {
                 let h = await localforage.getItem(`chatHistory_`+relRaw);
+                if(!h) h = await localforage.getItem(`chatHistory_`+String(relRaw));
+                if(!h && relRaw === `default`) h = await localforage.getItem(`chatHistory`);
                 if(!h) h = originalGetItem.call(ls, `chatHistory_`+relRaw);
-                if(h) recentHist = typeof h===`string` ? JSON.parse(h) : h;
+                if(h) recentHist = typeof h===`string` ? JSON.parse(h) : (Array.isArray(h) ? h : []);
             } catch(e) {}
         } else {
             charAP = (originalGetItem.call(ls, `cAP_`+rawId) || originalGetItem.call(ls, `cAP`) || ``).slice(0,400);
             charRel = originalGetItem.call(ls, `cR_`+rawId) || ``;
             try {
                 let h = await localforage.getItem(`chatHistory_`+rawId);
+                // 如果 localforage 无数据，用多种方式兜底
+                if(!h) h = await localforage.getItem(`chatHistory_`+String(rawId));
+                if(!h && rawId === `default`) h = await localforage.getItem(`chatHistory`);
                 if(!h) h = originalGetItem.call(ls, `chatHistory_`+rawId);
-                if(h) recentHist = typeof h===`string` ? JSON.parse(h) : h;
+                // 若当前正在该角色聊天室，直接用内存中的 history
+                if(!h && (rawId === currentChatId || String(rawId) === String(currentChatId))) {
+                    if(typeof history !== `undefined` && history.length) recentHist = history;
+                } else if(h) {
+                    recentHist = typeof h===`string` ? JSON.parse(h) : (Array.isArray(h) ? h : []);
+                }
             } catch(e) {}
         }
 
@@ -14724,26 +14734,6 @@ function _startLiveLocationShare(locText) {
     history.push({role:'user', content: msgContent, ts: Date.now()});
     ls.setItem('chatHistory', JSON.stringify(history));
     updateListPreview();
-
-    // AI 回应
-    setTimeout(async () => {
-        let pxy = $('apiPxy').value, key = $('apiK').value, mod = $('apiMod').value;
-        if(!pxy || !key || !mod) return;
-        if(!pxy.includes('chat/completions')) pxy = pxy.replace(/\/$/, '') + '/chat/completions';
-        let charName = $('cfgName')?.value || '对方';
-        let myName = $('cfgMyName')?.value || '你';
-        let charAP = $('cfgAiP')?.value || '';
-        let tp = parseFloat(originalGetItem.call(ls,'temp')||'0.8')||0.8;
-        let sys = `你是${charName}。${charAP ? '性格设定：' + charAP : ''}
-${myName}刚刚开启了与你的实时位置共享，对方目前在：${locText}。
-请根据你的性格对这件事作出第一反应（可以是好奇、甜蜜、查岗、担心等情绪）。直接输出对话内容，控制在80字以内，不加任何前缀。`;
-        try {
-            let res = await fetch(pxy, {method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:300,messages:[{role:'user',content:sys}]})});
-            let dat = await res.json();
-            let reply = (dat.choices?.[0]?.message?.content||'').trim();
-            if(reply) { history.push({role:'assistant',content:reply,ts:Date.now()}); mkBub(reply,'l'); updateListPreview(); }
-        } catch(e) {}
-    }, 800);
 }
 
 // 发送定位
