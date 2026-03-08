@@ -102,6 +102,20 @@ z-index: 100; overflow: hidden; }
 .bub-left { background-color: rgba(255,255,255,0.95); color: black; border-top-left-radius: 4px; border: 1px solid #eeeeee; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
 .bub-right { background-color: #6c5ce7; color: white; border-top-right-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 .quote-box { display: none; padding: 8px 15px; background: rgba(238, 242, 255, 0.95); color: #6c5ce7; font-size: 12px; border-left: 3px solid #6c5ce7; margin: 0 15px 5px 15px; border-radius: 4px 8px 8px 4px; position: relative; flex-shrink: 0; backdrop-filter: blur(5px); }
+/* ===== 定位卡片 ===== */
+@keyframes locPinFloat { 0%,100%{transform:translateY(0px);} 50%{transform:translateY(-5px);} }
+@keyframes livePulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:0.4;transform:scale(0.7);} }
+.loc-card { width:220px;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.13);cursor:pointer;background:#fff;border:1px solid #e8f5e9;transition:transform 0.2s; }
+.loc-card:active{transform:scale(0.97);}
+.loc-map-area { height:130px;position:relative;overflow:hidden; background:linear-gradient(135deg,#f0faf4,#e8f8ee); display:flex;align-items:center;justify-content:center; }
+.loc-map-grid { position:absolute;top:0;left:0;width:100%;height:100%;background-image:linear-gradient(rgba(46,204,113,0.08) 1px,transparent 1px),linear-gradient(90deg,rgba(46,204,113,0.08) 1px,transparent 1px);background-size:20px 20px; }
+.loc-pin-user { font-size:36px;position:relative;z-index:2;animation:locPinFloat 2.5s ease-in-out infinite; filter:drop-shadow(0 4px 8px rgba(46,204,113,0.4)); }
+.loc-pin-char { font-size:36px;position:relative;z-index:2;animation:locPinFloat 2.5s ease-in-out infinite 0.5s; filter:drop-shadow(0 4px 8px rgba(255,107,129,0.4)); }
+.loc-info-area { padding:12px 14px 14px;background:#fff; }
+.loc-place-name { font-size:14px;font-weight:bold;color:#222;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.loc-place-sub { font-size:11px;color:#aaa; }
+.live-loc-banner { display:none;padding:8px 15px;background:rgba(25,118,210,0.1);border-bottom:1px solid rgba(25,118,210,0.15);flex-shrink:0;align-items:center;gap:8px;justify-content:center; }
+.live-loc-dot { width:8px;height:8px;border-radius:50%;background:#1976d2;animation:livePulse 1.4s ease-in-out infinite; flex-shrink:0; }
 .quote-txt { margin-right: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .quote-close { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; font-weight: bold; font-size: 16px; }
 .chat-input { box-sizing: border-box; width: 100%; background-color: rgba(255,255,255,0.95); padding: 8px 10px 25px 10px; display: flex; gap: 6px; align-items: center; flex-shrink: 0; border-top: 1px solid #eeeeee; }
@@ -539,6 +553,11 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
             <span id=btnRoomSet class=settings-btn>⚙️</span>
         </div>
 
+        <div id=liveLocBanner class=live-loc-banner>
+            <div class=live-loc-dot></div>
+            <span id=liveLocBannerText style="font-size:12px;color:#1976d2;font-weight:bold;">正在共享实时位置</span>
+            <span id=btnStopLiveLoc style="margin-left:auto;font-size:11px;color:#e53935;cursor:pointer;padding:2px 8px;border-radius:10px;background:rgba(229,57,53,0.08);">停止</span>
+        </div>
         <div id=msgs class=chat-msgs></div>
         
         <div id=quoteBox class=quote-box>
@@ -612,6 +631,20 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
                         <svg width=20 height=20 viewBox="0 0 24 24" fill=none stroke=#6c5ce7 stroke-width=2 stroke-linecap=round stroke-linejoin=round><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
                     </div>
                     <div class=menu-icon-text>视频通话</div>
+                </div>
+
+                <div id=btnSendLocation class=menu-icon-btn>
+                    <div class=menu-icon-svg style="background:#e8f5e9;">
+                        <svg width=20 height=20 viewBox="0 0 24 24" fill=none stroke=#2ecc71 stroke-width=2 stroke-linecap=round stroke-linejoin=round><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    </div>
+                    <div class=menu-icon-text>定位</div>
+                </div>
+
+                <div id=btnShareLiveLocation class=menu-icon-btn>
+                    <div class=menu-icon-svg style="background:#e3f2fd;">
+                        <svg width=20 height=20 viewBox="0 0 24 24" fill=none stroke=#1976d2 stroke-width=2 stroke-linecap=round stroke-linejoin=round><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/><path d="M17 10h4M3 10h4M12 3V7M12 17v-1" stroke-dasharray="2 2"/></svg>
+                    </div>
+                    <div class=menu-icon-text>实时位置</div>
                 </div>
 
  
@@ -2371,6 +2404,67 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         </div>
     </div>
 
+    <!-- 定位输入弹窗 -->
+    <div id=locationInputModal class=modal-base style="z-index:1100;">
+        <div style="width:85%;max-width:320px;background:#fff;border-radius:20px;padding:25px;box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+            <div style="text-align:center;margin-bottom:18px;">
+                <div style="width:50px;height:50px;background:linear-gradient(135deg,#e8f5e9,#c8e6c9);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;">
+                    <svg width=24 height=24 viewBox="0 0 24 24" fill=none stroke=#2ecc71 stroke-width=2 stroke-linecap=round stroke-linejoin=round><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                </div>
+                <div style="font-weight:bold;font-size:16px;color:#333;">发送定位</div>
+                <div style="font-size:12px;color:#999;margin-top:4px;">填写你所处的环境</div>
+            </div>
+            <textarea id=locationInputText rows=3 placeholder="例如：下着大雨的公交站、喧闹的酒吧、安静的图书馆..." style="width:100%;padding:12px;border:1.5px solid #e0f2e9;border-radius:12px;font-size:13px;resize:none;outline:none;box-sizing:border-box;color:#333;font-family:sans-serif;line-height:1.6;"></textarea>
+            <div style="display:flex;gap:12px;margin-top:15px;">
+                <button id=btnLocationCancel style="flex:1;padding:12px;border-radius:25px;border:none;background:#f5f5f5;color:#666;font-size:14px;font-weight:bold;cursor:pointer;">取消</button>
+                <button id=btnLocationConfirm style="flex:1;padding:12px;border-radius:25px;border:none;background:linear-gradient(135deg,#2ecc71,#27ae60);color:#fff;font-size:14px;font-weight:bold;cursor:pointer;">发送</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 实时位置输入弹窗 -->
+    <div id=liveLocationModal class=modal-base style="z-index:1100;">
+        <div style="width:85%;max-width:320px;background:#fff;border-radius:20px;padding:25px;box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+            <div style="text-align:center;margin-bottom:18px;">
+                <div style="width:50px;height:50px;background:linear-gradient(135deg,#e3f2fd,#bbdefb);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;">
+                    <svg width=24 height=24 viewBox="0 0 24 24" fill=none stroke=#1976d2 stroke-width=2 stroke-linecap=round stroke-linejoin=round><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                </div>
+                <div style="font-weight:bold;font-size:16px;color:#333;">共享实时位置</div>
+                <div style="font-size:12px;color:#999;margin-top:4px;">告诉对方你的实时所在</div>
+            </div>
+            <textarea id=liveLocationText rows=3 placeholder="例如：我在学校图书馆、在家里、在公司..." style="width:100%;padding:12px;border:1.5px solid #e3f2fd;border-radius:12px;font-size:13px;resize:none;outline:none;box-sizing:border-box;color:#333;font-family:sans-serif;line-height:1.6;"></textarea>
+            <div style="display:flex;gap:12px;margin-top:15px;">
+                <button id=btnLiveLocationCancel style="flex:1;padding:12px;border-radius:25px;border:none;background:#f5f5f5;color:#666;font-size:14px;font-weight:bold;cursor:pointer;">取消</button>
+                <button id=btnLiveLocationConfirm style="flex:1;padding:12px;border-radius:25px;border:none;background:linear-gradient(135deg,#1976d2,#1565c0);color:#fff;font-size:14px;font-weight:bold;cursor:pointer;">开始共享</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 雷达全屏弹窗 -->
+    <div id=radarModal style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:2000;background:rgba(15,15,30,0.92);backdrop-filter:blur(12px);align-items:center;justify-content:center;flex-direction:column;">
+        <style>
+        @keyframes radarPulse { 0%{transform:scale(0.5);opacity:0.8;} 100%{transform:scale(3.5);opacity:0;} }
+        @keyframes pinFloat { 0%,100%{transform:translateY(0px);} 50%{transform:translateY(-8px);} }
+        @keyframes radarScan { 0%{transform:rotate(0deg);} 100%{transform:rotate(360deg);} }
+        @keyframes dotBlink { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:0.4;transform:scale(0.7);} }
+        </style>
+        <div style="position:relative;width:260px;height:260px;">
+            <!-- 雷达波纹 -->
+            <div style="position:absolute;top:50%;left:50%;width:60px;height:60px;border-radius:50%;border:2px solid rgba(100,220,150,0.5);transform:translate(-50%,-50%);animation:radarPulse 2s ease-out infinite 0s;"></div>
+            <div style="position:absolute;top:50%;left:50%;width:60px;height:60px;border-radius:50%;border:2px solid rgba(100,220,150,0.4);transform:translate(-50%,-50%);animation:radarPulse 2s ease-out infinite 0.6s;"></div>
+            <div style="position:absolute;top:50%;left:50%;width:60px;height:60px;border-radius:50%;border:2px solid rgba(100,220,150,0.3);transform:translate(-50%,-50%);animation:radarPulse 2s ease-out infinite 1.2s;"></div>
+            <!-- 雷达扫描线 -->
+            <div style="position:absolute;top:50%;left:50%;width:120px;height:2px;background:linear-gradient(90deg,rgba(100,220,150,0),rgba(100,220,150,0.8));transform-origin:left center;transform:translate(0,-50%);animation:radarScan 3s linear infinite;border-radius:2px;"></div>
+            <!-- 主头像 -->
+            <div id=radarAvatar style="position:absolute;top:50%;left:50%;width:64px;height:64px;border-radius:50%;background:#2ecc71 center/cover;border:3px solid #fff;box-shadow:0 0 20px rgba(46,204,113,0.6);transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;font-size:28px;animation:pinFloat 2.5s ease-in-out infinite;z-index:5;overflow:hidden;">👤</div>
+            <!-- 对方光点 -->
+            <div id=radarDot style="position:absolute;top:30%;left:68%;width:36px;height:36px;border-radius:50%;background:#ff6b81 center/cover;border:2px solid #fff;box-shadow:0 0 15px rgba(255,107,129,0.8);display:flex;align-items:center;justify-content:center;font-size:16px;animation:dotBlink 1.8s ease-in-out infinite;z-index:5;overflow:hidden;">👤</div>
+        </div>
+        <div id=radarLocationName style="color:#e0ffe0;font-size:16px;font-weight:bold;margin-top:24px;letter-spacing:1px;text-align:center;max-width:240px;"></div>
+        <div id=radarLocationSub style="color:rgba(200,255,200,0.7);font-size:12px;margin-top:6px;text-align:center;"></div>
+        <button id=btnCloseRadar style="margin-top:32px;width:52px;height:52px;border-radius:50%;border:none;background:rgba(255,255,255,0.15);color:#fff;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(5px);">✕</button>
+    </div>
+
     <div id=customPromptModal class=modal-base>
         <div class=modal-ctx style=width:80%;max-width:300px;padding:25px;border-radius:20px;background:#fff;display:flex;flex-direction:column;align-items:center;>
             <div id=customPromptText style=width:100%;font-size:15px;color:#333;line-height:1.6;margin-bottom:15px;font-weight:bold;></div>
@@ -3487,6 +3581,39 @@ async function renderContacts() {
             showScreen(`scrRoom`);
             setTimeout(() => msgs.scrollTop = msgs.scrollHeight, 100);
         };
+        // 消息列表左滑删除（只隐藏消息预览，不删除联系人和聊天记录）
+        let _listSwStartX = 0, _listSwStartY = 0;
+        div.addEventListener('touchstart', e => {
+            _listSwStartX = e.touches[0].clientX;
+            _listSwStartY = e.touches[0].clientY;
+        }, {passive:true});
+        div.addEventListener('touchend', e => {
+            let dx = _listSwStartX - e.changedTouches[0].clientX;
+            let dy = Math.abs(_listSwStartY - e.changedTouches[0].clientY);
+            if(dy > 40 || dx < 50) return;
+            // 关闭其他已打开的删除按钮
+            document.querySelectorAll('._list_del_overlay').forEach(el => el.remove());
+            let rect = div.getBoundingClientRect();
+            let ov = document.createElement('div');
+            ov.className = '_list_del_overlay';
+            ov.style.cssText = `position:fixed;right:0;top:${Math.round(rect.top)}px;width:72px;height:${Math.round(rect.height)}px;background:#ff4757;display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:bold;z-index:10000;cursor:pointer;`;
+            ov.innerText = '删除';
+            document.body.appendChild(ov);
+            const _listDelAction = (ev2) => {
+                if(ev2 && ev2.stopPropagation) ev2.stopPropagation();
+                if(ev2 && ev2.preventDefault) ev2.preventDefault();
+                ov.remove();
+                div.remove();
+            };
+            ov.addEventListener('touchend', _listDelAction, {passive:false});
+            ov.addEventListener('click', _listDelAction);
+            setTimeout(() => {
+                document.addEventListener('touchstart', function _rmLov(ev3){
+                    if(ov.parentNode && !ov.contains(ev3.target)) ov.remove();
+                    document.removeEventListener('touchstart', _rmLov);
+                }, {once:true, passive:true});
+            }, 150);
+        }, {passive:true});
         $(`listContent`).appendChild(div);
     }
     // 联系人页（contactContent）按添加顺序单独渲染（newest first）
@@ -3496,6 +3623,14 @@ async function renderContacts() {
             let isoHist2 = savedHist2 ? (typeof savedHist2 === 'string' ? JSON.parse(savedHist2) : savedHist2) : [];
             let isoAiA2 = originalGetItem.call(ls, `aiI_` + c.id);
             let avaHtml2 = isoAiA2 ? `<div class=avatar-list style=background-image:url(${isoAiA2});font-size:0;></div>` : `<div class=avatar-list>👤</div>`;
+            // 异步从 localforage 更新联系人页头像（保证实时同步）
+            (async () => {
+                let lfAva2 = await localforage.getItem(`aiI_` + c.id);
+                if(lfAva2 && divC) {
+                    let avaEl2 = divC.querySelector(`.avatar-list`);
+                    if(avaEl2) { avaEl2.style.backgroundImage = `url(${lfAva2})`; avaEl2.innerText = ``; }
+                }
+            })();
             let isoName2 = originalGetItem.call(ls, `cN_` + c.id) || c.name;
             let isBlk2 = originalGetItem.call(ls, `isBlocked_` + c.id) === 'true';
             if(isBlk2) isoName2 += `<span style="color:#ff4757;font-size:10px;margin-left:4px;padding:0 2px;">已拉黑</span>`;
@@ -3506,8 +3641,6 @@ async function renderContacts() {
             let charSign2 = originalGetItem.call(ls, `cSign_` + c.id) || "（该角色还在思考个性签名...）";
             divC.innerHTML = avaHtml2 + `<div class=chat-info> <div class=role-header-row> <div class=role-name>` + isoName2 + `</div> <div class=role-status><div class="status-dot ` + charStatusColorClass2 + `"></div>` + charStatusText2 + `</div> </div> <div class=role-signature>` + charSign2 + `</div> </div>`;
             divC.onclick = async () => {
-                // 若刚刚触发了左滑删除按钮，跳过本次点击
-                if(window._preventContactClick) { window._preventContactClick = false; return; }
                 window._prevScreen = 'scrContact'; window._prevContactTab = 'friends';
                 currentChatId = c.id;
                 $(`cfgName`).value = originalGetItem.call(ls, `cN_` + c.id) || c.name;
@@ -3527,8 +3660,8 @@ async function renderContacts() {
                 showScreen(`scrRoom`);
                 setTimeout(() => msgs.scrollTop = msgs.scrollHeight, 100);
             };
-            // 左滑删除：显示固定浮层按钮
-            let _swStartX = 0, _swStartY = 0;
+            // Swipe-left to delete: show fixed overlay button, no layout change
+            let _swStartX = 0, _swStartY = 0, _swActive = false;
             divC.addEventListener('touchstart', e => {
                 _swStartX = e.touches[0].clientX;
                 _swStartY = e.touches[0].clientY;
@@ -3537,54 +3670,32 @@ async function renderContacts() {
                 let dx = _swStartX - e.changedTouches[0].clientX;
                 let dy = Math.abs(_swStartY - e.changedTouches[0].clientY);
                 if(dy > 40 || dx < 50) return;
-                // 关闭其他已打开的删除按钮
+                // Remove any other open swipe buttons
                 document.querySelectorAll('._contact_del_overlay').forEach(el => el.remove());
                 let rect = divC.getBoundingClientRect();
                 let ov = document.createElement('div');
                 ov.className = '_contact_del_overlay';
-                ov.style.cssText = `position:fixed;right:0;top:${Math.round(rect.top)}px;width:88px;height:${Math.round(rect.height)}px;background:#ff4757;display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:bold;z-index:10000;cursor:pointer;`;
+                ov.style.cssText = `position:fixed;right:0;top:${Math.round(rect.top)}px;width:88px;height:${Math.round(rect.height)}px;background:#ff4757;display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:bold;z-index:9999;cursor:pointer;border-radius:0 0 0 0;`;
                 ov.innerText = '删除好友';
                 document.body.appendChild(ov);
-
-                // 删除操作核心函数
-                const _doDelete = async (ev2) => {
-                    if(ev2 && ev2.stopPropagation) ev2.stopPropagation();
-                    if(ev2 && ev2.preventDefault) ev2.preventDefault();
-                    // 设置标志阻止 divC.onclick 触发导航
-                    window._preventContactClick = true;
-                    setTimeout(() => { window._preventContactClick = false; }, 800);
+                ov.onclick = async (ev2) => {
+                    ev2.stopPropagation();
                     ov.remove();
                     let confirmed = await window._customConfirm('你确定删除该好友吗？\n此操作不可恢复！');
                     if(!confirmed) return;
                     contacts = contacts.filter(x => String(x.id) !== String(c.id));
                     originalSetItem.call(ls, 'myContacts', JSON.stringify(contacts));
                     await localforage.setItem('myContacts', JSON.stringify(contacts));
-                    ['chatHistory_','cN_','cR_','cMyN_','cAP_','cMP_','cBubbleCss_','cCtx_','cT_','cCTon_',
-                     'cStatusBarOn_','cStatusBar_','cSign_','cStatusTxt_','cStatusColor_','isBlocked_','aiStatus_','lastChatTime_'
-                    ].forEach(k => {
-                        try { originalRemoveItem.call(ls, k + String(c.id)); } catch(_e2) {}
-                        localforage.removeItem(k + String(c.id)).catch(()=>{});
+                    ['chatHistory_','cN_','cR_','cMyN_','cAP_','cMP_','cBubbleCss_','cCtx_','cT_','cCTon_','cStatusBarOn_','cStatusBar_','cSign_','cStatusTxt_','cStatusColor_','isBlocked_','aiStatus_','lastChatTime_'].forEach(k => {
+                        try { ls.removeItem(k+String(c.id)); } catch(e2) {}
                     });
                     divC.remove();
                     if(typeof renderContactGroups === 'function') renderContactGroups();
                 };
-
-                // touchend 优先处理（防止幽灵点击穿透）
-                ov.addEventListener('touchend', _doDelete, {passive:false});
-                // click 兜底（桌面端 / 未触发 touchend 时）
-                ov.addEventListener('click', (ev2) => {
-                    // touchend 已处理过则忽略 click
-                    if(window._preventContactClick) return;
-                    _doDelete(ev2);
-                });
-
-                // 点击其他区域关闭浮层
+                // Tap anywhere else closes it
                 setTimeout(() => {
-                    document.addEventListener('touchstart', function _rmOv(ev3){
-                        if(ov.parentNode && !ov.contains(ev3.target)) { ov.remove(); }
-                        document.removeEventListener('touchstart', _rmOv);
-                    }, {once:true, passive:true});
-                }, 150);
+                    document.addEventListener('touchstart', function _rmOv(){ ov.remove(); document.removeEventListener('touchstart',_rmOv); }, {once:true, passive:true});
+                }, 100);
             }, {passive:true});
             $(`contactContent`).appendChild(divC);
         }
@@ -3656,15 +3767,17 @@ $(`btnListToRoom`).onclick = async () => {
     
     if(ls.getItem(`cCtx`)) $(`cfgCtx`).value = ls.getItem(`cCtx`); else $(`cfgCtx`).value = 100;
     $(`cfgTime`).checked = ls.getItem(`cT`) !== `false`;
-    // 强制状态栏 load（默认房间）
-    (async () => {
-        let _sbon = originalGetItem.call(ls, `cStatusBarOn`) === `true`;
-        let _sbval = originalGetItem.call(ls, `cStatusBar`) || ``;
-        if(!_sbon) { try { let v=await localforage.getItem(`cStatusBarOn`); if(v===true||v===`true`) _sbon=true; } catch(e){} }
-        if(!_sbval) { try { let v=await localforage.getItem(`cStatusBar`); if(v) _sbval=String(v); } catch(e){} }
-        if($(`cfgStatusBarOn`)) $(`cfgStatusBarOn`).checked = _sbon;
-        if($(`cfgStatusBar`) && _sbval) $(`cfgStatusBar`).value = _sbval;
-    })();
+    // 强制状态栏 load
+    if($(`cfgStatusBarOn`)) {
+        let sbon = ls.getItem(`cStatusBarOn`) === `true`;
+        $(`cfgStatusBarOn`).checked = sbon;
+        // Panel is always visible - do NOT toggle display here
+    }
+    if($(`cfgStatusBar`)) {
+        let sbVal = ls.getItem(`cStatusBar`);
+        if(sbVal) $(`cfgStatusBar`).value = sbVal;
+        else $(`cfgStatusBar`).value = ``;
+    }
     $(`cfgAutoMem`).checked = ls.getItem(`cAMem`) === `true`;
     if(ls.getItem(`cMemT`)) $(`cfgMemTrig`).value = ls.getItem(`cMemT`); else $(`cfgMemTrig`).value = 10;
     if(ls.getItem(`cMemP`)) $(`cfgMemPmt`).value = ls.getItem(`cMemP`); else $(`cfgMemPmt`).value = `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。必须准确写出当前实际参与对话的【具体人物姓名】（包括user、char或任何出场的NPC）。`;
@@ -4172,30 +4285,6 @@ window.loadChatSettings = function() {
     if(ls.getItem(`cMemT`)) $(`cfgMemTrig`).value = ls.getItem(`cMemT`); else $(`cfgMemTrig`).value = 10;
     if(ls.getItem(`cMemP`)) $(`cfgMemPmt`).value = ls.getItem(`cMemP`); 
     else $(`cfgMemPmt`).value = `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。必须准确写出当前实际参与对话的【具体人物姓名】（包括user、char或任何出场的NPC）。`;
-    // 强制状态栏加载（per-contact，支持 localforage 兜底）
-    (async () => {
-        let _cid = currentChatId;
-        let _sbon = originalGetItem.call(ls, `cStatusBarOn_` + _cid) === `true`
-                 || originalGetItem.call(ls, `cStatusBarOn`) === `true`;
-        let _sbval = originalGetItem.call(ls, `cStatusBar_` + _cid)
-                  || originalGetItem.call(ls, `cStatusBar`) || ``;
-        if(!_sbon) {
-            try {
-                let v = await localforage.getItem(`cStatusBarOn_` + _cid);
-                if(v === null || v === undefined) v = await localforage.getItem(`cStatusBarOn`);
-                if(v === true || v === `true`) _sbon = true;
-            } catch(e) {}
-        }
-        if(!_sbval) {
-            try {
-                let v = await localforage.getItem(`cStatusBar_` + _cid);
-                if(v === null || v === undefined) v = await localforage.getItem(`cStatusBar`);
-                if(v) _sbval = String(v);
-            } catch(e) {}
-        }
-        if($(`cfgStatusBarOn`)) $(`cfgStatusBarOn`).checked = _sbon;
-        if($(`cfgStatusBar`)) $(`cfgStatusBar`).value = _sbval || ``;
-    })();
 };
 
         $(`btnCancelChat`).onclick = () => {
@@ -4235,11 +4324,6 @@ $(`btnSaveChat`).onclick = async () => {
         // 强制状态栏保存
         dataObj.cStatusBarOn = safeCheck(`cfgStatusBarOn`);
         dataObj.cStatusBar = safeVal(`cfgStatusBar`);
-        // 同时直接写入 per-contact localforage（确保 localStorage 满时也能读到）
-        await localforage.setItem(`cStatusBarOn_` + currentChatId, dataObj.cStatusBarOn);
-        await localforage.setItem(`cStatusBar_` + currentChatId, dataObj.cStatusBar);
-        try { originalSetItem.call(ls, `cStatusBarOn_` + currentChatId, String(dataObj.cStatusBarOn)); } catch(_e2) {}
-        try { originalSetItem.call(ls, `cStatusBar_` + currentChatId, dataObj.cStatusBar); } catch(_e2) {}
 
         for (let key in dataObj) {
             ls.setItem(key, dataObj[key]);
@@ -4694,7 +4778,7 @@ function redrawChat() {
             if(!out) return; // 整条消息如果全是格式就跳过
             
             let lns = out.split(/\n+/).filter(x => x.trim() !== ``);
-            if(lns.length === 1 && out.length > 30 && !out.includes(`[图片消息`)) { 
+            if(lns.length === 1 && out.length > 30 && !out.includes(`[图片消息`) && !out.includes(`[定位消息`) && !out.includes(`[实时位置`)) { 
                 lns = out.replace(/([。！？!?])/g, `$1\n`).split(/\n+/).filter(x => x.trim() !== ``); 
             }
             
@@ -5275,31 +5359,10 @@ if(charStickers.length > 0) {
         sys += `\n【你的专属表情包库】如果你想发表情配合情绪，请务必在【回复】中插入代码"[发送表情：表情名称]"。当前你拥有的表情名称有：` + names + `。警告：绝对不要捏造列表外的表情！不要发多余的链接！`;
     }
             sys += `\n【资金互动规则】如果玩家发了转账（显示未收款），你必须在回复的最开头写上系统指令 [收取转账] 或 [拒绝转账]。如果玩家发了红包（显示未领取），你必须在回复的最开头写上系统指令 [领取红包] 或 [退回红包]。指令必须严格带上方括号！然后再写你的文字回复。如果不写指令，系统将彻底报错崩溃！`;
-    // 强制状态栏注入（三层读取：DOM → localStorage → localforage 兜底）
-    let _sbOn = ($(`cfgStatusBarOn`) && $(`cfgStatusBarOn`).checked);
-    let _sbVal = ($(`cfgStatusBar`) && $(`cfgStatusBar`).value.trim()) || ``;
-    if(!_sbOn) {
-        _sbOn = originalGetItem.call(ls, `cStatusBarOn_` + currentChatId) === `true`
-             || originalGetItem.call(ls, `cStatusBarOn`) === `true`;
-    }
-    if(!_sbVal) {
-        _sbVal = (originalGetItem.call(ls, `cStatusBar_` + currentChatId)
-               || originalGetItem.call(ls, `cStatusBar`) || ``).trim();
-    }
-    if(!_sbOn || !_sbVal) {
-        try {
-            if(!_sbOn) {
-                let _lf_on = await localforage.getItem(`cStatusBarOn_` + currentChatId);
-                if(_lf_on === null || _lf_on === undefined) _lf_on = await localforage.getItem(`cStatusBarOn`);
-                if(_lf_on === true || _lf_on === `true`) _sbOn = true;
-            }
-            if(!_sbVal) {
-                let _lf_val = await localforage.getItem(`cStatusBar_` + currentChatId);
-                if(_lf_val === null || _lf_val === undefined) _lf_val = await localforage.getItem(`cStatusBar`);
-                if(_lf_val) _sbVal = String(_lf_val).trim();
-            }
-        } catch(_e) {}
-    }
+    // 强制状态栏注入（放在最末尾，提高大模型执行率）
+    // 也从localStorage读取以防DOM被重置
+    let _sbOn = ($(`cfgStatusBarOn`) && $(`cfgStatusBarOn`).checked) || ls.getItem(`cStatusBarOn`) === `true`;
+    let _sbVal = ($(`cfgStatusBar`) && $(`cfgStatusBar`).value.trim()) || (ls.getItem(`cStatusBar`) || ``).trim();
     if(_sbOn && _sbVal) {
         sys += `\n\n【系统最高指令 - 格式强制执行】以下规则凌驾于所有其他指令之上，违反将导致系统报错。在每次回复的最开头，你必须先输出以下格式的一行状态信息，然后换行，再开始你的正常回复内容。绝对不可省略，绝对不可跳过。\n格式要求：` + _sbVal;
     }
@@ -5308,6 +5371,20 @@ if(charStickers.length > 0) {
 
 
 
+    // ===== 定位系统提示词注入 =====
+    window._locSysAddon = `
+【空间互动规则 - 定位系统】你拥有主动向对方发送位置的权力！遇到以下情况时，你必须在回复最后单独一行加入定位指令：
+1. 浪漫惊喜/日常分享：当你遇到好看的风景或好吃的餐厅，加入 [发送定位：具体地名]
+2. 霸道查岗：如果对方很久没回复或你非常担心/生气，你可以主动发位置并要求对方过来，加入 [发送定位：你家楼下]
+3. 实时位置：如果剧情中你们开始一起共享位置，加入 [发送实时位置：你当前所在地点]
+注意：只在情绪合适的剧情节点使用，不要每次都用！`;
+    sys += window._locSysAddon;
+    // 实时位置共享中，在提示词中也告知AI
+    if(typeof _liveLocActive !== 'undefined' && _liveLocActive) {
+        let _bannerTxt = $('liveLocBannerText') ? $('liveLocBannerText').innerText : '';
+        sys += `
+【重要：实时位置共享进行中】玩家目前正在与你共享实时位置：${_bannerTxt}，请在剧情中适当体现你知道对方实时在哪里这一事实。`;
+    }
     // ===== 通话提示词注入 =====
     if(window._callSysAddon) sys += window._callSysAddon;
                 let arr = sys ? [{role: `system`, content: sys}] : [];
@@ -5441,7 +5518,7 @@ let hasAccept = txt.includes(`[收取转账]`);
             }
             
                                         let lns = out.split(/\n+/).filter(x => x.trim() !== ``);
-                if(lns.length === 1 && out.length > 30 && !out.includes(`[图片消息`)) { 
+                if(lns.length === 1 && out.length > 30 && !out.includes(`[图片消息`) && !out.includes(`[定位消息`) && !out.includes(`[实时位置`)) { 
                     lns = out.replace(/([。！？!?])/g, `$1\n`).split(/\n+/).filter(x => x.trim() !== ``); 
                 }
                 
@@ -5498,8 +5575,13 @@ let hasAccept = txt.includes(`[收取转账]`);
 
 };
 
-function renderQuoteBlock(b, txt) {
+function renderQuoteBlock(b, txt, _side) {
     b.dataset.raw = txt;
+    // 定位卡片检测
+    if(txt && (txt.startsWith('[定位消息：') || txt.startsWith('[实时位置：'))) {
+        renderLocationCard(b, txt, _side || 'l');
+        return;
+    }
         let transferMatch = txt.match(/^\[转账消息：([\d\.]+)\|(.*?)\|(未收款|已收款|对方已拒绝收款|已拒绝收款)\]$/);
 
     if(transferMatch) {
@@ -5902,12 +5984,70 @@ function renderQuoteBlock(b, txt) {
 
 
 
+// ===== 定位卡片渲染 =====
+function renderLocationCard(b, txt, side) {
+    // 格式: [定位消息：地点名称] 或 [实时位置：地点名称]
+    let isLive = txt.startsWith('[实时位置：');
+    let locName = txt.replace(/^\[(定位消息|实时位置)：/, '').replace(/\]$/, '').trim();
+    let isUser = (side === 'r');
+    let pinEmoji = isUser ? '🐰' : '🐾';
+    let pinClass = isUser ? 'loc-pin-user' : 'loc-pin-char';
+    let mapBg = isUser ? 'background:linear-gradient(135deg,#f0faf4,#e8f8ee);' : 'background:linear-gradient(135deg,#fff0f3,#fde8ec);';
+    let borderColor = isUser ? '#e8f5e9' : '#fde8ec';
+    let gridColor = isUser ? 'rgba(46,204,113,0.08)' : 'rgba(255,107,129,0.08)';
+    let subText = isLive ? '📡 正在共享实时位置' : (isUser ? '刚刚更新' : '距离你 ≈ 2.5 km');
+    let headerLabel = isLive ? '📡 实时位置' : '📍 我的位置';
+    if(!isUser) headerLabel = isLive ? '📡 对方实时位置' : '📍 对方位置';
+
+    b.innerHTML = `<div class="loc-card" style="border-color:${borderColor};">
+        <div class="loc-map-area" style="${mapBg}">
+            <div class="loc-map-grid" style="background-image:linear-gradient(${gridColor} 1px,transparent 1px),linear-gradient(90deg,${gridColor} 1px,transparent 1px);"></div>
+            <div class="${pinClass}">${pinEmoji}</div>
+        </div>
+        <div class="loc-info-area">
+            <div style="font-size:10px;color:#aaa;margin-bottom:5px;letter-spacing:0.5px;">${headerLabel}</div>
+            <div class="loc-place-name">${locName}</div>
+            <div class="loc-place-sub">${subText}</div>
+        </div>
+    </div>`;
+    b.style.background = 'transparent';
+    b.style.boxShadow = 'none';
+    b.style.padding = '0';
+    b.style.border = 'none';
+
+    // 点击打开雷达
+    b.querySelector('.loc-card').onclick = (e) => {
+        e.stopPropagation();
+        let rm = $('radarModal');
+        if(!rm) return;
+        let myAva = window.currentLoadedMyI || '';
+        let charAva = window.currentLoadedAiI || '';
+        let radarAv = $('radarAvatar'), radarDot = $('radarDot');
+        if(isUser) {
+            if(myAva) { radarAv.style.backgroundImage = `url(${myAva})`; radarAv.innerText = ''; }
+            else { radarAv.style.backgroundImage = 'none'; radarAv.innerText = '👤'; }
+            if(charAva) { radarDot.style.backgroundImage = `url(${charAva})`; radarDot.innerText = ''; }
+            else { radarDot.style.backgroundImage = 'none'; radarDot.innerText = '👤'; }
+        } else {
+            if(charAva) { radarAv.style.backgroundImage = `url(${charAva})`; radarAv.innerText = ''; }
+            else { radarAv.style.backgroundImage = 'none'; radarAv.innerText = '👤'; }
+            if(myAva) { radarDot.style.backgroundImage = `url(${myAva})`; radarDot.innerText = ''; }
+            else { radarDot.style.backgroundImage = 'none'; radarDot.innerText = '👤'; }
+        }
+        let locNameEl = $('radarLocationName');
+        let locSubEl = $('radarLocationSub');
+        if(locNameEl) locNameEl.innerText = locName;
+        if(locSubEl) locSubEl.innerText = isLive ? '📡 正在实时共享位置' : (isUser ? '📍 你的当前位置' : '📍 对方的当前位置');
+        rm.style.display = 'flex';
+    };
+}
+
 function mkBub(txt, side, isT=false) {
     let row = document.createElement(`div`);
     row.className = `msg-row ` + (side===`l`?`row-left`:`row-right`);
     if(isT) row.id = `thk`;
     let b = document.createElement(`div`); b.className = `bubble ` + (side===`l`?`bub-left`:`bub-right`);
-    if(!isT) { renderQuoteBlock(b, txt); bindPress(b); } else { b.innerText = txt; }
+    if(!isT) { renderQuoteBlock(b, txt, side); bindPress(b); } else { b.innerText = txt; }
     
     if(side===`l`) {
         let a = document.createElement(`div`);
@@ -5933,7 +6073,7 @@ function mkBubSync(txt, side) {
     let row = document.createElement(`div`);
     row.className = `msg-row ` + (side===`l`?`row-left`:`row-right`);
     let b = document.createElement(`div`); b.className = `bubble ` + (side===`l`?`bub-left`:`bub-right`); 
-    renderQuoteBlock(b, txt); bindPress(b);
+    renderQuoteBlock(b, txt, side); bindPress(b);
     if(side===`l`) {
         let a = document.createElement(`div`); a.className = `ava-sm ava-l`;
         let img = window.currentLoadedAiI || ``;
@@ -14067,6 +14207,192 @@ if($('btnVideoCall')) $('btnVideoCall').onclick = () => {
     let drawer = $('newMenuDrawer');
     if(drawer) drawer.classList.remove('show');
     _openCall('video', false);
+};
+
+// ============================================================
+// ===== 定位功能 =====
+// ============================================================
+let _liveLocActive = false;
+
+// 雷达关闭
+if($('btnCloseRadar')) {
+    $('btnCloseRadar').onclick = () => {
+        let rm = $('radarModal');
+        if(rm) rm.style.display = 'none';
+    };
+}
+if($('radarModal')) {
+    $('radarModal').onclick = (e) => {
+        if(e.target === $('radarModal')) $('radarModal').style.display = 'none';
+    };
+}
+
+// 停止实时位置
+function _stopLiveLocation(notifyAI) {
+    _liveLocActive = false;
+    let banner = $('liveLocBanner');
+    if(banner) banner.style.display = 'none';
+    if(notifyAI) {
+        let stopMsg = '[系统提示：实时位置共享已停止]';
+        history.push({role:'user', content: stopMsg, ts: Date.now()});
+        ls.setItem('chatHistory', JSON.stringify(history));
+    }
+}
+
+if($('btnStopLiveLoc')) {
+    $('btnStopLiveLoc').onclick = () => _stopLiveLocation(true);
+}
+
+// 开始实时位置共享
+function _startLiveLocationShare(locText) {
+    _liveLocActive = true;
+    let banner = $('liveLocBanner');
+    let bannerTxt = $('liveLocBannerText');
+    if(banner) banner.style.display = 'flex';
+    if(bannerTxt) bannerTxt.innerText = `正在共享实时位置 · ${locText}`;
+
+    let msgContent = `[实时位置：${locText}]`;
+    mkBub(msgContent, 'r');
+    history.push({role:'user', content: msgContent, ts: Date.now()});
+    ls.setItem('chatHistory', JSON.stringify(history));
+    updateListPreview();
+
+    // AI 回应
+    setTimeout(async () => {
+        let pxy = $('apiPxy').value, key = $('apiK').value, mod = $('apiMod').value;
+        if(!pxy || !key || !mod) return;
+        if(!pxy.includes('chat/completions')) pxy = pxy.replace(/\/$/, '') + '/chat/completions';
+        let charName = $('cfgName')?.value || '对方';
+        let myName = $('cfgMyName')?.value || '你';
+        let charAP = $('cfgAiP')?.value || '';
+        let tp = parseFloat(originalGetItem.call(ls,'temp')||'0.8')||0.8;
+        let sys = `你是${charName}。${charAP ? '性格设定：' + charAP : ''}
+${myName}刚刚开启了与你的实时位置共享，对方目前在：${locText}。
+请根据你的性格对这件事作出第一反应（可以是好奇、甜蜜、查岗、担心等情绪）。直接输出对话内容，控制在80字以内，不加任何前缀。`;
+        try {
+            let res = await fetch(pxy, {method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:300,messages:[{role:'user',content:sys}]})});
+            let dat = await res.json();
+            let reply = (dat.choices?.[0]?.message?.content||'').trim();
+            if(reply) { history.push({role:'assistant',content:reply,ts:Date.now()}); mkBub(reply,'l'); updateListPreview(); }
+        } catch(e) {}
+    }, 800);
+}
+
+// 发送定位
+function _sendUserLocation(locText) {
+    let msgContent = `[定位消息：${locText}]`;
+    mkBub(msgContent, 'r');
+    history.push({role:'user', content: msgContent, ts: Date.now()});
+    ls.setItem('chatHistory', JSON.stringify(history));
+    updateListPreview();
+
+    // AI 接收定位后的反应
+    setTimeout(async () => {
+        let pxy = $('apiPxy').value, key = $('apiK').value, mod = $('apiMod').value;
+        if(!pxy || !key || !mod) return;
+        if(!pxy.includes('chat/completions')) pxy = pxy.replace(/\/$/, '') + '/chat/completions';
+        let charName = $('cfgName')?.value || '对方';
+        let myName = $('cfgMyName')?.value || '你';
+        let charAP = $('cfgAiP')?.value || '';
+        let tp = parseFloat(originalGetItem.call(ls,'temp')||'0.8')||0.8;
+        let sys = `你是${charName}。${charAP ? '性格设定：' + charAP : ''}
+${myName}刚刚给你发送了一个定位，对方当前位置是：${locText}。
+请根据你的性格立刻对这个位置做出真实反应！可以是惊讶、好奇、甜蜜地评论地点、或者傲娇地说"我知道你在哪了"，情绪要鲜明真实。直接输出对话内容，控制在100字以内，不加任何前缀。`;
+        try {
+            let res = await fetch(pxy, {method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:350,messages:[{role:'user',content:sys}]})});
+            let dat = await res.json();
+            let reply = (dat.choices?.[0]?.message?.content||'').trim();
+            if(reply) { history.push({role:'assistant',content:reply,ts:Date.now()}); mkBub(reply,'l'); updateListPreview(); }
+        } catch(e) {}
+    }, 800);
+}
+
+// 按钮：发送定位
+if($('btnSendLocation')) {
+    $('btnSendLocation').onclick = () => {
+        toggleMenuDrawer(false);
+        let modal = $('locationInputModal');
+        let inp = $('locationInputText');
+        if(modal) { if(inp) inp.value = ''; modal.style.display = 'flex'; }
+    };
+}
+if($('btnLocationCancel')) {
+    $('btnLocationCancel').onclick = () => {
+        let modal = $('locationInputModal');
+        if(modal) modal.style.display = 'none';
+    };
+}
+if($('btnLocationConfirm')) {
+    $('btnLocationConfirm').onclick = () => {
+        let inp = $('locationInputText');
+        let locText = inp ? inp.value.trim() : '';
+        if(!locText) { alert('请填写你所处的位置！'); return; }
+        let modal = $('locationInputModal');
+        if(modal) modal.style.display = 'none';
+        _sendUserLocation(locText);
+    };
+}
+
+// 按钮：实时位置
+if($('btnShareLiveLocation')) {
+    $('btnShareLiveLocation').onclick = () => {
+        toggleMenuDrawer(false);
+        if(_liveLocActive) {
+            _stopLiveLocation(true);
+            return;
+        }
+        let modal = $('liveLocationModal');
+        let inp = $('liveLocationText');
+        if(modal) { if(inp) inp.value = ''; modal.style.display = 'flex'; }
+    };
+}
+if($('btnLiveLocationCancel')) {
+    $('btnLiveLocationCancel').onclick = () => {
+        let modal = $('liveLocationModal');
+        if(modal) modal.style.display = 'none';
+    };
+}
+if($('btnLiveLocationConfirm')) {
+    $('btnLiveLocationConfirm').onclick = () => {
+        let inp = $('liveLocationText');
+        let locText = inp ? inp.value.trim() : '';
+        if(!locText) { alert('请填写你所处的位置！'); return; }
+        let modal = $('liveLocationModal');
+        if(modal) modal.style.display = 'none';
+        _startLiveLocationShare(locText);
+    };
+}
+
+// AI 主动发定位解析 ([发送定位：xxx] 或 [发送实时位置：xxx])
+window._origMkBubForLoc = window.mkBub;
+window.mkBub = function(txt, side, isT) {
+    if(side === 'l' && !isT) {
+        // 解析 AI 主动发定位
+        let locMatch = txt.match(/\[发送定位：([^\]]+)\]/);
+        let liveMatch = txt.match(/\[发送实时位置：([^\]]+)\]/);
+        if(locMatch) {
+            let locText = locMatch[1].trim();
+            txt = txt.replace(locMatch[0], '').trim();
+            let locMsg = `[定位消息：${locText}]`;
+            history.push({role:'assistant', content: locMsg, ts: Date.now()});
+            ls.setItem('chatHistory', JSON.stringify(history));
+            window._origMkBubForLoc.call(this, locMsg, 'l', false);
+        }
+        if(liveMatch) {
+            let locText = liveMatch[1].trim();
+            txt = txt.replace(liveMatch[0], '').trim();
+            let locMsg = `[实时位置：${locText}]`;
+            history.push({role:'assistant', content: locMsg, ts: Date.now()});
+            ls.setItem('chatHistory', JSON.stringify(history));
+            window._origMkBubForLoc.call(this, locMsg, 'l', false);
+            // 对方也显示banner
+            let banner = $('liveLocBanner');
+            let bannerTxt = $('liveLocBannerText');
+            if(banner) banner.style.display = 'flex';
+            if(bannerTxt) bannerTxt.innerText = `对方正在共享实时位置 · ${locText}`;
+        }
+    }
+    if(txt && txt.trim()) window._origMkBubForLoc.call(this, txt, side, isT);
 };
 
 // 拦截AI回复中的主动发起通话指令（char主动打电话）
