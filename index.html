@@ -6166,10 +6166,11 @@ function renderQuoteBlock(b, txt, _side) {
     let imgMatch = txt.match(/\[图片消息：(.*?)\]/);
     if(imgMatch) {
         let _imgUrl = imgMatch[1];
-        // 如果是外部URL（char发的破图），转为粉色相机卡片
+                // 恢复正常渲染，直接显示图片和表情包
         if(_imgUrl.match(/^https?:\/\//)) {
-            b.innerHTML = `<div style="width:130px; height:170px; background:#fce4ec; border-radius:12px; display:flex; flex-direction:column; justify-content:center; align-items:center; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.05);" onclick="showCustomText('📸 图片')"><div style="font-size:40px; filter:grayscale(100%) opacity(50%);">📷</div><div style="font-size:11px;color:#aaa;margin-top:6px;">点击查看</div></div>`;
+            b.innerHTML = `<img src="${_imgUrl}" style="max-width: 200px; border-radius: 12px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">`;
         } else {
+
             b.innerHTML = `<img src="${_imgUrl}" style="max-width:150px;border-radius:10px;display:block;">`;
         }
         b.style.background = "transparent";
