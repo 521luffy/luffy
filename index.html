@@ -669,6 +669,13 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
                     <div class=menu-icon-text>实时位置</div>
                 </div>
 
+                <div id=btnOfflineMode class=menu-icon-btn>
+                    <div class=menu-icon-svg style="background:#fdf3ff;">
+                        <span style="font-size:20px;line-height:1;">🎬</span>
+                    </div>
+                    <div class=menu-icon-text id=offlineModeMenuLabel>线下模式</div>
+                </div>
+
                 <div id=btnOrderFood class=menu-icon-btn>
                     <div class=menu-icon-svg style="background:#fff8e1;">
                         <svg width=20 height=20 viewBox="0 0 24 24" fill=none stroke=#f59e0b stroke-width=2 stroke-linecap=round stroke-linejoin=round><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>
@@ -5746,6 +5753,32 @@ if(charStickers.length > 0) {
         sys += `
 【重要：实时位置共享进行中】玩家目前正在与你共享实时位置：${_bannerTxt}，请在剧情中适当体现你知道对方实时在哪里这一事实。`;
     }
+    // ===== 线下模式提示词注入 =====
+    if(window._offlineMode) {
+        let _olScene = window._offlineScene || '';
+        let _olRelation = window._offlineRelation || '';
+        let _olPreset = window._offlinePreset || '';
+        let _olWords = window._offlineWordCount || 0;
+        let _olCScene = window._offlineColorScene || '#6c5ce7';
+        let _olCDialog = window._offlineColorDialog || '#e84393';
+        // 线下模式时替换主格式要求，去掉"通过手机发消息"的隐含逻辑
+        // 替换主格式（不用/s flag，兼容旧手机浏览器）
+        let _sysHead = `严格按格式回复，勿加多余字符。内容必须极致生动：\n【定位与天气】（50字内，首字为天气emoji）\n【心声】（100字内）\n【回复】（对我说的话。重要规则：如有多句，必须用回车换行严格分段！）\n\n`;
+        let _sysOldEnd = sys.indexOf(`\n\n`);
+        if(_sysOldEnd > 0) sys = _sysHead + sys.slice(_sysOldEnd + 2);
+        else sys = _sysHead + sys;
+        sys += '\n\n【线下模式已激活 - 最高优先级】\n'
+            + '你和玩家已打破网络次元壁，此刻处于同一物理空间中。\n\n'
+            + '▶ 空间认知：禁止描写看手机、按键盘、发消息。所有互动基于现实面对面的物理感知。\n'
+            + '▶ 互动核心：描写肢体动作（呼吸温度、眼神流转、指尖触碰）、面部表情、环境声音。\n'
+            + '▶ 台词规范：所有说话内容必须只用「」包裹，禁止使用其他引号符号。'
+            + '（示例：他侧身看你。「今天怎么了？」）\n'
+            + (_olScene ? '▶ 场景：' + _olScene + '\n' : '')
+            + (_olRelation ? '▶ 关系氛围：' + _olRelation + '\n' : '')
+            + (_olPreset ? '▶ 附加要求：' + _olPreset + '\n' : '')
+            + (_olWords ? '▶ 回复字数：控制在' + _olWords + '字左右。\n' : '')
+            + '▶ 描写段落与「」对话交替出现，段落间空一行，不加任何前缀符号。';
+    }
     // ===== 通话提示词注入 =====
     if(window._callSysAddon) sys += window._callSysAddon;
     // ===== 强制状态栏注入（真正放在最末尾，紧贴AI调用之前，执行优先级最高）=====
@@ -6658,12 +6691,42 @@ function renderLocationCard(b, txt, side) {
     };
 }
 
+
+// ===== 线下模式文字颜色渲染 =====
+function _renderOfflineText(b, txt) {
+    let cScene = window._offlineColorScene || '#6c5ce7';
+    let cDialog = window._offlineColorDialog || '#e84393';
+    // 分段处理：「」包裹的是对话，其余是场景描写
+    let html = '';
+    let remaining = txt;
+    // 正则：找到所有「...」对话段落
+    let parts = remaining.split(/(「[^」]*」)/g);
+    parts.forEach(part => {
+        if(!part) return;
+        if(part.startsWith('「') && part.endsWith('」')) {
+            // 对话：用对话颜色加粗
+            html += `<span style="color:${cDialog};font-weight:600;">${part.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span>`;
+        } else if(part.trim()) {
+            // 场景描写：用场景颜色
+            html += `<span style="color:${cScene};">${part.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')}</span>`;
+        }
+    });
+    b.innerHTML = html || txt.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+    b.style.cssText += 'background:rgba(255,255,255,0.92);border:none;box-shadow:0 2px 12px rgba(108,92,231,0.1);line-height:1.9;';
+}
+
 function mkBub(txt, side, isT=false) {
     let row = document.createElement(`div`);
     row.className = `msg-row ` + (side===`l`?`row-left`:`row-right`);
     if(isT) row.id = `thk`;
     let b = document.createElement(`div`); b.className = `bubble ` + (side===`l`?`bub-left`:`bub-right`);
-    if(!isT) { renderQuoteBlock(b, txt, side); bindPress(b); } else { b.innerText = txt; }
+    if(!isT) {
+        if(window._offlineMode && side === 'l' && !txt.startsWith('[')) {
+            _renderOfflineText(b, txt); bindPress(b);
+        } else {
+            renderQuoteBlock(b, txt, side); bindPress(b);
+        }
+    } else { b.innerText = txt; }
     
     if(side===`l`) {
         let a = document.createElement(`div`);
@@ -6689,8 +6752,12 @@ function mkBubSync(txt, side) {
     let row = document.createElement(`div`);
     row.className = `msg-row ` + (side===`l`?`row-left`:`row-right`);
     let b = document.createElement(`div`); b.className = `bubble ` + (side===`l`?`bub-left`:`bub-right`); 
-    renderQuoteBlock(b, txt, side);
-    if(b.dataset.suppress) return; // 抑制AI命令标签，不渲染为文字气泡
+    if(window._offlineMode && side === 'l' && !txt.startsWith('[')) {
+        _renderOfflineText(b, txt);
+    } else {
+        renderQuoteBlock(b, txt, side);
+        if(b.dataset.suppress) return; // 抑制AI命令标签，不渲染为文字气泡
+    }
     bindPress(b);
     if(side===`l`) {
         let a = document.createElement(`div`); a.className = `ava-sm ava-l`;
@@ -15445,7 +15512,212 @@ window.mkBub = function(txt, side, isT) {
 // 单聊系统提示注入：主动发起通话规则
 window._callSysAddon = '\n【主动发起通话规则 - 极度重要】如果你在当前剧情中情绪出现剧烈波动（极度生气、极其思念、遇到紧急情况，或者对方故意冷落/惹怒你），你拥有主动向对方拨打电话的绝对特权！请在情绪爆发的回复最后，单独起一行加入指令：[发起语音通话] 或者 [发起视频通话]。注意：一旦使用此指令，代表你已经迫不及待想要越过文字直接对峙或倾诉，请务必在前面的正文里铺垫好你此时急躁、迫切或愤怒的情绪。';
 
+// ============================================================
+// ===== 线下模式（Offline Mode）===== 
+// ============================================================
+window._offlineMode = false;  // 是否处于线下模式
+window._offlineScene = '';    // 场景设定
+window._offlineRelation = ''; // 关系与氛围
+window._offlinePreset = '';   // 预设提示词
+window._offlineWordCount = 0; // 期望字数
+window._offlineColorScene = '#6c5ce7';  // 场景文字颜色
+window._offlineColorDialog = '#e84393'; // 对话文字颜色
+
+function _openOfflinePanel() {
+    let panel = document.getElementById('offlineModePanel');
+    if(!panel) return;
+    // 如果已在线下模式，显示"进行中"徽章，按钮文字变为"更新设置"
+    let badge = document.getElementById('offlineModeStatusBadge');
+    let enterText = document.getElementById('btnOfflineEnterText');
+    if(badge) badge.style.display = window._offlineMode ? 'block' : 'none';
+    if(enterText) enterText.textContent = window._offlineMode ? '更新设置' : '进入现实';
+    // 恢复已有设置
+    if(document.getElementById('olScene')) document.getElementById('olScene').value = window._offlineScene || '';
+    if(document.getElementById('olRelation')) document.getElementById('olRelation').value = window._offlineRelation || '';
+    if(document.getElementById('olPreset')) document.getElementById('olPreset').value = window._offlinePreset || '';
+    if(document.getElementById('olWordCount')) document.getElementById('olWordCount').value = window._offlineWordCount || '';
+    if(document.getElementById('olColorScene')) document.getElementById('olColorScene').value = window._offlineColorScene || '#6c5ce7';
+    if(document.getElementById('olColorDialog')) document.getElementById('olColorDialog').value = window._offlineColorDialog || '#e84393';
+    if(document.getElementById('olColorSceneHex')) document.getElementById('olColorSceneHex').textContent = window._offlineColorScene || '#6c5ce7';
+    if(document.getElementById('olColorDialogHex')) document.getElementById('olColorDialogHex').textContent = window._offlineColorDialog || '#e84393';
+    panel.style.transform = 'translateY(0)';
+    panel.style.pointerEvents = 'all';
+}
+
+function _closeOfflinePanel() {
+    let panel = document.getElementById('offlineModePanel');
+    if(!panel) return;
+    panel.style.transform = 'translateY(100%)';
+    panel.style.pointerEvents = 'none';
+}
+
+function _enterOfflineMode() {
+    window._offlineScene = (document.getElementById('olScene')?.value || '').trim();
+    window._offlineRelation = (document.getElementById('olRelation')?.value || '').trim();
+    window._offlinePreset = (document.getElementById('olPreset')?.value || '').trim();
+    window._offlineWordCount = parseInt(document.getElementById('olWordCount')?.value || '0') || 0;
+    window._offlineColorScene = document.getElementById('olColorScene')?.value || '#6c5ce7';
+    window._offlineColorDialog = document.getElementById('olColorDialog')?.value || '#e84393';
+
+    let wasOff = window._offlineMode;
+    window._offlineMode = true;
+    _closeOfflinePanel();
+
+    // 更新菜单图标文字
+    let menuLabel = document.getElementById('offlineModeMenuLabel');
+    if(menuLabel) menuLabel.textContent = '线下✓';
+
+    if(!wasOff) {
+        // 插入分割线气泡
+        let dividerMsg = '[_offline_divider_]';
+        let divBub = document.createElement('div');
+        divBub.style.cssText = 'text-align:center;margin:14px 0;opacity:0;transition:opacity 0.5s;';
+        divBub.innerHTML = '<span style="display:inline-block;padding:6px 18px;background:rgba(108,92,231,0.09);border-radius:99px;font-size:12px;color:#6c5ce7;letter-spacing:1px;border:1px solid rgba(108,92,231,0.2);">【 现实模式已开启：你们已身处同一空间 】</span>';
+        if(typeof msgs !== 'undefined' && msgs) {
+            msgs.appendChild(divBub);
+            setTimeout(() => { divBub.style.opacity = '1'; msgs.scrollTop = msgs.scrollHeight; }, 80);
+        }
+        // 写入history作为系统消息
+        if(typeof history !== 'undefined') {
+            history.push({role:'user', content:'[系统提示：线下模式已开启，你们已身处同一物理空间。请立刻切换至线下互动模式。]', ts:Date.now(), _sys:true, _offlineDivider:true});
+            if(typeof ls !== 'undefined') ls.setItem('chatHistory', JSON.stringify(history));
+        }
+    }
+    toggleMenuDrawer(false);
+}
+
+async function _exitOfflineMode() {
+    let confirmed = await window._customConfirm('你已退出线下模式！\n点击「确认」回到线上聊天模式，点击「取消」继续线下模式。');
+    if(!confirmed) return;
+    window._offlineMode = false;
+    window._offlineScene = '';
+    window._offlineRelation = '';
+    window._offlinePreset = '';
+    window._offlineWordCount = 0;
+    let menuLabel = document.getElementById('offlineModeMenuLabel');
+    if(menuLabel) menuLabel.textContent = '线下模式';
+    _closeOfflinePanel();
+    toggleMenuDrawer(false);
+}
+
+// 菜单图标点击
+if(document.getElementById('btnOfflineMode')) {
+    document.getElementById('btnOfflineMode').onclick = () => {
+        toggleMenuDrawer(false);
+        if(window._offlineMode) {
+            _exitOfflineMode();
+        } else {
+            _openOfflinePanel();
+        }
+    };
+}
+
+// 关闭面板按钮
+if(document.getElementById('btnOfflineClose')) {
+    document.getElementById('btnOfflineClose').onclick = _closeOfflinePanel;
+}
+
+// 进入现实按钮
+if(document.getElementById('btnOfflineEnter')) {
+    document.getElementById('btnOfflineEnter').onclick = _enterOfflineMode;
+}
+
+// 颜色选择器实时更新hex显示
+if(document.getElementById('olColorScene')) {
+    document.getElementById('olColorScene').oninput = function() {
+        let hex = document.getElementById('olColorSceneHex');
+        if(hex) hex.textContent = this.value;
+    };
+}
+if(document.getElementById('olColorDialog')) {
+    document.getElementById('olColorDialog').oninput = function() {
+        let hex = document.getElementById('olColorDialogHex');
+        if(hex) hex.textContent = this.value;
+    };
+}
+
+// 点击面板外部关闭
+if(document.getElementById('offlineModePanel')) {
+    document.getElementById('offlineModePanel').addEventListener('click', function(e) {
+        if(e.target === this) _closeOfflinePanel();
+    });
+}
+
 
 
 
 </script>
+
+<!-- ===== 线下模式设置面板（半屏毛玻璃底部弹出）===== -->
+<div id=offlineModePanel style="
+    position:fixed; left:0; bottom:0; width:100%; z-index:3000;
+    transform:translateY(100%); transition:transform 0.38s cubic-bezier(0.32,0.72,0,1);
+    pointer-events:none;
+">
+<div style="
+    background:rgba(255,255,255,0.82);
+    backdrop-filter:blur(28px) saturate(180%);
+    -webkit-backdrop-filter:blur(28px) saturate(180%);
+    border-radius:28px 28px 0 0;
+    box-shadow:0 -8px 40px rgba(0,0,0,0.18);
+    padding:0 0 env(safe-area-inset-bottom,0);
+    pointer-events:all;
+    max-height:88vh; overflow-y:auto;
+">
+    <div style="display:flex;justify-content:center;padding:12px 0 4px;">
+        <div style="width:36px;height:4px;border-radius:99px;background:rgba(0,0,0,0.15);"></div>
+    </div>
+    <div style="padding:4px 22px 24px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span style="font-size:22px;">🎬</span>
+                <span style="font-size:17px;font-weight:700;color:#1a1a2e;letter-spacing:0.3px;">线下模式设置</span>
+            </div>
+            <div id=offlineModeStatusBadge style="
+                display:none; padding:4px 12px; border-radius:99px;
+                background:linear-gradient(135deg,#a29bfe,#6c5ce7);
+                color:white; font-size:11px; font-weight:bold;
+            ">进行中</div>
+        </div>
+        <div style="margin-bottom:14px;">
+            <label style="display:block;font-size:12px;font-weight:600;color:#6c5ce7;margin-bottom:6px;">📍 场景设定</label>
+            <textarea id=olScene rows=3 placeholder="当前我们在哪里？例如：高三教室倒数第二排、公司一号会议室……" style="width:100%;padding:11px 13px;border:1.5px solid #e8e4ff;border-radius:14px;font-size:13px;resize:none;outline:none;box-sizing:border-box;background:rgba(255,255,255,0.9);color:#333;line-height:1.6;font-family:inherit;transition:border-color 0.2s;" onfocus="this.style.borderColor='#a29bfe'" onblur="this.style.borderColor='#e8e4ff'"></textarea>
+        </div>
+        <div style="margin-bottom:14px;">
+            <label style="display:block;font-size:12px;font-weight:600;color:#6c5ce7;margin-bottom:6px;">💫 当前关系与氛围</label>
+            <textarea id=olRelation rows=3 placeholder="随便描述一下现在的状态...例如：我们现在是互相看不顺眼的死对头；或者是刚认识不久、还在互相试探的普通同学。" style="width:100%;padding:11px 13px;border:1.5px solid #e8e4ff;border-radius:14px;font-size:13px;resize:none;outline:none;box-sizing:border-box;background:rgba(255,255,255,0.9);color:#333;line-height:1.6;font-family:inherit;transition:border-color 0.2s;" onfocus="this.style.borderColor='#a29bfe'" onblur="this.style.borderColor='#e8e4ff'"></textarea>
+        </div>
+        <div style="margin-bottom:14px;">
+            <label style="display:block;font-size:12px;font-weight:600;color:#6c5ce7;margin-bottom:6px;">✏️ 预设提示词</label>
+            <textarea id=olPreset rows=3 placeholder="可以描写你希望的视角、文风等等" style="width:100%;padding:11px 13px;border:1.5px solid #e8e4ff;border-radius:14px;font-size:13px;resize:none;outline:none;box-sizing:border-box;background:rgba(255,255,255,0.9);color:#333;line-height:1.6;font-family:inherit;transition:border-color 0.2s;" onfocus="this.style.borderColor='#a29bfe'" onblur="this.style.borderColor='#e8e4ff'"></textarea>
+        </div>
+        <div style="margin-bottom:16px;">
+            <label style="display:block;font-size:12px;font-weight:600;color:#6c5ce7;margin-bottom:6px;">📝 期望回复字数</label>
+            <input id=olWordCount type=number placeholder="例如：200（不填则由AI自行决定）" style="width:100%;padding:11px 13px;border:1.5px solid #e8e4ff;border-radius:14px;font-size:13px;outline:none;box-sizing:border-box;background:rgba(255,255,255,0.9);color:#333;font-family:inherit;transition:border-color 0.2s;" onfocus="this.style.borderColor='#a29bfe'" onblur="this.style.borderColor='#e8e4ff'">
+        </div>
+        <div style="margin-bottom:20px;">
+            <label style="display:block;font-size:12px;font-weight:600;color:#6c5ce7;margin-bottom:8px;">🎨 文字颜色</label>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <span style="font-size:12px;color:#666;min-width:80px;">场景·神态描写</span>
+                    <input id=olColorScene type=color value="#6c5ce7" style="width:36px;height:28px;border:1.5px solid #e8e4ff;border-radius:8px;cursor:pointer;padding:2px;">
+                    <span id=olColorSceneHex style="font-size:12px;color:#999;">#6c5ce7</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <span style="font-size:12px;color:#666;min-width:80px;">对话描写</span>
+                    <input id=olColorDialog type=color value="#e84393" style="width:36px;height:28px;border:1.5px solid #e8e4ff;border-radius:8px;cursor:pointer;padding:2px;">
+                    <span id=olColorDialogHex style="font-size:12px;color:#999;">#e84393</span>
+                </div>
+            </div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center;">
+            <button id=btnOfflineClose style="flex:1;padding:13px;border-radius:22px;border:none;background:rgba(0,0,0,0.07);color:#555;font-size:14px;font-weight:600;cursor:pointer;">关闭</button>
+            <button id=btnOfflineEnter style="flex:2.5;padding:13px;border-radius:22px;border:none;background:linear-gradient(135deg,#a29bfe 0%,#6c5ce7 100%);color:white;font-size:15px;font-weight:700;cursor:pointer;position:relative;overflow:hidden;box-shadow:0 4px 18px rgba(108,92,231,0.4);letter-spacing:0.5px;">
+                <span id=btnOfflineEnterText>进入现实</span>
+                <div style="position:absolute;top:-50%;left:-60%;width:40%;height:200%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.25),transparent);transform:skewX(-15deg);animation:_olShimmer 2.4s ease-in-out infinite;pointer-events:none;"></div>
+            </button>
+        </div>
+    </div>
+</div>
+</div>
+<style>@keyframes _olShimmer{0%{left:-60%}60%,100%{left:120%}}</style>
