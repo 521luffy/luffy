@@ -3702,6 +3702,18 @@ originalGetItem.call(ls, `chatHistory_` + currentChatId);
     history = savedHist ? (typeof savedHist === `string` ? JSON.parse(savedHist) : savedHist) : [];
     let savedAiStatus = await localforage.getItem(`aiStatus_` + currentChatId) || originalGetItem.call(ls, `aiStatus_` + currentChatId);
     aiStatus = savedAiStatus ? (typeof savedAiStatus === `string` ? JSON.parse(savedAiStatus) : savedAiStatus) : {weather:`等待连接...`,clothing:`等待连接...`,action:`等待连接...`,thought:`等待连接...`};
+    // 强制状态栏加载（default char，绝不fallback全局）
+    if($(`cfgStatusBarOn`)) {
+        let _sbon = originalGetItem.call(ls, `cStatusBarOn_default`);
+        $(`cfgStatusBarOn`).checked = (_sbon === `true`);
+    }
+    if($(`cfgStatusBar`)) {
+        let _sbv = originalGetItem.call(ls, `cStatusBar_default`) || ``;
+        $(`cfgStatusBar`).value = _sbv;
+    }
+    // 重置快捷模板单选按钮（避免跨char残留）
+    [`tplRadioA`,`tplRadioB`,`tplRadioC`].forEach(id => { let el=$(id); if(el) el.checked=false; });
+    [`tplPanelA`,`tplPanelB`,`tplPanelC`].forEach(id => { let el=$(id); if(el) el.style.display=`none`; });
     await applyVis();
     if (typeof msgs !== `undefined` && msgs) msgs.innerHTML = ``;
     if (typeof redrawChat === `function`) redrawChat();
@@ -3822,6 +3834,18 @@ async function renderContacts() {
             history = savedHist ? (typeof savedHist === 'string' ? JSON.parse(savedHist) : savedHist) : [];
             let savedAiStatus = await localforage.getItem(`aiStatus_` + currentChatId) || ls.getItem(`aiStatus_` + currentChatId);
             aiStatus = savedAiStatus ? (typeof savedAiStatus === `string` ? JSON.parse(savedAiStatus) : savedAiStatus) : {weather:`等待连接...`,clothing:`等待连接...`,action:`等待连接...`,thought:`等待连接...`};
+            // 强制状态栏加载（per-char，绝不fallback到其他char或全局）
+            if($(`cfgStatusBarOn`)) {
+                let _sbon = originalGetItem.call(ls, `cStatusBarOn_` + c.id);
+                $(`cfgStatusBarOn`).checked = (_sbon === `true`);
+            }
+            if($(`cfgStatusBar`)) {
+                let _sbv = originalGetItem.call(ls, `cStatusBar_` + c.id) || ``;
+                $(`cfgStatusBar`).value = _sbv;
+            }
+            // 重置快捷模板单选按钮和展开面板（避免跨char残留）
+            [`tplRadioA`,`tplRadioB`,`tplRadioC`].forEach(id => { let el=$(id); if(el) el.checked=false; });
+            [`tplPanelA`,`tplPanelB`,`tplPanelC`].forEach(id => { let el=$(id); if(el) el.style.display=`none`; });
             await applyVis();
             if (typeof msgs !== `undefined` && msgs) msgs.innerHTML = ``;
             redrawChat();
@@ -4037,17 +4061,20 @@ $(`btnListToRoom`).onclick = async () => {
     
     if(ls.getItem(`cCtx`)) $(`cfgCtx`).value = ls.getItem(`cCtx`); else $(`cfgCtx`).value = 100;
     $(`cfgTime`).checked = ls.getItem(`cT`) !== `false`;
-    // 强制状态栏 load
+    // 强制状态栏 load（用 originalGetItem 直接读 per-char key，绝不走proxy fallback）
     if($(`cfgStatusBarOn`)) {
-        let sbon = ls.getItem(`cStatusBarOn`) === `true`;
-        $(`cfgStatusBarOn`).checked = sbon;
-        // Panel is always visible - do NOT toggle display here
+        let _sbonKey = currentChatId === `default` ? `cStatusBarOn_default` : `cStatusBarOn_` + currentChatId;
+        let sbon = originalGetItem.call(ls, _sbonKey);
+        $(`cfgStatusBarOn`).checked = (sbon === `true`);
     }
     if($(`cfgStatusBar`)) {
-        let sbVal = ls.getItem(`cStatusBar`);
-        if(sbVal) $(`cfgStatusBar`).value = sbVal;
-        else $(`cfgStatusBar`).value = ``;
+        let _sbvKey = currentChatId === `default` ? `cStatusBar_default` : `cStatusBar_` + currentChatId;
+        let sbVal = originalGetItem.call(ls, _sbvKey) || ``;
+        $(`cfgStatusBar`).value = sbVal;
     }
+    // 重置快捷模板单选按钮（避免跨char残留）
+    [`tplRadioA`,`tplRadioB`,`tplRadioC`].forEach(id => { let el=$(id); if(el) el.checked=false; });
+    [`tplPanelA`,`tplPanelB`,`tplPanelC`].forEach(id => { let el=$(id); if(el) el.style.display=`none`; });
     $(`cfgAutoMem`).checked = ls.getItem(`cAMem`) === `true`;
     if(ls.getItem(`cMemT`)) $(`cfgMemTrig`).value = ls.getItem(`cMemT`); else $(`cfgMemTrig`).value = 10;
     if(ls.getItem(`cMemP`)) $(`cfgMemPmt`).value = ls.getItem(`cMemP`); else $(`cfgMemPmt`).value = `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。必须准确写出当前实际参与对话的【具体人物姓名】（包括user、char或任何出场的NPC）。`;
