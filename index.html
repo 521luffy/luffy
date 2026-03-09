@@ -2633,6 +2633,80 @@ if(typeof localforage === 'undefined') {
     };
 }
 </script>
+<!-- ===== 线下模式设置面板（半屏毛玻璃底部弹出）===== -->
+<div id=offlineModePanel style="
+    position:fixed; left:0; bottom:0; width:100%; z-index:3000;
+    transform:translateY(100%); transition:transform 0.38s cubic-bezier(0.32,0.72,0,1);
+    pointer-events:none;
+">
+<div style="
+    background:rgba(255,255,255,0.82);
+    backdrop-filter:blur(28px) saturate(180%);
+    -webkit-backdrop-filter:blur(28px) saturate(180%);
+    border-radius:28px 28px 0 0;
+    box-shadow:0 -8px 40px rgba(0,0,0,0.18);
+    padding:0 0 env(safe-area-inset-bottom,0);
+    pointer-events:all;
+    max-height:88vh; overflow-y:auto;
+">
+    <div style="display:flex;justify-content:center;padding:12px 0 4px;">
+        <div style="width:36px;height:4px;border-radius:99px;background:rgba(0,0,0,0.15);"></div>
+    </div>
+    <div style="padding:4px 22px 24px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span style="font-size:22px;">🎬</span>
+                <span style="font-size:17px;font-weight:700;color:#1a1a2e;letter-spacing:0.3px;">线下模式设置</span>
+            </div>
+            <div id=offlineModeStatusBadge style="
+                display:none; padding:4px 12px; border-radius:99px;
+                background:linear-gradient(135deg,#a29bfe,#6c5ce7);
+                color:white; font-size:11px; font-weight:bold;
+            ">进行中</div>
+        </div>
+        <div style="margin-bottom:14px;">
+            <label style="display:block;font-size:12px;font-weight:600;color:#6c5ce7;margin-bottom:6px;">📍 场景设定</label>
+            <textarea id=olScene rows=3 placeholder="当前我们在哪里？例如：高三教室倒数第二排、公司一号会议室……" style="width:100%;padding:11px 13px;border:1.5px solid #e8e4ff;border-radius:14px;font-size:13px;resize:none;outline:none;box-sizing:border-box;background:rgba(255,255,255,0.9);color:#333;line-height:1.6;font-family:inherit;transition:border-color 0.2s;" onfocus="this.style.borderColor='#a29bfe'" onblur="this.style.borderColor='#e8e4ff'"></textarea>
+        </div>
+        <div style="margin-bottom:14px;">
+            <label style="display:block;font-size:12px;font-weight:600;color:#6c5ce7;margin-bottom:6px;">💫 当前关系与氛围</label>
+            <textarea id=olRelation rows=3 placeholder="随便描述一下现在的状态...例如：我们现在是互相看不顺眼的死对头；或者是刚认识不久、还在互相试探的普通同学。" style="width:100%;padding:11px 13px;border:1.5px solid #e8e4ff;border-radius:14px;font-size:13px;resize:none;outline:none;box-sizing:border-box;background:rgba(255,255,255,0.9);color:#333;line-height:1.6;font-family:inherit;transition:border-color 0.2s;" onfocus="this.style.borderColor='#a29bfe'" onblur="this.style.borderColor='#e8e4ff'"></textarea>
+        </div>
+        <div style="margin-bottom:14px;">
+            <label style="display:block;font-size:12px;font-weight:600;color:#6c5ce7;margin-bottom:6px;">✏️ 预设提示词</label>
+            <textarea id=olPreset rows=3 placeholder="可以描写你希望的视角、文风等等" style="width:100%;padding:11px 13px;border:1.5px solid #e8e4ff;border-radius:14px;font-size:13px;resize:none;outline:none;box-sizing:border-box;background:rgba(255,255,255,0.9);color:#333;line-height:1.6;font-family:inherit;transition:border-color 0.2s;" onfocus="this.style.borderColor='#a29bfe'" onblur="this.style.borderColor='#e8e4ff'"></textarea>
+        </div>
+        <div style="margin-bottom:16px;">
+            <label style="display:block;font-size:12px;font-weight:600;color:#6c5ce7;margin-bottom:6px;">📝 期望回复字数</label>
+            <input id=olWordCount type=number placeholder="例如：200（不填则由AI自行决定）" style="width:100%;padding:11px 13px;border:1.5px solid #e8e4ff;border-radius:14px;font-size:13px;outline:none;box-sizing:border-box;background:rgba(255,255,255,0.9);color:#333;font-family:inherit;transition:border-color 0.2s;" onfocus="this.style.borderColor='#a29bfe'" onblur="this.style.borderColor='#e8e4ff'">
+        </div>
+        <div style="margin-bottom:20px;">
+            <label style="display:block;font-size:12px;font-weight:600;color:#6c5ce7;margin-bottom:8px;">🎨 文字颜色</label>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <span style="font-size:12px;color:#666;min-width:80px;">场景·神态描写</span>
+                    <input id=olColorScene type=color value="#6c5ce7" style="width:36px;height:28px;border:1.5px solid #e8e4ff;border-radius:8px;cursor:pointer;padding:2px;">
+                    <span id=olColorSceneHex style="font-size:12px;color:#999;">#6c5ce7</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <span style="font-size:12px;color:#666;min-width:80px;">对话描写</span>
+                    <input id=olColorDialog type=color value="#e84393" style="width:36px;height:28px;border:1.5px solid #e8e4ff;border-radius:8px;cursor:pointer;padding:2px;">
+                    <span id=olColorDialogHex style="font-size:12px;color:#999;">#e84393</span>
+                </div>
+            </div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center;">
+            <button id=btnOfflineClose style="flex:1;padding:13px;border-radius:22px;border:none;background:rgba(0,0,0,0.07);color:#555;font-size:14px;font-weight:600;cursor:pointer;">关闭</button>
+            <button id=btnOfflineEnter style="flex:2.5;padding:13px;border-radius:22px;border:none;background:linear-gradient(135deg,#a29bfe 0%,#6c5ce7 100%);color:white;font-size:15px;font-weight:700;cursor:pointer;position:relative;overflow:hidden;box-shadow:0 4px 18px rgba(108,92,231,0.4);letter-spacing:0.5px;">
+                <span id=btnOfflineEnterText>进入现实</span>
+                <div style="position:absolute;top:-50%;left:-60%;width:40%;height:200%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.25),transparent);transform:skewX(-15deg);animation:_olShimmer 2.4s ease-in-out infinite;pointer-events:none;"></div>
+            </button>
+        </div>
+    </div>
+</div>
+</div>
+<style>@keyframes _olShimmer{0%{left:-60%}60%,100%{left:120%}}</style>
+
 <script>
 
 
@@ -5746,9 +5820,9 @@ if(charStickers.length > 0) {
 2. 霸道查岗：如果对方很久没回复或你非常担心/生气，你可以主动发位置并要求对方过来，加入 [发送定位：你家楼下]
 3. 实时位置：如果剧情中你们开始一起共享位置，加入 [发送实时位置：你当前所在地点]
 注意：只在情绪合适的剧情节点使用，不要每次都用！`;
-    sys += window._locSysAddon;
+    if(!window._offlineMode) sys += window._locSysAddon;
     // 实时位置共享中，在提示词中也告知AI
-    if(typeof _liveLocActive !== 'undefined' && _liveLocActive) {
+    if(!window._offlineMode && typeof _liveLocActive !== 'undefined' && _liveLocActive) {
         let _bannerTxt = $('liveLocBannerText') ? $('liveLocBannerText').innerText : '';
         sys += `
 【重要：实时位置共享进行中】玩家目前正在与你共享实时位置：${_bannerTxt}，请在剧情中适当体现你知道对方实时在哪里这一事实。`;
@@ -5779,8 +5853,8 @@ if(charStickers.length > 0) {
             + (_olWords ? '▶ 回复字数：控制在' + _olWords + '字左右。\n' : '')
             + '▶ 描写段落与「」对话交替出现，段落间空一行，不加任何前缀符号。';
     }
-    // ===== 通话提示词注入 =====
-    if(window._callSysAddon) sys += window._callSysAddon;
+    // ===== 通话提示词注入（线下模式时不注入，因为线下是面对面，无需"主动打电话"指令）=====
+    if(window._callSysAddon && !window._offlineMode) sys += window._callSysAddon;
     // ===== 强制状态栏注入（真正放在最末尾，紧贴AI调用之前，执行优先级最高）=====
     // 只从DOM读取（已加入isolatedKeys，自动按char隔离）
     let _sbOn = $(`cfgStatusBarOn`) && $(`cfgStatusBarOn`).checked;
@@ -6756,8 +6830,8 @@ function mkBubSync(txt, side) {
         _renderOfflineText(b, txt);
     } else {
         renderQuoteBlock(b, txt, side);
-        if(b.dataset.suppress) return; // 抑制AI命令标签，不渲染为文字气泡
     }
+    if(b.dataset.suppress) return; // 抑制AI命令标签，不渲染为文字气泡
     bindPress(b);
     if(side===`l`) {
         let a = document.createElement(`div`); a.className = `ava-sm ava-l`;
@@ -15647,77 +15721,3 @@ if(document.getElementById('offlineModePanel')) {
 
 
 </script>
-
-<!-- ===== 线下模式设置面板（半屏毛玻璃底部弹出）===== -->
-<div id=offlineModePanel style="
-    position:fixed; left:0; bottom:0; width:100%; z-index:3000;
-    transform:translateY(100%); transition:transform 0.38s cubic-bezier(0.32,0.72,0,1);
-    pointer-events:none;
-">
-<div style="
-    background:rgba(255,255,255,0.82);
-    backdrop-filter:blur(28px) saturate(180%);
-    -webkit-backdrop-filter:blur(28px) saturate(180%);
-    border-radius:28px 28px 0 0;
-    box-shadow:0 -8px 40px rgba(0,0,0,0.18);
-    padding:0 0 env(safe-area-inset-bottom,0);
-    pointer-events:all;
-    max-height:88vh; overflow-y:auto;
-">
-    <div style="display:flex;justify-content:center;padding:12px 0 4px;">
-        <div style="width:36px;height:4px;border-radius:99px;background:rgba(0,0,0,0.15);"></div>
-    </div>
-    <div style="padding:4px 22px 24px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
-            <div style="display:flex;align-items:center;gap:10px;">
-                <span style="font-size:22px;">🎬</span>
-                <span style="font-size:17px;font-weight:700;color:#1a1a2e;letter-spacing:0.3px;">线下模式设置</span>
-            </div>
-            <div id=offlineModeStatusBadge style="
-                display:none; padding:4px 12px; border-radius:99px;
-                background:linear-gradient(135deg,#a29bfe,#6c5ce7);
-                color:white; font-size:11px; font-weight:bold;
-            ">进行中</div>
-        </div>
-        <div style="margin-bottom:14px;">
-            <label style="display:block;font-size:12px;font-weight:600;color:#6c5ce7;margin-bottom:6px;">📍 场景设定</label>
-            <textarea id=olScene rows=3 placeholder="当前我们在哪里？例如：高三教室倒数第二排、公司一号会议室……" style="width:100%;padding:11px 13px;border:1.5px solid #e8e4ff;border-radius:14px;font-size:13px;resize:none;outline:none;box-sizing:border-box;background:rgba(255,255,255,0.9);color:#333;line-height:1.6;font-family:inherit;transition:border-color 0.2s;" onfocus="this.style.borderColor='#a29bfe'" onblur="this.style.borderColor='#e8e4ff'"></textarea>
-        </div>
-        <div style="margin-bottom:14px;">
-            <label style="display:block;font-size:12px;font-weight:600;color:#6c5ce7;margin-bottom:6px;">💫 当前关系与氛围</label>
-            <textarea id=olRelation rows=3 placeholder="随便描述一下现在的状态...例如：我们现在是互相看不顺眼的死对头；或者是刚认识不久、还在互相试探的普通同学。" style="width:100%;padding:11px 13px;border:1.5px solid #e8e4ff;border-radius:14px;font-size:13px;resize:none;outline:none;box-sizing:border-box;background:rgba(255,255,255,0.9);color:#333;line-height:1.6;font-family:inherit;transition:border-color 0.2s;" onfocus="this.style.borderColor='#a29bfe'" onblur="this.style.borderColor='#e8e4ff'"></textarea>
-        </div>
-        <div style="margin-bottom:14px;">
-            <label style="display:block;font-size:12px;font-weight:600;color:#6c5ce7;margin-bottom:6px;">✏️ 预设提示词</label>
-            <textarea id=olPreset rows=3 placeholder="可以描写你希望的视角、文风等等" style="width:100%;padding:11px 13px;border:1.5px solid #e8e4ff;border-radius:14px;font-size:13px;resize:none;outline:none;box-sizing:border-box;background:rgba(255,255,255,0.9);color:#333;line-height:1.6;font-family:inherit;transition:border-color 0.2s;" onfocus="this.style.borderColor='#a29bfe'" onblur="this.style.borderColor='#e8e4ff'"></textarea>
-        </div>
-        <div style="margin-bottom:16px;">
-            <label style="display:block;font-size:12px;font-weight:600;color:#6c5ce7;margin-bottom:6px;">📝 期望回复字数</label>
-            <input id=olWordCount type=number placeholder="例如：200（不填则由AI自行决定）" style="width:100%;padding:11px 13px;border:1.5px solid #e8e4ff;border-radius:14px;font-size:13px;outline:none;box-sizing:border-box;background:rgba(255,255,255,0.9);color:#333;font-family:inherit;transition:border-color 0.2s;" onfocus="this.style.borderColor='#a29bfe'" onblur="this.style.borderColor='#e8e4ff'">
-        </div>
-        <div style="margin-bottom:20px;">
-            <label style="display:block;font-size:12px;font-weight:600;color:#6c5ce7;margin-bottom:8px;">🎨 文字颜色</label>
-            <div style="display:flex;flex-direction:column;gap:8px;">
-                <div style="display:flex;align-items:center;gap:10px;">
-                    <span style="font-size:12px;color:#666;min-width:80px;">场景·神态描写</span>
-                    <input id=olColorScene type=color value="#6c5ce7" style="width:36px;height:28px;border:1.5px solid #e8e4ff;border-radius:8px;cursor:pointer;padding:2px;">
-                    <span id=olColorSceneHex style="font-size:12px;color:#999;">#6c5ce7</span>
-                </div>
-                <div style="display:flex;align-items:center;gap:10px;">
-                    <span style="font-size:12px;color:#666;min-width:80px;">对话描写</span>
-                    <input id=olColorDialog type=color value="#e84393" style="width:36px;height:28px;border:1.5px solid #e8e4ff;border-radius:8px;cursor:pointer;padding:2px;">
-                    <span id=olColorDialogHex style="font-size:12px;color:#999;">#e84393</span>
-                </div>
-            </div>
-        </div>
-        <div style="display:flex;gap:12px;align-items:center;">
-            <button id=btnOfflineClose style="flex:1;padding:13px;border-radius:22px;border:none;background:rgba(0,0,0,0.07);color:#555;font-size:14px;font-weight:600;cursor:pointer;">关闭</button>
-            <button id=btnOfflineEnter style="flex:2.5;padding:13px;border-radius:22px;border:none;background:linear-gradient(135deg,#a29bfe 0%,#6c5ce7 100%);color:white;font-size:15px;font-weight:700;cursor:pointer;position:relative;overflow:hidden;box-shadow:0 4px 18px rgba(108,92,231,0.4);letter-spacing:0.5px;">
-                <span id=btnOfflineEnterText>进入现实</span>
-                <div style="position:absolute;top:-50%;left:-60%;width:40%;height:200%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.25),transparent);transform:skewX(-15deg);animation:_olShimmer 2.4s ease-in-out infinite;pointer-events:none;"></div>
-            </button>
-        </div>
-    </div>
-</div>
-</div>
-<style>@keyframes _olShimmer{0%{left:-60%}60%,100%{left:120%}}</style>
