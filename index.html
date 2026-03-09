@@ -2743,7 +2743,7 @@ let stW=$("stW"), stC=$("stC"), stA=$("stA"), stT=$("stT");
 let ls = localStorage;
 let currentChatId ="default";
 let originalSetItem = ls.setItem;
-let isolatedKeys = ["cMyN", "myI", "chatHistory", "aiStatus", "bgI", "aiI", "cMP", "cN", "cR", "cAP", "cCtx", "cT", "cAMem", "cMemT", "cMemP", "linkedWb", "lastMemCount", "memories", "cStatusTxt", "cStatusColor", "cSign", "cBubbleCss", "cCTon", "cCTy", "cCTm", "cCTd", "cCTh", "cCTmin", "cStatusBarOn", "cStatusBar"];
+let isolatedKeys = ["cMyN", "myI", "chatHistory", "aiStatus", "bgI", "aiI", "cMP", "cN", "cR", "cAP", "cCtx", "cT", "cAMem", "cMemT", "cMemP", "linkedWb", "lastMemCount", "memories", "cStatusTxt", "cStatusColor", "cSign", "cBubbleCss", "cCTon", "cCTy", "cCTm", "cCTd", "cCTh", "cCTmin", "cStatusBarOn", "cStatusBar", "cStatusBarTpl"];
 
 // ===== 名字内存缓存（绕开 localStorage 满的问题）=====
 window._nameCache = {};
@@ -2827,7 +2827,7 @@ ls.getItem = function(key) {
             let spec = originalGetItem.call(this, key + `_` + currentChatId);
             if (spec) return spec;
             // 这些key不允许fallback到全局值，每个char必须独立，没有则返回null
-            if (key === `chatHistory` || key === `aiStatus` || key === `memories` || key === `lastMemCount` || key === `cStatusBarOn` || key === `cStatusBar`) return null;
+            if (key === `chatHistory` || key === `aiStatus` || key === `memories` || key === `lastMemCount` || key === `cStatusBarOn` || key === `cStatusBar` || key === `cStatusBarTpl`) return null;
             return originalGetItem.call(this, key);
         }
         return originalGetItem.call(this, key);
@@ -2939,6 +2939,24 @@ function initCustomTimeUI() {
         $(`customTimePanel`).style.display = e.target.checked ? `flex` : `none`;
     // cfgStatusBarOn now just enables/disables injection - panel is always visible
 // Sync template format into main textarea (called when user edits template sub-textarea)
+
+// 强制状态栏模板选中状态恢复
+function _restoreStatusBarTpl(tplVal, sbVal) {
+    // 重置所有
+    [`tplRadioA`,`tplRadioB`,`tplRadioC`].forEach(id => { let el=$(id); if(el) el.checked=false; });
+    [`tplPanelA`,`tplPanelB`,`tplPanelC`].forEach(id => { let el=$(id); if(el) el.style.display=`none`; });
+    if(!tplVal) return;
+    let radioEl = $(`tplRadio` + tplVal);
+    let panelEl = $(`tplPanel` + tplVal);
+    if(radioEl) radioEl.checked = true;
+    if(panelEl) panelEl.style.display = `block`;
+    // 如果有已保存的自定义内容，回填进子textarea
+    if(sbVal) {
+        let fmtEl = $(`tplFmt` + tplVal);
+        if(fmtEl) fmtEl.value = sbVal;
+    }
+}
+
 window.syncStatusBarTpl = function() {
     let fmtEl = $(`cfgStatusBarFmt`);
     let mainEl = $(`cfgStatusBar`);
@@ -3707,13 +3725,13 @@ originalGetItem.call(ls, `chatHistory_` + currentChatId);
         let _sbon = originalGetItem.call(ls, `cStatusBarOn_default`);
         $(`cfgStatusBarOn`).checked = (_sbon === `true`);
     }
+    let _defSbv = ``;
     if($(`cfgStatusBar`)) {
-        let _sbv = originalGetItem.call(ls, `cStatusBar_default`) || ``;
-        $(`cfgStatusBar`).value = _sbv;
+        _defSbv = originalGetItem.call(ls, `cStatusBar_default`) || ``;
+        $(`cfgStatusBar`).value = _defSbv;
     }
-    // 重置快捷模板单选按钮（避免跨char残留）
-    [`tplRadioA`,`tplRadioB`,`tplRadioC`].forEach(id => { let el=$(id); if(el) el.checked=false; });
-    [`tplPanelA`,`tplPanelB`,`tplPanelC`].forEach(id => { let el=$(id); if(el) el.style.display=`none`; });
+    // 恢复模板选中状态
+    if(typeof _restoreStatusBarTpl === `function`) _restoreStatusBarTpl(originalGetItem.call(ls, `cStatusBarTpl_default`) || ``, _defSbv);
     await applyVis();
     if (typeof msgs !== `undefined` && msgs) msgs.innerHTML = ``;
     if (typeof redrawChat === `function`) redrawChat();
@@ -3839,13 +3857,13 @@ async function renderContacts() {
                 let _sbon = originalGetItem.call(ls, `cStatusBarOn_` + c.id);
                 $(`cfgStatusBarOn`).checked = (_sbon === `true`);
             }
+            let _charSbv = ``;
             if($(`cfgStatusBar`)) {
-                let _sbv = originalGetItem.call(ls, `cStatusBar_` + c.id) || ``;
-                $(`cfgStatusBar`).value = _sbv;
+                _charSbv = originalGetItem.call(ls, `cStatusBar_` + c.id) || ``;
+                $(`cfgStatusBar`).value = _charSbv;
             }
-            // 重置快捷模板单选按钮和展开面板（避免跨char残留）
-            [`tplRadioA`,`tplRadioB`,`tplRadioC`].forEach(id => { let el=$(id); if(el) el.checked=false; });
-            [`tplPanelA`,`tplPanelB`,`tplPanelC`].forEach(id => { let el=$(id); if(el) el.style.display=`none`; });
+            // 恢复模板选中状态（含已保存的自定义内容，避免跨char残留）
+            if(typeof _restoreStatusBarTpl === `function`) _restoreStatusBarTpl(originalGetItem.call(ls, `cStatusBarTpl_` + c.id) || ``, _charSbv);
             await applyVis();
             if (typeof msgs !== `undefined` && msgs) msgs.innerHTML = ``;
             redrawChat();
@@ -4067,14 +4085,15 @@ $(`btnListToRoom`).onclick = async () => {
         let sbon = originalGetItem.call(ls, _sbonKey);
         $(`cfgStatusBarOn`).checked = (sbon === `true`);
     }
+    let _sbvForTpl = ``;
     if($(`cfgStatusBar`)) {
         let _sbvKey = currentChatId === `default` ? `cStatusBar_default` : `cStatusBar_` + currentChatId;
-        let sbVal = originalGetItem.call(ls, _sbvKey) || ``;
-        $(`cfgStatusBar`).value = sbVal;
+        _sbvForTpl = originalGetItem.call(ls, _sbvKey) || ``;
+        $(`cfgStatusBar`).value = _sbvForTpl;
     }
-    // 重置快捷模板单选按钮（避免跨char残留）
-    [`tplRadioA`,`tplRadioB`,`tplRadioC`].forEach(id => { let el=$(id); if(el) el.checked=false; });
-    [`tplPanelA`,`tplPanelB`,`tplPanelC`].forEach(id => { let el=$(id); if(el) el.style.display=`none`; });
+    // 恢复模板选中状态（含已保存的自定义内容）
+    let _tplKey = currentChatId === `default` ? `cStatusBarTpl_default` : `cStatusBarTpl_` + currentChatId;
+    if(typeof _restoreStatusBarTpl === `function`) _restoreStatusBarTpl(originalGetItem.call(ls, _tplKey) || ``, _sbvForTpl);
     $(`cfgAutoMem`).checked = ls.getItem(`cAMem`) === `true`;
     if(ls.getItem(`cMemT`)) $(`cfgMemTrig`).value = ls.getItem(`cMemT`); else $(`cfgMemTrig`).value = 10;
     if(ls.getItem(`cMemP`)) $(`cfgMemPmt`).value = ls.getItem(`cMemP`); else $(`cfgMemPmt`).value = `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。必须准确写出当前实际参与对话的【具体人物姓名】（包括user、char或任何出场的NPC）。`;
@@ -4618,9 +4637,11 @@ $(`btnSaveChat`).onclick = async () => {
             cMemP: safeVal(`cfgMemPmt`)
         };
         if($(`cfgBubbleCss`)) dataObj.cBubbleCss = safeVal(`cfgBubbleCss`);
-        // 强制状态栏保存
+        // 强制状态栏保存（含模板选择）
         dataObj.cStatusBarOn = safeCheck(`cfgStatusBarOn`);
         dataObj.cStatusBar = safeVal(`cfgStatusBar`);
+        let _tplSel = [`tplRadioA`,`tplRadioB`,`tplRadioC`].find(id => { let el=$(id); return el && el.checked; });
+        dataObj.cStatusBarTpl = _tplSel ? _tplSel.replace(`tplRadio`,``) : ``;
 
         for (let key in dataObj) {
             ls.setItem(key, dataObj[key]);
@@ -5073,8 +5094,15 @@ function redrawChat() {
             let rM = txt.match(/【回复】([\s\S]*)$/);
             let out = txt;
             if(rM) out = rM[1].trim();
-            // 过滤掉 【】 状态行（不再过滤竖线格式行，避免影响正常内容）
-            out = out.replace(/^【[^】]*】[^\n]*$/gm, ``).replace(/^（[^）]*）$/gm, ``).trim();
+            // 过滤掉 【】 状态行（多行块 + 单行标签，全部清除）
+            out = out
+                .replace(/【定位与天气】[\s\S]*?(?=【|$)/g, ``)
+                .replace(/【当日服装】[\s\S]*?(?=【|$)/g, ``)
+                .replace(/【服装】[\s\S]*?(?=【|$)/g, ``)
+                .replace(/【表情与动作】[\s\S]*?(?=【|$)/g, ``)
+                .replace(/【心声】[\s\S]*?(?=【|$)/g, ``)
+                .replace(/【隐秘心声】[\s\S]*?(?=【|$)/g, ``)
+                .replace(/^【[^】]*】[^\n]*$/gm, ``).replace(/^（[^）]*）$/gm, ``).replace(/\n{2,}/g, `\n`).trim();
             if(!out) return; // 整条消息如果全是格式就跳过
             
             let lns = out.split(/\n+/).filter(x => x.trim() !== ``);
@@ -5859,6 +5887,17 @@ let hasAccept = txt.includes(`[收取转账]`);
                 if(aM) aiStatus.action = aM[1].trim(); if(tM) aiStatus.thought = tM[1].trim();
                 ls.setItem(`aiStatus`, JSON.stringify(aiStatus));
             }
+            // 无论是否有【回复】，都清除可能残留在out里的【状态行】（避免渲染为气泡）
+            // 先清除整个 【XX】...（下一个【前）的多行块，再清除单行标签
+            out = out
+                .replace(/【定位与天气】[\s\S]*?(?=【|$)/g, ``)
+                .replace(/【当日服装】[\s\S]*?(?=【|$)/g, ``)
+                .replace(/【服装】[\s\S]*?(?=【|$)/g, ``)
+                .replace(/【表情与动作】[\s\S]*?(?=【|$)/g, ``)
+                .replace(/【心声】[\s\S]*?(?=【|$)/g, ``)
+                .replace(/【隐秘心声】[\s\S]*?(?=【|$)/g, ``)
+                .replace(/^【[^】]*】[^\n]*$/gm, ``)
+                .replace(/\n{2,}/g, `\n`).trim();
             
                                         let lns = out.split(/\n+/).filter(x => x.trim() !== ``);
                 if(lns.length === 1 && out.length > 30 && !out.includes(`[图片消息`) && !out.includes(`[定位消息`) && !out.includes(`[实时位置`) && !out.includes(`[外卖消息`) && !out.includes(`[代付消息`) && !out.includes(`[链接消息`)) { 
@@ -5875,6 +5914,8 @@ let hasAccept = txt.includes(`[收取转账]`);
                        _lineTrim.startsWith('[发送实时位置：') || _lineTrim === '[发起语音通话]' ||
                        _lineTrim === '[发起视频通话]' || _lineTrim.startsWith('[更新状态：') ||
                        _lineTrim.startsWith('[发送定位：')) return;
+                    // 过滤【】状态行（定位与天气/服装/表情等），不渲染为气泡
+                    if(/^【(定位与天气|当日服装|服装|表情与动作|心声|隐秘心声|系统|状态)】/.test(_lineTrim)) return;
                     let voiceMatch = line.match(/\[?【?语音消息[^0-9]*(\d+)[^\]】]*\]?】?/);
                     if(voiceMatch) {
                         let sec = voiceMatch[1];
