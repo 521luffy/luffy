@@ -2743,7 +2743,7 @@ let stW=$("stW"), stC=$("stC"), stA=$("stA"), stT=$("stT");
 let ls = localStorage;
 let currentChatId ="default";
 let originalSetItem = ls.setItem;
-let isolatedKeys = ["cMyN", "myI", "chatHistory", "aiStatus", "bgI", "aiI", "cMP", "cN", "cR", "cAP", "cCtx", "cT", "cAMem", "cMemT", "cMemP", "linkedWb", "lastMemCount", "memories", "cStatusTxt", "cStatusColor", "cSign", "cBubbleCss", "cCTon", "cCTy", "cCTm", "cCTd", "cCTh", "cCTmin"];
+let isolatedKeys = ["cMyN", "myI", "chatHistory", "aiStatus", "bgI", "aiI", "cMP", "cN", "cR", "cAP", "cCtx", "cT", "cAMem", "cMemT", "cMemP", "linkedWb", "lastMemCount", "memories", "cStatusTxt", "cStatusColor", "cSign", "cBubbleCss", "cCTon", "cCTy", "cCTm", "cCTd", "cCTh", "cCTmin", "cStatusBarOn", "cStatusBar"];
 
 // ===== 名字内存缓存（绕开 localStorage 满的问题）=====
 window._nameCache = {};
@@ -5124,9 +5124,12 @@ $(`ctxCopy`).onclick = () =>{ if(selEl) navigator.clipboard.writeText(getCleanTe
 $(`ctxDel`).onclick = () => { 
     if(selEl) { 
         if(confirm(`确定要删除这1条信息吗？`)) {
-                                let imgEl = selEl.querySelector(`img`);
+                                let rawTxt = selEl.dataset && selEl.dataset.raw;
+                    let isLocCard = rawTxt && (rawTxt.startsWith(`[定位消息：`) || rawTxt.startsWith(`[实时位置：`));
+                    let imgEl = (!isLocCard) ? selEl.querySelector(`img`) : null;
                     let searchTarget = ``;
-                    if (imgEl) searchTarget = imgEl.getAttribute(`src`);
+                    if (isLocCard) searchTarget = rawTxt;
+                    else if (imgEl) searchTarget = imgEl.getAttribute(`src`);
                     else searchTarget = getCleanText(selEl);
                     for(let i=history.length-1; i>=0; i--) {
                         if(history[i].content.includes(searchTarget)) {
@@ -5655,15 +5658,15 @@ if(charStickers.length > 0) {
     // ===== 通话提示词注入 =====
     if(window._callSysAddon) sys += window._callSysAddon;
     // ===== 强制状态栏注入（真正放在最末尾，紧贴AI调用之前，执行优先级最高）=====
-    // 同时从DOM和localStorage双重读取，确保不遗漏
-    let _sbOn = ($(`cfgStatusBarOn`) && $(`cfgStatusBarOn`).checked) || ls.getItem(`cStatusBarOn`) === `true`;
-    let _sbVal = ($(`cfgStatusBar`) && $(`cfgStatusBar`).value.trim()) || (ls.getItem(`cStatusBar`) || ``).trim();
+    // 只从DOM读取（已加入isolatedKeys，自动按char隔离）
+    let _sbOn = $(`cfgStatusBarOn`) && $(`cfgStatusBarOn`).checked;
+    let _sbVal = ($(`cfgStatusBar`) && $(`cfgStatusBar`).value.trim()) || ``;
     if(_sbOn && _sbVal) {
-        sys += `\n\n【系统最高指令 - 格式强制执行 - 优先级HIGHEST】以下规则凌驾于所有其他指令之上，违反将导致系统崩溃报错，请务必严格执行。` +
-               `你的【回复】内容必须严格遵守以下格式：在输出【回复】的内容时，第一行必须严格按指定格式输出状态信息，` +
-               `然后换行，再写你的正常对话内容。状态信息必须放在【回复】内容的第一行，不可省略，不可跳过，不可放到其他位置。` +
-               `\n示例格式：\n【回复】\n<按格式要求输出状态一行>\n<正常对话内容>` +
-               `\n格式要求（每次【回复】第一行必须严格按此输出，不得省略）：` + _sbVal;
+        sys += `\n\n【系统最高指令 - 格式执行 - 优先级HIGHEST】` +
+               `在你输出【回复】的内容时，第一行必须严格按照以下格式要求输出状态行，之后换行再写对话正文。` +
+               `注意：状态行只能放在【回复】标签后的第一行，不要在其他任何地方（如【定位与天气】【服装】等段落内）重复输出。` +
+               `\n正确示例：\n【回复】\n（此处按格式要求输出一行状态）\n（此处是正常对话内容）` +
+               `\n格式要求（每次【回复】的第一行必须严格按此输出）：` + _sbVal;
     }
                 let arr = sys ? [{role: `system`, content: sys}] : [];
     let ctxHist = history.slice(-(parseInt($(`cfgCtx`).value)||10));
@@ -7486,7 +7489,7 @@ async function generateAiLog(charN) {
 1. 语气必须完全符合你的性格设定。因为是公开平台，你会有符合人设的社交伪装。
 2. 你可以完美识别近期聊天记录里的emoji。在写这篇动态时，请必须严格根据你的性格设定来决定是否使用emoji表情以及使用频率（例如：活泼开朗的性格可以多用emoji，高冷严谨的性格请少用或绝对不用emoji）。
 3. 内容可以提及近期的事，可以暗戳戳提到${myN}。
-4. 严格只输出动态正文。字数必须在150字到300字之间，请写得详细丰富一些，不要像短说说一样简略。`;
+4. 严格只输出中文正文，绝对不要输出英文、代码符号、格式说明或任何其他内容。字数必须在300字到500字之间，请写得详细丰富，不要截断，务必把话说完整。`;
 
     let specHistStr = originalGetItem.call(ls, `chatHistory_${currLogCharId}`) || originalGetItem.call(ls, `chatHistory`);
     let specHist = specHistStr ? JSON.parse(specHistStr) : [];
@@ -7503,7 +7506,7 @@ async function generateAiLog(charN) {
         let res = await fetch(url, {
             method: `POST`, 
             headers: {Authorization: `Bearer ` + key, "Content-Type": `application/json`},
-            body: JSON.stringify({model: mod, messages: [{role: `user`, content: sys}], temperature: 0.8})
+            body: JSON.stringify({model: mod, messages: [{role: `user`, content: sys}], temperature: 0.8, max_tokens: 2000})
         });
         let dat = await res.json();
         if(dat.choices && dat.choices.length > 0) {
@@ -11911,7 +11914,7 @@ if($(`btnGenCharMoments`)) $(`btnGenCharMoments`).onclick = async () => {
         }
 
         let _apMoment = charAP ? `【性格人设】${charAP.slice(0,400)}` : ``;
-        let sysMsg = `你是${name}。\n${_apMoment}\n${recentCtx}\n\n【必须】你发的朋友圈内容必须直接反映上方最近聊天记录的情绪状态：\n- 聊天甜蜜→朋友圈甜蜜，聊天冷淡→朋友圈疏离，刚发生重要事→围绕那件事发圈\n- 不写和聊天记录完全无关的内容\n- 用你自己的性格风格，详细描述你的心理活动和事情经过，字数控制在150到300字左右，尽量把话说完整，绝对不要只有十几个字！直接输出正文`;
+        let sysMsg = `你是${name}。\n${_apMoment}\n${recentCtx}\n\n【必须】你发的朋友圈内容必须直接反映上方最近聊天记录的情绪状态：\n- 聊天甜蜜→朋友圈甜蜜，聊天冷淡→朋友圈疏离，刚发生重要事→围绕那件事发圈\n- 不写和聊天记录完全无关的内容\n- 用你自己的性格风格，详细描述你的心理活动和事情经过，字数控制在300到500字之间，必须把话说完整，绝对不截断，绝对不要输出英文、代码或格式说明，直接输出中文正文`;
 
 
         try {
