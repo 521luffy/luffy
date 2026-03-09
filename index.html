@@ -5819,7 +5819,8 @@ if(charStickers.length > 0) {
 1. 浪漫惊喜/日常分享：当你遇到好看的风景或好吃的餐厅，加入 [发送定位：具体地名]
 2. 霸道查岗：如果对方很久没回复或你非常担心/生气，你可以主动发位置并要求对方过来，加入 [发送定位：你家楼下]
 3. 实时位置：如果剧情中你们开始一起共享位置，加入 [发送实时位置：你当前所在地点]
-注意：只在情绪合适的剧情节点使用，不要每次都用！`;
+4. 对方主动索要定位：如果对方用任何方式要求你发送位置/定位，必须立刻用 [发送定位：你当前所在的具体地点] 回应！
+注意：要求4是强制的；其余情况只在情绪合适的剧情节点使用，不要每次都用！`;
     if(!window._offlineMode) sys += window._locSysAddon;
     // 实时位置共享中，在提示词中也告知AI
     if(!window._offlineMode && typeof _liveLocActive !== 'undefined' && _liveLocActive) {
@@ -6052,10 +6053,9 @@ let hasAccept = txt.includes(`[收取转账]`);
                     if(skipNext) { skipNext = false; return; }
                     // 过滤系统指令行，不渲染为文字气泡
                     let _lineTrim = line.trim();
+                    // [发起语音通话][发起视频通话][发送定位：][发送实时位置：] 不能在此过滤！它们需进入mkBub wrapper链处理
                     if(_lineTrim.startsWith('[试图发送表情：') || _lineTrim.startsWith('[系统提示：') ||
-                       _lineTrim.startsWith('[发送实时位置：') || _lineTrim === '[发起语音通话]' ||
-                       _lineTrim === '[发起视频通话]' || _lineTrim.startsWith('[更新状态：') ||
-                       _lineTrim.startsWith('[发送定位：')) return;
+                       _lineTrim.startsWith('[更新状态：')) return;
                     // 过滤【】状态行（定位与天气/服装/表情等），不渲染为气泡
                     if(/^【(定位与天气|当日服装|服装|表情与动作|心声|隐秘心声|系统|状态)】/.test(_lineTrim)) return;
                     let voiceMatch = line.match(/\[?【?语音消息[^0-9]*(\d+)[^\]】]*\]?】?/);
@@ -14792,10 +14792,12 @@ async function _callAIConnect(type, isIncoming) {
         : (myName + '：' + m.content.slice(0,40))).join('\n');
     let callTypeName = type === 'voice' ? '语音通话' : '视频通话';
     let tp = parseFloat(originalGetItem.call(ls,'temp')||'0.8') || 0.8;
-    let connectSys = '你是' + charName + '。' + (charAP ? '你的设定：' + charAP : '') + '\n你当前面板状态：' + curStatus + '。\n近期聊天：\n' + recentHist + '\n\n【' + myName + '向你发起了' + callTypeName + '，正在等你接听】\n请根据你的性格和当前情绪状态决定是否接听！\n如接听（大多数情况下应该接）：回复最开头写 [接听通话]，随后用「」写出接起电话后的第一句话，配合相关听觉或视觉细节描写，内容要丰富完整，不要截断。\n如拒接（仅在正在吵架或心情极差时才拒接）：回复最开头写 [拒接通话]，随后发来一条文字消息（100字以内），说明你接不了的原因（比如在忙、不方便、或直接无视），但绝对不能说成是对方挂了你电话——是你主动选择不接' + myName + '的电话。\n注意：只要不是关系极度僵化或正在冷战，你都应该接听，通话时内容自然。【强制要求：你接起电话后的第一句话必须在200字内自然地说完，符合真实语境，不要截断！】';
+    let connectSys = '你是' + charName + '。' + (charAP ? '你的设定：' + charAP : '') + '\n你当前面板状态：' + curStatus + '。\n近期聊天：\n' + recentHist + '\n\n【' + myName + '向你发起了' + callTypeName + '，正在等你接听】\n' +
+        (type === 'voice' ? '【语音通话规则】接起后只能描写听觉细节（呼吸声/环境音/语气），严禁描写任何视觉画面（"看到你""你在我视线里"等）。' : '【视频通话规则】接起后可以描写视觉细节（你的表情/背景/对方画面）。') +
+        '\n请根据你的性格和当前情绪状态决定是否接听！\n如接听（大多数情况下应该接）：回复最开头写 [接听通话]，随后用「」写出接起电话后第一句自然的开场白，简短真实（严格在60字以内），就像真实打电话一样。\n如拒接（仅在正在吵架或心情极差时才拒接）：回复最开头写 [拒接通话]，随后说明原因（60字以内），不能说成是对方挂了你电话。\n注意：只要不是关系极度僵化，你都应该接听。';
 
     try {
-        let res = await fetch(pxy, { method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer '+key}, body:JSON.stringify({model:mod, temperature:tp, max_tokens:2000, messages:[{role:'user', content:connectSys}]}) });
+        let res = await fetch(pxy, { method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer '+key}, body:JSON.stringify({model:mod, temperature:tp, max_tokens:400, messages:[{role:'user', content:connectSys}]}) });
         let dat = await res.json();
         let reply = (dat.choices?.[0]?.message?.content || '').trim();
         if(reply.includes('[接听通话]')) {
@@ -14916,7 +14918,7 @@ async function _callSendMsg(txt) {
     let tp = parseFloat(originalGetItem.call(ls,'temp')||'0.8') || 0.8;
     let callLog = window._callState.msgs.slice(-6).map(m => (m.isUser ? myName : charName) + '：' + m.txt).join('\n');
     window._callState.msgs.push({isUser:true, txt});
-    let voiceRules = type === 'voice' ? '【语音通话规则 - 极度重要】你们正在进行语音通话，双方看不到对方。你必须：\n1. 完全禁止描写任何视觉动作（如"瞪了一眼""我看着你"），只描写听觉和触觉（呼吸声、环境音、物体声响、衣物摩擦声等）。\n2. 像真实打电话一样自然说话，语气要有质感，【强制要求】你的每次回复必须在200字内说完整一段话，符合真实情绪，可以有省略号或停顿，绝不截断。\n3. 可以描写背景里的声音细节，让对方脑补环境。\n4. 【极其重要】你必须直接回应对方刚才说的话，不要自说自话，不要重复上一条内容。' : '【视频通话规则 - 极度重要】你们正在进行视频通话，可以看到彼此。你必须：\n1. 大量描写视觉细节：你穿了什么、头发状态、距离镜头的远近、眼神交互。\n2. 如果想展示周围的东西，可以用[发送照片：详细描述]指令翻转镜头。\n3. 如果网络卡了可以演戏说画面定格了，回复控制在200字以内。\n4. 【极其重要】你必须直接回应对方刚才说的话，不要自说自话，不要重复上一条内容。';
+    let voiceRules = type === 'voice' ? '【语音通话规则 - 极度重要】你们正在进行语音通话，双方看不到对方。你必须：\n1. 完全禁止描写任何视觉动作（如"瞪了一眼""我看着你"），只描写听觉和触觉（呼吸声、环境音、物体声响、衣物摩擦声等）。\n2. 像真实打电话一样自然说话，语气要有质感，【强制要求】你的每次回复每次回复严格在80字以内，像真实打电话一样简短自然，不要大段描写，说当下最想说的一两句话。\n3. 可以描写背景里的声音细节，让对方脑补环境。\n4. 【极其重要】你必须直接回应对方刚才说的话，不要自说自话，不要重复上一条内容。' : '【视频通话规则 - 极度重要】你们正在进行视频通话，可以看到彼此。你必须：\n1. 大量描写视觉细节：你穿了什么、头发状态、距离镜头的远近、眼神交互。\n2. 如果想展示周围的东西，可以用[发送照片：详细描述]指令翻转镜头。\n3. 如果网络卡了可以演戏说画面定格了，回复控制在200字以内。\n4. 【极其重要】你必须直接回应对方刚才说的话，不要自说自话，不要重复上一条内容。';
 let callSys = '你是' + charName + '。' + (charAP ? '你的设定：' + charAP : '') + '\n\n' + voiceRules + '\n\n通话记录：\n' + callLog + '\n\n' + myName + '刚才说】：' + txt + '\n\n请直接针对' + myName + '说的内容回复，无需任何前缀。【强制要求：必须在200字内把这段话说完整，符合真实沟通状态，不得截断！】';
 
 
@@ -15584,7 +15586,7 @@ window.mkBub = function(txt, side, isT) {
 };
 
 // 单聊系统提示注入：主动发起通话规则
-window._callSysAddon = '\n【主动发起通话规则 - 极度重要】如果你在当前剧情中情绪出现剧烈波动（极度生气、极其思念、遇到紧急情况，或者对方故意冷落/惹怒你），你拥有主动向对方拨打电话的绝对特权！请在情绪爆发的回复最后，单独起一行加入指令：[发起语音通话] 或者 [发起视频通话]。注意：一旦使用此指令，代表你已经迫不及待想要越过文字直接对峙或倾诉，请务必在前面的正文里铺垫好你此时急躁、迫切或愤怒的情绪。';
+window._callSysAddon = '\n【主动发起通话规则 - 极度重要】两种情况下你必须主动发起通话：①情绪剧烈波动（极度生气、极其思念、遇到紧急情况），②对方明确要求你打电话/给我打电话/视频一下。满足任一条件时，在回复最后单独一行加入：[发起语音通话] 或 [发起视频通话]。用了此指令就代表你真的在给对方打电话。';
 
 // ============================================================
 // ===== 线下模式（Offline Mode）===== 
