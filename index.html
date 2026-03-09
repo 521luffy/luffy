@@ -4555,7 +4555,8 @@ async function renderMemList() {
         grouped[d].forEach((item, idx) => {
             if (isMemInlineEditMode) {
                 // 原地变为可编辑的文本框
-                html += `<div style="display:flex;align-items:flex-start;"><span style="color:#6c5ce7;font-weight:bold;margin-right:5px;margin-top:8px;">` + (idx+1) + `.</span><textarea id="inlineMemEdit_${item.originalIndex}" class="textarea-field" style="flex:1;height:70px;font-size:13px;padding:8px;border-color:#ffeaa7;resize:none;">${item.rawContent}</textarea></div>`;
+                let _memDateVal = (mems[item.originalIndex].date || '').split(' ')[0];
+                html += `<div style="display:flex;flex-direction:column;gap:4px;border:1px dashed #ffeaa7;border-radius:8px;padding:8px;margin-bottom:4px;"><div style="display:flex;align-items:center;gap:6px;"><span style="color:#6c5ce7;font-size:11px;font-weight:bold;">📅 日期：</span><input type="text" id="inlineDateEdit_${item.originalIndex}" value="${_memDateVal}" style="flex:1;font-size:12px;padding:4px 8px;border-radius:6px;border:1px solid #a29bfe;outline:none;" placeholder="格式：2024/1/1"></div><div style="display:flex;align-items:flex-start;"><span style="color:#6c5ce7;font-weight:bold;margin-right:5px;margin-top:8px;">` + (idx+1) + `.</span><textarea id="inlineMemEdit_${item.originalIndex}" class="textarea-field" style="flex:1;height:70px;font-size:13px;padding:8px;border-color:#ffeaa7;resize:none;">${item.rawContent}</textarea></div></div>`;
             } else {
                 let border = (isMemEditMode && selMems.has(item.originalIndex)) ? `border-left:3px solid #ff4d4f;padding-left:5px;` : ``;
                 let clickAction = isMemEditMode ? `toggleMemSel(${item.originalIndex})` : ``;
@@ -4613,10 +4614,16 @@ $(`btnViewMem`).onclick = () =>{
                 let mems = await getMems();
                 mems.forEach((m, i) => {
                     let ta = document.getElementById(`inlineMemEdit_${i}`);
-                    if(ta) {
-                        m.content = ta.value.trim() || m.content;
+                    if(ta) m.content = ta.value.trim() || m.content;
+                    let da = document.getElementById(`inlineDateEdit_${i}`);
+                    if(da && da.value.trim()) {
+                        // 保留时间部分（如有），只替换日期部分
+                        let oldTimePart = (m.date || '').split(' ').slice(1).join(' ');
+                        m.date = da.value.trim() + (oldTimePart ? ' ' + oldTimePart : '');
                     }
                 });
+                // 按日期重新排序（同一日期归并显示）
+                mems.sort((a, b) => new Date(a.date) - new Date(b.date));
                 await saveMems(mems);
                 isMemInlineEditMode = false;
                 $(`btnInlineEditMem`).innerText = `编辑`;
@@ -5852,7 +5859,10 @@ if(charStickers.length > 0) {
             + (_olRelation ? '▶ 关系氛围：' + _olRelation + '\n' : '')
             + (_olPreset ? '▶ 附加要求：' + _olPreset + '\n' : '')
             + (_olWords ? '▶ 回复字数：控制在' + _olWords + '字左右。\n' : '')
-            + '▶ 描写段落与「」对话交替出现，段落间空一行，不加任何前缀符号。';
+            + '▶ 描写段落与「」对话交替出现，段落间空一行，不加任何前缀符号。\n'
+            + '▶ 【强制标点规范】必须使用正确中文标点（句号。逗号，感叹号！省略号……等），严禁用空格代替标点！\n'
+            + '▶ 【语序规范】必须使用正常语序表达，严禁倒装句（错误示例："有点哑，他的声音" → 正确："他的声音有点哑"）。\n'
+            + '▶ 【单条回复】必须将本次全部回复内容合并为一整段连续文本发出，不得分成多条消息。';
     }
     // ===== 通话提示词注入（线下模式时不注入，因为线下是面对面，无需"主动打电话"指令）=====
     if(window._callSysAddon && !window._offlineMode) sys += window._callSysAddon;
@@ -6061,22 +6071,28 @@ let hasAccept = txt.includes(`[收取转账]`);
                     let voiceMatch = line.match(/\[?【?语音消息[^0-9]*(\d+)[^\]】]*\]?】?/);
                     if(voiceMatch) {
                         let sec = voiceMatch[1];
-                        let pureText = line.replace(voiceMatch[0], ``).replace(/['""""'']/g, ``).replace(/\s+/g, `，`).replace(/，+/g, `，`).replace(/([。！？!?…])，/g, `$1`).replace(/^，|，$/g, ``);
+                        let pureText = line.replace(voiceMatch[0], ``).replace(/['"""'']/g, ``).replace(/\s+/g, `，`).replace(/，+/g, `，`).replace(/([。！？!?…])，/g, `$1`).replace(/^，|，$/g, ``);
                         if(!pureText && i + 1 < lns.length) {
-                            pureText = lns[i+1].replace(/['""""'']/g, ``).replace(/\s+/g, `，`).replace(/，+/g, `，`).replace(/([。！？!?…])，/g, `$1`).replace(/^，|，$/g, ``);
+                            pureText = lns[i+1].replace(/['"""'']/g, ``).replace(/\s+/g, `，`).replace(/，+/g, `，`).replace(/([。！？!?…])，/g, `$1`).replace(/^，|，$/g, ``);
                             skipNext = true;
                         }
                         if(pureText && !/[。！？!?…]$/.test(pureText)) pureText += `。`;
                         let cleanVoice = `[语音消息：${sec}秒]` + pureText;
                         newLines.push(cleanVoice);
-                        setTimeout(() => mkBub(cleanVoice, `l`), i * 1500);
+                        if(!window._offlineMode) setTimeout(() => mkBub(cleanVoice, `l`), i * 1500);
                     } else {
                         newLines.push(line);
-                        setTimeout(() => mkBub(line, `l`), i * 1500);
+                        if(!window._offlineMode) setTimeout(() => mkBub(line, `l`), i * 1500);
                     }
                 });
+                // 线下模式：所有行合并为单条气泡，一次性渲染
+                if(window._offlineMode && newLines.length > 0) {
+                    let offlineLines = newLines.filter(l => !l.startsWith('[') || l.startsWith('[发起') || l.startsWith('[发送'));
+                    let specialLines = newLines.filter(l => l.startsWith('[') && !l.startsWith('[发起') && !l.startsWith('[发送'));
+                    if(offlineLines.length > 0) mkBub(offlineLines.join('\n'), `l`);
+                    specialLines.forEach((line, i) => setTimeout(() => mkBub(line, `l`), i * 500));
+                }
 
-                
                 let newOut = newLines.join(`\n`);
                 if(out !== newOut && rM) {
                     history[history.length-1].content = txt.replace(rM[1], `\n` + newOut);
@@ -8016,7 +8032,19 @@ window.forceCheckAutoMem = async function() {
             if(dat.choices && dat.choices.length > 0) {
                 let out = dat.choices[0].message.content.trim();
                 let mems = await getMems();
-                mems.push({ date: updTime().toLocaleString(), content: out });
+                // 使用自定义时间或现实时间（与手动总结保持一致）
+                let _autoDateStr = '';
+                if($('cfgCustomTime') && $('cfgCustomTime').checked) {
+                    let _cy = $('ctYear')?.value || new Date().getFullYear();
+                    let _cm = $('ctMonth')?.value || (new Date().getMonth()+1);
+                    let _cd = $('ctDay')?.value || new Date().getDate();
+                    let _ch = $('ctHour')?.value || new Date().getHours();
+                    let _cmin = $('ctMinute')?.value || new Date().getMinutes();
+                    _autoDateStr = _cy + '/' + _cm + '/' + _cd + ' ' + _ch + ':' + String(_cmin).padStart(2,'0') + ':00';
+                } else {
+                    _autoDateStr = updTime().toLocaleString();
+                }
+                mems.push({ date: _autoDateStr, content: out });
                 await saveMems(mems);
                 console.log(`[系统] 自动记忆总结已静默完成`);
             }
@@ -14735,6 +14763,31 @@ function _endCall(declined) {
     try { localforage.setItem('chatHistory_' + currentChatId, JSON.stringify(history)).catch(()=>{}); } catch(e) {}
     mkBub(record, 'l');
     updateListPreview();
+    // 通话内容存入记忆库（时长超过5秒才记录）
+    if(!declined && duration >= 5 && st.msgs && st.msgs.length > 0) {
+        (async () => {
+            try {
+                let charName = $('cfgName')?.value || '对方';
+                let myName = $('cfgMyName')?.value || '我';
+                let callLog = st.msgs.map(m => (m.isUser ? myName : charName) + '\uff1a' + m.txt).join('\n');
+                let memContent = '【' + callType + '记录，时长' + _fmtCallTime(duration) + '】\n' + callLog;
+                let mems = await getMems();
+                let dateStr = '';
+                if($('cfgCustomTime') && $('cfgCustomTime').checked) {
+                    let cy = $('ctYear')?.value || new Date().getFullYear();
+                    let cm = $('ctMonth')?.value || (new Date().getMonth()+1);
+                    let cd = $('ctDay')?.value || new Date().getDate();
+                    let ch = $('ctHour')?.value || new Date().getHours();
+                    let cmin = $('ctMinute')?.value || new Date().getMinutes();
+                    dateStr = cy + '/' + cm + '/' + cd + ' ' + ch + ':' + String(cmin).padStart(2,'0') + ':00';
+                } else {
+                    dateStr = updTime().toLocaleString();
+                }
+                mems.push({ date: dateStr, content: memContent });
+                await saveMems(mems);
+            } catch(e) {}
+        })();
+    }
     st.active = false; st.type = null; st.startTime = null; st.msgs = [];
     let sv = $('scrVoiceCall'), svd = $('scrVideoCall');
     if(sv) sv.style.display = 'none';
@@ -14797,7 +14850,7 @@ async function _callAIConnect(type, isIncoming) {
         '\n请根据你的性格和当前情绪状态决定是否接听！\n如接听（大多数情况下应该接）：回复最开头写 [接听通话]，随后用「」写出接起电话后第一句自然的开场白，简短真实（严格在60字以内），就像真实打电话一样。\n如拒接（仅在正在吵架或心情极差时才拒接）：回复最开头写 [拒接通话]，随后说明原因（60字以内），不能说成是对方挂了你电话。\n注意：只要不是关系极度僵化，你都应该接听。';
 
     try {
-        let res = await fetch(pxy, { method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer '+key}, body:JSON.stringify({model:mod, temperature:tp, max_tokens:400, messages:[{role:'user', content:connectSys}]}) });
+        let res = await fetch(pxy, { method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer '+key}, body:JSON.stringify({model:mod, temperature:tp, max_tokens:(type==='video'?600:400), messages:[{role:'user', content:connectSys}]}) });
         let dat = await res.json();
         let reply = (dat.choices?.[0]?.message?.content || '').trim();
         if(reply.includes('[接听通话]')) {
@@ -15591,13 +15644,28 @@ window._callSysAddon = '\n【主动发起通话规则 - 极度重要】两种情
 // ============================================================
 // ===== 线下模式（Offline Mode）===== 
 // ============================================================
-window._offlineMode = false;  // 是否处于线下模式
-window._offlineScene = '';    // 场景设定
-window._offlineRelation = ''; // 关系与氛围
-window._offlinePreset = '';   // 预设提示词
-window._offlineWordCount = 0; // 期望字数
-window._offlineColorScene = '#6c5ce7';  // 场景文字颜色
-window._offlineColorDialog = '#e84393'; // 对话文字颜色
+// 线下模式状态 - 从localStorage恢复（切换聊天后保持）
+(function() {
+    let _olKey = 'offlineState_' + (window.currentChatId || 'default');
+    try {
+        let saved = JSON.parse(originalGetItem.call(ls, _olKey) || 'null');
+        window._offlineMode = !!(saved && saved.active);
+        window._offlineScene = (saved && saved.scene) || '';
+        window._offlineRelation = (saved && saved.relation) || '';
+        window._offlinePreset = (saved && saved.preset) || '';
+        window._offlineWordCount = (saved && saved.wordCount) || 0;
+        window._offlineColorScene = (saved && saved.colorScene) || '#6c5ce7';
+        window._offlineColorDialog = (saved && saved.colorDialog) || '#e84393';
+    } catch(e) {
+        window._offlineMode = false;
+        window._offlineScene = '';
+        window._offlineRelation = '';
+        window._offlinePreset = '';
+        window._offlineWordCount = 0;
+        window._offlineColorScene = '#6c5ce7';
+        window._offlineColorDialog = '#e84393';
+    }
+})();
 
 function _openOfflinePanel() {
     let panel = document.getElementById('offlineModePanel');
@@ -15637,6 +15705,18 @@ function _enterOfflineMode() {
 
     let wasOff = window._offlineMode;
     window._offlineMode = true;
+    // 持久化线下模式状态到localStorage
+    try {
+        originalSetItem.call(ls, 'offlineState_' + currentChatId, JSON.stringify({
+            active: true,
+            scene: window._offlineScene,
+            relation: window._offlineRelation,
+            preset: window._offlinePreset,
+            wordCount: window._offlineWordCount,
+            colorScene: window._offlineColorScene,
+            colorDialog: window._offlineColorDialog
+        }));
+    } catch(e) {}
     _closeOfflinePanel();
 
     // 更新菜单图标文字
@@ -15670,6 +15750,8 @@ async function _exitOfflineMode() {
     window._offlineRelation = '';
     window._offlinePreset = '';
     window._offlineWordCount = 0;
+    // 清除localStorage中的线下模式状态
+    try { originalSetItem.call(ls, 'offlineState_' + currentChatId, JSON.stringify({active: false})); } catch(e) {}
     let menuLabel = document.getElementById('offlineModeMenuLabel');
     if(menuLabel) menuLabel.textContent = '线下模式';
     _closeOfflinePanel();
@@ -15677,6 +15759,12 @@ async function _exitOfflineMode() {
 }
 
 // 菜单图标点击
+// 恢复线下模式的菜单文字（如果之前是线下模式）
+if(window._offlineMode) {
+    let _restoredLabel = document.getElementById('offlineModeMenuLabel');
+    if(_restoredLabel) _restoredLabel.textContent = '线下✓';
+}
+
 if(document.getElementById('btnOfflineMode')) {
     document.getElementById('btnOfflineMode').onclick = () => {
         toggleMenuDrawer(false);
