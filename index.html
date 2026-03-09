@@ -819,13 +819,13 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
                     <!-- 模板A：日常陪伴型 -->
                     <div style="border:1.5px solid #a29bfe;border-radius:12px;margin-bottom:8px;">
                         <label style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#f0eeff;cursor:pointer;">
-                            <input type=radio name=statusBarTpl id=tplRadioA value=A style="accent-color:#6c5ce7;width:16px;height:16px;" onchange="(function(){ var dateStr; var ctOn = document.getElementById('cfgCustomTime'); if(ctOn && ctOn.checked){ var cy=document.getElementById('ctYear').value, cm=document.getElementById('ctMonth').value, cd=document.getElementById('ctDay').value; dateStr=cy+'年'+cm+'月'+cd+'日'; } else { var now=new Date(); dateStr=now.getFullYear()+'年'+(now.getMonth()+1)+'月'+now.getDate()+'日'; } var weatherStr=''; try{ var st=JSON.parse(localStorage.getItem('aiStatus_'+window.currentChatId)||localStorage.getItem('aiStatus')||'{}'); weatherStr=st.weather||''; } catch(e){} var locStr=''; if(weatherStr){ var wm=weatherStr.match(/[📍地点在：:：]([^|。，,\n]+)/); if(wm) locStr=wm[1].trim(); } var t='📅 日期：'+dateStr+' | 🌤️ 天气：'+(weatherStr?weatherStr.slice(0,20).replace(/\n/g,' '):'填入当前天气')+' | 📍 地点：'+(locStr||'填入当前地点'); document.getElementById('tplPanelA').style.display='block';document.getElementById('tplPanelB').style.display='none';document.getElementById('tplPanelC').style.display='none';document.getElementById('cfgStatusBar').value=t;document.getElementById('tplFmtA').value=t; })();">
+                            <input type=radio name=statusBarTpl id=tplRadioA value=A style="accent-color:#6c5ce7;width:16px;height:16px;" onchange="var t='📅 日期：年月日 | 🌤️ 天气：当前天气 | 📍 地点：当前地点';document.getElementById('tplPanelA').style.display='block';document.getElementById('tplPanelB').style.display='none';document.getElementById('tplPanelC').style.display='none';document.getElementById('cfgStatusBar').value=t;document.getElementById('tplFmtA').value=t;">
                             <span style="font-size:13px;font-weight:bold;color:#6c5ce7;">📅 日常陪伴型</span>
                             <span style="font-size:11px;color:#aaa;margin-left:auto;">适合沉浸式生活流</span>
                         </label>
                         <div id=tplPanelA style="display:none;padding:10px 14px;background:white;border-top:1px solid #e0d8ff;">
                             <div style="font-size:11px;color:#999;margin-bottom:4px;">自定义格式内容（可直接编辑）：</div>
-                            <textarea id=tplFmtA rows=2 style="display:block;width:100%;padding:8px;border:1px solid #e0d8ff;border-radius:8px;font-size:12px;resize:none;box-sizing:border-box;outline:none;line-height:1.5;" oninput="document.getElementById('cfgStatusBar').value=this.value;">📅 日期：（自动填入当前设定时间年月日）| 🌤️ 天气：（自动填入当前剧情天气）| 📍 地点：（自动填入当前剧情地点）</textarea>
+                            <textarea id=tplFmtA rows=2 style="display:block;width:100%;padding:8px;border:1px solid #e0d8ff;border-radius:8px;font-size:12px;resize:none;box-sizing:border-box;outline:none;line-height:1.5;" oninput="document.getElementById('cfgStatusBar').value=this.value;">📅 日期：年月日 | 🌤️ 天气：当前天气 | 📍 地点：当前地点</textarea>
                         </div>
                     </div>
                     <!-- 模板B：RPG数值型 -->
@@ -2826,7 +2826,8 @@ ls.getItem = function(key) {
         if (isolatedKeys.includes(key)) {
             let spec = originalGetItem.call(this, key + `_` + currentChatId);
             if (spec) return spec;
-            if (key === `chatHistory` || key === `aiStatus` || key === `memories` || key === `lastMemCount`) return null;
+            // 这些key不允许fallback到全局值，每个char必须独立，没有则返回null
+            if (key === `chatHistory` || key === `aiStatus` || key === `memories` || key === `lastMemCount` || key === `cStatusBarOn` || key === `cStatusBar`) return null;
             return originalGetItem.call(this, key);
         }
         return originalGetItem.call(this, key);
@@ -5661,8 +5662,8 @@ if(charStickers.length > 0) {
     // 只从DOM读取（已加入isolatedKeys，自动按char隔离）
     let _sbOn = $(`cfgStatusBarOn`) && $(`cfgStatusBarOn`).checked;
     let _sbVal = ($(`cfgStatusBar`) && $(`cfgStatusBar`).value.trim()) || ``;
-    // 日常陪伴型：动态替换时间/天气/地点占位符
-    if(_sbOn && _sbVal && (_sbVal.includes(`自动填入当前设定时间`) || _sbVal.includes(`填入剧情日期`) || _sbVal.includes(`📅 日期：`))) {
+    // 日常陪伴型：如果用户使用格式模板，注入时动态填入真实时间/天气/地点
+    if(_sbOn && _sbVal && _sbVal.includes(`📅 日期：`)) {
         let _dateStr;
         if($(`cfgCustomTime`) && $(`cfgCustomTime`).checked) {
             let cy=$(`ctYear`).value, cm=$(`ctMonth`).value, cd=$(`ctDay`).value;
@@ -5672,9 +5673,8 @@ if(charStickers.length > 0) {
             _dateStr = _now.getFullYear()+`年`+(_now.getMonth()+1)+`月`+_now.getDate()+`日`;
         }
         let _aiSt = aiStatus || {};
-        let _wStr = (_aiSt.weather||``).trim().replace(/\n/g,` `).slice(0,30) || `写当前剧情天气`;
-        // 尝试从weather字段里提取地点
-        let _locStr = `写当前剧情所在地点`;
+        let _wStr = (_aiSt.weather||``).trim().replace(/\n/g,` `).slice(0,30) || `（写当前剧情天气）`;
+        let _locStr = `（写当前剧情地点）`;
         if(_aiSt.weather) { let _lm=_aiSt.weather.match(/(?:在|位于|地点[：:])([^，。,\.\n|]+)/); if(_lm) _locStr=_lm[1].trim(); }
         _sbVal = `📅 日期：${_dateStr} | 🌤️ 天气：${_wStr} | 📍 地点：${_locStr}`;
     }
@@ -5719,8 +5719,8 @@ if(charStickers.length > 0) {
         let dat = await res.json(); rmThk();
                                 if(dat.choices && dat.choices.length > 0) {
             let txt = dat.choices[0].message.content;
-            // 清除模型推理/自我修正泄漏文本（DeepSeek等模型的 <think>标签 或 *(Self-Correction...) 等）
-            txt = txt.replace(/<think>[\s\S]*?<\/think>/gi, ``).replace(/\*\([^)\n]{0,200}\)\*/g, ``).trim();
+            // 清除模型推理/自我修正泄漏文本（<think>、*(...)* 和 "*英文注释*" 等所有格式）
+            txt = txt.replace(/<think>[\s\S]*?<\/think>/gi, ``).replace(/\*\([\s\S]*?\)\*/g, ``).replace(/\*\([^\)]*$/gm, ``).replace(/[\u201c\u201d\u201e]?\*[A-Za-z][^*\n]{8,400}\*[\u201c\u201d\u201e]?/g, ``).trim();
             let currentStickers = charStickers;
                         txt = txt.replace(/\[发送表情：(.*?)\]/g, (match, p1) => {
                 let s = currentStickers.find(x => x.name === p1.trim());
@@ -7548,7 +7548,7 @@ async function generateAiLog(charN) {
         if(dat.choices && dat.choices.length > 0) {
             let text = dat.choices[0].message.content.trim();
             // 清除模型自我修正/推理泄漏文本
-            text = text.replace(/\*\([^)]*\)\*/g, ``).replace(/\*\([\s\S]*?\)\s*$/gm, ``).replace(/<think>[\s\S]*?<\/think>/gi, ``).trim();
+            text = text.replace(/<think>[\s\S]*?<\/think>/gi, ``).replace(/\*\([\s\S]*?\)\*/g, ``).replace(/\*\([^\)]*$/gm, ``).replace(/["""]?\*[A-Za-z][^*\n]{8,400}\*["""]?/g, ``).trim();
             logsData.push({
                 id: Date.now(),
                 author: `ai`,
@@ -11964,7 +11964,7 @@ if($(`btnGenCharMoments`)) $(`btnGenCharMoments`).onclick = async () => {
             let data = await resp.json();
             let postTxt = (data.choices?.[0]?.message?.content || ``).trim();
             // 清除模型自我修正/推理泄漏文本（如 *(Self-Correction...) 等）
-            postTxt = postTxt.replace(/\*\([^)]*\)\*/g, ``).replace(/\*\([\s\S]*?\)\s*$/gm, ``).replace(/<think>[\s\S]*?<\/think>/gi, ``).trim();
+            postTxt = postTxt.replace(/<think>[\s\S]*?<\/think>/gi, ``).replace(/\*\([\s\S]*?\)\*/g, ``).replace(/\*\([^\)]*$/gm, ``).replace(/["""]?\*[A-Za-z][^*\n]{8,400}\*["""]?/g, ``).trim();
             if(!postTxt) continue;
 
             let authorAvatar = null;
@@ -12954,7 +12954,9 @@ ${charRel ? `【你的身份关系】${charRel}` : ``}${recentCtx}
             });
             let data = await resp.json();
             let postTxt = (data.choices?.[0]?.message?.content || ``).trim();
-            postTxt = postTxt.replace(/^["「『]|["」』]$/g, ``).trim();
+            postTxt = postTxt.replace(/^[\"「『]|[\"」』]$/g, ``).trim();
+            // 清除模型自我修正/推理泄漏文本（*(...)*、"*英文内容*" 等格式）
+            postTxt = postTxt.replace(/<think>[\s\S]*?<\/think>/gi, ``).replace(/\*\([\s\S]*?\)\*/g, ``).replace(/\*\([^\)]*$/gm, ``).replace(/[\u201c\u201d\u201e]?\*[A-Za-z][^*\n]{8,400}\*[\u201c\u201d\u201e]?/g, ``).trim();
             // 清除模型自我修正/推理泄漏文本
             postTxt = postTxt.replace(/\*\([^)]*\)\*/g, ``).replace(/\*\([\s\S]*?\)\s*$/gm, ``).replace(/<think>[\s\S]*?<\/think>/gi, ``).trim();
             if(!postTxt) continue;
