@@ -2695,6 +2695,14 @@ if(typeof localforage === 'undefined') {
                 </div>
             </div>
         </div>
+        <!-- 保存预设区域 -->
+        <div style="margin-bottom:16px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                <label style="font-size:12px;font-weight:600;color:#6c5ce7;">📌 保存预设</label>
+                <button id=btnSaveOlPreset style="padding:4px 12px;border-radius:20px;border:none;background:linear-gradient(135deg,#a29bfe,#6c5ce7);color:white;font-size:12px;font-weight:600;cursor:pointer;">保存当前</button>
+            </div>
+            <div id=olPresetList style="display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto;"></div>
+        </div>
         <div style="display:flex;gap:12px;align-items:center;">
             <button id=btnOfflineClose style="flex:1;padding:13px;border-radius:22px;border:none;background:rgba(0,0,0,0.07);color:#555;font-size:14px;font-weight:600;cursor:pointer;">关闭</button>
             <button id=btnOfflineEnter style="flex:2.5;padding:13px;border-radius:22px;border:none;background:linear-gradient(135deg,#a29bfe 0%,#6c5ce7 100%);color:white;font-size:15px;font-weight:700;cursor:pointer;position:relative;overflow:hidden;box-shadow:0 4px 18px rgba(108,92,231,0.4);letter-spacing:0.5px;">
@@ -3921,6 +3929,8 @@ async function renderContacts() {
         div.dataset.lasttime = String(_lastTime);
                 div.onclick = async () => {
             currentChatId = c.id;
+            // 恢复当前char的线下模式状态
+            if(typeof window._restoreOfflineState === 'function') window._restoreOfflineState(c.id);
             $(`cfgName`).value = originalGetItem.call(ls, `cN_` + c.id) || c.name;
             $(`cfgRem`).value = originalGetItem.call(ls, `cR_` + c.id) || ``;
             // 修复：优先从 localforage 读取，不 fallback 到全局 cMyN（避免显示旧全局名"檬檬"）
@@ -5233,16 +5243,21 @@ function redrawChat() {
                 lns = out.replace(/([。！？!?])/g, `$1\n`).split(/\n+/).filter(x => x.trim() !== ``); 
             }
             
-                        let newLines = [];
+                        // 线下模式：所有段落合并为单气泡
+            if(window._offlineMode) {
+                let offlineText = lns.filter(l => l.trim()).join('\n');
+                if(offlineText) mkBubSync(offlineText, `l`);
+            } else {
+            let newLines = [];
             let skipNext = false;
             lns.forEach((line, i) => {
                 if(skipNext) { skipNext = false; return; }
                 let voiceMatch = line.match(/\[?【?语音消息[^0-9]*(\d+)[^\]】]*\]?】?/);
                 if(voiceMatch) {
                     let sec = voiceMatch[1];
-                    let pureText = line.replace(voiceMatch[0], ``).replace(/['""""'']/g, ``).replace(/\s+/g, `，`).replace(/，+/g, `，`).replace(/([。！？!?…])，/g, `$1`).replace(/^，|，$/g, ``);
+                    let pureText = line.replace(voiceMatch[0], ``).replace(/['""\"\"'']/g, ``).replace(/\s+/g, `，`).replace(/，+/g, `，`).replace(/([。！？!?…])，/g, `$1`).replace(/^，|，$/g, ``);
                     if(!pureText && i + 1 < lns.length) {
-                        pureText = lns[i+1].replace(/['""""'']/g, ``).replace(/\s+/g, `，`).replace(/，+/g, `，`).replace(/([。！？!?…])，/g, `$1`).replace(/^，|，$/g, ``);
+                        pureText = lns[i+1].replace(/['""\"\"'']/g, ``).replace(/\s+/g, `，`).replace(/，+/g, `，`).replace(/([。！？!?…])，/g, `$1`).replace(/^，|，$/g, ``);
                         skipNext = true;
                     }
                     if(pureText && !/[。！？!?…]$/.test(pureText)) pureText += `。`;
@@ -5261,9 +5276,9 @@ function redrawChat() {
                 msg.content = txt.replace(rM[1], `\n` + newOut);
                 changed = true;
             }
-        }
-
-    });
+            } // end else (non-offline)
+        } // end else if(assistant)
+    }); // end history.forEach
     if(changed) ls.setItem(`chatHistory`, JSON.stringify(history));
 }
 
@@ -5881,9 +5896,17 @@ if(charStickers.length > 0) {
             _dateStr = _now.getFullYear()+`年`+(_now.getMonth()+1)+`月`+_now.getDate()+`日`;
         }
         let _aiSt = aiStatus || {};
-        let _wStr = (_aiSt.weather||``).trim().replace(/\n/g,` `).slice(0,30) || `（写当前剧情天气）`;
+        // 提取天气信息（仅保留天气描述，不含地点）
+        let _wRaw = (_aiSt.weather||``).trim().replace(/\n/g,` `);
+        // 截取至第一个地点描述词前，避免把地点塞进天气
+        let _wStr = _wRaw.replace(/(?:在|位于|地点[：:])[^，。|]*/,'').replace(/\|.*/,'').trim().slice(0,20) || `（写当前剧情天气）`;
         let _locStr = `（写当前剧情地点）`;
-        if(_aiSt.weather) { let _lm=_aiSt.weather.match(/(?:在|位于|地点[：:])([^，。,\.\n|]+)/); if(_lm) _locStr=_lm[1].trim(); }
+        if(window._offlineMode && window._offlineScene) {
+            // 线下模式：从场景设定中取地点（更精准，不从天气里挖）
+            _locStr = window._offlineScene.slice(0,20);
+        } else if(_aiSt.weather) {
+            let _lm=_aiSt.weather.match(/(?:在|位于|地点[：:])([^，。,\.\n|]{2,15})/); if(_lm) _locStr=_lm[1].trim();
+        }
         // 构建时间字符串（含星期几和时分）
         let _timeStr;
         if($(`cfgCustomTime`) && $(`cfgCustomTime`).checked) {
@@ -6786,20 +6809,23 @@ function renderLocationCard(b, txt, side) {
 function _renderOfflineText(b, txt) {
     let cScene = window._offlineColorScene || '#6c5ce7';
     let cDialog = window._offlineColorDialog || '#e84393';
-    // 分段处理：「」包裹的是对话，其余是场景描写
+    // 按换行分段，每段单独渲染，段落间有间距
+    let paragraphs = txt.split(/\n+/).filter(p => p.trim());
     let html = '';
-    let remaining = txt;
-    // 正则：找到所有「...」对话段落
-    let parts = remaining.split(/(「[^」]*」)/g);
-    parts.forEach(part => {
-        if(!part) return;
-        if(part.startsWith('「') && part.endsWith('」')) {
-            // 对话：用对话颜色加粗
-            html += `<span style="color:${cDialog};font-weight:600;">${part.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span>`;
-        } else if(part.trim()) {
-            // 场景描写：用场景颜色
-            html += `<span style="color:${cScene};">${part.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')}</span>`;
-        }
+    paragraphs.forEach((para, pi) => {
+        let marginTop = pi > 0 ? 'margin-top:10px;' : '';
+        // 段落内可能混合场景描写和「」对话
+        let parts = para.split(/(「[^」]*」)/g);
+        let paraHtml = '';
+        parts.forEach(part => {
+            if(!part) return;
+            if(part.startsWith('「') && part.endsWith('」')) {
+                paraHtml += `<span style="color:${cDialog};font-weight:600;">${part.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span>`;
+            } else if(part.trim()) {
+                paraHtml += `<span style="color:${cScene};">${part.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span>`;
+            }
+        });
+        if(paraHtml) html += `<div style="${marginTop}line-height:1.75;">${paraHtml}</div>`;
     });
     b.innerHTML = html || txt.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
     b.style.cssText += 'background:rgba(255,255,255,0.92);border:none;box-shadow:0 2px 12px rgba(108,92,231,0.1);line-height:1.9;';
@@ -15644,9 +15670,17 @@ window._callSysAddon = '\n【主动发起通话规则 - 极度重要】两种情
 // ============================================================
 // ===== 线下模式（Offline Mode）===== 
 // ============================================================
-// 线下模式状态 - 从localStorage恢复（切换聊天后保持）
-(function() {
-    let _olKey = 'offlineState_' + (window.currentChatId || 'default');
+// 线下模式状态 - 按char隔离恢复
+window._offlineMode = false;
+window._offlineScene = '';
+window._offlineRelation = '';
+window._offlinePreset = '';
+window._offlineWordCount = 0;
+window._offlineColorScene = '#6c5ce7';
+window._offlineColorDialog = '#e84393';
+
+window._restoreOfflineState = function(chatId) {
+    let _olKey = 'offlineState_' + (chatId || 'default');
     try {
         let saved = JSON.parse(originalGetItem.call(ls, _olKey) || 'null');
         window._offlineMode = !!(saved && saved.active);
@@ -15657,15 +15691,16 @@ window._callSysAddon = '\n【主动发起通话规则 - 极度重要】两种情
         window._offlineColorScene = (saved && saved.colorScene) || '#6c5ce7';
         window._offlineColorDialog = (saved && saved.colorDialog) || '#e84393';
     } catch(e) {
-        window._offlineMode = false;
-        window._offlineScene = '';
-        window._offlineRelation = '';
-        window._offlinePreset = '';
-        window._offlineWordCount = 0;
-        window._offlineColorScene = '#6c5ce7';
-        window._offlineColorDialog = '#e84393';
+        window._offlineMode = false; window._offlineScene = ''; window._offlineRelation = '';
+        window._offlinePreset = ''; window._offlineWordCount = 0;
+        window._offlineColorScene = '#6c5ce7'; window._offlineColorDialog = '#e84393';
     }
-})();
+    // 同步菜单文字
+    let _ml = document.getElementById('offlineModeMenuLabel');
+    if(_ml) _ml.textContent = window._offlineMode ? '线下✓' : '线下模式';
+};
+// 初始加载（此时currentChatId可能是default）
+window._restoreOfflineState(window.currentChatId || 'default');
 
 function _openOfflinePanel() {
     let panel = document.getElementById('offlineModePanel');
@@ -15686,6 +15721,67 @@ function _openOfflinePanel() {
     if(document.getElementById('olColorDialogHex')) document.getElementById('olColorDialogHex').textContent = window._offlineColorDialog || '#e84393';
     panel.style.transform = 'translateY(0)';
     panel.style.pointerEvents = 'all';
+    _renderOlPresets();
+}
+
+function _renderOlPresets() {
+    let list = document.getElementById('olPresetList');
+    if(!list) return;
+    let presets = [];
+    try { presets = JSON.parse(originalGetItem.call(ls, 'olPresets') || '[]'); } catch(e) {}
+    if(presets.length === 0) {
+        list.innerHTML = '<div style="color:#bbb;font-size:12px;text-align:center;padding:8px;">暂无保存的预设，点击「保存当前」添加</div>';
+        return;
+    }
+    list.innerHTML = '';
+    presets.forEach((p, i) => {
+        let row = document.createElement('div');
+        row.style.cssText = 'display:flex;align-items:center;gap:6px;background:rgba(108,92,231,0.06);border:1px solid #e8e4ff;border-radius:10px;padding:6px 10px;';
+        // 选中按钮
+        let selBtn = document.createElement('button');
+        selBtn.style.cssText = 'flex-shrink:0;width:22px;height:22px;border-radius:50%;border:2px solid #a29bfe;background:white;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;';
+        selBtn.textContent = '○';
+        selBtn.onclick = () => _loadOlPreset(i);
+        // 预设名称/摘要（两行高度展示）
+        let info = document.createElement('div');
+        info.style.cssText = 'flex:1;min-width:0;';
+        let nameEl = document.createElement('div');
+        nameEl.style.cssText = 'font-size:12px;font-weight:600;color:#6c5ce7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+        nameEl.textContent = p.name || ('预设' + (i+1));
+        let previewEl = document.createElement('div');
+        previewEl.style.cssText = 'font-size:11px;color:#888;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;margin-top:2px;';
+        previewEl.textContent = [p.scene, p.relation, p.preset].filter(Boolean).join(' / ').slice(0, 80);
+        info.appendChild(nameEl); info.appendChild(previewEl);
+        // 删除按钮
+        let delBtn = document.createElement('button');
+        delBtn.style.cssText = 'flex-shrink:0;border:none;background:none;color:#ff7675;font-size:16px;cursor:pointer;padding:0 2px;';
+        delBtn.textContent = '×';
+        delBtn.onclick = () => _deleteOlPreset(i);
+        row.appendChild(selBtn); row.appendChild(info); row.appendChild(delBtn);
+        list.appendChild(row);
+    });
+}
+
+function _loadOlPreset(i) {
+    let presets = [];
+    try { presets = JSON.parse(originalGetItem.call(ls, 'olPresets') || '[]'); } catch(e) {}
+    let p = presets[i]; if(!p) return;
+    if(document.getElementById('olScene')) document.getElementById('olScene').value = p.scene || '';
+    if(document.getElementById('olRelation')) document.getElementById('olRelation').value = p.relation || '';
+    if(document.getElementById('olPreset')) document.getElementById('olPreset').value = p.preset || '';
+    if(document.getElementById('olWordCount')) document.getElementById('olWordCount').value = p.wordCount || '';
+    if(document.getElementById('olColorScene')) document.getElementById('olColorScene').value = p.colorScene || '#6c5ce7';
+    if(document.getElementById('olColorDialog')) document.getElementById('olColorDialog').value = p.colorDialog || '#e84393';
+    if(document.getElementById('olColorSceneHex')) document.getElementById('olColorSceneHex').textContent = p.colorScene || '#6c5ce7';
+    if(document.getElementById('olColorDialogHex')) document.getElementById('olColorDialogHex').textContent = p.colorDialog || '#e84393';
+}
+
+function _deleteOlPreset(i) {
+    let presets = [];
+    try { presets = JSON.parse(originalGetItem.call(ls, 'olPresets') || '[]'); } catch(e) {}
+    presets.splice(i, 1);
+    originalSetItem.call(ls, 'olPresets', JSON.stringify(presets));
+    _renderOlPresets();
 }
 
 function _closeOfflinePanel() {
@@ -15743,7 +15839,7 @@ function _enterOfflineMode() {
 }
 
 async function _exitOfflineMode() {
-    let confirmed = await window._customConfirm('你已退出线下模式！\n点击「确认」回到线上聊天模式，点击「取消」继续线下模式。');
+    let confirmed = await window._customConfirm('你确定退出线下模式吗？\n点击「确认」回到线上聊天模式，点击「取消」继续线下模式。');
     if(!confirmed) return;
     window._offlineMode = false;
     window._offlineScene = '';
@@ -15759,12 +15855,6 @@ async function _exitOfflineMode() {
 }
 
 // 菜单图标点击
-// 恢复线下模式的菜单文字（如果之前是线下模式）
-if(window._offlineMode) {
-    let _restoredLabel = document.getElementById('offlineModeMenuLabel');
-    if(_restoredLabel) _restoredLabel.textContent = '线下✓';
-}
-
 if(document.getElementById('btnOfflineMode')) {
     document.getElementById('btnOfflineMode').onclick = () => {
         toggleMenuDrawer(false);
@@ -15779,6 +15869,24 @@ if(document.getElementById('btnOfflineMode')) {
 // 关闭面板按钮
 if(document.getElementById('btnOfflineClose')) {
     document.getElementById('btnOfflineClose').onclick = _closeOfflinePanel;
+}
+
+// 保存预设按钮
+if(document.getElementById('btnSaveOlPreset')) {
+    document.getElementById('btnSaveOlPreset').onclick = () => {
+        let scene = (document.getElementById('olScene')?.value || '').trim();
+        let relation = (document.getElementById('olRelation')?.value || '').trim();
+        let preset = (document.getElementById('olPreset')?.value || '').trim();
+        let wordCount = document.getElementById('olWordCount')?.value || '';
+        let colorScene = document.getElementById('olColorScene')?.value || '#6c5ce7';
+        let colorDialog = document.getElementById('olColorDialog')?.value || '#e84393';
+        let name = (scene || relation || preset || '').slice(0, 15) || ('预设' + Date.now());
+        let presets = [];
+        try { presets = JSON.parse(originalGetItem.call(ls, 'olPresets') || '[]'); } catch(e) {}
+        presets.unshift({ name, scene, relation, preset, wordCount, colorScene, colorDialog });
+        originalSetItem.call(ls, 'olPresets', JSON.stringify(presets));
+        _renderOlPresets();
+    };
 }
 
 // 进入现实按钮
