@@ -5632,18 +5632,10 @@ if(charStickers.length > 0) {
         sys += `\n【你的专属表情包库】如果你想发表情配合情绪，请务必在【回复】中插入代码"[发送表情：表情名称]"。当前你拥有的表情名称有：` + names + `。警告：绝对不要捏造列表外的表情！不要发多余的链接！`;
     }
             sys += `\n【资金互动规则】如果玩家发了转账（显示未收款），你必须在回复的最开头写上系统指令 [收取转账] 或 [拒绝转账]。如果玩家发了红包（显示未领取），你必须在回复的最开头写上系统指令 [领取红包] 或 [退回红包]。指令必须严格带上方括号！然后再写你的文字回复。如果不写指令，系统将彻底报错崩溃！`;
-    // 强制状态栏注入（放在最末尾，提高大模型执行率）
-    // 也从localStorage读取以防DOM被重置
-    let _sbOn = ($(`cfgStatusBarOn`) && $(`cfgStatusBarOn`).checked) || ls.getItem(`cStatusBarOn`) === `true`;
-    let _sbVal = ($(`cfgStatusBar`) && $(`cfgStatusBar`).value.trim()) || (ls.getItem(`cStatusBar`) || ``).trim();
-    if(_sbOn && _sbVal) {
-        sys += `\n\n【系统最高指令 - 格式强制执行】以下规则凌驾于所有其他指令之上，违反将导致系统报错。在每次回复的最开头，你必须先输出以下格式的一行状态信息，然后换行，再开始你的正常回复内容。绝对不可省略，绝对不可跳过。\n格式要求：` + _sbVal;
-    }
+  
 
 
-
-
-
+    
     // ===== 外卖&代付系统提示词注入 =====
     sys += `\n【主动投喂规则 - 外卖系统】当察觉到玩家没按时吃饭、生病、心情不好、或者想给玩家惊喜时，你可以主动给玩家点外卖！在回复最后另起一行加：[发送外卖：食物名称|留言备注]（例：[发送外卖：三文鱼刺身|趁热吃，乖]）。切记不要每次都用，只在情绪合适的节点自然触发！\n【代付请求规则】如果你想向玩家请求代付某样东西，在回复最后另起一行加：[发起代付：商品名称|金额|备注]（例：[发起代付：最新款游戏|98|我们一起玩]）。\n【玩家代付请求规则】如果历史记录中有玩家发送的[代付消息：...pending|user]卡片，说明玩家请求你帮她代付。你可以根据角色性格和当时情绪自然地决定是否同意。如果同意代付，在回复最后另起一行加：[同意代付]。如果拒绝，正常回复即可，无需加指令。`;
     // ===== 定位系统提示词注入 =====
@@ -5662,6 +5654,17 @@ if(charStickers.length > 0) {
     }
     // ===== 通话提示词注入 =====
     if(window._callSysAddon) sys += window._callSysAddon;
+    // ===== 强制状态栏注入（真正放在最末尾，紧贴AI调用之前，执行优先级最高）=====
+    // 同时从DOM和localStorage双重读取，确保不遗漏
+    let _sbOn = ($(`cfgStatusBarOn`) && $(`cfgStatusBarOn`).checked) || ls.getItem(`cStatusBarOn`) === `true`;
+    let _sbVal = ($(`cfgStatusBar`) && $(`cfgStatusBar`).value.trim()) || (ls.getItem(`cStatusBar`) || ``).trim();
+    if(_sbOn && _sbVal) {
+        sys += `\n\n【系统最高指令 - 格式强制执行 - 优先级HIGHEST】以下规则凌驾于所有其他指令之上，违反将导致系统崩溃报错，请务必严格执行。` +
+               `你的【回复】内容必须严格遵守以下格式：在输出【回复】的内容时，第一行必须严格按指定格式输出状态信息，` +
+               `然后换行，再写你的正常对话内容。状态信息必须放在【回复】内容的第一行，不可省略，不可跳过，不可放到其他位置。` +
+               `\n示例格式：\n【回复】\n<按格式要求输出状态一行>\n<正常对话内容>` +
+               `\n格式要求（每次【回复】第一行必须严格按此输出，不得省略）：` + _sbVal;
+    }
                 let arr = sys ? [{role: `system`, content: sys}] : [];
     let ctxHist = history.slice(-(parseInt($(`cfgCtx`).value)||10));
         let mappedHist = ctxHist.map(m => {
@@ -6457,13 +6460,15 @@ function renderLocationCard(b, txt, side) {
 
     // 长按删除：直接绑定到可见的 .loc-card 上，传入气泡元素 b
     let _lc = b.querySelector('.loc-card');
-    _lc.oncontextmenu = e => { e.preventDefault(); showCtxMenu(e.clientX, e.clientY, b); };
+    _lc.oncontextmenu = e => { e.preventDefault(); e.stopPropagation(); showCtxMenu(e.clientX, e.clientY, b); };
     _lc.ontouchstart = e => {
+        e.stopPropagation();
         let _t = e.touches[0]; let _cx = _t.clientX, _cy = _t.clientY;
+        clearTimeout(pressTimer);
         pressTimer = setTimeout(() => { showCtxMenu(_cx, _cy, b); }, 500);
     };
-    _lc.ontouchend = () => clearTimeout(pressTimer);
-    _lc.ontouchmove = () => clearTimeout(pressTimer);
+    _lc.ontouchend = e => { e.stopPropagation(); clearTimeout(pressTimer); };
+    _lc.ontouchmove = e => { e.stopPropagation(); clearTimeout(pressTimer); };
 
     // 点击打开雷达
     _lc.onclick = (e) => {
@@ -11906,7 +11911,7 @@ if($(`btnGenCharMoments`)) $(`btnGenCharMoments`).onclick = async () => {
         }
 
         let _apMoment = charAP ? `【性格人设】${charAP.slice(0,400)}` : ``;
-        let sysMsg = `你是${name}。\n${_apMoment}\n${recentCtx}\n\n【必须】你发的朋友圈内容必须直接反映上方最近聊天记录的情绪状态：\n- 聊天甜蜜→朋友圈甜蜜，聊天冷淡→朋友圈疏离，刚发生重要事→围绕那件事发圈\n- 不写和聊天记录完全无关的内容\n- 用你自己的性格风格，详细描述你的心理活动和事情经过，字数控制在50到150字左右，尽量把话说完整，绝对不要只有十几个字！直接输出正文`;
+        let sysMsg = `你是${name}。\n${_apMoment}\n${recentCtx}\n\n【必须】你发的朋友圈内容必须直接反映上方最近聊天记录的情绪状态：\n- 聊天甜蜜→朋友圈甜蜜，聊天冷淡→朋友圈疏离，刚发生重要事→围绕那件事发圈\n- 不写和聊天记录完全无关的内容\n- 用你自己的性格风格，详细描述你的心理活动和事情经过，字数控制在150到300字左右，尽量把话说完整，绝对不要只有十几个字！直接输出正文`;
 
 
         try {
