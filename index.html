@@ -2699,13 +2699,13 @@ if(typeof localforage === 'undefined') {
         <div style="margin-bottom:16px;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
                 <label style="font-size:12px;font-weight:600;color:#6c5ce7;">📌 保存预设</label>
-                <button id=btnSaveOlPreset style="padding:4px 12px;border-radius:20px;border:none;background:linear-gradient(135deg,#a29bfe,#6c5ce7);color:white;font-size:12px;font-weight:600;cursor:pointer;">保存当前</button>
+                <button id=btnSaveOlPreset style="padding:4px 12px;border-radius:20px;border:none;background:linear-gradient(135deg,#a29bfe,#6c5ce7);color:white;font-size:12px;font-weight:600;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">保存当前</button>
             </div>
             <div id=olPresetList style="display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto;"></div>
         </div>
         <div style="display:flex;gap:12px;align-items:center;">
-            <button id=btnOfflineClose style="flex:1;padding:13px;border-radius:22px;border:none;background:rgba(0,0,0,0.07);color:#555;font-size:14px;font-weight:600;cursor:pointer;">关闭</button>
-            <button id=btnOfflineEnter style="flex:2.5;padding:13px;border-radius:22px;border:none;background:linear-gradient(135deg,#a29bfe 0%,#6c5ce7 100%);color:white;font-size:15px;font-weight:700;cursor:pointer;position:relative;overflow:hidden;box-shadow:0 4px 18px rgba(108,92,231,0.4);letter-spacing:0.5px;">
+            <button id=btnOfflineClose style="flex:1;padding:13px;border-radius:22px;border:none;background:rgba(0,0,0,0.07);color:#555;font-size:14px;font-weight:600;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">关闭</button>
+            <button id=btnOfflineEnter style="flex:2.5;padding:13px;border-radius:22px;border:none;background:linear-gradient(135deg,#a29bfe 0%,#6c5ce7 100%);color:white;font-size:15px;font-weight:700;cursor:pointer;position:relative;overflow:hidden;box-shadow:0 4px 18px rgba(108,92,231,0.4);letter-spacing:0.5px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">
                 <span id=btnOfflineEnterText>进入现实</span>
                 <div style="position:absolute;top:-50%;left:-60%;width:40%;height:200%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.25),transparent);transform:skewX(-15deg);animation:_olShimmer 2.4s ease-in-out infinite;pointer-events:none;"></div>
             </button>
@@ -5221,7 +5221,8 @@ $(`btnPull`).onclick = async () =>{
 function redrawChat() {
     msgs.innerHTML = ``;
     let changed = false;
-    history.forEach(msg => {
+    history.forEach((msg, _hIdx) => {
+        window._renderingHistIdx = _hIdx; // 记录当前渲染的history索引，用于编辑时精准定位
         if(msg.role === `user`) {
             if(msg._sys) return; // 跳过系统感知消息，不渲染为气泡
             mkBubSync(msg.content, `r`);
@@ -5288,6 +5289,7 @@ function redrawChat() {
             } // end else (non-offline)
         } // end else if(assistant)
     }); // end history.forEach
+    window._renderingHistIdx = null;
     if(changed) ls.setItem(`chatHistory`, JSON.stringify(history));
 }
 
@@ -5378,13 +5380,44 @@ $(`btnCancelEdit`).onclick = () =>{ $(`editMsgModal`).style.display = `none`; };
 $(`btnConfirmEdit`).onclick = () =>{
     let newTxt = $(`editMsgInput`).value;
     if(!newTxt) return;
-    for(let i=history.length-1; i>=0; i--) {
-        if(history[i].content.includes(editingOldText)) {
-            history[i].content = history[i].content.replace(editingOldText, newTxt);
+    let _saved = false;
+
+    // 方案A: 精准定位 —— 使用bubble上记录的histIdx（线下消息必须走此路径）
+    if(selEl && selEl.dataset.histIdx !== undefined) {
+        let _i = parseInt(selEl.dataset.histIdx);
+        if(!isNaN(_i) && history[_i]) {
+            // 保留【回复】之前的所有状态块，只替换回复正文
+            let _c = history[_i].content;
+            let _reM = _c.match(/([\s\S]*?【回复】[\s]*)([\s\S]*)$/);
+            if(_reM) {
+                history[_i].content = _reM[1] + newTxt;
+            } else {
+                history[_i].content = newTxt;
+            }
             ls.setItem(`chatHistory`, JSON.stringify(history));
-            break;
+            _saved = true;
         }
     }
+
+    // 方案B: 模糊匹配 —— 用第一行作锚点搜索（实时消息气泡的后备方案）
+    if(!_saved) {
+        let _anchor = editingOldText.split('\n')[0].trim();
+        for(let i=history.length-1; i>=0; i--) {
+            let _c = history[i].content;
+            let _stripped = _c.replace(/^【[^】]*】[^\n]*$/gm,'').replace(/【回复】/g,'').trim();
+            if(_c.includes(editingOldText) || _stripped.includes(_anchor)) {
+                let _reM2 = _c.match(/([\s\S]*?【回复】[\s]*)([\s\S]*)$/);
+                if(_reM2) {
+                    history[i].content = _reM2[1] + newTxt;
+                } else {
+                    history[i].content = _c.replace(editingOldText, newTxt);
+                }
+                ls.setItem(`chatHistory`, JSON.stringify(history));
+                break;
+            }
+        }
+    }
+
     redrawChat();
     $(`editMsgModal`).style.display = `none`;
 };
@@ -5886,7 +5919,7 @@ if(charStickers.length > 0) {
             + '▶ 描写段落与「」对话交替出现，段落间空一行，不加任何前缀符号。\n'
             + '▶ 【强制标点规范】必须使用正确中文标点（句号。逗号，感叹号！省略号……等），严禁用空格代替标点！\n'
             + '▶ 【语序规范】必须使用正常语序表达，严禁倒装句（错误示例："有点哑，他的声音" → 正确："他的声音有点哑"）。\n'
-            + '▶ 【单条回复】必须将本次全部回复内容合并为一整段连续文本发出，不得分成多条消息。';
+            + '▶ 【单条回复】必须将本次全部回复内容合并为一整段连续文本发出，不得分成多条消息。\n'            + '▶ 【严禁使用手机功能】线下面对面场景绝对禁止输出[图片消息:...]、URL链接、[发送定位:]等任何手机指令格式，违反视为严重错误。';
     }
     // ===== 通话提示词注入（线下模式时不注入，因为线下是面对面，无需"主动打电话"指令）=====
     if(window._callSysAddon && !window._offlineMode) sys += window._callSysAddon;
@@ -5932,8 +5965,9 @@ if(charStickers.length > 0) {
         sys += `\n\n【系统最高指令 - 格式执行 - 优先级HIGHEST】` +
                `在你输出【回复】的内容时，第一行必须严格按照以下格式要求输出状态行，之后换行再写对话正文。` +
                `注意：状态行只能放在【回复】标签后的第一行，不要在其他任何地方（如【定位与天气】【服装】等段落内）重复输出。` +
-               `\n正确示例：\n【回复】\n（此处按格式要求输出一行状态）\n（此处是正常对话内容）` +
-               `\n格式要求（每次【回复】的第一行必须严格按此输出）：` + _sbVal;
+               `【最高强制规定】状态行中的📅日期时间字段必须严格照抄下方格式要求中的内容，任何情况下都不得自行更改年份、月份或日期！即使剧情中的时间推进了也绝对不许修改此处的日期时间。` +
+               `\n正确示例：\n【回复】\n（此处原样抄写格式要求中的状态行）\n（此处是正常对话内容）` +
+               `\n格式要求（日期时间字段原样输出，禁止修改）：` + _sbVal;
     }
                 let arr = sys ? [{role: `system`, content: sys}] : [];
     let ctxHist = history.slice(-(parseInt($(`cfgCtx`).value)||10));
@@ -6060,6 +6094,24 @@ let hasAccept = txt.includes(`[收取转账]`);
                 }
             }
             
+            // ★ FIX4: 强制修正状态栏日期 —— 使用自定义/系统时间替换AI自行生成的日期
+            if($(`cfgStatusBarOn`) && $(`cfgStatusBarOn`).checked) {
+                try {
+                    let _dateStr;
+                    if($(`cfgCustomTime`) && $(`cfgCustomTime`).checked) {
+                        let _cy=$(`ctYear`).value||'', _cm=$(`ctMonth`).value||'', _cd=$(`ctDay`).value||'';
+                        let _ch=$(`ctHour`)?.value||'', _cmin=$(`ctMinute`)?.value||'0';
+                        let _wd=($(`ctWeekday`)?.innerText||'').trim();
+                        _dateStr = _cy+'年'+_cm+'月'+_cd+'日 '+(_wd?_wd+' ':'')+_ch+'时'+_cmin.padStart(2,'0')+'分';
+                    } else {
+                        let _n=new Date();
+                        let _days=['周日','周一','周二','周三','周四','周五','周六'];
+                        _dateStr=_n.getFullYear()+'年'+(_n.getMonth()+1)+'月'+_n.getDate()+'日 '+_days[_n.getDay()]+' '+_n.getHours()+'时'+String(_n.getMinutes()).padStart(2,'0')+'分';
+                    }
+                    // 替换AI响应里所有 📅 日期：XXX 部分，只动日期时间，不动天气地点
+                    txt = txt.replace(/(📅 日期[：:])([^|\n]+)/g, (_m, prefix) => prefix + _dateStr + ' ');
+                } catch(e) {}
+            }
             history.push({role: `assistant`, content: txt, _offline: !!window._offlineMode});
             ls.setItem(`chatHistory`, JSON.stringify(history));
 
@@ -6119,7 +6171,13 @@ let hasAccept = txt.includes(`[收取转账]`);
                 });
                 // 线下模式：所有行合并为单条气泡，一次性渲染
                 if(window._offlineMode && newLines.length > 0) {
-                    let offlineLines = newLines.filter(l => !l.startsWith('[') || l.startsWith('[发起') || l.startsWith('[发送'));
+                    let offlineLines = newLines.filter(l => {
+                        let _t = l.trim();
+                        // 线下模式屏蔽图片消息/链接（线上功能不适用于面对面场景）
+                        if(_t.startsWith('[图片消息')) return false;
+                        if(/^https?:\/\/\S+\.(gif|jpe?g|png|webp)/i.test(_t)) return false;
+                        return !_t.startsWith('[') || _t.startsWith('[发起') || _t.startsWith('[发送');
+                    });
                     let specialLines = newLines.filter(l => l.startsWith('[') && !l.startsWith('[发起') && !l.startsWith('[发送'));
                     if(offlineLines.length > 0) mkBub(offlineLines.join('\n'), `l`);
                     specialLines.forEach((line, i) => setTimeout(() => mkBub(line, `l`), i * 500));
@@ -6816,6 +6874,9 @@ function renderLocationCard(b, txt, side) {
 
 // ===== 线下模式文字颜色渲染 =====
 function _renderOfflineText(b, txt) {
+    // 线下模式：过滤混入的图片链接/URL（线上遗留污染）
+    txt = txt.replace(/\[图片消息[：:][^\]]*\]/g, '').replace(/https?:\/\/\S+\.(gif|jpe?g|png|webp)\S*/gi, '').trim();
+    if(!txt) { b.dataset.suppress = '1'; return; }
     b.dataset.raw = txt; // 供长按编辑时读取完整内容
     let cScene = window._offlineColorScene || '#6c5ce7';
     let cDialog = window._offlineColorDialog || '#e84393';
@@ -6884,6 +6945,9 @@ function mkBubSync(txt, side) {
         renderQuoteBlock(b, txt, side);
     }
     if(b.dataset.suppress) return; // 抑制AI命令标签，不渲染为文字气泡
+    // 记录history索引，供长按编辑精准定位（线下消息尤其需要）
+    if(typeof window._renderingHistIdx !== 'undefined' && window._renderingHistIdx !== null)
+        b.dataset.histIdx = window._renderingHistIdx;
     bindPress(b);
     if(side===`l`) {
         let a = document.createElement(`div`); a.className = `ava-sm ava-l`;
@@ -15712,6 +15776,83 @@ window._restoreOfflineState = function(chatId) {
 // 初始加载（此时currentChatId可能是default）
 window._restoreOfflineState(window.currentChatId || 'default');
 
+// ★ BUG6修复: 线下模式心跳守护 - 每5秒从localStorage重新同步状态，防止意外丢失
+setInterval(function _offlineHeartbeat() {
+    if(typeof currentChatId === 'undefined' || typeof ls === 'undefined') return;
+    try {
+        let _key = 'offlineState_' + currentChatId;
+        let _saved = JSON.parse(originalGetItem.call(ls, _key) || 'null');
+        let _shouldBeOn = !!(_saved && _saved.active);
+        // localStorage显示应在线下模式，但当前变量为false → 立即恢复
+        if(_shouldBeOn && !window._offlineMode) {
+            window._offlineMode = true;
+            window._offlineScene    = (_saved.scene)       || '';
+            window._offlineRelation = (_saved.relation)    || '';
+            window._offlinePreset   = (_saved.preset)      || '';
+            window._offlineWordCount= (_saved.wordCount)   || 0;
+            window._offlineColorScene = (_saved.colorScene)|| '#6c5ce7';
+            window._offlineColorDialog= (_saved.colorDialog)||'#e84393';
+            let _ml = document.getElementById('offlineModeMenuLabel');
+            if(_ml) _ml.textContent = '线下✓';
+        }
+        // 若当前确实在线下模式，周期性重写localStorage防止被意外覆盖
+        if(window._offlineMode) {
+            originalSetItem.call(ls, _key, JSON.stringify({
+                active: true,
+                scene:       window._offlineScene    || '',
+                relation:    window._offlineRelation || '',
+                preset:      window._offlinePreset   || '',
+                wordCount:   window._offlineWordCount|| 0,
+                colorScene:  window._offlineColorScene ||'#6c5ce7',
+                colorDialog: window._offlineColorDialog||'#e84393'
+            }));
+        }
+        // 同步菜单标签视觉
+        let _lbl = document.getElementById('offlineModeMenuLabel');
+        if(_lbl) _lbl.textContent = window._offlineMode ? '线下✓' : '线下模式';
+    } catch(e) {}
+}, 5000);
+
+// ★ 线下模式心跳守护（每6秒从localStorage重新同步，防止状态意外丢失）
+(function _offlineHeartbeat() {
+    setInterval(function() {
+        try {
+            if(typeof currentChatId === 'undefined' || !currentChatId) return;
+            let _k = 'offlineState_' + currentChatId;
+            let _saved = null;
+            try { _saved = JSON.parse(originalGetItem.call(ls, _k) || 'null'); } catch(e2) {}
+            let _shouldOn = !!(_saved && _saved.active);
+            // localStorage显示应为线下模式但变量是false → 立即恢复
+            if(_shouldOn && !window._offlineMode) {
+                window._offlineMode = true;
+                window._offlineScene    = (_saved && _saved.scene)        || '';
+                window._offlineRelation = (_saved && _saved.relation)     || '';
+                window._offlinePreset   = (_saved && _saved.preset)       || '';
+                window._offlineWordCount= (_saved && _saved.wordCount)    || 0;
+                window._offlineColorScene  = (_saved && _saved.colorScene)   || '#6c5ce7';
+                window._offlineColorDialog = (_saved && _saved.colorDialog)  || '#e84393';
+                let _ml = document.getElementById('offlineModeMenuLabel');
+                if(_ml) _ml.textContent = '线下✓';
+            }
+            // 当前是线下模式 → 持续刷写localStorage，防止被意外清除
+            if(window._offlineMode) {
+                try {
+                    originalSetItem.call(ls, _k, JSON.stringify({
+                        active: true, scene: window._offlineScene||'',
+                        relation: window._offlineRelation||'', preset: window._offlinePreset||'',
+                        wordCount: window._offlineWordCount||0,
+                        colorScene: window._offlineColorScene||'#6c5ce7',
+                        colorDialog: window._offlineColorDialog||'#e84393'
+                    }));
+                } catch(e3) {}
+            }
+            // 同步菜单标签
+            let _lbl = document.getElementById('offlineModeMenuLabel');
+            if(_lbl) _lbl.textContent = window._offlineMode ? '线下✓' : '线下模式';
+        } catch(e) {}
+    }, 6000);
+})();
+
 function _openOfflinePanel() {
     let panel = document.getElementById('offlineModePanel');
     if(!panel) return;
@@ -15732,26 +15873,31 @@ function _openOfflinePanel() {
     panel.style.transform = 'translateY(0)';
     panel.style.pointerEvents = 'all';
     _renderOlPresets();
-    // 每次打开面板重新绑定按钮事件（确保可用）
-    let _saveBtn = document.getElementById('btnSaveOlPreset');
-    if(_saveBtn) _saveBtn.onclick = function() {
-        let scene = (document.getElementById('olScene')?.value || '').trim();
+    // 每次打开面板重新绑定按钮事件（cloneNode彻底清除旧监听器，addEventListener保证移动端可用）
+    function _bindPanelBtn(id, handler) {
+        let el = document.getElementById(id);
+        if(!el) return;
+        let fresh = el.cloneNode(true);
+        el.parentNode.replaceChild(fresh, el);
+        fresh.addEventListener('click', function(e){ e.stopPropagation(); handler(); }, {passive:false});
+        fresh.addEventListener('touchend', function(e){ e.preventDefault(); e.stopPropagation(); handler(); }, {passive:false});
+    }
+    _bindPanelBtn('btnSaveOlPreset', function() {
+        let scene    = (document.getElementById('olScene')?.value    || '').trim();
         let relation = (document.getElementById('olRelation')?.value || '').trim();
-        let preset = (document.getElementById('olPreset')?.value || '').trim();
-        let wordCount = document.getElementById('olWordCount')?.value || '';
+        let preset   = (document.getElementById('olPreset')?.value   || '').trim();
+        let wordCount  = document.getElementById('olWordCount')?.value  || '';
         let colorScene = document.getElementById('olColorScene')?.value || '#6c5ce7';
-        let colorDialog = document.getElementById('olColorDialog')?.value || '#e84393';
+        let colorDialog= document.getElementById('olColorDialog')?.value|| '#e84393';
         let name = (scene || relation || preset || '').slice(0, 15) || ('预设' + new Date().toLocaleTimeString());
         let presets = [];
         try { presets = JSON.parse(localStorage.getItem('olPresets') || '[]'); } catch(e) {}
         presets.unshift({ name, scene, relation, preset, wordCount, colorScene, colorDialog });
         localStorage.setItem('olPresets', JSON.stringify(presets));
         _renderOlPresets();
-    };
-    let _closeBtn = document.getElementById('btnOfflineClose');
-    if(_closeBtn) _closeBtn.onclick = _closeOfflinePanel;
-    let _enterBtn = document.getElementById('btnOfflineEnter');
-    if(_enterBtn) _enterBtn.onclick = _enterOfflineMode;
+    });
+    _bindPanelBtn('btnOfflineClose', _closeOfflinePanel);
+    _bindPanelBtn('btnOfflineEnter', _enterOfflineMode);
 }
 
 function _renderOlPresets() {
@@ -15869,15 +16015,18 @@ function _enterOfflineMode() {
 }
 
 async function _exitOfflineMode() {
+    // 立即锁定当前chatId，防止await期间切换char导致误清除其他char的线下状态
+    let _lockedChatId = currentChatId;
     let confirmed = await window._customConfirm('你确定退出线下模式吗？\n点击「确认」回到线上聊天模式，点击「取消」继续线下模式。');
     if(!confirmed) return;
+    // 再次校验：必须仍是同一个char才允许退出
+    if(currentChatId !== _lockedChatId) return;
     window._offlineMode = false;
     window._offlineScene = '';
     window._offlineRelation = '';
     window._offlinePreset = '';
     window._offlineWordCount = 0;
-    // 清除localStorage中的线下模式状态
-    try { originalSetItem.call(ls, 'offlineState_' + currentChatId, JSON.stringify({active: false})); } catch(e) {}
+    try { originalSetItem.call(ls, 'offlineState_' + _lockedChatId, JSON.stringify({active: false})); } catch(e) {}
     let menuLabel = document.getElementById('offlineModeMenuLabel');
     if(menuLabel) menuLabel.textContent = '线下模式';
     _closeOfflinePanel();
