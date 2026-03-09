@@ -2656,7 +2656,7 @@ if(typeof localforage === 'undefined') {
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
             <div style="display:flex;align-items:center;gap:10px;">
                 <span style="font-size:22px;">🎬</span>
-                <span style="font-size:17px;font-weight:700;color:#1a1a2e;letter-spacing:0.3px;">线下模式设置</span>
+                <span style="font-size:17px;font-weight:700;color:#1a1a2e;letter-spacing:0.3px;">线下模式设置</span><span style="font-size:11px;color:#a0a0b0;font-weight:400;margin-left:6px;">（可选择不填）</span>
             </div>
             <div id=offlineModeStatusBadge style="
                 display:none; padding:4px 12px; border-radius:99px;
@@ -3822,6 +3822,7 @@ originalGetItem.call(ls, `chatHistory_` + currentChatId);
     // 恢复模板选中状态
     if(typeof _restoreStatusBarTpl === `function`) _restoreStatusBarTpl(originalGetItem.call(ls, `cStatusBarTpl_default`) || ``, _defSbv);
     await applyVis();
+    if(typeof window._restoreOfflineState === 'function') window._restoreOfflineState('default');
     if (typeof msgs !== `undefined` && msgs) msgs.innerHTML = ``;
     if (typeof redrawChat === `function`) redrawChat();
     showScreen(`scrRoom`); 
@@ -4049,6 +4050,7 @@ async function renderContacts() {
             divC.onclick = async () => {
                 window._prevScreen = 'scrContact'; window._prevContactTab = 'friends';
                 currentChatId = c.id;
+                if(typeof window._restoreOfflineState === 'function') window._restoreOfflineState(c.id);
                 $(`cfgName`).value = originalGetItem.call(ls, `cN_` + c.id) || c.name;
                 $(`cfgRem`).value = originalGetItem.call(ls, `cR_` + c.id) || ``;
                 let _cMyN_c2 = (window._nameCache && window._nameCache[c.id]) || await localforage.getItem(`cMyN_` + c.id) || originalGetItem.call(ls, `cMyN_` + c.id) || ``;
@@ -4167,6 +4169,8 @@ window.loadCharRoom = async function(charId, preloadHistory) {
     }
     let savedAiStatus = await localforage.getItem(`aiStatus_`+cid).catch(()=>null);
     if(savedAiStatus) { let s=typeof savedAiStatus===`string`?JSON.parse(savedAiStatus):savedAiStatus; if(typeof applyVis===`function`) await applyVis(); }
+    // 恢复当前char的线下模式状态
+    if(typeof window._restoreOfflineState === 'function') window._restoreOfflineState(cid);
     if(typeof msgs!==`undefined`&&msgs) msgs.innerHTML=``;
     redrawChat();
     showScreen(`scrRoom`);
@@ -5243,10 +5247,15 @@ function redrawChat() {
                 lns = out.replace(/([。！？!?])/g, `$1\n`).split(/\n+/).filter(x => x.trim() !== ``); 
             }
             
-                        // 线下模式：所有段落合并为单气泡
-            if(window._offlineMode) {
+                        // 线下模式：使用消息自身标记，不依赖当前状态（避免切换时误合并线上消息）
+            if(msg._offline) {
                 let offlineText = lns.filter(l => l.trim()).join('\n');
-                if(offlineText) mkBubSync(offlineText, `l`);
+                if(offlineText) {
+                    let _prev = window._offlineMode;
+                    window._offlineMode = true; // 临时开启以触发彩色渲染
+                    mkBubSync(offlineText, `l`);
+                    window._offlineMode = _prev;
+                }
             } else {
             let newLines = [];
             let skipNext = false;
@@ -6051,7 +6060,7 @@ let hasAccept = txt.includes(`[收取转账]`);
                 }
             }
             
-            history.push({role: `assistant`, content: txt});
+            history.push({role: `assistant`, content: txt, _offline: !!window._offlineMode});
             ls.setItem(`chatHistory`, JSON.stringify(history));
 
 
@@ -6807,6 +6816,7 @@ function renderLocationCard(b, txt, side) {
 
 // ===== 线下模式文字颜色渲染 =====
 function _renderOfflineText(b, txt) {
+    b.dataset.raw = txt; // 供长按编辑时读取完整内容
     let cScene = window._offlineColorScene || '#6c5ce7';
     let cDialog = window._offlineColorDialog || '#e84393';
     // 按换行分段，每段单独渲染，段落间有间距
@@ -15722,13 +15732,33 @@ function _openOfflinePanel() {
     panel.style.transform = 'translateY(0)';
     panel.style.pointerEvents = 'all';
     _renderOlPresets();
+    // 每次打开面板重新绑定按钮事件（确保可用）
+    let _saveBtn = document.getElementById('btnSaveOlPreset');
+    if(_saveBtn) _saveBtn.onclick = function() {
+        let scene = (document.getElementById('olScene')?.value || '').trim();
+        let relation = (document.getElementById('olRelation')?.value || '').trim();
+        let preset = (document.getElementById('olPreset')?.value || '').trim();
+        let wordCount = document.getElementById('olWordCount')?.value || '';
+        let colorScene = document.getElementById('olColorScene')?.value || '#6c5ce7';
+        let colorDialog = document.getElementById('olColorDialog')?.value || '#e84393';
+        let name = (scene || relation || preset || '').slice(0, 15) || ('预设' + new Date().toLocaleTimeString());
+        let presets = [];
+        try { presets = JSON.parse(localStorage.getItem('olPresets') || '[]'); } catch(e) {}
+        presets.unshift({ name, scene, relation, preset, wordCount, colorScene, colorDialog });
+        localStorage.setItem('olPresets', JSON.stringify(presets));
+        _renderOlPresets();
+    };
+    let _closeBtn = document.getElementById('btnOfflineClose');
+    if(_closeBtn) _closeBtn.onclick = _closeOfflinePanel;
+    let _enterBtn = document.getElementById('btnOfflineEnter');
+    if(_enterBtn) _enterBtn.onclick = _enterOfflineMode;
 }
 
 function _renderOlPresets() {
     let list = document.getElementById('olPresetList');
     if(!list) return;
     let presets = [];
-    try { presets = JSON.parse(originalGetItem.call(ls, 'olPresets') || '[]'); } catch(e) {}
+    try { presets = JSON.parse(localStorage.getItem('olPresets') || '[]'); } catch(e) {}
     if(presets.length === 0) {
         list.innerHTML = '<div style="color:#bbb;font-size:12px;text-align:center;padding:8px;">暂无保存的预设，点击「保存当前」添加</div>';
         return;
@@ -15778,9 +15808,9 @@ function _loadOlPreset(i) {
 
 function _deleteOlPreset(i) {
     let presets = [];
-    try { presets = JSON.parse(originalGetItem.call(ls, 'olPresets') || '[]'); } catch(e) {}
+    try { presets = JSON.parse(localStorage.getItem('olPresets') || '[]'); } catch(e) {}
     presets.splice(i, 1);
-    originalSetItem.call(ls, 'olPresets', JSON.stringify(presets));
+    localStorage.setItem('olPresets', JSON.stringify(presets));
     _renderOlPresets();
 }
 
@@ -15871,23 +15901,7 @@ if(document.getElementById('btnOfflineClose')) {
     document.getElementById('btnOfflineClose').onclick = _closeOfflinePanel;
 }
 
-// 保存预设按钮
-if(document.getElementById('btnSaveOlPreset')) {
-    document.getElementById('btnSaveOlPreset').onclick = () => {
-        let scene = (document.getElementById('olScene')?.value || '').trim();
-        let relation = (document.getElementById('olRelation')?.value || '').trim();
-        let preset = (document.getElementById('olPreset')?.value || '').trim();
-        let wordCount = document.getElementById('olWordCount')?.value || '';
-        let colorScene = document.getElementById('olColorScene')?.value || '#6c5ce7';
-        let colorDialog = document.getElementById('olColorDialog')?.value || '#e84393';
-        let name = (scene || relation || preset || '').slice(0, 15) || ('预设' + Date.now());
-        let presets = [];
-        try { presets = JSON.parse(originalGetItem.call(ls, 'olPresets') || '[]'); } catch(e) {}
-        presets.unshift({ name, scene, relation, preset, wordCount, colorScene, colorDialog });
-        originalSetItem.call(ls, 'olPresets', JSON.stringify(presets));
-        _renderOlPresets();
-    };
-}
+
 
 // 进入现实按钮
 if(document.getElementById('btnOfflineEnter')) {
