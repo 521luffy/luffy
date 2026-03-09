@@ -3748,7 +3748,24 @@ $(`btnRoomBack`).onclick = () =>{
     }
 };
 
-$(`btnRoomSet`).onclick = () =>showScreen(`scrSetChat`);
+$(`btnRoomSet`).onclick = () => {
+    // 进入设置页面时，强制重新加载当前char的状态栏设置（防止跨char残留）
+    let _cid = currentChatId;
+    let _sbonKey = `cStatusBarOn_` + _cid;
+    let _sbvKey = `cStatusBar_` + _cid;
+    let _tplKey = `cStatusBarTpl_` + _cid;
+    if($(`cfgStatusBarOn`)) {
+        let _v = originalGetItem.call(ls, _sbonKey);
+        $(`cfgStatusBarOn`).checked = (_v === `true`);
+    }
+    let _sbv = ``;
+    if($(`cfgStatusBar`)) {
+        _sbv = originalGetItem.call(ls, _sbvKey) || ``;
+        $(`cfgStatusBar`).value = _sbv;
+    }
+    if(typeof _restoreStatusBarTpl === `function`) _restoreStatusBarTpl(originalGetItem.call(ls, _tplKey) || ``, _sbv);
+    showScreen(`scrSetChat`);
+};
 $(`btnSetChatBack`).onclick = () =>showScreen(`scrRoom`);
 $(`btnHomeWb`).onclick = () =>{ showScreen(`scrWb`); renderWb(); };
 $(`btnCloseModal`).onclick = () =>modal.style.display=`none`;
@@ -4064,6 +4081,24 @@ window.loadCharRoom = async function(charId, preloadHistory) {
     showScreen(`scrRoom`);
     setTimeout(()=>{ if(msgs) msgs.scrollTop=msgs.scrollHeight; },100);
 };
+
+// ===== 一次性清理旧版本遗留的全局 cStatusBar* 污染数据 =====
+// 旧版本未隔离时，cStatusBarOn/cStatusBar/cStatusBarTpl 被全局保存，
+// 导致所有char都继承同一个开关状态。现在改为每char独立，旧全局key需清除。
+(function _cleanLegacyStatusBarKeys() {
+    try {
+        // 删除无 _charId 后缀的旧全局key（仅对这三个key做清理，不影响其他数据）
+        let _legacyKeys = [`cStatusBarOn`, `cStatusBar`, `cStatusBarTpl`];
+        _legacyKeys.forEach(k => {
+            let _rawVal = originalGetItem ? originalGetItem.call(ls, k) : null;
+            if(_rawVal !== null) {
+                // 存在旧全局key，删除它（per-char数据在 k_charId 里，不受影响）
+                try { if(originalRemoveItem) originalRemoveItem.call(ls, k); } catch(e) {}
+                try { localforage.removeItem(k).catch(()=>{}); } catch(e) {}
+            }
+        });
+    } catch(e) {}
+})();
 
 
 
