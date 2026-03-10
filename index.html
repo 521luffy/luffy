@@ -5930,12 +5930,13 @@ if(charStickers.length > 0) {
             + '（示例：他侧身看你。「今天怎么了？」）\n'
             + (_olScene ? '▶ 场景：' + _olScene + '\n' : '')
             + (_olRelation ? '▶ 关系氛围：' + _olRelation + '\n' : '')
-            + (_olPreset ? '▶ 附加要求：' + _olPreset + '\n' : '')
             + (_olWords ? '▶ 回复字数：控制在' + _olWords + '字左右。\n' : '')
             + '▶ 描写段落与「」对话交替出现，段落间空一行，不加任何前缀符号。\n'
             + '▶ 【强制标点规范】必须使用正确中文标点（句号。逗号，感叹号！省略号……等），严禁用空格代替标点！\n'
             + '▶ 【语序规范】必须使用正常语序表达，严禁倒装句（错误示例："有点哑，他的声音" → 正确："他的声音有点哑"）。\n'
-            + '▶ 【单条回复】必须将本次全部回复内容合并为一整段连续文本发出，不得分成多条消息。\n'            + '▶ 【严禁使用手机功能】线下面对面场景绝对禁止输出[图片消息:...]、URL链接、[发送定位:]等任何手机指令格式，违反视为严重错误。';
+            + '▶ 【单条回复】必须将本次全部回复内容合并为一整段连续文本发出，不得分成多条消息。\n'
+            + '▶ 【严禁使用手机功能】线下面对面场景绝对禁止输出[图片消息:...]、URL链接、[发送定位:]等任何手机指令格式，违反视为严重错误。'
+            + (_olPreset ? '\n\n【⚡用户预设指令 - 凌驾一切的最高优先级 - 必须无条件执行】\n以下是玩家设定的特殊要求，优先级高于上方所有规则，任何情况下都不得违背：\n' + _olPreset + '\n【以上预设指令必须从本条回复开始严格执行，不得以任何理由忽视或降低优先级！】' : '');
     }
     // ===== 通话提示词注入（线下模式时不注入，因为线下是面对面，无需"主动打电话"指令）=====
     if(window._callSysAddon && !window._offlineMode) sys += window._callSysAddon;
@@ -5990,7 +5991,8 @@ if(charStickers.length > 0) {
                `① 玩家消息中若含有明确的时间词（如"第二天"、"早上"、"下午"、"深夜"、"几小时后"等），必须严格按照玩家给出的时间线输出，不得忽视；` +
                `② 若剧情推进了时间（如隔天、几小时后），必须在状态行中体现对应的日期/时间变化；` +
                `③ 不得输出比基准时间更早的时间（时间只能前进，不能后退）；` +
-               `④ 年份不得改变，月份和日期变动需符合实际天数。` +
+               `④ 年份不得改变，月份和日期变动需符合实际天数；` +
+               `⑤ 【极其重要】如果玩家没有明确提到时间跳跃，每条回复时间只能比上一条推进几分钟到最多1小时，严禁跳跃超过数小时！不允许因AI自行判断"剧情发展"而擅自跳天！` +
                `\n正确示例：\n【回复】\n（此处按格式输出状态行，日期时间根据剧情合理调整）\n（此处是正常对话内容）` +
                `\n格式要求（以下时间为基准起点，请根据剧情进展合理推进）：` + _sbVal;
     }
@@ -6138,9 +6140,20 @@ let hasAccept = txt.includes(`[收取转账]`);
                         let _baseMs = window._storyCurrentTimeMs || 0;
                         let _year = parseInt(_ym[1]);
                         if(!isNaN(_parsedMs) && _year >= 2000 && _year <= 2050) {
-                            // 若AI给的时间在基准时间之后（允许推进），更新剧情时间
+                            // 若AI给的时间在基准时间之后（允许推进），但要限制单次推进量
                             if(_parsedMs >= _baseMs) {
-                                window._storyCurrentTimeMs = _parsedMs;
+                                // ★ 关键修复：单条消息最多允许推进2小时（防止AI每条消息跳跃多天）
+                                // 若用户消息含明确时间词（如"第二天"、"隔天"、"一周后"），允许大幅推进
+                                const _MAX_ADV_MS = 2 * 60 * 60 * 1000; // 2小时
+                                const _hasTimeJump = /第二天|隔天|明天|后天|一周后|几天后|多少天|下午|晚上|深夜|早上|早晨|凌晨|傍晚|午后|一小时后|几小时后/.test(
+                                    (typeof history !== 'undefined' && history.length > 0) ? (history[history.length-1]?.content || '') : ''
+                                );
+                                if(_baseMs > 0 && !_hasTimeJump && (_parsedMs - _baseMs) > _MAX_ADV_MS) {
+                                    // 没有用户明确时间跳跃，但AI跳跃过大 → 仅允许推进15分钟
+                                    window._storyCurrentTimeMs = _baseMs + 15 * 60 * 1000;
+                                } else {
+                                    window._storyCurrentTimeMs = _parsedMs;
+                                }
                             }
                             // 若AI给的时间在基准时间之前（污染/倒退），强制修正为当前剧情时间
                             if(_parsedMs < _baseMs) {
@@ -15025,12 +15038,13 @@ async function _callAIConnect(type, isIncoming) {
     let tp = parseFloat(originalGetItem.call(ls,'temp')||'0.8') || 0.8;
     let connectSys = '你是' + charName + '。' + (charAP ? '你的设定：' + charAP : '') + '\n你当前面板状态：' + curStatus + '。\n近期聊天：\n' + recentHist + '\n\n【' + myName + '向你发起了' + callTypeName + '，正在等你接听】\n' +
         (type === 'voice' ? '【语音通话规则】接起后只能描写听觉细节（呼吸声/环境音/语气），严禁描写任何视觉画面（"看到你""你在我视线里"等）。' : '【视频通话规则】接起后可以描写视觉细节（你的表情/背景/对方画面）。') +
-        '\n请根据你的性格和当前情绪状态决定是否接听！\n如接听（大多数情况下应该接）：回复最开头写 [接听通话]，随后用「」写出接起电话后第一句自然的开场白，简短真实（严格在60字以内），就像真实打电话一样。\n如拒接（仅在正在吵架或心情极差时才拒接）：回复最开头写 [拒接通话]，随后说明原因（60字以内），不能说成是对方挂了你电话。\n注意：只要不是关系极度僵化，你都应该接听。';
+        '\n请根据你的性格和当前情绪状态决定是否接听！\n如接听（大多数情况下应该接）：回复最开头写 [接听通话]，随后用「」写出接起电话后第一句自然的开场白，简短真实（严格在60字以内），就像真实打电话一样，纯中文，禁止英文。\n如拒接（仅在正在吵架或心情极差时才拒接）：回复最开头写 [拒接通话]，随后说明原因（60字以内），不能说成是对方挂了你电话。\n注意：只要不是关系极度僵化，你都应该接听。';
 
     try {
         let res = await fetch(pxy, { method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer '+key}, body:JSON.stringify({model:mod, temperature:tp, max_tokens:(type==='video'?600:400), messages:[{role:'user', content:connectSys}]}) });
         let dat = await res.json();
         let reply = (dat.choices?.[0]?.message?.content || '').trim();
+        reply = _sanitizeCallReply(reply);
         if(reply.includes('[接听通话]')) {
             reply = reply.replace('[接听通话]', '').trim();
             _startCallConnected(type);
@@ -15134,6 +15148,27 @@ function _addCallMsg(txt, isUser, typewriter) {
     }
 }
 
+// ★ 通话回复净化：去除英文括号说明、【】格式块、代码残留，防止爆代码
+function _sanitizeCallReply(txt) {
+    if(!txt) return '';
+    // 去掉 【】 格式块（如【定位与天气】...）
+    txt = txt.replace(/【[\s\S]*?】[^\n]*/g, '');
+    // 去掉英文括号括起的状态说明，如 (panicked/anxious) (nervous)
+    txt = txt.replace(/\([a-zA-Z][a-zA-Z\/\s,\.'-]{2,}\)/g, '');
+    // 去掉 [接听通话] [拒接通话] 标签（防止漏网）
+    txt = txt.replace(/\[接听通话\]|\[拒接通话\]/g, '');
+    // 去掉超过3个连续英文字母组成的单词（非汉字/标点行）的整行
+    txt = txt.split('\n').map(line => {
+        let trimmed = line.trim();
+        if(!trimmed) return '';
+        let englishWords = (trimmed.match(/[a-zA-Z]{3,}/g) || []).join('');
+        // 如果一行超过40%是英文字母，认为是乱码行，丢弃
+        if(englishWords.length > trimmed.length * 0.35) return '';
+        return line;
+    }).join('\n');
+    return txt.replace(/\n{3,}/g, '\n\n').trim();
+}
+
 async function _callSendMsg(txt) {
     if(!txt || !window._callState.active) return;
     _addCallMsg(txt, true, false);
@@ -15149,14 +15184,29 @@ async function _callSendMsg(txt) {
     let tp = parseFloat(originalGetItem.call(ls,'temp')||'0.8') || 0.8;
     let callLog = window._callState.msgs.slice(-6).map(m => (m.isUser ? myName : charName) + '：' + m.txt).join('\n');
     window._callState.msgs.push({isUser:true, txt});
-    let voiceRules = type === 'voice' ? '【语音通话规则 - 极度重要】你们正在进行语音通话，双方看不到对方。你必须：\n1. 完全禁止描写任何视觉动作（如"瞪了一眼""我看着你"），只描写听觉和触觉（呼吸声、环境音、物体声响、衣物摩擦声等）。\n2. 像真实打电话一样自然说话，语气要有质感，【强制要求】你的每次回复每次回复严格在80字以内，像真实打电话一样简短自然，不要大段描写，说当下最想说的一两句话。\n3. 可以描写背景里的声音细节，让对方脑补环境。\n4. 【极其重要】你必须直接回应对方刚才说的话，不要自说自话，不要重复上一条内容。' : '【视频通话规则 - 极度重要】你们正在进行视频通话，可以看到彼此。你必须：\n1. 大量描写视觉细节：你穿了什么、头发状态、距离镜头的远近、眼神交互。\n2. 如果想展示周围的东西，可以用[发送照片：详细描述]指令翻转镜头。\n3. 如果网络卡了可以演戏说画面定格了，回复控制在200字以内。\n4. 【极其重要】你必须直接回应对方刚才说的话，不要自说自话，不要重复上一条内容。';
-let callSys = '你是' + charName + '。' + (charAP ? '你的设定：' + charAP : '') + '\n\n' + voiceRules + '\n\n通话记录：\n' + callLog + '\n\n' + myName + '刚才说】：' + txt + '\n\n请直接针对' + myName + '说的内容回复，无需任何前缀。【强制要求：必须在200字内把这段话说完整，符合真实沟通状态，不得截断！】';
+    // ★ 加入通话前的聊天上下文（让AI知道通话前发生了什么，避免割裂感）
+    let preCallCtx = '';
+    if(history && history.length > 0) {
+        let _preHist = history.slice(-8).map(m => {
+            if(m._sys || m._offlineDivider) return '';
+            if(m.role === 'assistant') {
+                let _c = m.content.replace(/【[\s\S]*?】[^\n]*/g,'').replace(/【回复】/g,'').trim().slice(0,80);
+                return _c ? charName + '：' + _c : '';
+            } else {
+                return myName + '：' + m.content.replace(/\[系统提示[^]]*\]/g,'').trim().slice(0,60);
+            }
+        }).filter(Boolean).join('\n');
+        if(_preHist) preCallCtx = '\n\n【通话前的聊天记录（请据此判断当前情绪和话题）：】\n' + _preHist;
+    }
+    let voiceRules = type === 'voice' ? '【语音通话规则 - 极度重要】你们正在进行语音通话，双方看不到对方。你必须：\n1. 完全禁止描写任何视觉动作（如"瞪了一眼""我看着你"），只描写听觉和触觉（呼吸声、环境音、物体声响、衣物摩擦声等）。\n2. 像真实打电话一样自然说话，语气要有质感，【强制要求】你的每次回复每次回复严格在80字以内，像真实打电话一样简短自然，不要大段描写，说当下最想说的一两句话。\n3. 可以描写背景里的声音细节，让对方脑补环境。\n4. 【极其重要】你必须直接回应对方刚才说的话，不要自说自话，不要重复上一条内容。\n5. 【禁止输出英文】所有输出必须是纯中文，禁止夹带任何英文括号说明。' : '【视频通话规则 - 极度重要】你们正在进行视频通话，可以看到彼此。你必须：\n1. 大量描写视觉细节：你穿了什么、头发状态、距离镜头的远近、眼神交互。\n2. 如果想展示周围的东西，可以用[发送照片：详细描述]指令翻转镜头。\n3. 如果网络卡了可以演戏说画面定格了，回复控制在200字以内。\n4. 【极其重要】你必须直接回应对方刚才说的话，不要自说自话，不要重复上一条内容。\n5. 【禁止输出英文】所有输出必须是纯中文，禁止夹带任何英文括号说明。';
+let callSys = '你是' + charName + '。' + (charAP ? '你的设定：' + charAP : '') + preCallCtx + '\n\n' + voiceRules + '\n\n【当前通话记录：】\n' + callLog + '\n\n' + myName + '刚才说：' + txt + '\n\n请直接针对' + myName + '说的内容回复，无需任何前缀，禁止用英文。【强制要求：必须在200字内把这段话说完整，符合真实沟通状态，不得截断！】';
 
 
     try {
         let res = await fetch(pxy, { method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer '+key}, body:JSON.stringify({model:mod, temperature:tp, max_tokens:2000, messages:[{role:'user', content:callSys}]}) });
         let dat = await res.json();
         let reply = (dat.choices?.[0]?.message?.content || '').trim();
+        reply = _sanitizeCallReply(reply);
         // 处理发送照片指令（视频通话专属）
         let photoM = reply.match(/\[发送照片：([\s\S]*?)\]/);
         if(photoM) {
