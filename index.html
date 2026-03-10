@@ -2645,14 +2645,15 @@ if(typeof localforage === 'undefined') {
     -webkit-backdrop-filter:blur(28px) saturate(180%);
     border-radius:28px 28px 0 0;
     box-shadow:0 -8px 40px rgba(0,0,0,0.18);
-    padding:0 0 env(safe-area-inset-bottom,0);
     pointer-events:all;
-    max-height:88vh; overflow-y:auto;
+    max-height:88vh;
+    display:flex; flex-direction:column;
 ">
-    <div style="display:flex;justify-content:center;padding:12px 0 4px;">
+    <div style="display:flex;justify-content:center;padding:12px 0 4px;flex-shrink:0;">
         <div style="width:36px;height:4px;border-radius:99px;background:rgba(0,0,0,0.15);"></div>
     </div>
-    <div style="padding:4px 22px 24px;">
+    <!-- 可滚动内容区 -->
+    <div style="overflow-y:auto;flex:1;padding:4px 22px 12px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
             <div style="display:flex;align-items:center;gap:10px;">
                 <span style="font-size:22px;">🎬</span>
@@ -2696,20 +2697,21 @@ if(typeof localforage === 'undefined') {
             </div>
         </div>
         <!-- 保存预设区域 -->
-        <div style="margin-bottom:16px;">
+        <div style="margin-bottom:8px;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
                 <label style="font-size:12px;font-weight:600;color:#6c5ce7;">📌 保存预设</label>
                 <button id=btnSaveOlPreset style="padding:4px 12px;border-radius:20px;border:none;background:linear-gradient(135deg,#a29bfe,#6c5ce7);color:white;font-size:12px;font-weight:600;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">保存当前</button>
             </div>
             <div id=olPresetList style="display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto;"></div>
         </div>
-        <div style="display:flex;gap:12px;align-items:center;">
-            <button id=btnOfflineClose style="flex:1;padding:13px;border-radius:22px;border:none;background:rgba(0,0,0,0.07);color:#555;font-size:14px;font-weight:600;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">关闭</button>
-            <button id=btnOfflineEnter style="flex:2.5;padding:13px;border-radius:22px;border:none;background:linear-gradient(135deg,#a29bfe 0%,#6c5ce7 100%);color:white;font-size:15px;font-weight:700;cursor:pointer;position:relative;overflow:hidden;box-shadow:0 4px 18px rgba(108,92,231,0.4);letter-spacing:0.5px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">
-                <span id=btnOfflineEnterText>进入现实</span>
-                <div style="position:absolute;top:-50%;left:-60%;width:40%;height:200%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.25),transparent);transform:skewX(-15deg);animation:_olShimmer 2.4s ease-in-out infinite;pointer-events:none;"></div>
-            </button>
-        </div>
+    </div>
+    <!-- ★ 按钮区固定在底部，不参与滚动 -->
+    <div style="flex-shrink:0;padding:12px 22px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid rgba(0,0,0,0.06);background:rgba(255,255,255,0.95);display:flex;gap:12px;align-items:center;">
+        <button id=btnOfflineClose style="flex:1;padding:13px;border-radius:22px;border:none;background:rgba(0,0,0,0.07);color:#555;font-size:14px;font-weight:600;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">关闭</button>
+        <button id=btnOfflineEnter style="flex:2.5;padding:13px;border-radius:22px;border:none;background:linear-gradient(135deg,#a29bfe 0%,#6c5ce7 100%);color:white;font-size:15px;font-weight:700;cursor:pointer;position:relative;overflow:hidden;box-shadow:0 4px 18px rgba(108,92,231,0.4);letter-spacing:0.5px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">
+            <span id=btnOfflineEnterText>进入现实</span>
+            <div style="position:absolute;top:-50%;left:-60%;width:40%;height:200%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.25),transparent);transform:skewX(-15deg);animation:_olShimmer 2.4s ease-in-out infinite;pointer-events:none;"></div>
+        </button>
     </div>
 </div>
 </div>
@@ -4176,6 +4178,8 @@ window.loadCharRoom = async function(charId, preloadHistory) {
     // 恢复新char的线下模式状态（先保存当前状态到localStorage再切换）
     if(typeof window._saveCurrentOfflineState === 'function') window._saveCurrentOfflineState();
     if(typeof window._restoreOfflineState === 'function') window._restoreOfflineState(cid);
+    // ★ 切换char时重置剧情时间追踪（防跨char时间污染）
+    window._storyCurrentTimeMs = null;
     if(typeof msgs!==`undefined`&&msgs) msgs.innerHTML=``;
     redrawChat();
     showScreen(`scrRoom`);
@@ -5934,13 +5938,28 @@ if(charStickers.length > 0) {
     let _sbVal = ($(`cfgStatusBar`) && $(`cfgStatusBar`).value.trim()) || ``;
     // 日常陪伴型：如果用户使用格式模板，注入时动态填入真实时间/天气/地点
     if(_sbOn && _sbVal && _sbVal.includes(`📅 日期：`)) {
-        let _dateStr;
-        if($(`cfgCustomTime`) && $(`cfgCustomTime`).checked) {
+        let _dateStr, _timeStr;
+        // ★ 优先用剧情追踪时间（如已初始化），否则用自定义/现实时间
+        if(window._storyCurrentTimeMs) {
+            let _sdt = new Date(window._storyCurrentTimeMs);
+            const _wdays = [`周日`,`周一`,`周二`,`周三`,`周四`,`周五`,`周六`];
+            _dateStr = _sdt.getFullYear()+`年`+(_sdt.getMonth()+1)+`月`+_sdt.getDate()+`日`;
+            _timeStr = _wdays[_sdt.getDay()]+` `+_sdt.getHours()+`时`+String(_sdt.getMinutes()).padStart(2,`0`)+`分`;
+        } else if($(`cfgCustomTime`) && $(`cfgCustomTime`).checked) {
             let cy=$(`ctYear`).value, cm=$(`ctMonth`).value, cd=$(`ctDay`).value;
+            let ch = $(`ctHour`)?.value || ``, cmin = $(`ctMinute`)?.value || `0`, cw = $(`ctWeekday`)?.innerText || ``;
             _dateStr = cy+`年`+cm+`月`+cd+`日`;
+            _timeStr = (cw ? cw+` ` : ``) + ch + `时` + String(cmin).padStart(2,`0`) + `分`;
+            // 初始化剧情时间
+            try {
+                let _initMs = new Date(`${cy}-${String(cm).padStart(2,'0')}-${String(cd).padStart(2,'0')}T${String(ch).padStart(2,'0')}:${String(cmin).padStart(2,'0')}:00`).getTime();
+                if(!isNaN(_initMs)) window._storyCurrentTimeMs = _initMs;
+            } catch(e) {}
         } else {
             let _now = updTime ? updTime() : new Date();
+            const _days = [`周日`,`周一`,`周二`,`周三`,`周四`,`周五`,`周六`];
             _dateStr = _now.getFullYear()+`年`+(_now.getMonth()+1)+`月`+_now.getDate()+`日`;
+            _timeStr = _days[_now.getDay()]+` `+_now.getHours()+`时`+String(_now.getMinutes()).padStart(2,`0`)+`分`;
         }
         let _aiSt = aiStatus || {};
         // 提取天气信息（仅保留天气描述，不含地点）
@@ -5954,25 +5973,15 @@ if(charStickers.length > 0) {
         } else if(_aiSt.weather) {
             let _lm=_aiSt.weather.match(/(?:在|位于|地点[：:])([^，。,\.\n|]{2,15})/); if(_lm) _locStr=_lm[1].trim();
         }
-        // 构建时间字符串（含星期几和时分）
-        let _timeStr;
-        if($(`cfgCustomTime`) && $(`cfgCustomTime`).checked) {
-            let ch = $(`ctHour`)?.value || ``, cmin = $(`ctMinute`)?.value || ``, cw = $(`ctWeekday`)?.innerText || ``;
-            _timeStr = (cw ? cw+` ` : ``) + ch + `时` + cmin + `分`;
-        } else {
-            let _tn = updTime ? updTime() : new Date();
-            const _days = [`周日`,`周一`,`周二`,`周三`,`周四`,`周五`,`周六`];
-            _timeStr = _days[_tn.getDay()] + ` ` + _tn.getHours() + `时` + String(_tn.getMinutes()).padStart(2,`0`) + `分`;
-        }
         _sbVal = `📅 日期：${_dateStr} ${_timeStr} | 🌤️ 天气：${_wStr} | 📍 地点：${_locStr}`;
     }
     if(_sbOn && _sbVal) {
         sys += `\n\n【系统最高指令 - 格式执行 - 优先级HIGHEST】` +
                `在你输出【回复】的内容时，第一行必须严格按照以下格式要求输出状态行，之后换行再写对话正文。` +
                `注意：状态行只能放在【回复】标签后的第一行，不要在其他任何地方（如【定位与天气】【服装】等段落内）重复输出。` +
-               `【最高强制规定】状态行中的📅日期时间字段必须严格照抄下方格式要求中的内容，任何情况下都不得自行更改年份、月份或日期！即使剧情中的时间推进了也绝对不许修改此处的日期时间。` +
-               `\n正确示例：\n【回复】\n（此处原样抄写格式要求中的状态行）\n（此处是正常对话内容）` +
-               `\n格式要求（日期时间字段原样输出，禁止修改）：` + _sbVal;
+               `【时间自然推进规则】状态行中的📅日期时间字段应以下方起始时间为基准，随剧情自然推进（如隔天早上应显示第二天日期，相差数小时应调整时分），不得随意跳跃或倒退到更早的时间！年份不得改变，月份变动需合理。` +
+               `\n正确示例：\n【回复】\n（此处按格式输出状态行，日期时间根据剧情合理调整）\n（此处是正常对话内容）` +
+               `\n格式要求（以下时间为当前基准，请根据剧情推进合理调整）：` + _sbVal;
     }
                 let arr = sys ? [{role: `system`, content: sys}] : [];
     let ctxHist = history.slice(-(parseInt($(`cfgCtx`).value)||10));
@@ -6099,33 +6108,60 @@ let hasAccept = txt.includes(`[收取转账]`);
                 }
             }
             
-            // ★ FIX4: 强制修正状态栏日期 —— 使用自定义/系统时间替换AI自行生成的日期
-            if($(`cfgStatusBarOn`) && $(`cfgStatusBarOn`).checked) {
-                try {
-                    let _dateStr, _cy='', _cm='', _cd='';
-                    if($(`cfgCustomTime`) && $(`cfgCustomTime`).checked) {
-                        _cy=$(`ctYear`).value||''; _cm=$(`ctMonth`).value||''; _cd=$(`ctDay`).value||'';
-                        let _ch=$(`ctHour`)?.value||'', _cmin=$(`ctMinute`)?.value||'0';
-                        let _wd=($(`ctWeekday`)?.innerText||'').trim();
-                        _dateStr = _cy+'年'+_cm+'月'+_cd+'日 '+(_wd?_wd+' ':'')+_ch+'时'+_cmin.padStart(2,'0')+'分';
-                    } else {
-                        let _n=new Date();
-                        let _days=['周日','周一','周二','周三','周四','周五','周六'];
-                        _dateStr=_n.getFullYear()+'年'+(_n.getMonth()+1)+'月'+_n.getDate()+'日 '+_days[_n.getDay()]+' '+_n.getHours()+'时'+String(_n.getMinutes()).padStart(2,'0')+'分';
+            // ★ FIX4: 状态栏日期修正 + 剧情时间追踪
+            try {
+                // ★ 先从AI响应的状态栏行中提取日期时间，用于更新剧情追踪时间
+                let _aiDateMatch = txt.match(/📅[^|\n]*日期[：:]([^|\n]+)/);
+                if(_aiDateMatch) {
+                    let _aiDateRaw = _aiDateMatch[1].trim();
+                    // 解析日期时间，如 "2017年5月31日 星期三 08时30分"
+                    let _ym = _aiDateRaw.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
+                    let _hm = _aiDateRaw.match(/(\d{1,2})时(\d{1,2})分/);
+                    if(_ym) {
+                        let _parsedMs = new Date(
+                            parseInt(_ym[1]), parseInt(_ym[2])-1, parseInt(_ym[3]),
+                            _hm ? parseInt(_hm[1]) : 0,
+                            _hm ? parseInt(_hm[2]) : 0
+                        ).getTime();
+                        // 只接受：合理年份 + 不早于剧情起始时间（防倒退）
+                        let _baseMs = window._storyCurrentTimeMs || 0;
+                        let _year = parseInt(_ym[1]);
+                        if(!isNaN(_parsedMs) && _year >= 2000 && _year <= 2050) {
+                            // 若AI给的时间在基准时间之后（允许推进），更新剧情时间
+                            if(_parsedMs >= _baseMs) {
+                                window._storyCurrentTimeMs = _parsedMs;
+                            }
+                            // 若AI给的时间在基准时间之前（污染/倒退），强制修正为当前剧情时间
+                            if(_parsedMs < _baseMs) {
+                                // 用当前剧情时间替换AI的日期时间
+                                let _sdt = new Date(_baseMs);
+                                const _wds = ['周日','周一','周二','周三','周四','周五','周六'];
+                                let _correctDate = _sdt.getFullYear()+'年'+(_sdt.getMonth()+1)+'月'+_sdt.getDate()+'日 '+_wds[_sdt.getDay()]+' '+_sdt.getHours()+'时'+String(_sdt.getMinutes()).padStart(2,'0')+'分';
+                                txt = txt.replace(/(📅[^|\n]*日期[：:])([^|\n]+)/g, (_m, prefix) => prefix + _correctDate + ' ');
+                            }
+                        }
                     }
-                    // ★ 强力替换：1) 带emoji的标准格式; 2) 纯文本日期行; 3) 错误年份
-                    // 方式1: 标准状态栏格式 📅 日期：XXXX
-                    txt = txt.replace(/(📅 日期[：:])([^|\n]+)/g, (_m, prefix) => prefix + _dateStr + ' ');
-                    // 方式2: 纯"日期："格式（AI有时省略emoji）
-                    txt = txt.replace(/((?:^|\n)日期[：:])([^|\n]+)/g, (_m, prefix) => prefix + _dateStr + ' ');
-                    // 方式3: 整体替换 - 如果检测到不正确的年份，替换整个年月日字段
-                    if(_cy && _cm && _cd) {
-                        let _correctYMD = _cy + '年' + _cm + '月' + _cd + '日';
-                        // 把任何出现的 XXXX年XX月XX日 格式替换为正确年月日
-                        txt = txt.replace(/\d{4}年\d{1,2}月\d{1,2}日/g, _correctYMD);
-                    }
-                } catch(e) {}
-            }
+                }
+                // ★ 无论cfgStatusBarOn是否开启，只要有自定义时间，就防止低年份污染
+                // 取当前剧情基准年份（自定义时间或剧情追踪时间）
+                let _refYear = 0;
+                if(window._storyCurrentTimeMs) {
+                    _refYear = new Date(window._storyCurrentTimeMs).getFullYear();
+                } else if($(`cfgCustomTime`) && $(`cfgCustomTime`).checked) {
+                    _refYear = parseInt($(`ctYear`)?.value || '0');
+                }
+                if(_refYear >= 2000) {
+                    // 替换任何明显低于参考年份的年月日（如2016，而参考年为2017）
+                    txt = txt.replace(/(\d{4})年(\d{1,2})月(\d{1,2})日/g, (m, y, mo, d) => {
+                        let _y = parseInt(y);
+                        if(_y < _refYear && _refYear - _y > 0) {
+                            // 保留月日，只修正年份到参考年
+                            return _refYear + '年' + mo + '月' + d + '日';
+                        }
+                        return m;
+                    });
+                }
+            } catch(e) {}
             history.push({role: `assistant`, content: txt, _offline: !!window._offlineMode});
             ls.setItem(`chatHistory`, JSON.stringify(history));
 
@@ -6900,6 +6936,15 @@ function _renderOfflineText(b, txt) {
     let paragraphs = txt.split(/\n+/).filter(p => p.trim());
     let html = '';
     paragraphs.forEach((para, pi) => {
+        let pTrim = para.trim();
+        // ★ 状态栏行（📅开头）：渲染为独立信息卡，不截断
+        if(pTrim.startsWith('📅') || /^[📅📍🌤️]\s*日期[：:]/.test(pTrim)) {
+            // 将 | 分隔的字段拆成多行小标签
+            let fields = pTrim.split('|').map(s=>s.trim()).filter(Boolean);
+            let fieldsHtml = fields.map(f => `<div style="font-size:11px;color:#666;line-height:1.6;padding:1px 0;">${f.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`).join('');
+            html += `<div style="margin-bottom:8px;padding:6px 10px;background:rgba(108,92,231,0.07);border-radius:10px;border-left:3px solid rgba(108,92,231,0.35);word-break:break-all;">${fieldsHtml}</div>`;
+            return;
+        }
         let marginTop = pi > 0 ? 'margin-top:10px;' : '';
         // 段落内可能混合场景描写和「」对话
         let parts = para.split(/(「[^」]*」)/g);
@@ -15764,6 +15809,8 @@ window._callSysAddon = '\n【主动发起通话规则 - 极度重要】两种情
 window._offlineMode = false;
 window._offlineScene = '';
 window._offlineRelation = '';
+// ★ 故事时间追踪：随着剧情发展自动推进（非固定在自定义初始时间）
+window._storyCurrentTimeMs = null; // null=未初始化，初始化后为毫秒时间戳
 window._offlinePreset = '';
 window._offlineWordCount = 0;
 window._offlineColorScene = '#6c5ce7';
@@ -15875,7 +15922,7 @@ function _openOfflinePanel() {
     let _saveBtn = document.getElementById('btnSaveOlPreset');
     if(_saveBtn) {
         _saveBtn.onclick = null;
-        _saveBtn.onclick = function() {
+        _saveBtn.onclick = async function() {
             let scene    = (document.getElementById('olScene')?.value    || '').trim();
             let relation = (document.getElementById('olRelation')?.value || '').trim();
             let preset   = (document.getElementById('olPreset')?.value   || '').trim();
@@ -15884,9 +15931,9 @@ function _openOfflinePanel() {
             let colorDialog= document.getElementById('olColorDialog')?.value|| '#e84393';
             let name = (scene || relation || preset || '').slice(0, 15) || ('预设' + new Date().toLocaleTimeString());
             let presets = [];
-            try { presets = JSON.parse(localStorage.getItem('olPresets') || '[]'); } catch(e) {}
+            try { presets = JSON.parse(await localforage.getItem('olPresets') || '[]'); } catch(e) {}
             presets.unshift({ name, scene, relation, preset, wordCount, colorScene, colorDialog });
-            localStorage.setItem('olPresets', JSON.stringify(presets));
+            try { await localforage.setItem('olPresets', JSON.stringify(presets)); } catch(e) {}
             _renderOlPresets();
         };
     }
@@ -15899,8 +15946,10 @@ function _openOfflinePanel() {
 function _renderOlPresets() {
     let list = document.getElementById('olPresetList');
     if(!list) return;
+    list.innerHTML = '<div style="color:#bbb;font-size:12px;text-align:center;padding:8px;">加载中...</div>';
+    localforage.getItem('olPresets').then(raw => {
     let presets = [];
-    try { presets = JSON.parse(localStorage.getItem('olPresets') || '[]'); } catch(e) {}
+    try { presets = JSON.parse(raw || '[]'); } catch(e) {}
     if(presets.length === 0) {
         list.innerHTML = '<div style="color:#bbb;font-size:12px;text-align:center;padding:8px;">暂无保存的预设，点击「保存当前」添加</div>';
         return;
@@ -15932,27 +15981,30 @@ function _renderOlPresets() {
         row.appendChild(selBtn); row.appendChild(info); row.appendChild(delBtn);
         list.appendChild(row);
     });
+    }).catch(()=>{ list.innerHTML = '<div style="color:#bbb;font-size:12px;text-align:center;padding:8px;">加载失败</div>'; });
 }
 
 function _loadOlPreset(i) {
-    let presets = [];
-    try { presets = JSON.parse(originalGetItem.call(ls, 'olPresets') || '[]'); } catch(e) {}
-    let p = presets[i]; if(!p) return;
-    if(document.getElementById('olScene')) document.getElementById('olScene').value = p.scene || '';
-    if(document.getElementById('olRelation')) document.getElementById('olRelation').value = p.relation || '';
-    if(document.getElementById('olPreset')) document.getElementById('olPreset').value = p.preset || '';
-    if(document.getElementById('olWordCount')) document.getElementById('olWordCount').value = p.wordCount || '';
-    if(document.getElementById('olColorScene')) document.getElementById('olColorScene').value = p.colorScene || '#6c5ce7';
-    if(document.getElementById('olColorDialog')) document.getElementById('olColorDialog').value = p.colorDialog || '#e84393';
-    if(document.getElementById('olColorSceneHex')) document.getElementById('olColorSceneHex').textContent = p.colorScene || '#6c5ce7';
-    if(document.getElementById('olColorDialogHex')) document.getElementById('olColorDialogHex').textContent = p.colorDialog || '#e84393';
+    localforage.getItem('olPresets').then(raw => {
+        let presets = [];
+        try { presets = JSON.parse(raw || '[]'); } catch(e) {}
+        let p = presets[i]; if(!p) return;
+        if(document.getElementById('olScene')) document.getElementById('olScene').value = p.scene || '';
+        if(document.getElementById('olRelation')) document.getElementById('olRelation').value = p.relation || '';
+        if(document.getElementById('olPreset')) document.getElementById('olPreset').value = p.preset || '';
+        if(document.getElementById('olWordCount')) document.getElementById('olWordCount').value = p.wordCount || '';
+        if(document.getElementById('olColorScene')) document.getElementById('olColorScene').value = p.colorScene || '#6c5ce7';
+        if(document.getElementById('olColorDialog')) document.getElementById('olColorDialog').value = p.colorDialog || '#e84393';
+        if(document.getElementById('olColorSceneHex')) document.getElementById('olColorSceneHex').textContent = p.colorScene || '#6c5ce7';
+        if(document.getElementById('olColorDialogHex')) document.getElementById('olColorDialogHex').textContent = p.colorDialog || '#e84393';
+    }).catch(()=>{});
 }
 
-function _deleteOlPreset(i) {
+async function _deleteOlPreset(i) {
     let presets = [];
-    try { presets = JSON.parse(localStorage.getItem('olPresets') || '[]'); } catch(e) {}
+    try { presets = JSON.parse(await localforage.getItem('olPresets') || '[]'); } catch(e) {}
     presets.splice(i, 1);
-    localStorage.setItem('olPresets', JSON.stringify(presets));
+    try { await localforage.setItem('olPresets', JSON.stringify(presets)); } catch(e) {}
     _renderOlPresets();
 }
 
@@ -16022,6 +16074,7 @@ async function _exitOfflineMode() {
     window._offlineRelation = '';
     window._offlinePreset = '';
     window._offlineWordCount = 0;
+    window._storyCurrentTimeMs = null; // 退出线下模式时重置剧情时间
     try { originalSetItem.call(ls, 'offlineState_' + _lockedChatId, JSON.stringify({active: false})); } catch(e) {}
     let menuLabel = document.getElementById('offlineModeMenuLabel');
     if(menuLabel) menuLabel.textContent = '线下模式';
