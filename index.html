@@ -2681,6 +2681,15 @@ if(typeof localforage === 'undefined') {
             <label style="display:block;font-size:12px;font-weight:600;color:#6c5ce7;margin-bottom:6px;">📝 期望回复字数</label>
             <input id=olWordCount type=number placeholder="例如：200（不填则由AI自行决定）" style="width:100%;padding:11px 13px;border:1.5px solid #e8e4ff;border-radius:14px;font-size:13px;outline:none;box-sizing:border-box;background:rgba(255,255,255,0.9);color:#333;font-family:inherit;transition:border-color 0.2s;" onfocus="this.style.borderColor='#a29bfe'" onblur="this.style.borderColor='#e8e4ff'">
         </div>
+        <div style="margin-bottom:16px;">
+            <label style="display:block;font-size:12px;font-weight:600;color:#6c5ce7;margin-bottom:6px;">👁️ 叙述人称</label>
+            <select id=olPerson style="width:100%;padding:11px 13px;border:1.5px solid #e8e4ff;border-radius:14px;font-size:13px;outline:none;box-sizing:border-box;background:rgba(255,255,255,0.9);color:#333;font-family:inherit;appearance:none;-webkit-appearance:none;cursor:pointer;transition:border-color 0.2s;" onfocus="this.style.borderColor='#a29bfe'" onblur="this.style.borderColor='#e8e4ff'">
+                <option value="">不限制（AI自行决定）</option>
+                <option value="second">第二人称（"你"视角，最强沉浸感）</option>
+                <option value="third">第三人称（"她/他"视角，旁观叙述）</option>
+                <option value="first">第一人称（char以"我"叙述）</option>
+            </select>
+        </div>
         <div style="margin-bottom:20px;">
             <label style="display:block;font-size:12px;font-weight:600;color:#6c5ce7;margin-bottom:8px;">🎨 文字颜色</label>
             <div style="display:flex;flex-direction:column;gap:8px;">
@@ -4566,37 +4575,28 @@ async function renderMemList() {
         return;
     }
     if($(`memActions`)) $(`memActions`).style.display = isMemEditMode ? `flex` : `none`;
-    let grouped = {};
-    mems.forEach((m, idx) => {
-        let d = m.date.split(` `)[0]; 
-        if(!grouped[d]) grouped[d] = [];
-        let cleanTxt = m.content.replace(/^[\s\S]*?(：|:)/, ``).replace(/^[0-9]+[、. *]+/, ``).replace(/\*/g, ``).trim();
-        grouped[d].push({txt: cleanTxt, rawContent: m.content, originalIndex: idx});
-    });
     
     if (isMemInlineEditMode) {
         list.innerHTML += `<div style="text-align:center;color:#10ac84;font-size:12px;margin-bottom:10px;font-weight:bold;">✍️ 正在原地编辑模式，直接修改下方文本框，点击右上角【保存】即可</div>`;
     } else if (!isMemEditMode) {
-        list.innerHTML += `<div style="text-align:center;color:#888;font-size:12px;margin-bottom:10px;">💡 点击右上角【编辑】即可修改记忆</div>`;
+        list.innerHTML += `<div style="text-align:center;color:#888;font-size:12px;margin-bottom:10px;">💡 点击右上角【编辑】即可修改记忆 · 按剧情发展顺序排列</div>`;
     }
     
-    Object.keys(grouped).reverse().forEach(d => {
-        let html = `<div class=stat-card><div class=stat-tag style=background:#6c5ce7;color:white;>${d}</div><div class=stat-txt style=display:flex;flex-direction:column;gap:8px;>`;
-        grouped[d].forEach((item, idx) => {
-            if (isMemInlineEditMode) {
-                // 原地变为可编辑的文本框
-                let _memDateVal = (mems[item.originalIndex].date || '').split(' ')[0];
-                html += `<div style="display:flex;flex-direction:column;gap:4px;border:1px dashed #ffeaa7;border-radius:8px;padding:8px;margin-bottom:4px;"><div style="display:flex;align-items:center;gap:6px;"><span style="color:#6c5ce7;font-size:11px;font-weight:bold;">📅 日期：</span><input type="text" id="inlineDateEdit_${item.originalIndex}" value="${_memDateVal}" style="flex:1;font-size:12px;padding:4px 8px;border-radius:6px;border:1px solid #a29bfe;outline:none;" placeholder="格式：2024/1/1"></div><div style="display:flex;align-items:flex-start;"><span style="color:#6c5ce7;font-weight:bold;margin-right:5px;margin-top:8px;">` + (idx+1) + `.</span><textarea id="inlineMemEdit_${item.originalIndex}" class="textarea-field" style="flex:1;height:70px;font-size:13px;padding:8px;border-color:#ffeaa7;resize:none;">${item.rawContent}</textarea></div></div>`;
-            } else {
-                let border = (isMemEditMode && selMems.has(item.originalIndex)) ? `border-left:3px solid #ff4d4f;padding-left:5px;` : ``;
-                let clickAction = isMemEditMode ? `toggleMemSel(${item.originalIndex})` : ``;
-                let pointer = isMemEditMode ? `cursor:pointer;` : ``;
-                html += `<div style="${border}${pointer}padding:4px 0;transition:0.2s;" onclick="${clickAction}"><span style=color:#6c5ce7;font-weight:bold;margin-right:5px;>` + (idx+1) + `.</span>${item.txt}</div>`;
-            }
-        });
-        html += `</div></div>`;
-        list.innerHTML += html;
+    // ★ 按剧情发展顺序（插入顺序）从上到下排列，不做日期分组
+    let html = `<div class=stat-card><div class=stat-txt style="display:flex;flex-direction:column;gap:8px;">`;
+    mems.forEach((item, idx) => {
+        let cleanTxt = item.content.replace(/^[\s\S]*?(：|:)/, ``).replace(/^[0-9]+[、. *]+/, ``).replace(/\*/g, ``).trim();
+        if (isMemInlineEditMode) {
+            html += `<div style="display:flex;flex-direction:column;gap:4px;border:1px dashed #ffeaa7;border-radius:8px;padding:8px;margin-bottom:4px;"><div style="display:flex;align-items:flex-start;"><span style="color:#6c5ce7;font-weight:bold;margin-right:5px;margin-top:8px;">` + (idx+1) + `.</span><textarea id="inlineMemEdit_${idx}" class="textarea-field" style="flex:1;height:70px;font-size:13px;padding:8px;border-color:#ffeaa7;resize:none;">${item.content}</textarea></div></div>`;
+        } else {
+            let border = (isMemEditMode && selMems.has(idx)) ? `border-left:3px solid #ff4d4f;padding-left:5px;` : ``;
+            let clickAction = isMemEditMode ? `toggleMemSel(${idx})` : ``;
+            let pointer = isMemEditMode ? `cursor:pointer;` : ``;
+            html += `<div style="${border}${pointer}padding:4px 0;transition:0.2s;" onclick="${clickAction}"><span style=color:#6c5ce7;font-weight:bold;margin-right:5px;>` + (idx+1) + `.</span>${cleanTxt}</div>`;
+        }
     });
+    html += `</div></div>`;
+    list.innerHTML += html;
 }
 
 window.toggleMemSel = idx =>{
@@ -4645,15 +4645,8 @@ $(`btnViewMem`).onclick = () =>{
                 mems.forEach((m, i) => {
                     let ta = document.getElementById(`inlineMemEdit_${i}`);
                     if(ta) m.content = ta.value.trim() || m.content;
-                    let da = document.getElementById(`inlineDateEdit_${i}`);
-                    if(da && da.value.trim()) {
-                        // 保留时间部分（如有），只替换日期部分
-                        let oldTimePart = (m.date || '').split(' ').slice(1).join(' ');
-                        m.date = da.value.trim() + (oldTimePart ? ' ' + oldTimePart : '');
-                    }
+                    // ★ 不再修改日期，也不做日期排序，保持剧情插入顺序
                 });
-                // 按日期重新排序（同一日期归并显示）
-                mems.sort((a, b) => new Date(a.date) - new Date(b.date));
                 await saveMems(mems);
                 isMemInlineEditMode = false;
                 $(`btnInlineEditMem`).innerText = `编辑`;
@@ -5914,6 +5907,7 @@ if(charStickers.length > 0) {
         let _olRelation = window._offlineRelation || '';
         let _olPreset = window._offlinePreset || '';
         let _olWords = window._offlineWordCount || 0;
+        let _olPerson = window._offlinePerson || '';
         let _olCScene = window._offlineColorScene || '#6c5ce7';
         let _olCDialog = window._offlineColorDialog || '#e84393';
         // 线下模式时替换主格式要求，去掉"通过手机发消息"的隐含逻辑
@@ -5928,19 +5922,31 @@ if(charStickers.length > 0) {
             + '▶ 互动核心：描写肢体动作（呼吸温度、眼神流转、指尖触碰）、面部表情、环境声音。\n'
             + '▶ 台词规范：所有说话内容必须只用「」包裹，禁止使用其他引号符号。'
             + '（示例：他侧身看你。「今天怎么了？」）\n'
+            + (_olPerson === 'second' ? '▶ 【叙述人称 - 强制执行】全程必须使用第二人称，以"你"指代玩家角色。例："你感受到他的目光落在你脸上"，严禁用"她/他"指代玩家。\n' : '')
+            + (_olPerson === 'third'  ? '▶ 【叙述人称 - 强制执行】全程必须使用第三人称，以人名或"她/他"指代玩家角色。严禁使用"你"指代玩家。\n' : '')
+            + (_olPerson === 'first'  ? '▶ 【叙述人称 - 强制执行】全程以角色第一人称"我"叙述动作和感受，营造独白式沉浸感。\n' : '')
             + (_olScene ? '▶ 场景：' + _olScene + '\n' : '')
             + (_olRelation ? '▶ 关系氛围：' + _olRelation + '\n' : '')
             + (_olWords ? '▶ 回复字数：控制在' + _olWords + '字左右。\n' : '')
             + '▶ 描写段落与「」对话交替出现，段落间空一行，不加任何前缀符号。\n'
             + '▶ 【强制标点规范】必须使用正确中文标点（句号。逗号，感叹号！省略号……等），严禁用空格代替标点！\n'
-            + '▶ 【语序规范】必须使用正常语序表达，严禁倒装句（错误示例："有点哑，他的声音" → 正确："他的声音有点哑"）。\n'
+            + '▶ 【语序规范】必须使用正常语序表达，严禁倒装句。\n'
             + '▶ 【单条回复】必须将本次全部回复内容合并为一整段连续文本发出，不得分成多条消息。\n'
-            + '▶ 【严禁使用手机功能】线下面对面场景绝对禁止输出[图片消息:...]、URL链接、[发送定位:]等任何手机指令格式，违反视为严重错误。'
-            + (_olPreset ? '\n\n【⚡用户预设指令 - 凌驾一切的最高优先级 - 必须无条件执行】\n以下是玩家设定的特殊要求，优先级高于上方所有规则，任何情况下都不得违背：\n' + _olPreset + '\n【以上预设指令必须从本条回复开始严格执行，不得以任何理由忽视或降低优先级！】' : '');
+            + '▶ 【严禁使用手机功能】线下面对面场景绝对禁止输出[图片消息:...]、URL链接、[发送定位:]等任何手机指令格式，违反视为严重错误。';
+        // ★ 预设提示词单独作为最后的绝对指令注入，确保不被任何规则覆盖
+        if(_olPreset) {
+            sys += '\n\n════════════════════════════════════════\n'
+                + '⚡【玩家专属预设指令】⚡\n'
+                + '优先级：凌驾上方一切规则，无条件、无例外执行\n'
+                + '════════════════════════════════════════\n'
+                + _olPreset + '\n'
+                + '════════════════════════════════════════\n'
+                + '↑↑↑ 以上预设指令是最终命令，AI必须从本条回复开始100%执行，\n'
+                + '不得以任何理由（包括"保持角色一致性"）忽视或软化上述要求！\n'
+                + '════════════════════════════════════════';
+        }
     }
-    // ===== 通话提示词注入（线下模式时不注入，因为线下是面对面，无需"主动打电话"指令）=====
-    if(window._callSysAddon && !window._offlineMode) sys += window._callSysAddon;
-    // ===== 强制状态栏注入（真正放在最末尾，紧贴AI调用之前，执行优先级最高）=====
+    // ===== 强制状态栏注入（紧贴AI调用之前，执行优先级最高）=====
     // 只从DOM读取（已加入isolatedKeys，自动按char隔离）
     let _sbOn = $(`cfgStatusBarOn`) && $(`cfgStatusBarOn`).checked;
     let _sbVal = ($(`cfgStatusBar`) && $(`cfgStatusBar`).value.trim()) || ``;
@@ -5958,7 +5964,6 @@ if(charStickers.length > 0) {
             let ch = $(`ctHour`)?.value || ``, cmin = $(`ctMinute`)?.value || `0`, cw = $(`ctWeekday`)?.innerText || ``;
             _dateStr = cy+`年`+cm+`月`+cd+`日`;
             _timeStr = (cw ? cw+` ` : ``) + ch + `时` + String(cmin).padStart(2,`0`) + `分`;
-            // 初始化剧情时间
             try {
                 let _initMs = new Date(`${cy}-${String(cm).padStart(2,'0')}-${String(cd).padStart(2,'0')}T${String(ch).padStart(2,'0')}:${String(cmin).padStart(2,'0')}:00`).getTime();
                 if(!isNaN(_initMs)) window._storyCurrentTimeMs = _initMs;
@@ -5970,13 +5975,10 @@ if(charStickers.length > 0) {
             _timeStr = _days[_now.getDay()]+` `+_now.getHours()+`时`+String(_now.getMinutes()).padStart(2,`0`)+`分`;
         }
         let _aiSt = aiStatus || {};
-        // 提取天气信息（仅保留天气描述，不含地点）
         let _wRaw = (_aiSt.weather||``).trim().replace(/\n/g,` `);
-        // 截取至第一个地点描述词前，避免把地点塞进天气
         let _wStr = _wRaw.replace(/(?:在|位于|地点[：:])[^，。|]*/,'').replace(/\|.*/,'').trim().slice(0,20) || `（写当前剧情天气）`;
         let _locStr = `（写当前剧情地点）`;
         if(window._offlineMode && window._offlineScene) {
-            // 线下模式：从场景设定中取地点（更精准，不从天气里挖）
             _locStr = window._offlineScene.slice(0,20);
         } else if(_aiSt.weather) {
             let _lm=_aiSt.weather.match(/(?:在|位于|地点[：:])([^，。,\.\n|]{2,15})/); if(_lm) _locStr=_lm[1].trim();
@@ -5992,10 +5994,13 @@ if(charStickers.length > 0) {
                `② 若剧情推进了时间（如隔天、几小时后），必须在状态行中体现对应的日期/时间变化；` +
                `③ 不得输出比基准时间更早的时间（时间只能前进，不能后退）；` +
                `④ 年份不得改变，月份和日期变动需符合实际天数；` +
-               `⑤ 【极其重要】如果玩家没有明确提到时间跳跃，每条回复时间只能比上一条推进几分钟到最多1小时，严禁跳跃超过数小时！不允许因AI自行判断"剧情发展"而擅自跳天！` +
+               `⑤ 【极其重要】如果玩家没有明确提到时间跳跃，每条回复时间只能比上一条推进几分钟到最多1小时，严禁跳跃超过数小时！` +
                `\n正确示例：\n【回复】\n（此处按格式输出状态行，日期时间根据剧情合理调整）\n（此处是正常对话内容）` +
                `\n格式要求（以下时间为基准起点，请根据剧情进展合理推进）：` + _sbVal;
     }
+    // ===== 通话提示词注入（线下模式时不注入，因为线下是面对面，无需"主动打电话"指令）=====
+    // ★ 放在最末尾，确保AI最后看到它，不被状态栏提示词覆盖
+    if(window._callSysAddon && !window._offlineMode) sys += window._callSysAddon;
                 let arr = sys ? [{role: `system`, content: sys}] : [];
     let ctxHist = history.slice(-(parseInt($(`cfgCtx`).value)||10));
         let mappedHist = ctxHist.map(m => {
@@ -15038,19 +15043,23 @@ async function _callAIConnect(type, isIncoming) {
     let tp = parseFloat(originalGetItem.call(ls,'temp')||'0.8') || 0.8;
     let connectSys = '你是' + charName + '。' + (charAP ? '你的设定：' + charAP : '') + '\n你当前面板状态：' + curStatus + '。\n近期聊天：\n' + recentHist + '\n\n【' + myName + '向你发起了' + callTypeName + '，正在等你接听】\n' +
         (type === 'voice' ? '【语音通话规则】接起后只能描写听觉细节（呼吸声/环境音/语气），严禁描写任何视觉画面（"看到你""你在我视线里"等）。' : '【视频通话规则】接起后可以描写视觉细节（你的表情/背景/对方画面）。') +
-        '\n请根据你的性格和当前情绪状态决定是否接听！\n如接听（大多数情况下应该接）：回复最开头写 [接听通话]，随后用「」写出接起电话后第一句自然的开场白，简短真实（严格在60字以内），就像真实打电话一样，纯中文，禁止英文。\n如拒接（仅在正在吵架或心情极差时才拒接）：回复最开头写 [拒接通话]，随后说明原因（60字以内），不能说成是对方挂了你电话。\n注意：只要不是关系极度僵化，你都应该接听。';
+        '\n请根据你的性格和当前情绪状态决定是否接听！\n如接听（大多数情况下应该接）：回复最开头写 [接听通话]，随后用「」写出接起电话后第一句自然的开场白，自然真实（100字以内），就像真实打电话一样，纯中文，禁止英文。\n如拒接（仅在正在吵架或心情极差时才拒接）：回复最开头写 [拒接通话]，随后说明原因（60字以内），不能说成是对方挂了你电话。\n注意：只要不是关系极度僵化，你都应该接听。';
 
     try {
-        let res = await fetch(pxy, { method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer '+key}, body:JSON.stringify({model:mod, temperature:tp, max_tokens:(type==='video'?600:400), messages:[{role:'user', content:connectSys}]}) });
+        let res = await fetch(pxy, { method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer '+key}, body:JSON.stringify({model:mod, temperature:tp, max_tokens:(type==='video'?1600:1200), messages:[{role:'user', content:connectSys}]}) });
         let dat = await res.json();
         let reply = (dat.choices?.[0]?.message?.content || '').trim();
+        // ★ 关键修复：先提取命令标签，再净化（防止sanitizer把标签清掉）
+        let _hasAccept = reply.includes('[接听通话]');
+        let _hasReject = reply.includes('[拒接通话]');
+        reply = reply.replace('[接听通话]', '').replace('[拒接通话]', '').trim();
         reply = _sanitizeCallReply(reply);
-        if(reply.includes('[接听通话]')) {
-            reply = reply.replace('[接听通话]', '').trim();
+        if(_hasAccept) {
+            reply = reply.trim();
             _startCallConnected(type);
             setTimeout(() => _addCallMsg(reply, false, true), 800);
-        } else if(reply.includes('[拒接通话]')) {
-            reply = reply.replace('[拒接通话]', '').trim();
+        } else if(_hasReject) {
+            reply = reply.trim();
             let sv = $('scrVoiceCall'), svd = $('scrVideoCall');
             if(sv) sv.style.display = 'none';
             if(svd) svd.style.display = 'none';
@@ -15924,6 +15933,7 @@ window._restoreOfflineState = function(chatId) {
         window._offlineRelation = saved.relation     || '';
         window._offlinePreset   = saved.preset       || '';
         window._offlineWordCount= saved.wordCount    || 0;
+        window._offlinePerson   = saved.person       || '';
         window._offlineColorScene  = saved.colorScene   || '#6c5ce7';
         window._offlineColorDialog = saved.colorDialog  || '#e84393';
     } else if(!saved) {
@@ -15939,6 +15949,7 @@ window._restoreOfflineState = function(chatId) {
                     window._offlineRelation = lfSaved.relation     || '';
                     window._offlinePreset   = lfSaved.preset       || '';
                     window._offlineWordCount= lfSaved.wordCount    || 0;
+                    window._offlinePerson   = lfSaved.person       || '';
                     window._offlineColorScene  = lfSaved.colorScene   || '#6c5ce7';
                     window._offlineColorDialog = lfSaved.colorDialog  || '#e84393';
                     // 同步回localStorage供下次同步读取
@@ -15980,6 +15991,7 @@ window._restoreOfflineState(window.currentChatId || 'default');
                 window._offlineRelation = (_saved && _saved.relation)     || '';
                 window._offlinePreset   = (_saved && _saved.preset)       || '';
                 window._offlineWordCount= (_saved && _saved.wordCount)    || 0;
+                window._offlinePerson   = (_saved && _saved.person)       || '';
                 window._offlineColorScene  = (_saved && _saved.colorScene)   || '#6c5ce7';
                 window._offlineColorDialog = (_saved && _saved.colorDialog)  || '#e84393';
                 let _ml = document.getElementById('offlineModeMenuLabel');
@@ -15991,6 +16003,7 @@ window._restoreOfflineState(window.currentChatId || 'default');
                     active: true, scene: window._offlineScene||'',
                     relation: window._offlineRelation||'', preset: window._offlinePreset||'',
                     wordCount: window._offlineWordCount||0,
+                    person: window._offlinePerson||'',
                     colorScene: window._offlineColorScene||'#6c5ce7',
                     colorDialog: window._offlineColorDialog||'#e84393'
                 };
@@ -16017,6 +16030,7 @@ function _openOfflinePanel() {
     if(document.getElementById('olRelation')) document.getElementById('olRelation').value = window._offlineRelation || '';
     if(document.getElementById('olPreset')) document.getElementById('olPreset').value = window._offlinePreset || '';
     if(document.getElementById('olWordCount')) document.getElementById('olWordCount').value = window._offlineWordCount || '';
+    if(document.getElementById('olPerson')) document.getElementById('olPerson').value = window._offlinePerson || '';
     if(document.getElementById('olColorScene')) document.getElementById('olColorScene').value = window._offlineColorScene || '#6c5ce7';
     if(document.getElementById('olColorDialog')) document.getElementById('olColorDialog').value = window._offlineColorDialog || '#e84393';
     if(document.getElementById('olColorSceneHex')) document.getElementById('olColorSceneHex').textContent = window._offlineColorScene || '#6c5ce7';
@@ -16126,6 +16140,7 @@ function _enterOfflineMode() {
     window._offlineRelation = (document.getElementById('olRelation')?.value || '').trim();
     window._offlinePreset = (document.getElementById('olPreset')?.value || '').trim();
     window._offlineWordCount = parseInt(document.getElementById('olWordCount')?.value || '0') || 0;
+    window._offlinePerson = document.getElementById('olPerson')?.value || '';
     window._offlineColorScene = document.getElementById('olColorScene')?.value || '#6c5ce7';
     window._offlineColorDialog = document.getElementById('olColorDialog')?.value || '#e84393';
 
@@ -16138,6 +16153,7 @@ function _enterOfflineMode() {
         relation: window._offlineRelation,
         preset: window._offlinePreset,
         wordCount: window._offlineWordCount,
+        person: window._offlinePerson || '',
         colorScene: window._offlineColorScene,
         colorDialog: window._offlineColorDialog
     };
