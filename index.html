@@ -3125,6 +3125,8 @@ function getPreviewText(histArray) {
         }
     }
     txt = txt.replace(/「引用：.*?」\n/g, ``).replace(/【.*?】/g, ``).replace(/\[图片消息：.*?\][\s\S]*/g, `[表情包]`).trim();
+    // 过滤通话发起指令标签（不应出现在消息预览中）
+    txt = txt.replace(/\[发起[^\]]+\]/g, ``).trim();
     // 过滤掉所有 |日期|/|时间| 格式的污染行（单竖线也过滤）
     txt = txt.replace(/^\|[^\n]*$/gm, ``).trim();
     // 过滤掉 【状态标签】行
@@ -6224,11 +6226,24 @@ let hasAccept = txt.includes(`[收取转账]`);
                 // ★ 捕获当前响应的线下状态（在forEach开始前，防止异步操作改变_offlineMode）
                 let _thisIsOffline = !!window._offlineMode;
                 let skipNext = false;
+                let _pendingCallType = null; // ★ 收集到的主动发起通话指令
                 lns.forEach((line, i) => {
                     if(skipNext) { skipNext = false; return; }
                     // 过滤系统指令行，不渲染为文字气泡
                     let _lineTrim = line.trim();
-                    // [发起语音通话][发起视频通话][发送定位：][发送实时位置：] 不能在此过滤！它们需进入mkBub wrapper链处理
+                    // ★ 新逻辑：[发起语音通话][发起视频通话] 直接在这里处理，不加入newLines，不推气泡
+                    if(_lineTrim === '[发起语音通话]' || _lineTrim === '[发起视频通话]') {
+                        _pendingCallType = _lineTrim.includes('视频') ? 'video' : 'voice';
+                        return; // 跳过，不加入newLines
+                    }
+                    // 若是包含call tag的混合行（call tag附在其他文字后面），先剥离再渲染
+                    if(_lineTrim.includes('[发起语音通话]') || _lineTrim.includes('[发起视频通话]')) {
+                        if(_lineTrim.includes('[发起视频通话]')) _pendingCallType = 'video';
+                        else _pendingCallType = 'voice';
+                        line = line.replace('[发起语音通话]','').replace('[发起视频通话]','').trim();
+                        _lineTrim = line.trim();
+                        if(!_lineTrim) return; // 剥离后空行，跳过
+                    }
                     if(_lineTrim.startsWith('[试图发送表情：') || _lineTrim.startsWith('[系统提示：') ||
                        _lineTrim.startsWith('[更新状态：')) return;
                     // 过滤【】状态行（定位与天气/服装/表情等），不渲染为气泡
@@ -6250,6 +6265,25 @@ let hasAccept = txt.includes(`[收取转账]`);
                         if(!_thisIsOffline) setTimeout(() => mkBub(line, `l`), i * 1500);
                     }
                 });
+                // ★ 处理主动发起通话：在chat气泡渲染完毕后触发来电屏幕
+                if(_pendingCallType) {
+                    let _pct = _pendingCallType;
+                    setTimeout(() => {
+                        if(window._callState && window._callState.active) return;
+                        let _charName2 = $('cfgName')?.value || '对方';
+                        let _charAv2 = window.currentLoadedAiI || '';
+                        let _icName = $('icCharName'), _icType2 = $('icCallType'), _icAv = $('icAvatar'), _si = $('scrIncomingCall');
+                        if(!_icName || !_si) return;
+                        window._callState._incomingType = _pct;
+                        window._callState.active = true;
+                        _icName.innerText = _charName2;
+                        _icType2.innerText = _charName2 + (_pct === 'video' ? ' 发来了视频通话邀请' : ' 发来了语音通话邀请');
+                        if(_charAv2) { _icAv.style.backgroundImage = 'url(' + _charAv2 + ')'; _icAv.innerText = ''; }
+                        else { _icAv.style.backgroundImage = 'none'; _icAv.innerText = '👤'; }
+                        _si.style.display = 'flex';
+                        if(navigator.vibrate) navigator.vibrate([300,100,300]);
+                    }, newLines.length > 0 ? (newLines.length * 1500 + 500) : 1200);
+                }
                 // 线下模式：所有行合并为单条气泡，一次性渲染
                 if(_thisIsOffline && newLines.length > 0) {
                     let offlineLines = newLines.filter(l => {
@@ -6257,6 +6291,8 @@ let hasAccept = txt.includes(`[收取转账]`);
                         // 线下模式屏蔽图片消息/链接（线上功能不适用于面对面场景）
                         if(_t.startsWith('[图片消息')) return false;
                         if(/^https?:\/\/\S+\.(gif|jpe?g|png|webp)/i.test(_t)) return false;
+                        // 通话发起指令不渲染为文字（已在lns.forEach中处理）
+                        if(_t === '[发起语音通话]' || _t === '[发起视频通话]') return false;
                         return !_t.startsWith('[') || _t.startsWith('[发起') || _t.startsWith('[发送');
                     });
                     let specialLines = newLines.filter(l => l.startsWith('[') && !l.startsWith('[发起') && !l.startsWith('[发送'));
@@ -14965,8 +15001,7 @@ function _endCall(declined) {
             try {
                 let charName = $('cfgName')?.value || '对方';
                 let myName = $('cfgMyName')?.value || '我';
-                let callLog = st.msgs.map(m => (m.isUser ? myName : charName) + '\uff1a' + m.txt).join('\n');
-                let memContent = '【' + callType + '记录，时长' + _fmtCallTime(duration) + '】\n' + callLog;
+                let callLog = st.msgs.map(m => (m.isUser ? myName : charName) + '：' + m.txt).join('\n');
                 let mems = await getMems();
                 let dateStr = '';
                 if($('cfgCustomTime') && $('cfgCustomTime').checked) {
@@ -14978,6 +15013,21 @@ function _endCall(declined) {
                     dateStr = cy + '/' + cm + '/' + cd + ' ' + ch + ':' + String(cmin).padStart(2,'0') + ':00';
                 } else {
                     dateStr = updTime().toLocaleString();
+                }
+                // ★ 用AI生成自然语言总结，而非直接保存原始通话记录
+                let pxy2 = originalGetItem.call(ls,'pxy') || '';
+                let key2 = originalGetItem.call(ls,'key') || '';
+                let mod2 = originalGetItem.call(ls,'mod') || '';
+                if(pxy2 && !pxy2.includes('chat/completions')) pxy2 = pxy2.replace(/\/$/, '') + '/chat/completions';
+                let memContent = '【' + callType + '，时长' + _fmtCallTime(duration) + '】' + callLog;
+                if(pxy2 && key2 && mod2) {
+                    let sumSys = `请用2-4句自然语言总结这次${callType}中发生的事情，像写日记一样，只保留关键剧情和情感，不要加序号、不要用冒号分隔符、不要复述具体对话原文。开头直接写"这次${callType}中，"。\n\n通话记录：\n${callLog}`;
+                    try {
+                        let sumRes = await fetch(pxy2, {method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer '+key2}, body:JSON.stringify({model:mod2, temperature:0.5, max_tokens:200, messages:[{role:'user', content:sumSys}]})});
+                        let sumDat = await sumRes.json();
+                        let sumText = (sumDat.choices?.[0]?.message?.content || '').trim();
+                        if(sumText) memContent = sumText;
+                    } catch(e) {}
                 }
                 mems.push({ date: dateStr, content: memContent });
                 await saveMems(mems);
@@ -15054,9 +15104,11 @@ async function _callAIConnect(type, isIncoming) {
         let _hasReject = reply.includes('[拒接通话]');
         reply = reply.replace('[接听通话]', '').replace('[拒接通话]', '').trim();
         reply = _sanitizeCallReply(reply);
+        // 净化后若为空，给一个保底的符合角色的开场白
+        if(!reply) reply = '喂？';
         if(_hasAccept) {
-            reply = reply.trim();
             _startCallConnected(type);
+            window._callState.msgs.push({isUser:false, txt:reply}); // ★ 存入msgs供后续对话使用
             setTimeout(() => _addCallMsg(reply, false, true), 800);
         } else if(_hasReject) {
             reply = reply.trim();
@@ -15072,7 +15124,10 @@ async function _callAIConnect(type, isIncoming) {
             updateListPreview();
         } else {
             _startCallConnected(type);
-            if(reply) setTimeout(() => _addCallMsg(reply, false, true), 800);
+            if(reply) {
+                window._callState.msgs.push({isUser:false, txt:reply});
+                setTimeout(() => _addCallMsg(reply, false, true), 800);
+            }
         }
     } catch(e) { _startCallConnected(type); }
 }
@@ -15199,7 +15254,11 @@ async function _callSendMsg(txt) {
         let _preHist = history.slice(-8).map(m => {
             if(m._sys || m._offlineDivider) return '';
             if(m.role === 'assistant') {
-                let _c = m.content.replace(/【[\s\S]*?】[^\n]*/g,'').replace(/【回复】/g,'').trim().slice(0,80);
+                // 过滤call tag和状态行
+                let _c = m.content
+                    .replace(/\[发起[^\]]+\]/g,'')
+                    .replace(/【[\s\S]*?】[^\n]*/g,'')
+                    .replace(/【回复】/g,'').trim().slice(0,80);
                 return _c ? charName + '：' + _c : '';
             } else {
                 return myName + '：' + m.content.replace(/\[系统提示[^]]*\]/g,'').trim().slice(0,60);
@@ -15216,6 +15275,8 @@ let callSys = '你是' + charName + '。' + (charAP ? '你的设定：' + charAP
         let dat = await res.json();
         let reply = (dat.choices?.[0]?.message?.content || '').trim();
         reply = _sanitizeCallReply(reply);
+        // 净化后若为空，保底回复（防止用户发完后AI无响应）
+        if(!reply) reply = '……';
         // 处理发送照片指令（视频通话专属）
         let photoM = reply.match(/\[发送照片：([\s\S]*?)\]/);
         if(photoM) {
@@ -15846,34 +15907,7 @@ ${summary}
     };
 }
 
-// 拦截AI回复中的主动发起通话指令（char主动打电话）
-const _origMkBubForCall = mkBub;
-window.mkBub = function(txt, side, isT) {
-    if(side === 'l' && !isT) {
-        let hasVoice = txt.includes('[发起语音通话]');
-        let hasVideo = txt.includes('[发起视频通话]');
-        if(hasVoice || hasVideo) {
-            txt = txt.replace('[发起语音通话]', '').replace('[发起视频通话]', '').trim();
-            let icType = hasVideo ? 'video' : 'voice';
-            setTimeout(() => {
-                if(window._callState.active) return;
-                window._callState._incomingType = icType;
-                window._callState.active = true;
-                let charName = $('cfgName')?.value || '对方';
-                let charAvatar = window.currentLoadedAiI || '';
-                let icName = $('icCharName'), icType2 = $('icCallType'), icAv = $('icAvatar'), si = $('scrIncomingCall');
-                if(!icName||!si) return;
-                icName.innerText = charName;
-                icType2.innerText = charName + (icType === 'video' ? ' 发来了视频通话邀请' : ' 发来了语音通话邀请');
-                if(charAvatar) { icAv.style.backgroundImage = 'url(' + charAvatar + ')'; icAv.innerText = ''; }
-                else { icAv.style.backgroundImage = 'none'; icAv.innerText = '👤'; }
-                si.style.display = 'flex';
-                if(navigator.vibrate) navigator.vibrate([300,100,300]);
-            }, 1000);
-        }
-    }
-    if(txt.trim()) _origMkBubForCall.call(this, txt, side, isT);
-};
+// 主动发起通话规则：已在主消息处理循环(lns.forEach)中直接处理[发起语音通话]/[发起视频通话]，无需mkBub wrapper
 
 // 单聊系统提示注入：主动发起通话规则
 window._callSysAddon = '\n【主动发起通话规则 - 极度重要】两种情况下你必须主动发起通话：①情绪剧烈波动（极度生气、极其思念、遇到紧急情况），②对方明确要求你打电话/给我打电话/视频一下。满足任一条件时，在回复最后单独一行加入：[发起语音通话] 或 [发起视频通话]。用了此指令就代表你真的在给对方打电话。';
