@@ -5918,7 +5918,7 @@ if(charStickers.length > 0) {
         let _olCDialog = window._offlineColorDialog || '#e84393';
         // 线下模式时替换主格式要求，去掉"通过手机发消息"的隐含逻辑
         // 替换主格式（不用/s flag，兼容旧手机浏览器）
-        let _sysHead = `严格按格式回复，勿加多余字符。内容必须极致生动：\n【定位与天气】（50字内，首字为天气emoji）\n【心声】（100字内）\n【回复】（对我说的话。重要规则：如有多句，必须用回车换行严格分段！）\n\n`;
+        let _sysHead = `严格按格式回复，勿加多余字符。内容必须极致生动：\n【定位与天气】（50字内，首字为天气emoji，包含当前地点）\n【服装】（20字内，描写char当前穿着打扮）\n【表情与动作】（20字内，描写当前神态动作）\n【心声】（100字内）\n【回复】（对我说的话。重要规则：如有多句，必须用回车换行严格分段！）\n\n`;
         let _sysOldEnd = sys.indexOf(`\n\n`);
         if(_sysOldEnd > 0) sys = _sysHead + sys.slice(_sysOldEnd + 2);
         else sys = _sysHead + sys;
@@ -5986,9 +5986,13 @@ if(charStickers.length > 0) {
         sys += `\n\n【系统最高指令 - 格式执行 - 优先级HIGHEST】` +
                `在你输出【回复】的内容时，第一行必须严格按照以下格式要求输出状态行，之后换行再写对话正文。` +
                `注意：状态行只能放在【回复】标签后的第一行，不要在其他任何地方（如【定位与天气】【服装】等段落内）重复输出。` +
-               `【时间自然推进规则】状态行中的📅日期时间字段应以下方起始时间为基准，随剧情自然推进（如隔天早上应显示第二天日期，相差数小时应调整时分），不得随意跳跃或倒退到更早的时间！年份不得改变，月份变动需合理。` +
+               `【时间推进核心规则】📅日期时间字段以下方基准时间为起点，必须根据剧情上下文自然推进：` +
+               `① 玩家消息中若含有明确的时间词（如"第二天"、"早上"、"下午"、"深夜"、"几小时后"等），必须严格按照玩家给出的时间线输出，不得忽视；` +
+               `② 若剧情推进了时间（如隔天、几小时后），必须在状态行中体现对应的日期/时间变化；` +
+               `③ 不得输出比基准时间更早的时间（时间只能前进，不能后退）；` +
+               `④ 年份不得改变，月份和日期变动需符合实际天数。` +
                `\n正确示例：\n【回复】\n（此处按格式输出状态行，日期时间根据剧情合理调整）\n（此处是正常对话内容）` +
-               `\n格式要求（以下时间为当前基准，请根据剧情推进合理调整）：` + _sbVal;
+               `\n格式要求（以下时间为基准起点，请根据剧情进展合理推进）：` + _sbVal;
     }
                 let arr = sys ? [{role: `system`, content: sys}] : [];
     let ctxHist = history.slice(-(parseInt($(`cfgCtx`).value)||10));
@@ -6179,11 +6183,6 @@ let hasAccept = txt.includes(`[收取转账]`);
                 out = rM[1].trim();
                 if(wM) aiStatus.weather = wM[1].trim(); if(cM) aiStatus.clothing = cM[1].trim();
                 if(aM) aiStatus.action = aM[1].trim(); if(tM) aiStatus.thought = tM[1].trim();
-                // ★ 线下模式：清除过时的服装/动作数据（线下格式不输出这两项）
-                if(window._offlineMode) {
-                    if(!cM) aiStatus.clothing = '';
-                    if(!aM) aiStatus.action = '';
-                }
                 ls.setItem(`aiStatus`, JSON.stringify(aiStatus));
             }
             // 无论是否有【回复】，都清除可能残留在out里的【状态行】（避免渲染为气泡）
@@ -6994,15 +6993,7 @@ function mkBub(txt, side, isT=false) {
         let img = window.currentLoadedAiI || ``;
         if(img) { a.style.backgroundImage = `url(`+img+`)`; a.innerText = ``; } else a.innerText = `👤`;
         if(!isT) a.onclick = () => {
-                if(window._offlineMode) {
-                    // 线下模式：状态栏显示面对面语境，服装/动作不显示过时的在线数据
-                    stW.innerText = aiStatus.weather || '（与你面对面）';
-                    stC.innerText = '（线下模式中，当面互动无法获取）';
-                    stA.innerText = '（正与你面对面，非屏幕互动）';
-                    stT.innerText = aiStatus.thought || '（内心想法见对话）';
-                } else {
-                    stW.innerText=aiStatus.weather; stC.innerText=aiStatus.clothing; stA.innerText=aiStatus.action; stT.innerText=aiStatus.thought;
-                }
+                stW.innerText=aiStatus.weather; stC.innerText=aiStatus.clothing; stA.innerText=aiStatus.action; stT.innerText=aiStatus.thought;
                 modal.style.display=`flex`;
             };
         row.appendChild(a); row.appendChild(b);
@@ -7038,14 +7029,7 @@ function mkBubSync(txt, side) {
         let img = window.currentLoadedAiI || ``;
         if(img) { a.style.backgroundImage = `url(`+img+`)`; a.innerText = ``; } else a.innerText = `👤`;
         a.onclick = () => {
-                if(window._offlineMode) {
-                    stW.innerText = aiStatus.weather || '（与你面对面）';
-                    stC.innerText = '（线下模式中，当面互动无法获取）';
-                    stA.innerText = '（正与你面对面，非屏幕互动）';
-                    stT.innerText = aiStatus.thought || '（内心想法见对话）';
-                } else {
-                    stW.innerText=aiStatus.weather; stC.innerText=aiStatus.clothing; stA.innerText=aiStatus.action; stT.innerText=aiStatus.thought;
-                }
+                stW.innerText=aiStatus.weather; stC.innerText=aiStatus.clothing; stA.innerText=aiStatus.action; stT.innerText=aiStatus.thought;
                 modal.style.display=`flex`;
             };
         row.appendChild(a); row.appendChild(b);
@@ -15855,7 +15839,7 @@ window._saveCurrentOfflineState = function() {
     try {
         let _k = 'offlineState_' + currentChatId;
         if(window._offlineMode) {
-            originalSetItem.call(ls, _k, JSON.stringify({
+            let _data = {
                 active: true,
                 scene: window._offlineScene || '',
                 relation: window._offlineRelation || '',
@@ -15863,7 +15847,9 @@ window._saveCurrentOfflineState = function() {
                 wordCount: window._offlineWordCount || 0,
                 colorScene: window._offlineColorScene || '#6c5ce7',
                 colorDialog: window._offlineColorDialog || '#e84393'
-            }));
+            };
+            originalSetItem.call(ls, _k, JSON.stringify(_data));
+            localforage.setItem(_k, _data).catch(()=>{});
         }
     } catch(e) {}
 };
@@ -15890,6 +15876,28 @@ window._restoreOfflineState = function(chatId) {
         window._offlineWordCount= saved.wordCount    || 0;
         window._offlineColorScene  = saved.colorScene   || '#6c5ce7';
         window._offlineColorDialog = saved.colorDialog  || '#e84393';
+    } else if(!saved) {
+        // ★ localStorage无记录时，异步从localforage补充（防localStorage满导致丢失）
+        localforage.getItem(_olKey).then(function(lfSaved) {
+            if(lfSaved && lfSaved.active) {
+                // 确保仍是同一个char才恢复（防异步返回时已切换char）
+                let _targetId = chatId || 'default';
+                let _currentId = (typeof currentChatId !== 'undefined' ? currentChatId : null) || 'default';
+                if(_targetId === _currentId) {
+                    window._offlineMode = true;
+                    window._offlineScene    = lfSaved.scene        || '';
+                    window._offlineRelation = lfSaved.relation     || '';
+                    window._offlinePreset   = lfSaved.preset       || '';
+                    window._offlineWordCount= lfSaved.wordCount    || 0;
+                    window._offlineColorScene  = lfSaved.colorScene   || '#6c5ce7';
+                    window._offlineColorDialog = lfSaved.colorDialog  || '#e84393';
+                    // 同步回localStorage供下次同步读取
+                    try { originalSetItem.call(ls, _olKey, JSON.stringify(lfSaved)); } catch(e2) {}
+                    let _ml2 = document.getElementById('offlineModeMenuLabel');
+                    if(_ml2) _ml2.textContent = '线下✓';
+                }
+            }
+        }).catch(()=>{});
     }
     // 同步菜单文字
     let _ml = document.getElementById('offlineModeMenuLabel');
@@ -15898,7 +15906,6 @@ window._restoreOfflineState = function(chatId) {
 // 初始加载（此时currentChatId可能是default）
 window._restoreOfflineState(window.currentChatId || 'default');
 
-// (心跳守护已合并到下方)
 // ★ 线下模式心跳守护（每6秒从localStorage重新同步，防止状态意外丢失）
 (function _offlineHeartbeat() {
     setInterval(function() {
@@ -15908,6 +15915,14 @@ window._restoreOfflineState(window.currentChatId || 'default');
             let _saved = null;
             try { _saved = JSON.parse(originalGetItem.call(ls, _k) || 'null'); } catch(e2) {}
             let _shouldOn = !!(_saved && _saved.active);
+            // localStorage无记录时，尝试从localforage查询
+            if(!_saved) {
+                localforage.getItem(_k).then(function(lfData) {
+                    if(lfData && lfData.active && currentChatId === (_k.replace('offlineState_','')) ) {
+                        try { originalSetItem.call(ls, _k, JSON.stringify(lfData)); } catch(e4) {}
+                    }
+                }).catch(()=>{});
+            }
             // localStorage显示应为线下模式但变量是false → 立即恢复
             if(_shouldOn && !window._offlineMode) {
                 window._offlineMode = true;
@@ -15920,17 +15935,17 @@ window._restoreOfflineState(window.currentChatId || 'default');
                 let _ml = document.getElementById('offlineModeMenuLabel');
                 if(_ml) _ml.textContent = '线下✓';
             }
-            // 当前是线下模式 → 持续刷写localStorage，防止被意外清除
+            // 当前是线下模式 → 持续刷写localStorage和localforage，防止被意外清除
             if(window._offlineMode) {
-                try {
-                    originalSetItem.call(ls, _k, JSON.stringify({
-                        active: true, scene: window._offlineScene||'',
-                        relation: window._offlineRelation||'', preset: window._offlinePreset||'',
-                        wordCount: window._offlineWordCount||0,
-                        colorScene: window._offlineColorScene||'#6c5ce7',
-                        colorDialog: window._offlineColorDialog||'#e84393'
-                    }));
-                } catch(e3) {}
+                let _hbData = {
+                    active: true, scene: window._offlineScene||'',
+                    relation: window._offlineRelation||'', preset: window._offlinePreset||'',
+                    wordCount: window._offlineWordCount||0,
+                    colorScene: window._offlineColorScene||'#6c5ce7',
+                    colorDialog: window._offlineColorDialog||'#e84393'
+                };
+                try { originalSetItem.call(ls, _k, JSON.stringify(_hbData)); } catch(e3) {}
+                localforage.setItem(_k, _hbData).catch(()=>{});
             }
             // 同步菜单标签
             let _lbl = document.getElementById('offlineModeMenuLabel');
@@ -16066,18 +16081,20 @@ function _enterOfflineMode() {
 
     let wasOff = window._offlineMode;
     window._offlineMode = true;
-    // 持久化线下模式状态到localStorage
+    // 持久化线下模式状态到localStorage + localforage（双重保险）
+    let _olStateData = {
+        active: true,
+        scene: window._offlineScene,
+        relation: window._offlineRelation,
+        preset: window._offlinePreset,
+        wordCount: window._offlineWordCount,
+        colorScene: window._offlineColorScene,
+        colorDialog: window._offlineColorDialog
+    };
     try {
-        originalSetItem.call(ls, 'offlineState_' + currentChatId, JSON.stringify({
-            active: true,
-            scene: window._offlineScene,
-            relation: window._offlineRelation,
-            preset: window._offlinePreset,
-            wordCount: window._offlineWordCount,
-            colorScene: window._offlineColorScene,
-            colorDialog: window._offlineColorDialog
-        }));
+        originalSetItem.call(ls, 'offlineState_' + currentChatId, JSON.stringify(_olStateData));
     } catch(e) {}
+    localforage.setItem('offlineState_' + currentChatId, _olStateData).catch(()=>{});
     _closeOfflinePanel();
 
     // 更新菜单图标文字
@@ -16117,6 +16134,7 @@ async function _exitOfflineMode() {
     window._offlineWordCount = 0;
     window._storyCurrentTimeMs = null; // 退出线下模式时重置剧情时间
     try { originalSetItem.call(ls, 'offlineState_' + _lockedChatId, JSON.stringify({active: false})); } catch(e) {}
+    localforage.setItem('offlineState_' + _lockedChatId, {active: false}).catch(()=>{});
     let menuLabel = document.getElementById('offlineModeMenuLabel');
     if(menuLabel) menuLabel.textContent = '线下模式';
     _closeOfflinePanel();
