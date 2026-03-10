@@ -3933,8 +3933,11 @@ async function renderContacts() {
         }
         div.dataset.lasttime = String(_lastTime);
                 div.onclick = async () => {
+            // ★ 先保存当前char的线下状态，再切换（防止切走时丢失状态）
+            if(typeof window._saveCurrentOfflineState === 'function') window._saveCurrentOfflineState();
             currentChatId = c.id;
-            // 恢复当前char的线下模式状态
+            window._storyCurrentTimeMs = null; // 切换char时重置剧情时间
+            // 恢复新char自己的线下模式状态（会先清空再按存档恢复）
             if(typeof window._restoreOfflineState === 'function') window._restoreOfflineState(c.id);
             $(`cfgName`).value = originalGetItem.call(ls, `cN_` + c.id) || c.name;
             $(`cfgRem`).value = originalGetItem.call(ls, `cR_` + c.id) || ``;
@@ -4053,7 +4056,11 @@ async function renderContacts() {
             divC.innerHTML = avaHtml2 + `<div class=chat-info> <div class=role-header-row> <div class=role-name>` + isoName2 + `</div> <div class=role-status><div class="status-dot ` + charStatusColorClass2 + `"></div>` + charStatusText2 + `</div> </div> <div class=role-signature>` + charSign2 + `</div> </div>`;
             divC.onclick = async () => {
                 window._prevScreen = 'scrContact'; window._prevContactTab = 'friends';
+                // ★ 先保存当前char的线下状态，再切换
+                if(typeof window._saveCurrentOfflineState === 'function') window._saveCurrentOfflineState();
                 currentChatId = c.id;
+                window._storyCurrentTimeMs = null; // 切换char时重置剧情时间
+                // 恢复新char自己的线下模式状态（会先清空再按存档恢复）
                 if(typeof window._restoreOfflineState === 'function') window._restoreOfflineState(c.id);
                 $(`cfgName`).value = originalGetItem.call(ls, `cN_` + c.id) || c.name;
                 $(`cfgRem`).value = originalGetItem.call(ls, `cR_` + c.id) || ``;
@@ -6167,11 +6174,16 @@ let hasAccept = txt.includes(`[收取转账]`);
 
 
             
-            let out = txt, wM = txt.match(/【定位与天气】([\s\S]*?)【/), cM = txt.match(/【服装】([\s\S]*?)【/), aM = txt.match(/【表情与动作】([\s\S]*?)【/), tM = txt.match(/【心声】([\s\S]*?)【/), rM = txt.match(/【回复】([\s\S]*)$/);
+            let out = txt, wM = txt.match(/【定位与天气】([\s\S]*?)【/), cM = txt.match(/【服装】([\s\S]*?)【/), aM = txt.match(/【表情与动作】([\s\S]*?)【/), tM = txt.match(/【心声】([\s\S]*?)(?:【|$)/), rM = txt.match(/【回复】([\s\S]*)$/);
                         if(rM) {
                 out = rM[1].trim();
                 if(wM) aiStatus.weather = wM[1].trim(); if(cM) aiStatus.clothing = cM[1].trim();
                 if(aM) aiStatus.action = aM[1].trim(); if(tM) aiStatus.thought = tM[1].trim();
+                // ★ 线下模式：清除过时的服装/动作数据（线下格式不输出这两项）
+                if(window._offlineMode) {
+                    if(!cM) aiStatus.clothing = '';
+                    if(!aM) aiStatus.action = '';
+                }
                 ls.setItem(`aiStatus`, JSON.stringify(aiStatus));
             }
             // 无论是否有【回复】，都清除可能残留在out里的【状态行】（避免渲染为气泡）
@@ -6981,7 +6993,18 @@ function mkBub(txt, side, isT=false) {
         a.className = `ava-sm ava-l`;
         let img = window.currentLoadedAiI || ``;
         if(img) { a.style.backgroundImage = `url(`+img+`)`; a.innerText = ``; } else a.innerText = `👤`;
-        if(!isT) a.onclick = () => { stW.innerText=aiStatus.weather; stC.innerText=aiStatus.clothing; stA.innerText=aiStatus.action; stT.innerText=aiStatus.thought; modal.style.display=`flex`; };
+        if(!isT) a.onclick = () => {
+                if(window._offlineMode) {
+                    // 线下模式：状态栏显示面对面语境，服装/动作不显示过时的在线数据
+                    stW.innerText = aiStatus.weather || '（与你面对面）';
+                    stC.innerText = '（线下模式中，当面互动无法获取）';
+                    stA.innerText = '（正与你面对面，非屏幕互动）';
+                    stT.innerText = aiStatus.thought || '（内心想法见对话）';
+                } else {
+                    stW.innerText=aiStatus.weather; stC.innerText=aiStatus.clothing; stA.innerText=aiStatus.action; stT.innerText=aiStatus.thought;
+                }
+                modal.style.display=`flex`;
+            };
         row.appendChild(a); row.appendChild(b);
     } else {
         row.appendChild(b);
@@ -7014,7 +7037,17 @@ function mkBubSync(txt, side) {
         let a = document.createElement(`div`); a.className = `ava-sm ava-l`;
         let img = window.currentLoadedAiI || ``;
         if(img) { a.style.backgroundImage = `url(`+img+`)`; a.innerText = ``; } else a.innerText = `👤`;
-        a.onclick = () => { stW.innerText=aiStatus.weather; stC.innerText=aiStatus.clothing; stA.innerText=aiStatus.action; stT.innerText=aiStatus.thought; modal.style.display=`flex`; };
+        a.onclick = () => {
+                if(window._offlineMode) {
+                    stW.innerText = aiStatus.weather || '（与你面对面）';
+                    stC.innerText = '（线下模式中，当面互动无法获取）';
+                    stA.innerText = '（正与你面对面，非屏幕互动）';
+                    stT.innerText = aiStatus.thought || '（内心想法见对话）';
+                } else {
+                    stW.innerText=aiStatus.weather; stC.innerText=aiStatus.clothing; stA.innerText=aiStatus.action; stT.innerText=aiStatus.thought;
+                }
+                modal.style.display=`flex`;
+            };
         row.appendChild(a); row.appendChild(b);
     } else {
         row.appendChild(b);
@@ -15837,18 +15870,26 @@ window._saveCurrentOfflineState = function() {
 
 window._restoreOfflineState = function(chatId) {
     let _olKey = 'offlineState_' + (chatId || 'default');
-    // ★ 绝不在catch里清除线下模式状态（防止localStorage临时异常导致模式误清除）
     let saved = null;
-    try { saved = JSON.parse(originalGetItem.call(ls, _olKey) || 'null'); } catch(e) { /* 读取失败时保持现状，不清除 */ }
-    if(saved !== null) {
-        // 有明确保存的状态才更新（没有记录则保持当前状态不变）
-        window._offlineMode = !!(saved && saved.active);
-        window._offlineScene    = (saved && saved.scene)        || '';
-        window._offlineRelation = (saved && saved.relation)     || '';
-        window._offlinePreset   = (saved && saved.preset)       || '';
-        window._offlineWordCount= (saved && saved.wordCount)    || 0;
-        window._offlineColorScene  = (saved && saved.colorScene)   || '#6c5ce7';
-        window._offlineColorDialog = (saved && saved.colorDialog)  || '#e84393';
+    try { saved = JSON.parse(originalGetItem.call(ls, _olKey) || 'null'); } catch(e) {}
+    // ★ 核心修复：切换char时，必须先彻底清空线下状态，再按目标char存档恢复。
+    // 这样A char的线下状态绝不会残留到B char（B没有存档时默认为非线下模式）。
+    window._offlineMode = false;
+    window._offlineScene = '';
+    window._offlineRelation = '';
+    window._offlinePreset = '';
+    window._offlineWordCount = 0;
+    window._offlineColorScene = '#6c5ce7';
+    window._offlineColorDialog = '#e84393';
+    // 仅当目标char有明确开启的存档时才恢复
+    if(saved && saved.active) {
+        window._offlineMode = true;
+        window._offlineScene    = saved.scene        || '';
+        window._offlineRelation = saved.relation     || '';
+        window._offlinePreset   = saved.preset       || '';
+        window._offlineWordCount= saved.wordCount    || 0;
+        window._offlineColorScene  = saved.colorScene   || '#6c5ce7';
+        window._offlineColorDialog = saved.colorDialog  || '#e84393';
     }
     // 同步菜单文字
     let _ml = document.getElementById('offlineModeMenuLabel');
