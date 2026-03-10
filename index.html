@@ -140,8 +140,8 @@ z-index: 100; overflow: hidden; }
 .live-loc-dot { width:8px;height:8px;border-radius:50%;background:#1976d2;animation:livePulse 1.4s ease-in-out infinite; flex-shrink:0; }
 .quote-txt { margin-right: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .quote-close { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; font-weight: bold; font-size: 16px; }
-.chat-input { box-sizing: border-box; width: 100%; background-color: rgba(255,255,255,0.95); padding: 8px 10px 25px 10px; display: flex; gap: 6px; align-items: center; flex-shrink: 0; border-top: 1px solid #eeeeee; }
-.msg-input { flex: 1; min-width: 0; border: none; background-color: #f0f2f5; padding: 8px 12px; border-radius: 20px; font-size: 14px; outline: none; }
+.chat-input { box-sizing: border-box; width: 100%; background-color: rgba(255,255,255,0.95); padding: 8px 10px 25px 10px; display: flex; gap: 6px; align-items: flex-end; flex-shrink: 0; border-top: 1px solid #eeeeee; }
+.msg-input { flex: 1; min-width: 0; border: none; background-color: #f0f2f5; padding: 8px 12px; border-radius: 20px; font-size: 14px; outline: none; font-family: inherit; line-height: 1.4; min-height: 34px; max-height: 120px; resize: none; overflow: hidden; display: block; }
 .tool-svg { width: 28px; height: 28px; display: flex; justify-content: center; align-items: center; cursor: pointer; flex-shrink: 0; transition: 0.2s; }
 .tool-svg svg { width: 24px; height: 24px; stroke-linecap: round; stroke-linejoin: round; }
 .tool-svg:active { transform: scale(0.9); }
@@ -595,7 +595,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
                 <div class=chat-input>
             <div id=btnOpenSticker class=tool-svg><svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg></div>
             <div id=btnMic class=tool-svg><svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg></div>
-                                    <input type=search id=iptMsg class=msg-input placeholder=输入消息... autocomplete=off>
+                                    <textarea id=iptMsg class=msg-input placeholder=输入消息... autocomplete=off rows=1 style="resize:none;overflow:hidden;line-height:1.4;min-height:34px;max-height:120px;"></textarea>
 
 
             <div id=btnLemon class=tool-svg><svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5.172C10 3.782 8.423 2.679 6.5 3c-2.823.47-4.113 6.006-4 7 .08.703 1.725 1.722 3.656 1 1.261-.467 1.95-1.9 3.844-2.5"></path><path d="M14 5.172C14 3.782 15.577 2.679 17.5 3c2.823.47 4.113 6.006 4 7-.08.703-1.725 1.722-3.656 1-1.261-.467-1.95-1.9-3.844-2.5"></path><path d="M8 14v1a4 4 0 0 0 8 0v-1"></path><path d="M16 10.5h.01"></path><path d="M8 10.5h.01"></path></svg></div>
@@ -2687,7 +2687,7 @@ if(typeof localforage === 'undefined') {
                 <option value="">不限制（AI自行决定）</option>
                 <option value="second">第二人称（"你"视角，最强沉浸感）</option>
                 <option value="third">第三人称（"她/他"视角，旁观叙述）</option>
-                <option value="first">第一人称（char以"我"叙述）</option>
+                <option value="first" selected>第一人称（char以"我"叙述）【默认】</option>
             </select>
         </div>
         <div style="margin-bottom:20px;">
@@ -4538,6 +4538,14 @@ async function runMemorySummary(isAuto = false) {
                 let dat = await res.json();
         if(dat.choices && dat.choices.length > 0) {
             let diary = dat.choices[0].message.content;
+            // ★ 验证内容：拒绝保存API报错文本（英文为主、含"error"、"capacity"等关键词的内容）
+            let _isError = !diary || diary.trim().length < 5
+                || /^[A-Za-z\s\[\]{}:,\.'"0-9\-_]+$/.test(diary.trim()) // 纯英文/符号
+                || /no capacity|error|failed|exception|server|timeout|quota|rate.?limit|invalid|unauthorized|forbidden/i.test(diary.trim().slice(0,120));
+            if(_isError) {
+                if(!isAuto) alert(`生成失败：API返回了异常内容，请重试。`);
+                return;
+            }
             let mems = await getMems();
             
             // 全新的时间戳智能盖章逻辑
@@ -4722,8 +4730,15 @@ window.loadChatSettings = function() {
     if(ls.getItem(`cAP`)) $(`cfgAiP`).value = ls.getItem(`cAP`); else $(`cfgAiP`).value = '';
     if(ls.getItem(`cMP`)) $(`cfgMyP`).value = ls.getItem(`cMP`); else $(`cfgMyP`).value = '';
     if($(`cfgBubbleCss`)) {
-        if(ls.getItem(`cBubbleCss`)) $(`cfgBubbleCss`).value = ls.getItem(`cBubbleCss`); 
+        let _lsBubble = ls.getItem(`cBubbleCss`);
+        if(_lsBubble) $(`cfgBubbleCss`).value = _lsBubble; 
         else $(`cfgBubbleCss`).value = '';
+        // ★ 异步从 localforage 补充（localStorage 满时优先从大仓库读取）
+        localforage.getItem(`cBubbleCss_` + currentChatId).then(v => {
+            if(v !== null && v !== undefined && String(v).trim() !== '') {
+                if($(`cfgBubbleCss`)) $(`cfgBubbleCss`).value = String(v);
+            }
+        }).catch(()=>{});
     }
     if(ls.getItem(`cCtx`)) $(`cfgCtx`).value = ls.getItem(`cCtx`); else $(`cfgCtx`).value = 100;
     
@@ -5340,6 +5355,21 @@ $(`ctxCopy`).onclick = () =>{ if(selEl) navigator.clipboard.writeText(getCleanTe
 $(`ctxDel`).onclick = () => { 
     if(selEl) { 
         if(confirm(`确定要删除这1条信息吗？`)) {
+            // ★ 方案A：histIdx直接定位（线下模式气泡必须走此路径）
+            if(selEl.dataset.histIdx !== undefined) {
+                let _di = parseInt(selEl.dataset.histIdx);
+                if(!isNaN(_di) && history[_di]) {
+                    history.splice(_di, 1);
+                    let lmc = parseInt(ls.getItem(`lastMemCount`)) || 0;
+                    if(lmc > history.length) ls.setItem(`lastMemCount`, history.length.toString());
+                    ls.setItem(`chatHistory`, JSON.stringify(history));
+                    redrawChat();
+                    if(typeof updateListPreview === `function`) updateListPreview();
+                    $(`ctxMenu`).style.display = `none`;
+                    return;
+                }
+            }
+            // ★ 方案B：文字内容搜索（普通气泡后备）
                                 let rawTxt = selEl.dataset && selEl.dataset.raw;
                     let isLocCard = rawTxt && (rawTxt.startsWith(`[定位消息：`) || rawTxt.startsWith(`[实时位置：`));
                     let imgEl = (!isLocCard) ? selEl.querySelector(`img`) : null;
@@ -5405,6 +5435,7 @@ $(`btnConfirmEdit`).onclick = () =>{
             } else {
                 history[_i].content = newTxt;
             }
+            if(history[_i].role === 'assistant') history[_i]._userEdited = true; // ★ 标记为用户编辑
             ls.setItem(`chatHistory`, JSON.stringify(history));
             _saved = true;
         }
@@ -5423,6 +5454,7 @@ $(`btnConfirmEdit`).onclick = () =>{
                 } else {
                     history[i].content = _c.replace(editingOldText, newTxt);
                 }
+                if(history[i].role === 'assistant') history[i]._userEdited = true; // ★ 标记为用户编辑
                 ls.setItem(`chatHistory`, JSON.stringify(history));
                 break;
             }
@@ -5808,7 +5840,7 @@ if($(`picUploadInput`)) {
 $(`btnSend`).onclick = () =>{
     let t = iptMsg.value; if(!t && !currentQuote) return;
     if(currentQuote) t = `「引用：` + currentQuote + `」\n` + t;
-    mkBub(t, `r`); iptMsg.value = ``; $(`quoteBox`).style.display = `none`;
+    mkBub(t, `r`); iptMsg.value = ``; if(typeof _autoResizeIptMsg === 'function') _autoResizeIptMsg(); $(`quoteBox`).style.display = `none`;
     currentQuote = ``;
     history.push({role: `user`, content: t});
     ls.setItem(`chatHistory`, JSON.stringify(history));
@@ -5819,7 +5851,7 @@ $(`btnLemon`).onclick = async () =>{
     let t = iptMsg.value;
     if(t || currentQuote) {
         if(currentQuote) t = `「引用：` + currentQuote + `」\n` + t;
-        mkBub(t, `r`); iptMsg.value = ``; $(`quoteBox`).style.display = `none`; currentQuote = ``;
+        mkBub(t, `r`); iptMsg.value = ``; if(typeof _autoResizeIptMsg === 'function') _autoResizeIptMsg(); $(`quoteBox`).style.display = `none`; currentQuote = ``;
         history.push({role: `user`, content: t}); ls.setItem(`chatHistory`, JSON.stringify(history)); updateListPreview();
     }
         if(history.length === 0) return;
@@ -5914,7 +5946,7 @@ if(charStickers.length > 0) {
         let _olCDialog = window._offlineColorDialog || '#e84393';
         // 线下模式时替换主格式要求，去掉"通过手机发消息"的隐含逻辑
         // 替换主格式（不用/s flag，兼容旧手机浏览器）
-        let _sysHead = `严格按格式回复，勿加多余字符。内容必须极致生动：\n【定位与天气】（50字内，首字为天气emoji，包含当前地点）\n【服装】（20字内，描写char当前穿着打扮）\n【表情与动作】（20字内，描写当前神态动作）\n【心声】（100字内）\n【回复】（对我说的话。重要规则：如有多句，必须用回车换行严格分段！）\n\n`;
+        let _sysHead = `严格按格式回复，勿加多余字符。内容必须极致生动：\n【定位与天气】（100字内，首字为天气emoji，包含当前地点和环境氛围，充分描写感官细节）\n【服装】（100字内，详细描写char当前完整穿着打扮，包含颜色材质细节）\n【表情与动作】（100字内，详细描写当前神态、动作、肢体语言）\n【心声】（200字内）\n【回复】（对我说的话。重要规则：如有多句，必须用回车换行严格分段！）\n\n`;
         let _sysOldEnd = sys.indexOf(`\n\n`);
         if(_sysOldEnd > 0) sys = _sysHead + sys.slice(_sysOldEnd + 2);
         else sys = _sysHead + sys;
@@ -5929,12 +5961,27 @@ if(charStickers.length > 0) {
             + (_olPerson === 'first'  ? '▶ 【叙述人称 - 强制执行】全程以角色第一人称"我"叙述动作和感受，营造独白式沉浸感。\n' : '')
             + (_olScene ? '▶ 场景：' + _olScene + '\n' : '')
             + (_olRelation ? '▶ 关系氛围：' + _olRelation + '\n' : '')
-            + (_olWords ? '▶ 回复字数：控制在' + _olWords + '字左右。\n' : '')
+            + (_olWords ? `▶ 【字数硬性限制 - 极度重要】每次回复的【回复】正文总字数必须严格控制在${_olWords}字以内，不得超出！这是最高优先级规定，绝对不允许以任何理由（情节紧张、描写丰富等）突破此限制！超出即视为严重错误。\n` : '')
             + '▶ 描写段落与「」对话交替出现，段落间空一行，不加任何前缀符号。\n'
             + '▶ 【强制标点规范】必须使用正确中文标点（句号。逗号，感叹号！省略号……等），严禁用空格代替标点！\n'
             + '▶ 【语序规范】必须使用正常语序表达，严禁倒装句。\n'
             + '▶ 【单条回复】必须将本次全部回复内容合并为一整段连续文本发出，不得分成多条消息。\n'
             + '▶ 【严禁使用手机功能】线下面对面场景绝对禁止输出[图片消息:...]、URL链接、[发送定位:]等任何手机指令格式，违反视为严重错误。';
+        // ★ AI学习能力：检测玩家近期编辑过的消息，提取修改规律注入提示词
+        try {
+            let _editedMsgs = history.filter(m => m._userEdited && m.role === 'assistant').slice(-5);
+            if(_editedMsgs.length > 0) {
+                let _editHints = _editedMsgs.map(m => {
+                    let _reply = m.content.replace(/[\s\S]*?【回复】\s*/,'').slice(0,100);
+                    return _reply;
+                }).filter(Boolean);
+                if(_editHints.length > 0) {
+                    sys += '\n\n▶ 【写作风格学习 - 极度重要】玩家已修改过以下段落作为范例，请严格模仿其文风、用词和人称规律，保持一致性：\n'
+                        + _editHints.map((h,i) => `范例${i+1}：${h}…`).join('\n')
+                        + '\n请从本条回复开始，完全遵循以上范例的写作风格，不得退回旧风格。';
+                }
+            }
+        } catch(e) {}
         // ★ 预设提示词单独作为最后的绝对指令注入，确保不被任何规则覆盖
         if(_olPreset) {
             sys += '\n\n════════════════════════════════════════\n'
@@ -6058,9 +6105,14 @@ if(charStickers.length > 0) {
                 if(sTxt === `status-busy`) sTxt = `忙碌`;
                 if(sTxt === `status-online`) sTxt = `在线`;
                 if(sTxt === `status-offline`) sTxt = `离线`;
-                originalSetItem.call(ls, `cStatusTxt_` + currentChatId, sTxt);
-                originalSetItem.call(ls, `cStatusColor_` + currentChatId, statusMatch[2].trim());
-                originalSetItem.call(ls, `cSign_` + currentChatId, statusMatch[3].trim());
+                // ★ 用 try/catch 包裹，防止 localStorage 满时报错中断
+                try { originalSetItem.call(ls, `cStatusTxt_` + currentChatId, sTxt); } catch(e){}
+                try { originalSetItem.call(ls, `cStatusColor_` + currentChatId, statusMatch[2].trim()); } catch(e){}
+                try { originalSetItem.call(ls, `cSign_` + currentChatId, statusMatch[3].trim()); } catch(e){}
+                // 同步写到 localforage（大仓库不会超限）
+                localforage.setItem(`cStatusTxt_`+currentChatId, sTxt).catch(()=>{});
+                localforage.setItem(`cStatusColor_`+currentChatId, statusMatch[2].trim()).catch(()=>{});
+                localforage.setItem(`cSign_`+currentChatId, statusMatch[3].trim()).catch(()=>{});
                 txt = txt.replace(statusMatch[0], ``);
                 if(typeof renderContacts === `function`) renderContacts();
                 if(typeof applyVis === `function`) applyVis();
@@ -7148,6 +7200,21 @@ iptMsg.onclick = () =>{
     toggleMenuDrawer(false);
     if(typeof toggleStickerDrawer === `function`) toggleStickerDrawer(false);
 };
+// ★ 输入框自动拓展高度
+function _autoResizeIptMsg() {
+    iptMsg.style.height = 'auto';
+    let newH = Math.min(iptMsg.scrollHeight, 120);
+    iptMsg.style.height = newH + 'px';
+    iptMsg.style.overflowY = iptMsg.scrollHeight > 120 ? 'auto' : 'hidden';
+}
+iptMsg.addEventListener('input', _autoResizeIptMsg);
+iptMsg.addEventListener('keydown', e => {
+    // Enter发送（不按Shift），Shift+Enter换行
+    if(e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        $('btnSend').click();
+    }
+});
 
 
 $(`btnRegenNew`).onclick = () =>{
@@ -15026,7 +15093,11 @@ function _endCall(declined) {
                         let sumRes = await fetch(pxy2, {method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer '+key2}, body:JSON.stringify({model:mod2, temperature:0.5, max_tokens:200, messages:[{role:'user', content:sumSys}]})});
                         let sumDat = await sumRes.json();
                         let sumText = (sumDat.choices?.[0]?.message?.content || '').trim();
-                        if(sumText) memContent = sumText;
+                        // ★ 验证总结内容不是API错误文本
+                        let _sumIsError = !sumText || sumText.length < 5
+                            || /^[A-Za-z\s\[\]{}:,\.'"0-9\-_]+$/.test(sumText)
+                            || /no capacity|error|failed|exception|server|timeout|quota|rate.?limit|invalid/i.test(sumText.slice(0,120));
+                        if(sumText && !_sumIsError) memContent = sumText;
                     } catch(e) {}
                 }
                 mems.push({ date: dateStr, content: memContent });
@@ -15923,6 +15994,7 @@ window._offlineRelation = '';
 window._storyCurrentTimeMs = null; // null=未初始化，初始化后为毫秒时间戳
 window._offlinePreset = '';
 window._offlineWordCount = 0;
+window._offlinePerson = 'first'; // ★ 默认第一人称
 window._offlineColorScene = '#6c5ce7';
 window._offlineColorDialog = '#e84393';
 
@@ -15967,7 +16039,7 @@ window._restoreOfflineState = function(chatId) {
         window._offlineRelation = saved.relation     || '';
         window._offlinePreset   = saved.preset       || '';
         window._offlineWordCount= saved.wordCount    || 0;
-        window._offlinePerson   = saved.person       || '';
+        window._offlinePerson   = saved.person       || 'first';
         window._offlineColorScene  = saved.colorScene   || '#6c5ce7';
         window._offlineColorDialog = saved.colorDialog  || '#e84393';
     } else if(!saved) {
@@ -15983,7 +16055,7 @@ window._restoreOfflineState = function(chatId) {
                     window._offlineRelation = lfSaved.relation     || '';
                     window._offlinePreset   = lfSaved.preset       || '';
                     window._offlineWordCount= lfSaved.wordCount    || 0;
-                    window._offlinePerson   = lfSaved.person       || '';
+                    window._offlinePerson   = lfSaved.person       || 'first';
                     window._offlineColorScene  = lfSaved.colorScene   || '#6c5ce7';
                     window._offlineColorDialog = lfSaved.colorDialog  || '#e84393';
                     // 同步回localStorage供下次同步读取
@@ -16025,7 +16097,7 @@ window._restoreOfflineState(window.currentChatId || 'default');
                 window._offlineRelation = (_saved && _saved.relation)     || '';
                 window._offlinePreset   = (_saved && _saved.preset)       || '';
                 window._offlineWordCount= (_saved && _saved.wordCount)    || 0;
-                window._offlinePerson   = (_saved && _saved.person)       || '';
+                window._offlinePerson   = (_saved && _saved.person)       || 'first';
                 window._offlineColorScene  = (_saved && _saved.colorScene)   || '#6c5ce7';
                 window._offlineColorDialog = (_saved && _saved.colorDialog)  || '#e84393';
                 let _ml = document.getElementById('offlineModeMenuLabel');
