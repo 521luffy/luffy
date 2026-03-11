@@ -5537,26 +5537,37 @@ $(`btnSaveChat`).onclick = async () => {
         let _tplSel = [`tplRadioA`,`tplRadioB`,`tplRadioC`].find(id => { let el=$(id); return el && el.checked; });
         dataObj.cStatusBarTpl = _tplSel ? _tplSel.replace(`tplRadio`,``) : ``;
 
-        for (let key in dataObj) {
-    let finalKey = (typeof isolatedKeys !== `undefined` && isolatedKeys.includes(key)) ? key + `_` + currentChatId : key;
-    
-    try {
-        ls.setItem(key, dataObj[key]);
-        if (key !== finalKey) {
-            ls.setItem(finalKey, dataObj[key]);
-        }
-    } catch (error) {
-        console.warn(`小仓库容量已满，已跳过并强制存入大仓库`);
-    }
+                for (let key in dataObj) {
+            // 恢复原版后缀逻辑：所有配置项都必须强制加上角色专属后缀
+            let finalKey = key + `_` + currentChatId;
+            
+            try {
+                ls.setItem(key, dataObj[key]); // 全局兜底
+                ls.setItem(finalKey, dataObj[key]); // 专属角色设定
+            } catch (error) {
+                // 小仓库空间爆满时，紧急清理体积最大的冗余历史项腾出空间
+                // 聊天记录在大仓库和专属键值中已有完整备份，这里安全清理以确保核心人设能存入
+                ls.removeItem(`chatHistory`); 
+                try {
+                    ls.setItem(finalKey, dataObj[key]);
+                } catch(e) {}
+            }
 
-    await localforage.setItem(finalKey, dataObj[key]);
-    
-    // 名字写入内存缓存，确保 loadChatSettings 下次即时读到
-    if(key === `cMyN`) {
-        if(!window._nameCache) window._nameCache = {};
-        window._nameCache[currentChatId] = dataObj[key];
-    }
-}
+            // 强制大仓库同步双重备份
+            await localforage.setItem(finalKey, dataObj[key]);
+            
+            if (currentChatId === `default`) {
+                try { ls.setItem(key, dataObj[key]); } catch(e){}
+                await localforage.setItem(key, dataObj[key]);
+            }
+
+            // 名字写入内存缓存，确保即时读到
+            if(key === `cMyN`) {
+                if(!window._nameCache) window._nameCache = {};
+                window._nameCache[currentChatId] = dataObj[key];
+            }
+        }
+
 
 
         let checkImg = async (preId, key) => {
