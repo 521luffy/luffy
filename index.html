@@ -1447,6 +1447,12 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
     <span class="header-center" style="color:white;">🎵 我们的歌</span>
     <span class="empty-btn"></span>
   </div>
+  <!-- char selector bar -->
+  <div style="padding:10px 14px 0;flex-shrink:0;">
+    <select id="ourSongsCharSel" onchange="loadOurSongs(this.value)"
+      style="width:100%;padding:9px 14px;border-radius:14px;border:1.5px solid rgba(162,155,254,.35);background:white;color:#4a3f6b;font-size:14px;outline:none;box-shadow:0 2px 10px rgba(108,92,231,.1);appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='8'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%23a29bfe' stroke-width='2' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;cursor:pointer;">
+    </select>
+  </div>
   <div id="ourSongsBody" style="flex:1;overflow-y:auto;padding:12px 14px 40px;"></div>
 </div>
 
@@ -1488,7 +1494,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
     background:linear-gradient(135deg,#f0ecff,#e8e4ff);border:1px solid rgba(162,155,254,.3);
     box-shadow:0 2px 8px rgba(162,155,254,.12);display:flex;align-items:center;padding:0 14px;">
     <div style="flex:1;overflow:hidden;position:relative;">
-      <span id="wkLcdTxt" style="font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:1.5px;color:#6c5ce7;white-space:nowrap;display:inline-block;animation:wkLcdScroll 18s linear infinite;">── READY · 点击 ＋♫ 添加歌曲 · ADD A TRACK ──</span>
+      <span id="wkLcdTxt" style="font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:1.5px;color:#6c5ce7;white-space:nowrap;display:inline-block;animation:wkLcdScroll 18s linear infinite;text-shadow:0 0 8px rgba(108,92,231,.7),0 0 18px rgba(162,155,254,.5),0 0 2px rgba(108,92,231,1);">── READY · 点击 ＋♫ 添加歌曲 · ADD A TRACK ──</span>
     </div>
     <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#a29bfe;margin-left:8px;flex-shrink:0;animation:wkBreath 1.9s ease-in-out infinite;">REC●</div>
   </div>
@@ -1552,26 +1558,25 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
     <!-- chat panel -->
     <div id="wkCP" style="flex:1;display:none;flex-direction:column;overflow:hidden;">
       <div id="wkCMsgs" style="flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:7px;scrollbar-width:thin;scrollbar-color:#e0dcff transparent;"></div>
-      <div style="display:flex;gap:6px;padding:7px 10px;border-top:1px solid rgba(162,155,254,.1);flex-shrink:0;align-items:flex-end;">
-        <textarea id="wkCI" rows=1 placeholder="说点什么…" maxlength=300
-          style="flex:1;background:#f8f6ff;border:1px solid rgba(162,155,254,.3);border-radius:16px;padding:7px 13px;font-size:14px;color:#4a3f6b;outline:none;font-family:'Caveat',cursive;caret-color:#6c5ce7;resize:none;overflow-y:hidden;min-height:34px;max-height:88px;box-sizing:border-box;line-height:1.45;height:34px;"
-          oninput="this.style.height='34px';if(this.scrollHeight>38)this.style.height=Math.min(this.scrollHeight,88)+'px';"
-          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();wkSend();}"></textarea>
+      <div id="wkInputBar" style="display:flex;gap:6px;padding:7px 10px;border-top:1px solid rgba(162,155,254,.1);flex-shrink:0;align-items:center;background:white;">
+        <input id="wkCI" type="text" placeholder="说点什么…" maxlength=200 autocomplete="off"
+          style="flex:1;background:#f8f6ff;border:1px solid rgba(162,155,254,.3);border-radius:16px;padding:8px 14px;font-size:14px;color:#4a3f6b;outline:none;font-family:'Caveat',cursive;caret-color:#6c5ce7;box-sizing:border-box;height:36px;"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();wkSend();}">
         <div id="wkBtnAI" title="让对方回应"
-          style="width:34px;height:34px;border-radius:50%;flex-shrink:0;cursor:pointer;background:#f0ecff;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 8px rgba(108,92,231,.18);transition:transform .12s;"
+          style="width:36px;height:36px;border-radius:50%;flex-shrink:0;cursor:pointer;background:#f0ecff;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 8px rgba(108,92,231,.18);"
           onclick="wkAIReply()">🐾</div>
-        <button onclick="wkSend()" style="padding:8px 14px;border-radius:16px;border:none;cursor:pointer;flex-shrink:0;background:linear-gradient(135deg,#6c5ce7,#a29bfe);color:white;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:1px;box-shadow:0 3px 8px rgba(108,92,231,.28);">SEND</button>
+        <button onclick="wkSend()" style="padding:8px 14px;border-radius:16px;border:none;cursor:pointer;flex-shrink:0;background:linear-gradient(135deg,#6c5ce7,#a29bfe);color:white;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:1px;box-shadow:0 3px 8px rgba(108,92,231,.28);height:36px;white-space:nowrap;">SEND</button>
       </div>
     </div>
   </div>
 
-  <!-- sticky note (mini) -->
-  <div id="wkSticky" style="position:absolute;bottom:70px;right:10px;z-index:8;display:none;
-    width:50px;padding:5px 4px 7px;border-radius:8px;
-    --wr:4deg;transform:rotate(var(--wr));
+  <!-- sticky note (mini) - moved to top-right inside chat area, no longer blocking send -->
+  <div id="wkSticky" style="position:absolute;top:52%;right:10px;z-index:8;display:none;
+    width:52px;padding:5px 4px 7px;border-radius:8px;
+    --wr:5deg;transform:rotate(var(--wr));
     background:linear-gradient(135deg,#fff0f6,#ffe4f0);
     border:1px solid rgba(253,121,168,.22);box-shadow:2px 4px 12px rgba(253,121,168,.18);
-    animation:wkStickyWag 5.5s ease-in-out infinite;">
+    animation:wkStickyWag 5.5s ease-in-out infinite;pointer-events:none;">
     <div style="font-family:'Caveat',cursive;font-size:9px;color:#c0567a;line-height:1.4;text-align:center;font-weight:700;">💌<br><span id="wkStickyTxt">悄悄喜欢</span></div>
   </div>
 
@@ -1656,7 +1661,7 @@ const wkLoadDB=async()=>{
 
 const el=id=>document.getElementById(id);
 const fmt=s=>{s=isFinite(s)&&s>=0?s:0;return Math.floor(s/60)+':'+(s=Math.floor(s%60),s<10?'0':'')+s;};
-const setLcd=txt=>{let e=el('wkLcdTxt');if(!e)return;e.style.animation='none';e.offsetHeight;e.innerText=txt;e.style.animation='wkLcdScroll 18s linear infinite';};
+const setLcd=txt=>{let e=el('wkLcdTxt');if(!e)return;e.style.animation='none';e.offsetHeight;e.innerText=txt;e.style.animation='wkLcdScroll 18s linear infinite';e.style.textShadow='0 0 8px rgba(108,92,231,.7),0 0 18px rgba(162,155,254,.5),0 0 2px rgba(108,92,231,1)';};
 const setCnt=v=>{let s=String(Math.min(999,Math.floor(v))).padStart(3,'0');['wkC0','wkC1','wkC2'].forEach((id,i)=>{let e=el(id);if(!e||e.innerText===s[i])return;e.style.animation='none';e.offsetHeight;e.style.animation='wkCntFlick .12s ease';e.innerText=s[i];});};
 
 function wkTick(){
@@ -1794,11 +1799,19 @@ window.wkToggleLike=function(){
   let btn=el('wkBtnLike');if(btn){btn.innerText=WK.songs[WK.cur].liked?'♥':'♡';btn.style.color=WK.songs[WK.cur].liked?'#fd79a8':'#c0b8e0';}
   wkSave();
 };
-window.wkToggleLikeByIdx=function(idx){
-  if(!WK.songs[idx])return;
-  WK.songs[idx].liked=!WK.songs[idx].liked;
-  if(WK.cur===idx){let btn=el('wkBtnLike');if(btn){btn.innerText=WK.songs[idx].liked?'♥':'♡';btn.style.color=WK.songs[idx].liked?'#fd79a8':'#c0b8e0';}}
-  wkSave();if(typeof loadOurSongs==='function')loadOurSongs();
+window.wkToggleLikeByIdx=function(idx,cid){
+  cid=cid||document.getElementById('ourSongsCharSel')?.value||WK.charId||'default';
+  // if currently playing char
+  if(window._WK&&window._WK.charId===cid){
+    if(!WK.songs[idx])return;
+    WK.songs[idx].liked=!WK.songs[idx].liked;
+    if(WK.cur===idx){let btn=el('wkBtnLike');if(btn){btn.innerText=WK.songs[idx].liked?'♥':'♡';btn.style.color=WK.songs[idx].liked?'#fd79a8':'#c0b8e0';}}
+    wkSave();
+  } else {
+    let sk='wk_songs_v5_'+cid;
+    localforage.getItem(sk).then(s=>{let songs=Array.isArray(s)?s:[];if(songs[idx])songs[idx].liked=!songs[idx].liked;return localforage.setItem(sk,songs);}).catch(()=>{});
+  }
+  if(typeof loadOurSongs==='function')loadOurSongs(cid);
 };
 window.wkEject=function(){
   if(WK.audio){WK.audio.pause();WK.playing=false;}
@@ -1891,11 +1904,23 @@ window.wkRegenMsg=function(idx){
   wkSaveC();wkRenderChat();wkCloseMenu();
   setTimeout(()=>window.wkAIReply(),50);
 };
-window.wkMoveSong=function(idx,dir){
-  let ni=idx+dir;if(ni<0||ni>=WK.songs.length)return;
-  [WK.songs[idx],WK.songs[ni]]=[WK.songs[ni],WK.songs[idx]];
-  if(WK.cur===idx)WK.cur=ni;else if(WK.cur===ni)WK.cur=idx;
-  wkSave();if(typeof loadOurSongs==='function')loadOurSongs();
+window.wkMoveSong=function(idx,dir,cid){
+  cid=cid||document.getElementById('ourSongsCharSel')?.value||WK.charId||'default';
+  if(window._WK&&window._WK.charId===cid){
+    let ni=idx+dir;if(ni<0||ni>=WK.songs.length)return;
+    [WK.songs[idx],WK.songs[ni]]=[WK.songs[ni],WK.songs[idx]];
+    if(WK.cur===idx)WK.cur=ni;else if(WK.cur===ni)WK.cur=idx;
+    wkSave();
+  } else {
+    let sk='wk_songs_v5_'+cid;
+    localforage.getItem(sk).then(s=>{
+      let songs=Array.isArray(s)?s:[];
+      let ni=idx+dir;if(ni<0||ni>=songs.length)return;
+      [songs[idx],songs[ni]]=[songs[ni],songs[idx]];
+      return localforage.setItem(sk,songs);
+    }).catch(()=>{});
+  }
+  if(typeof loadOurSongs==='function')loadOurSongs(cid);
 };
 
 // ── send message ──
@@ -1903,7 +1928,7 @@ window.wkSend=function(){
   let inp=el('wkCI');if(!inp)return;
   let txt=(inp.value||'').trim();if(!txt)return;
   WK.chats.push({text:txt,isMe:true,ts:Date.now(),songIdx:WK.cur});
-  wkSaveC();wkRenderChat();inp.value='';inp.style.height='34px';
+  wkSaveC();wkRenderChat();inp.value='';
   wkMaybeCycleNote();
 };
 
@@ -2050,6 +2075,19 @@ window.wkOpen=async function(){
     let btn=el('wkBtnLike');if(btn){btn.innerText=WK.songs[WK.cur].liked?'♥':'♡';btn.style.color=WK.songs[WK.cur].liked?'#fd79a8':'#c0b8e0';}
   }
   let bp=el('wkBPlay');if(bp)bp.innerText=WK.playing?'⏸':'▶';
+  // keyboard-aware: scroll msgs into view when keyboard appears
+  if(window.visualViewport&&!window._wkVpHandler){
+    window._wkVpHandler=()=>{
+      let cp=el('wkCP');if(!cp||cp.style.display==='none')return;
+      let bar=el('wkInputBar');if(!bar)return;
+      let vvh=window.visualViewport.height;
+      let shell=el('wkShell');
+      if(shell)shell.style.height=vvh+'px';
+      let msgs=el('wkCMsgs');if(msgs)setTimeout(()=>{msgs.scrollTop=msgs.scrollHeight;},80);
+    };
+    window.visualViewport.addEventListener('resize',window._wkVpHandler);
+    window.visualViewport.addEventListener('scroll',window._wkVpHandler);
+  }
   // show sticky if has content
   let stk=el('wkSticky');
   if(stk)stk.style.display=(WK.playing||WK.chats.length>0)?'block':'none';
@@ -2064,14 +2102,34 @@ window._WK=WK;
 
 <script>
 // ════════════════════════════════════════════
-// ★ 我们的歌 (loadOurSongs)
+// ★ 我们的歌 (loadOurSongs) - multi-char
 // ════════════════════════════════════════════
-async function loadOurSongs(){
-  // ensure WK data is loaded
-  if(window._WK&&!window._WK.songs.length){
-    try{let s=await localforage.getItem(window._WK.SK);if(Array.isArray(s))window._WK.songs=s;}catch(e){}
+async function loadOurSongs(charId){
+  // populate char selector
+  let sel=document.getElementById('ourSongsCharSel');
+  if(sel){
+    let allC=[{id:'default',name:originalGetItem.call(localStorage,'cN_default')||originalGetItem.call(localStorage,'cN')||'专属恋人'}];
+    let rawC=null;try{rawC=await localforage.getItem('myContacts');}catch(e){}
+    if(!rawC){let r=originalGetItem.call(localStorage,'myContacts');if(r)rawC=r;}
+    let contacts=rawC?(typeof rawC==='string'?JSON.parse(rawC):rawC):[];
+    contacts.forEach(c2=>{allC.push({id:c2.id,name:originalGetItem.call(localStorage,'cN_'+c2.id)||c2.name});});
+    // rebuild options only if changed
+    if(sel.options.length!==allC.length){
+      sel.innerHTML=allC.map(x=>`<option value="${x.id}">${x.name}</option>`).join('');
+    }
+    if(charId===undefined){charId=sel.value||'default';}
+    sel.value=charId;
   }
-  let songs=window._WK?window._WK.songs:[];
+  let cid=charId||'default';
+  let sk='wk_songs_v5_'+cid;
+  let songs=[];
+  // if currently loaded char matches, use in-memory
+  if(window._WK&&window._WK.charId===cid){
+    if(!window._WK.songs.length){try{let s=await localforage.getItem(window._WK.SK);if(Array.isArray(s))window._WK.songs=s;}catch(e){}}
+    songs=window._WK.songs;
+  } else {
+    try{let s=await localforage.getItem(sk);if(Array.isArray(s))songs=s;}catch(e){}
+  }
   let body=document.getElementById('ourSongsBody');
   if(!body)return;
   if(!songs.length){
@@ -2095,7 +2153,7 @@ async function loadOurSongs(){
         favMsgs.map((m,mi)=>`
           <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px;">
             <div style="flex:1;padding:8px 12px;background:${m.isMe?'linear-gradient(135deg,#ede4ff,#dfd5f8)':'white'};border-radius:12px;font-size:14px;color:${m.isMe?'#5040a0':'#2d2040'};line-height:1.5;word-break:break-word;box-shadow:0 1px 6px rgba(108,92,231,.1);">${(m.text||'').replace(/</g,'&lt;')}</div>
-            <button onclick="event.stopPropagation();wkDelFavMsg(${origIdx},${mi})" style="padding:4px 7px;border-radius:8px;border:none;cursor:pointer;background:#f5f0ff;color:#c8aae0;font-size:13px;flex-shrink:0;margin-top:3px;">✕</button>
+            <button onclick="event.stopPropagation();wkDelFavMsg(${origIdx},${mi},document.getElementById('ourSongsCharSel')?.value)" style="padding:4px 7px;border-radius:8px;border:none;cursor:pointer;background:#f5f0ff;color:#c8aae0;font-size:13px;flex-shrink:0;margin-top:3px;">✕</button>
           </div>`).join('')+
       '</div>':
       '<div style="padding:10px 14px 12px;background:#faf8ff;font-size:13px;color:#c0b8d8;text-align:center;">长按听歌聊天中的消息来收藏 ★</div>';
@@ -2114,10 +2172,10 @@ async function loadOurSongs(){
           </div>
         </div>
         <div style="display:flex;gap:4px;flex-shrink:0;align-items:center;">
-          <button onclick="event.stopPropagation();wkToggleLikeByIdx(${origIdx})" style="background:none;border:none;cursor:pointer;font-size:24px;color:${liked?'#ff4088':'#d0c0d8'};line-height:1;padding:4px;">${liked?'♥':'♡'}</button>
-          <button onclick="event.stopPropagation();wkMoveSong(${origIdx},-1)" style="background:#f0eeff;border:none;cursor:pointer;border-radius:6px;width:26px;height:26px;color:#a090c0;font-size:14px;display:flex;align-items:center;justify-content:center;">↑</button>
-          <button onclick="event.stopPropagation();wkMoveSong(${origIdx},1)" style="background:#f0eeff;border:none;cursor:pointer;border-radius:6px;width:26px;height:26px;color:#a090c0;font-size:14px;display:flex;align-items:center;justify-content:center;">↓</button>
-          <button onclick="event.stopPropagation();if(confirm('删除「${(s.name||'').replace(/'/g,'\\\'').replace(/</g,'&lt;')}」的记录？'))wkDelSongRecord(${origIdx})" style="background:#fff0f0;border:none;cursor:pointer;border-radius:6px;width:26px;height:26px;color:#e08080;font-size:13px;display:flex;align-items:center;justify-content:center;">🗑</button>
+          <button onclick="event.stopPropagation();wkToggleLikeByIdx(${origIdx},document.getElementById('ourSongsCharSel')?.value)" style="background:none;border:none;cursor:pointer;font-size:24px;color:${liked?'#ff4088':'#d0c0d8'};line-height:1;padding:4px;">${liked?'♥':'♡'}</button>
+          <button onclick="event.stopPropagation();wkMoveSong(${origIdx},-1,document.getElementById('ourSongsCharSel')?.value)" style="background:#f0eeff;border:none;cursor:pointer;border-radius:6px;width:26px;height:26px;color:#a090c0;font-size:14px;display:flex;align-items:center;justify-content:center;">↑</button>
+          <button onclick="event.stopPropagation();wkMoveSong(${origIdx},1,document.getElementById('ourSongsCharSel')?.value)" style="background:#f0eeff;border:none;cursor:pointer;border-radius:6px;width:26px;height:26px;color:#a090c0;font-size:14px;display:flex;align-items:center;justify-content:center;">↓</button>
+          <button onclick="event.stopPropagation();if(confirm('删除「${(s.name||'').replace(/'/g,'\\\'').replace(/</g,'&lt;')}」的记录？'))wkDelSongRecord(${origIdx},document.getElementById('ourSongsCharSel')?.value)" style="background:#fff0f0;border:none;cursor:pointer;border-radius:6px;width:26px;height:26px;color:#e08080;font-size:13px;display:flex;align-items:center;justify-content:center;">🗑</button>
         </div>
       </div>
       <div class="os-expand" style="display:none;">${favHtml}</div>`;
@@ -2125,19 +2183,29 @@ async function loadOurSongs(){
   });
 }
 
-window.wkDelFavMsg=function(songIdx,msgIdx){
-  let songs=window._WK?window._WK.songs:[];
-  if(!songs[songIdx]||!songs[songIdx].favMsgs)return;
-  songs[songIdx].favMsgs.splice(msgIdx,1);
-  if(window._WK)localforage.setItem(window._WK.SK,songs).catch(()=>{});
-  loadOurSongs();
+window.wkDelFavMsg=function(songIdx,msgIdx,cid){
+  cid=cid||document.getElementById('ourSongsCharSel')?.value||'default';
+  let sk='wk_songs_v5_'+cid;
+  let songs=[];
+  if(window._WK&&window._WK.charId===cid)songs=window._WK.songs;
+  localforage.getItem(sk).then(s=>{
+    if(Array.isArray(s))songs=s;
+    if(!songs[songIdx]||!songs[songIdx].favMsgs)return;
+    songs[songIdx].favMsgs.splice(msgIdx,1);
+    if(window._WK&&window._WK.charId===cid)window._WK.songs=songs;
+    return localforage.setItem(sk,songs);
+  }).then(()=>loadOurSongs(cid)).catch(()=>loadOurSongs(cid));
 };
 
-window.wkDelSongRecord=function(idx){
-  let songs=window._WK?window._WK.songs:[];
-  songs.splice(idx,1);
-  if(window._WK){window._WK.cur=Math.min(window._WK.cur,songs.length-1);localforage.setItem(window._WK.SK,songs).catch(()=>{});}
-  loadOurSongs();
+window.wkDelSongRecord=function(idx,cid){
+  cid=cid||document.getElementById('ourSongsCharSel')?.value||'default';
+  let sk='wk_songs_v5_'+cid;
+  localforage.getItem(sk).then(s=>{
+    let songs=Array.isArray(s)?s:[];
+    songs.splice(idx,1);
+    if(window._WK&&window._WK.charId===cid){window._WK.songs=songs;window._WK.cur=Math.min(window._WK.cur,songs.length-1);}
+    return localforage.setItem(sk,songs);
+  }).then(()=>loadOurSongs(cid)).catch(()=>loadOurSongs(cid));
 };
 </script>
  -->
@@ -9292,7 +9360,7 @@ if($(`btnFavBack`)) {
 }
 if($(`btnGoOurSongs`)) {
     $(`btnGoOurSongs`).onclick = async () => {
-        await loadOurSongs();
+        await loadOurSongs(typeof currentChatId!=='undefined'?currentChatId:'default');
         showScreen(`scrOurSongs`);
     };
 }
