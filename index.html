@@ -141,7 +141,7 @@ z-index: 100; overflow: hidden; }
 .quote-txt { margin-right: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .quote-close { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; font-weight: bold; font-size: 16px; }
 .chat-input { box-sizing: border-box; width: 100%; background-color: rgba(255,255,255,0.95); padding: 8px 10px 25px 10px; display: flex; gap: 6px; align-items: flex-end; flex-shrink: 0; border-top: 1px solid #eeeeee; }
-.msg-input { flex: 1; min-width: 0; border: none; background-color: #f0f2f5; padding: 8px 12px; border-radius: 20px; font-size: 14px; outline: none; font-family: inherit; line-height: 1.4; min-height: 34px; max-height: 120px; resize: none; overflow: hidden; display: block; }
+.msg-input { flex: 1; min-width: 0; border: none; background-color: #f0f2f5; padding: 7px 12px; border-radius: 18px; font-size: 14px; outline: none; font-family: inherit; line-height: 1.45; height: 34px; min-height: 34px; max-height: 120px; resize: none; overflow-y: hidden; display: block; box-sizing: border-box; }
 .tool-svg { width: 28px; height: 28px; display: flex; justify-content: center; align-items: center; cursor: pointer; flex-shrink: 0; transition: 0.2s; }
 .tool-svg svg { width: 24px; height: 24px; stroke-linecap: round; stroke-linejoin: round; }
 .tool-svg:active { transform: scale(0.9); }
@@ -595,7 +595,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
                 <div class=chat-input>
             <div id=btnOpenSticker class=tool-svg><svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg></div>
             <div id=btnMic class=tool-svg><svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg></div>
-                                    <textarea id=iptMsg class=msg-input placeholder=输入消息... autocomplete=off rows=1 style="resize:none;overflow:hidden;line-height:1.4;min-height:34px;max-height:120px;"></textarea>
+                                    <textarea id=iptMsg class=msg-input placeholder=输入消息... autocomplete=off rows=1></textarea>
 
 
             <div id=btnLemon class=tool-svg><svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5.172C10 3.782 8.423 2.679 6.5 3c-2.823.47-4.113 6.006-4 7 .08.703 1.725 1.722 3.656 1 1.261-.467 1.95-1.9 3.844-2.5"></path><path d="M14 5.172C14 3.782 15.577 2.679 17.5 3c2.823.47 4.113 6.006 4 7-.08.703-1.725 1.722-3.656 1-1.261-.467-1.95-1.9-3.844-2.5"></path><path d="M8 14v1a4 4 0 0 0 8 0v-1"></path><path d="M16 10.5h.01"></path><path d="M8 10.5h.01"></path></svg></div>
@@ -697,9 +697,9 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
                     <div class=menu-icon-text>分享链接</div>
                 </div>
 
-                <div id=btnTogetherMusic class=menu-icon-btn onclick="wkOpen()">
-                    <div class=menu-icon-svg style="background:linear-gradient(135deg,#1a0a2e,#3d1a6e);">
-                        <svg width=20 height=20 viewBox="0 0 24 24" fill=none stroke=#c8a0f8 stroke-width=2 stroke-linecap=round stroke-linejoin=round><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                <div id=btnTogetherMusic class=menu-icon-btn onclick="if(typeof wkOpen==='function')wkOpen()">
+                    <div class=menu-icon-svg style="background:linear-gradient(135deg,#12082a,#2e1060);">
+                        <svg width=20 height=20 viewBox="0 0 24 24" fill=none stroke=#b090f8 stroke-width=2 stroke-linecap=round stroke-linejoin=round><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
                     </div>
                     <div class=menu-icon-text>一起听歌</div>
                 </div>
@@ -1431,433 +1431,547 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 </div>
 
 
-<!-- ═══════════════════════════════════════════════════
-     一起听歌 · 复古随身听（Skeuomorphic Walkman）
-     ═══════════════════════════════════════════════════ -->
-<div id="scrWalkman" style="display:none;position:fixed;inset:0;z-index:9980;overflow:hidden;">
+<!-- ═══════════════════════════════════════════════
+     一起听歌 · 复古随身听 Skeuomorphic v3
+     ═══════════════════════════════════════════════ -->
+<div id="scrWalkman" style="display:none;position:fixed;inset:0;z-index:9980;overflow:hidden;flex-direction:column;">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Share+Tech+Mono&display=swap');
+@keyframes wkBreath    {0%,100%{opacity:.6}50%{opacity:1}}
+@keyframes wkLcdScroll {0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
+@keyframes wkLyricUp   {0%{opacity:0;transform:translateY(12px)}16%{opacity:1;transform:translateY(0)}80%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-12px)}}
+@keyframes wkStickyWag {0%,100%{transform:rotate(var(--wr,3.5deg)) translateY(0)}50%{transform:rotate(var(--wr,3.5deg)) translateY(-2px)}}
+@keyframes wkGlowPulse {0%,100%{opacity:.09;left:-20%;top:-30%}50%{opacity:.17;left:-16%;top:-26%}}
+@keyframes wkCntFlick  {0%,100%{opacity:1}30%{opacity:.08}}
+@keyframes wkScratch   {0%,100%{opacity:.07}50%{opacity:.18}}
 
-/* ── 动画 ── */
-@keyframes wkBreath     { 0%,100%{opacity:.65} 50%{opacity:1} }
-@keyframes wkLcdScroll  { 0%{transform:translateX(100%)} 100%{transform:translateX(-100%)} }
-@keyframes wkGyro       { 0%,100%{opacity:.10;top:-25%} 50%{opacity:.18;top:-20%} }
-@keyframes wkLyricUp    { 0%{opacity:0;transform:translateY(14px)} 18%{opacity:1;transform:translateY(0)} 78%{opacity:1;transform:translateY(0)} 100%{opacity:0;transform:translateY(-14px)} }
-@keyframes wkNoteWag    { 0%,100%{transform:rotate(3deg)} 50%{transform:rotate(5deg)} }
-@keyframes wkBtnPop     { 0%{transform:translateY(0)} 35%{transform:translateY(4px)} 70%{transform:translateY(-1px)} 100%{transform:translateY(0)} }
-@keyframes wkScratch    { 0%,100%{opacity:.06} 50%{opacity:.14} }
-@keyframes wkCntFlick   { 0%,40%{opacity:1} 20%{opacity:.2} 100%{opacity:1} }
-
-/* ── 机械按键 ── */
+/* ── 按键槽（按键安在坑里）── */
+.wk-slot {
+  border-radius:13px;
+  background:linear-gradient(155deg,#100c08,#181210,#0e0a06);
+  box-shadow:inset 0 5px 12px rgba(0,0,0,.98),inset 0 0 0 1px rgba(0,0,0,.9),0 1px 0 rgba(255,255,255,.03);
+  padding:4px;display:flex;align-items:center;justify-content:center;
+}
+/* ── 机械凸起按键 ── */
 .wk-key {
-  border:none; cursor:pointer; font-family:'Share Tech Mono',monospace;
-  border-radius:10px; user-select:none; position:relative;
-  display:flex; align-items:center; justify-content:center;
-  /* 塑料外壳漆面 */
-  background: linear-gradient(160deg, #5c544a 0%, #46403a 40%, #38322c 70%, #2e2820 100%);
-  /* 顶面高光 + 底部厚重阴影 = 凸起感 */
+  border:none;cursor:pointer;user-select:none;position:relative;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Share Tech Mono',monospace;border-radius:10px;
+  background:linear-gradient(158deg,#605848 0%,#484038 42%,#382e26 78%,#2c221a 100%);
+  /* 底部实体厚度 + 侧面明暗交界 */
   box-shadow:
-    /* 底部厚度 */
-    0 6px 0 #18120c,
-    0 8px 14px rgba(0,0,0,.65),
-    /* 顶面高光（左上光源） */
-    inset 0 2px 0 rgba(255,255,255,.22),
-    inset 2px 0 0 rgba(255,255,255,.10),
-    /* 底面暗影 */
-    inset 0 -3px 0 rgba(0,0,0,.50),
-    inset -2px 0 0 rgba(0,0,0,.25);
-  border:1px solid #1a140e;
-  transition: box-shadow .06s, transform .06s, background .06s;
-  color:#c8c0b0;
+    0 5px 0 #110e08,0 7px 14px rgba(0,0,0,.7),
+    inset 0 2px 0 rgba(255,255,255,.24),inset 2px 0 0 rgba(255,255,255,.10),
+    inset 0 -3px 0 rgba(0,0,0,.56),inset -2px 0 0 rgba(0,0,0,.28);
+  border-top:1px solid rgba(255,255,255,.08);border-left:1px solid rgba(255,255,255,.05);
+  border-right:1px solid rgba(0,0,0,.5);border-bottom:2px solid #0a0804;
+  color:#c8baa8;transition:box-shadow .06s,transform .06s,background .06s;will-change:transform;
 }
 .wk-key:active {
-  transform: translateY(5px) !important;
-  box-shadow:
-    0 1px 0 #18120c,
-    0 2px 6px rgba(0,0,0,.5),
-    inset 0 4px 10px rgba(0,0,0,.7),
-    inset 0 1px 0 rgba(0,0,0,.4) !important;
-  background: linear-gradient(160deg, #2e2820 0%, #38322c 60%, #46403a 100%) !important;
-  animation: wkBtnPop .25s ease-out;
+  transform:translateY(5px)!important;
+  box-shadow:0 0 0 #110e08,0 2px 6px rgba(0,0,0,.6),inset 0 6px 14px rgba(0,0,0,.85),inset 0 1px 0 rgba(0,0,0,.5)!important;
+  background:linear-gradient(158deg,#2c221a,#382e26,#484038)!important;
+  border-top-color:rgba(0,0,0,.3)!important;
 }
-/* 播放键 · 金色特化 */
-.wk-key-play {
-  background: linear-gradient(160deg, #6a4c1c 0%, #543c14 40%, #40280c 70%, #301c06 100%);
-  box-shadow:
-    0 6px 0 #140c00,
-    0 8px 14px rgba(0,0,0,.65),
-    inset 0 2px 0 rgba(255,210,80,.28),
-    inset 2px 0 0 rgba(255,200,60,.12),
-    inset 0 -3px 0 rgba(0,0,0,.55),
-    inset -2px 0 0 rgba(0,0,0,.30);
-  color:#e8b820;
-  text-shadow: 0 0 8px rgba(240,180,30,.6);
+/* 播放键·铜金 */
+.wk-gold {
+  background:linear-gradient(158deg,#7c5820 0%,#5c3e10 42%,#422c08 78%,#301e04 100%);
+  box-shadow:0 5px 0 #160c00,0 7px 14px rgba(0,0,0,.7),inset 0 2px 0 rgba(255,215,80,.30),inset 2px 0 0 rgba(255,200,60,.12),inset 0 -3px 0 rgba(0,0,0,.60),inset -2px 0 0 rgba(0,0,0,.35);
+  color:#f0c030;text-shadow:0 0 10px rgba(240,185,30,.7);
 }
-.wk-key-play.wk-playing {
-  transform: translateY(4px) !important;
-  box-shadow:
-    0 2px 0 #140c00,
-    0 3px 8px rgba(0,0,0,.5),
-    inset 0 5px 12px rgba(0,0,0,.75),
-    inset 0 0 16px rgba(240,160,30,.12) !important;
-  background: linear-gradient(160deg, #301c06 0%, #40280c 60%, #543c14 100%) !important;
+.wk-gold:active{background:linear-gradient(158deg,#301e04,#422c08,#5c3e10)!important;}
+.wk-gold.wk-playing{transform:translateY(4px);box-shadow:0 1px 0 #160c00,0 2px 6px rgba(0,0,0,.55),inset 0 4px 12px rgba(0,0,0,.85),inset 0 0 16px rgba(240,160,20,.08)!important;}
+/* 出仓键·蓝钢 */
+.wk-blue {
+  background:linear-gradient(158deg,#1e2c3e,#162030,#0e1828);
+  box-shadow:0 5px 0 #060e18,0 7px 14px rgba(0,0,0,.7),inset 0 2px 0 rgba(120,190,255,.20),inset 0 -3px 0 rgba(0,0,0,.55);
+  color:#78b4e0;
 }
-/* 出仓键 · 蓝色特化 */
-.wk-key-eject {
-  background: linear-gradient(160deg, #1c2a3c 0%, #14202e 60%, #0e1822 100%);
-  box-shadow:
-    0 5px 0 #06101a,
-    0 7px 12px rgba(0,0,0,.65),
-    inset 0 2px 0 rgba(120,180,255,.18),
-    inset 0 -3px 0 rgba(0,0,0,.5);
-  color:#80b8e8;
-}
+.wk-blue:active{background:linear-gradient(158deg,#0e1828,#162030,#1e2c3e)!important;}
 </style>
 
-<!-- ── 随身听主体外壳 ── -->
-<div id="wkShell" style="
-  width:100%; height:100%; position:relative; overflow:hidden; display:flex; flex-direction:column;
-  /* 外壳主材质：深灰哑光 + 左上角光源渐变 */
-  background:
-    radial-gradient(ellipse 90% 50% at 15% 10%, rgba(255,240,190,.08) 0%, transparent 60%),
-    linear-gradient(165deg, #32291e 0%, #271f16 25%, #1e1810 55%, #181208 100%);
-  /* 外壳厚重轮廓阴影 */
-  box-shadow: inset 0 0 100px rgba(0,0,0,.55), inset 0 0 0 2px rgba(255,255,255,.04);
-">
+<div id="wkShell" style="width:100%;height:100%;position:relative;overflow:hidden;display:flex;flex-direction:column;
+  background:radial-gradient(ellipse 78% 44% at 14% 7%,rgba(255,248,200,.09) 0%,transparent 55%),linear-gradient(168deg,#302618 0%,#221a10 22%,#1a140a 50%,#121008 100%);
+  box-shadow:inset 0 0 120px rgba(0,0,0,.6),inset 0 0 0 2px rgba(255,255,255,.03);">
 
-  <!-- 磨砂颗粒感纹理叠层 -->
-  <div style="position:absolute;inset:0;z-index:1;pointer-events:none;background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%228%22 height=%228%22><rect width=%228%22 height=%228%22 fill=%22none%22/><circle cx=%221.5%22 cy=%221.5%22 r=%220.7%22 fill=%22rgba(255,255,255,0.022)%22/><circle cx=%225%22 cy=%224%22 r=%220.5%22 fill=%22rgba(0,0,0,0.038)%22/><circle cx=%222%22 cy=%226%22 r=%220.6%22 fill=%22rgba(255,255,255,0.016)%22/><circle cx=%226.5%22 cy=%221%22 r=%220.4%22 fill=%22rgba(0,0,0,0.03)%22/></svg>');"></div>
+  <!-- 磨砂工程塑料颗粒 -->
+  <div style="position:absolute;inset:0;z-index:1;pointer-events:none;background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2210%22 height=%2210%22><circle cx=%221.5%22 cy=%221.8%22 r=%220.8%22 fill=%22rgba(255,255,255,0.018)%22/><circle cx=%225.5%22 cy=%224.2%22 r=%220.6%22 fill=%22rgba(0,0,0,0.04)%22/><circle cx=%228.5%22 cy=%227.5%22 r=%220.7%22 fill=%22rgba(255,255,255,0.014)%22/><circle cx=%223%22 cy=%228%22 r=%220.5%22 fill=%22rgba(0,0,0,0.032)%22/><circle cx=%227%22 cy=%221.5%22 r=%220.4%22 fill=%22rgba(255,255,255,0.02)%22/></svg>');"></div>
 
-  <!-- 左上角主光源高光 -->
-  <div id="wkGlow" style="position:absolute;top:-30%;left:-20%;width:70%;height:60%;
-    background:radial-gradient(ellipse,rgba(255,248,210,.13) 0%,transparent 65%);
-    transform:rotate(-12deg);z-index:2;pointer-events:none;
-    animation:wkGyro 6s ease-in-out infinite;"></div>
+  <!-- 左上光源 -->
+  <div id="wkGlow" style="position:absolute;z-index:2;pointer-events:none;width:65%;height:55%;border-radius:50%;
+    background:radial-gradient(ellipse,rgba(255,250,210,.12) 0%,transparent 65%);
+    transform:rotate(-14deg);animation:wkGlowPulse 7s ease-in-out infinite;"></div>
 
-  <!-- 拟真划痕 -->
-  <div style="position:absolute;top:14%;right:10%;width:60px;height:1px;z-index:3;pointer-events:none;
-    background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.13) 30%,rgba(255,255,255,.18) 50%,rgba(255,255,255,.10) 70%,transparent 100%);
-    transform:rotate(6deg);animation:wkScratch 8s ease-in-out infinite;"></div>
-  <div style="position:absolute;top:15.8%;right:10.5%;width:36px;height:1px;z-index:3;pointer-events:none;
-    background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent);
-    transform:rotate(6deg);"></div>
+  <!-- 岁月划痕 -->
+  <div style="position:absolute;top:15.5%;right:8%;width:72px;height:1px;z-index:3;pointer-events:none;transform:rotate(5.5deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.15) 25%,rgba(255,255,255,.22) 55%,rgba(255,255,255,.10) 75%,transparent);animation:wkScratch 9s ease-in-out infinite;"></div>
+  <div style="position:absolute;top:17.2%;right:8.5%;width:46px;height:1px;z-index:3;pointer-events:none;transform:rotate(5.5deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent);"></div>
+  <div style="position:absolute;bottom:23%;left:6%;width:34px;height:1px;z-index:3;pointer-events:none;transform:rotate(-3deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.07),transparent);animation:wkScratch 12s ease-in-out 3s infinite;"></div>
 
-  <!-- ──────── 顶部区 ──────── -->
+  <!-- ─── 顶栏 ─── -->
   <div style="position:relative;z-index:5;padding:10px 18px 0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
-    <!-- 品牌字 -->
-    <div style="font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:3px;color:#6a5a3a;text-transform:uppercase;">WALKMAN · TYPE-II</div>
-    <!-- 出仓键 -->
-    <button class="wk-key wk-key-eject" onclick="wkEject()" title="退出" style="width:40px;height:28px;font-size:14px;border-radius:7px;">⏏</button>
-  </div>
-
-  <!-- ──────── LCD 液晶屏 ──────── -->
-  <div style="position:relative;z-index:5;margin:8px 18px 0;flex-shrink:0;
-    height:30px;border-radius:5px;overflow:hidden;
-    background:linear-gradient(180deg,#061810 0%,#0a2214 50%,#061810 100%);
-    border:1px solid #122a18;
-    box-shadow:
-      inset 0 2px 10px rgba(0,0,0,.9),
-      inset 0 0 24px rgba(0,60,20,.12),
-      0 1px 0 rgba(255,255,255,.05),
-      0 -1px 0 rgba(0,0,0,.4);
-    display:flex;align-items:center;padding:0 10px;
-  ">
-    <!-- 背光呼吸 -->
-    <div style="position:absolute;inset:0;background:rgba(40,180,60,.025);animation:wkBreath 2.4s ease-in-out infinite;pointer-events:none;"></div>
-    <!-- 扫描线 -->
-    <div style="position:absolute;inset:0;pointer-events:none;
-      background:repeating-linear-gradient(180deg,rgba(0,0,0,.15) 0px,rgba(0,0,0,.15) 1px,transparent 1px,transparent 3px);"></div>
-    <div style="flex:1;overflow:hidden;position:relative;">
-      <span id="wkLcdTxt" style="
-        font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;
-        color:#44dd66;text-shadow:0 0 8px #22aa44,0 0 18px #118822;
-        white-space:nowrap;display:inline-block;
-        animation:wkLcdScroll 16s linear infinite;
-      ">── READY · 添加歌曲开始聆听 · SELECT A TRACK ──</span>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3.5px;color:#6a5830;text-transform:uppercase;">WALKMAN · TYPE-II</div>
+    <div class="wk-slot" style="width:46px;height:32px;">
+      <button class="wk-key wk-blue" onclick="wkEject()" style="width:38px;height:24px;font-size:13px;border-radius:7px;">⏏</button>
     </div>
-    <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#1a5a2a;margin-left:8px;animation:wkBreath 1.8s ease-in-out infinite;flex-shrink:0;">REC●</div>
   </div>
 
-  <!-- ──────── 磁带视窗 ──────── -->
+  <!-- ─── LCD像素液晶屏 ─── -->
+  <div style="position:relative;z-index:5;margin:8px 18px 0;flex-shrink:0;height:30px;border-radius:5px;overflow:hidden;
+    background:linear-gradient(180deg,#041310 0%,#071e10 50%,#041310 100%);
+    border:1px solid #0f2416;
+    box-shadow:inset 0 3px 14px rgba(0,0,0,.98),inset 0 0 30px rgba(0,50,12,.1),0 1px 0 rgba(255,255,255,.04),0 -1px 0 rgba(0,0,0,.6);
+    display:flex;align-items:center;padding:0 10px;">
+    <div style="position:absolute;inset:0;background:rgba(28,155,45,.022);animation:wkBreath 2.5s ease-in-out infinite;pointer-events:none;"></div>
+    <!-- 点阵像素扫描线 -->
+    <div style="position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(180deg,rgba(0,0,0,.24) 0px,rgba(0,0,0,.24) 1px,transparent 1px,transparent 2px);"></div>
+    <div style="position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(90deg,rgba(0,0,0,.07) 0px,rgba(0,0,0,.07) 1px,transparent 1px,transparent 4px);"></div>
+    <div style="flex:1;overflow:hidden;position:relative;">
+      <span id="wkLcdTxt" style="font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;color:#3ad855;text-shadow:0 0 6px #1a9930,0 0 14px #0d6e1c,0 0 26px #083e10;white-space:nowrap;display:inline-block;animation:wkLcdScroll 18s linear infinite;">── READY · 点击 ＋♫ 添加歌曲 · ADD A TRACK ──</span>
+    </div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#145220;margin-left:8px;flex-shrink:0;animation:wkBreath 1.9s ease-in-out infinite;">REC●</div>
+  </div>
+
+  <!-- ─── 磁带视窗 ─── -->
   <div style="position:relative;z-index:5;margin:10px 18px 0;flex-shrink:0;">
+    <!-- 深凹槽外框 -->
+    <div style="border-radius:18px;position:relative;overflow:hidden;
+      background:linear-gradient(150deg,#100c06 0%,#1a1408 50%,#120e06 100%);
+      box-shadow:inset 0 8px 22px rgba(0,0,0,.99),inset 0 0 0 1px rgba(255,255,255,.04),0 2px 0 rgba(255,255,255,.04),0 -1px 0 rgba(0,0,0,.9);
+      padding:14px 16px 12px;">
 
-    <!-- 视窗凹陷外框 -->
-    <div style="
-      border-radius:18px;
-      background:linear-gradient(150deg,#181008 0%,#221a10 60%,#1a1208 100%);
-      box-shadow:
-        inset 0 6px 18px rgba(0,0,0,.95),
-        inset 0 0 0 1px rgba(255,255,255,.05),
-        0 2px 0 rgba(255,255,255,.04),
-        0 -1px 0 rgba(0,0,0,.7);
-      padding:12px 16px 12px;
-      position:relative;overflow:hidden;
-    ">
-
-      <!-- 亚克力透明板反光遮罩 -->
-      <div style="position:absolute;top:0;left:0;right:0;height:42%;border-radius:18px 18px 0 0;
-        background:linear-gradient(180deg,rgba(255,255,255,.07) 0%,rgba(255,255,255,.015) 100%);
-        pointer-events:none;z-index:10;"></div>
-      <div style="position:absolute;top:0;left:0;width:40%;height:100%;border-radius:18px 0 0 18px;
-        background:linear-gradient(90deg,rgba(255,255,255,.03) 0%,transparent 100%);
-        pointer-events:none;z-index:10;"></div>
+      <!-- 亚克力透明盖板 -->
+      <div style="position:absolute;top:0;left:0;right:0;height:45%;border-radius:18px 18px 0 0;pointer-events:none;z-index:10;background:linear-gradient(180deg,rgba(255,255,255,.08) 0%,rgba(255,255,255,.015) 100%);"></div>
+      <div style="position:absolute;top:0;left:0;width:32%;height:100%;border-radius:18px 0 0 18px;pointer-events:none;z-index:10;background:linear-gradient(90deg,rgba(255,255,255,.03),transparent);"></div>
 
       <!-- 歌名手写贴条 -->
-      <div style="
-        background:linear-gradient(110deg,#fffde8 0%,#faf6c0 40%,#fefce0 100%);
-        border-radius:3px;padding:6px 14px;margin-bottom:12px;text-align:center;
-        position:relative;z-index:5;
-        box-shadow:
-          1px 3px 8px rgba(0,0,0,.5),
-          inset 0 1px 0 rgba(255,255,255,.9),
-          0 0 0 1px rgba(200,180,40,.35);
-        overflow:hidden;
-      ">
-        <!-- 贴条纸纹 -->
-        <div style="position:absolute;inset:0;
-          background:repeating-linear-gradient(95deg,transparent 0px,transparent 3px,rgba(200,180,30,.04) 3px,rgba(200,180,30,.04) 4px);
-          pointer-events:none;"></div>
-        <div id="wkSongName" style="
-          font-family:'Caveat',cursive;font-size:18px;font-weight:700;
-          color:#2e2010;letter-spacing:.5px;line-height:1.2;
-          white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-          position:relative;z-index:1;
-        ">— no tape loaded —</div>
-        <div id="wkArtistName" style="font-family:'Caveat',cursive;font-size:12px;color:#6a5020;margin-top:1px;position:relative;z-index:1;"></div>
+      <div style="position:relative;z-index:5;border-radius:3px;padding:6px 14px;margin-bottom:12px;text-align:center;overflow:hidden;
+        background:linear-gradient(108deg,#fffde6 0%,#faf6be 35%,#fefce2 70%,#faf8c6 100%);
+        box-shadow:2px 3px 11px rgba(0,0,0,.56),inset 0 1px 0 rgba(255,255,255,.9),0 0 0 1px rgba(185,165,25,.28);">
+        <!-- 纸纹 -->
+        <div style="position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(92deg,transparent 0px,transparent 4px,rgba(170,148,0,.028) 4px,rgba(170,148,0,.028) 5px);"></div>
+        <!-- 折痕 -->
+        <div style="position:absolute;top:49%;left:0;right:0;height:1px;background:rgba(140,118,0,.07);pointer-events:none;"></div>
+        <div id="wkSongName" style="font-family:'Caveat',cursive;font-size:18px;font-weight:700;color:#271606;letter-spacing:.5px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:relative;z-index:1;">— no tape loaded —</div>
+        <div id="wkArtistName" style="font-family:'Caveat',cursive;font-size:12px;color:#6a4c16;margin-top:1px;position:relative;z-index:1;"></div>
       </div>
 
-      <!-- 磁带轴主体 -->
-      <div style="display:flex;align-items:center;padding:0 4px 6px;position:relative;z-index:5;">
+      <!-- 磁带轴 -->
+      <div style="display:flex;align-items:center;padding:0 4px 8px;position:relative;z-index:5;">
 
-        <!-- ── 左轴 ── -->
-        <div id="wkReelL" style="width:82px;height:82px;flex-shrink:0;border-radius:50%;position:relative;
-          background:radial-gradient(circle at 32% 28%,#6a5228 0%,#3c2e14 40%,#1e1608 80%,#100c04 100%);
-          box-shadow:
-            0 4px 14px rgba(0,0,0,.85),
-            inset 0 2px 6px rgba(255,200,80,.07),
-            inset 0 -4px 8px rgba(0,0,0,.7),
-            inset 2px 0 4px rgba(255,220,100,.04);
-        ">
-          <!-- 轮毂辐条 (SVG) -->
-          <svg style="position:absolute;inset:0;width:100%;height:100%;opacity:.75;" viewBox="0 0 82 82">
-            <g transform="translate(41,41)">
-              <!-- 外环 -->
-              <circle r="39" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1.5"/>
-              <!-- 内环 -->
-              <circle r="22" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
-              <!-- 辐条 x6 -->
-              <line x1="0" y1="-38" x2="0" y2="38" stroke="rgba(255,255,255,0.055)" stroke-width="1.2"/>
-              <line x1="-32.9" y1="-19" x2="32.9" y2="19" stroke="rgba(255,255,255,0.055)" stroke-width="1.2"/>
-              <line x1="32.9" y1="-19" x2="-32.9" y2="19" stroke="rgba(255,255,255,0.055)" stroke-width="1.2"/>
-              <!-- 齿纹圆 -->
-              <circle r="36" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="3" stroke-dasharray="4,3"/>
+        <!-- 左轴 -->
+        <div id="wkReelL" style="width:84px;height:84px;flex-shrink:0;border-radius:50%;position:relative;display:flex;align-items:center;justify-content:center;
+          background:radial-gradient(circle at 30% 25%,#7a5c28 0%,#4a3412 35%,#281c08 65%,#140e04 100%);
+          box-shadow:0 5px 16px rgba(0,0,0,.9),inset 0 2px 8px rgba(255,210,78,.06),inset 0 -5px 10px rgba(0,0,0,.78);">
+          <!-- 磁带卷层 -->
+          <div id="wkTapeL" style="position:absolute;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);width:58px;height:58px;
+            background:radial-gradient(circle at 50%,rgba(255,255,255,.018) 0%,transparent 65%),
+            conic-gradient(#1a1006 0deg,#3a2810 16deg,#221608 32deg,#3a2810 48deg,#1a1006 64deg,#3a2810 80deg,#221608 96deg,#3a2810 112deg,#1a1006 128deg,#3a2810 144deg,#221608 160deg,#3a2810 176deg,#1a1006 192deg,#3a2810 208deg,#221608 224deg,#3a2810 240deg,#1a1006 256deg,#3a2810 272deg,#221608 288deg,#3a2810 304deg,#1a1006 320deg,#3a2810 336deg,#221608 352deg);
+            box-shadow:inset 0 3px 8px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.04);">
+          </div>
+          <!-- 六辐条 + 磁带边缘光泽 -->
+          <svg style="position:absolute;width:100%;height:100%;z-index:2;" viewBox="0 0 84 84">
+            <g transform="translate(42,42)">
+              <line x1="0" y1="-38" x2="0" y2="-18" stroke="rgba(210,185,120,.14)" stroke-width="2.5" stroke-linecap="round"/>
+              <line x1="-32.9" y1="-19" x2="-15.6" y2="-9" stroke="rgba(210,185,120,.14)" stroke-width="2.5" stroke-linecap="round"/>
+              <line x1="32.9" y1="-19" x2="15.6" y2="-9" stroke="rgba(210,185,120,.14)" stroke-width="2.5" stroke-linecap="round"/>
+              <line x1="0" y1="38" x2="0" y2="18" stroke="rgba(210,185,120,.14)" stroke-width="2.5" stroke-linecap="round"/>
+              <line x1="-32.9" y1="19" x2="-15.6" y2="9" stroke="rgba(210,185,120,.14)" stroke-width="2.5" stroke-linecap="round"/>
+              <line x1="32.9" y1="19" x2="15.6" y2="9" stroke="rgba(210,185,120,.14)" stroke-width="2.5" stroke-linecap="round"/>
+              <circle r="29" fill="none" stroke="rgba(200,160,55,.07)" stroke-width="3.5"/>
+              <circle r="28" fill="none" stroke="rgba(255,255,255,.04)" stroke-width="1"/>
+              <circle r="12" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="1.5"/>
             </g>
           </svg>
-          <!-- 磁带卷（会变薄） -->
-          <div id="wkTapeL" style="position:absolute;border-radius:50%;
-            top:50%;left:50%;transform:translate(-50%,-50%);
-            width:56px;height:56px;
-            background:conic-gradient(
-              #1e1408 0deg,#3a2810 18deg,#281c0e 36deg,#3a2810 54deg,
-              #1e1408 72deg,#3a2810 90deg,#281c0e 108deg,#3a2810 126deg,
-              #1e1408 144deg,#3a2810 162deg,#281c0e 180deg,#3a2810 198deg,
-              #1e1408 216deg,#3a2810 234deg,#281c0e 252deg,#3a2810 270deg,
-              #1e1408 288deg,#3a2810 306deg,#281c0e 324deg,#3a2810 342deg
-            );
-            box-shadow:inset 0 2px 6px rgba(0,0,0,.6);
-          "></div>
-          <!-- 中心孔 -->
-          <div style="position:absolute;width:16px;height:16px;border-radius:50%;
-            top:50%;left:50%;transform:translate(-50%,-50%);z-index:3;
-            background:radial-gradient(circle,#aaa 0%,#777 40%,#444 100%);
-            box-shadow:0 1px 5px rgba(0,0,0,.8),inset 0 1px 2px rgba(255,255,255,.25);"></div>
+          <!-- 六齿银轴 -->
+          <div style="position:absolute;width:20px;height:20px;border-radius:50%;z-index:3;background:radial-gradient(circle at 34% 28%,#d0d0d0,#888 48%,#555 100%);box-shadow:0 2px 6px rgba(0,0,0,.85),inset 0 1px 3px rgba(255,255,255,.3),0 0 0 2px rgba(70,52,22,.5);">
+            <svg style="position:absolute;inset:0;width:100%;height:100%;" viewBox="0 0 20 20">
+              <polygon points="10,1 12.8,5 16,3.8 16,7.2 19,10 16,12.8 16,16.2 12.8,15 10,19 7.2,15 4,16.2 4,12.8 1,10 4,7.2 4,3.8 7.2,5" fill="none" stroke="rgba(90,68,28,.45)" stroke-width="1.2"/>
+            </svg>
+          </div>
         </div>
 
-        <!-- 磁带带子 -->
-        <div style="flex:1;height:5px;
-          background:linear-gradient(90deg,#1e1408 0%,#2e2010 20%,#3c2c18 50%,#2e2010 80%,#1e1408 100%);
-          box-shadow:0 2px 5px rgba(0,0,0,.7),0 -1px 0 rgba(255,255,255,.04);
-          border-radius:2px;margin-top:-2px;
-        "></div>
+        <!-- 带子 -->
+        <div style="flex:1;height:5px;background:linear-gradient(90deg,#1a1006 0%,#2e2010 20%,#3e2c1a 50%,#2e2010 80%,#1a1006 100%);box-shadow:0 2px 7px rgba(0,0,0,.82),0 -1px 0 rgba(255,255,255,.04);border-radius:2px;margin-top:-3px;"></div>
 
-        <!-- ── 右轴 ── -->
-        <div id="wkReelR" style="width:82px;height:82px;flex-shrink:0;border-radius:50%;position:relative;
-          background:radial-gradient(circle at 32% 28%,#6a5228 0%,#3c2e14 40%,#1e1608 80%,#100c04 100%);
-          box-shadow:
-            0 4px 14px rgba(0,0,0,.85),
-            inset 0 2px 6px rgba(255,200,80,.07),
-            inset 0 -4px 8px rgba(0,0,0,.7);
-        ">
-          <svg style="position:absolute;inset:0;width:100%;height:100%;opacity:.75;" viewBox="0 0 82 82">
-            <g transform="translate(41,41)">
-              <circle r="39" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1.5"/>
-              <circle r="22" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
-              <line x1="0" y1="-38" x2="0" y2="38" stroke="rgba(255,255,255,0.055)" stroke-width="1.2"/>
-              <line x1="-32.9" y1="-19" x2="32.9" y2="19" stroke="rgba(255,255,255,0.055)" stroke-width="1.2"/>
-              <line x1="32.9" y1="-19" x2="-32.9" y2="19" stroke="rgba(255,255,255,0.055)" stroke-width="1.2"/>
-              <circle r="36" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="3" stroke-dasharray="4,3"/>
+        <!-- 右轴 -->
+        <div id="wkReelR" style="width:84px;height:84px;flex-shrink:0;border-radius:50%;position:relative;display:flex;align-items:center;justify-content:center;
+          background:radial-gradient(circle at 30% 25%,#7a5c28 0%,#4a3412 35%,#281c08 65%,#140e04 100%);
+          box-shadow:0 5px 16px rgba(0,0,0,.9),inset 0 2px 8px rgba(255,210,78,.06),inset 0 -5px 10px rgba(0,0,0,.78);">
+          <div id="wkTapeR" style="position:absolute;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);width:28px;height:28px;
+            background:conic-gradient(#1a1006 0deg,#3a2810 16deg,#221608 32deg,#3a2810 48deg,#1a1006 64deg,#3a2810 80deg,#221608 96deg,#3a2810 112deg,#1a1006 128deg,#3a2810 144deg,#221608 160deg,#3a2810 176deg,#1a1006 192deg,#3a2810 208deg,#221608 224deg,#3a2810 240deg);
+            box-shadow:inset 0 2px 7px rgba(0,0,0,.65),0 0 0 1px rgba(255,255,255,.04);">
+          </div>
+          <svg style="position:absolute;width:100%;height:100%;z-index:2;" viewBox="0 0 84 84">
+            <g transform="translate(42,42)">
+              <line x1="0" y1="-38" x2="0" y2="-18" stroke="rgba(210,185,120,.14)" stroke-width="2.5" stroke-linecap="round"/>
+              <line x1="-32.9" y1="-19" x2="-15.6" y2="-9" stroke="rgba(210,185,120,.14)" stroke-width="2.5" stroke-linecap="round"/>
+              <line x1="32.9" y1="-19" x2="15.6" y2="-9" stroke="rgba(210,185,120,.14)" stroke-width="2.5" stroke-linecap="round"/>
+              <line x1="0" y1="38" x2="0" y2="18" stroke="rgba(210,185,120,.14)" stroke-width="2.5" stroke-linecap="round"/>
+              <line x1="-32.9" y1="19" x2="-15.6" y2="9" stroke="rgba(210,185,120,.14)" stroke-width="2.5" stroke-linecap="round"/>
+              <line x1="32.9" y1="19" x2="15.6" y2="9" stroke="rgba(210,185,120,.14)" stroke-width="2.5" stroke-linecap="round"/>
+              <circle r="29" fill="none" stroke="rgba(200,160,55,.07)" stroke-width="3.5"/>
+              <circle r="12" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="1.5"/>
             </g>
           </svg>
-          <div id="wkTapeR" style="position:absolute;border-radius:50%;
-            top:50%;left:50%;transform:translate(-50%,-50%);
-            width:26px;height:26px;
-            background:conic-gradient(
-              #1e1408 0deg,#3a2810 18deg,#281c0e 36deg,#3a2810 54deg,
-              #1e1408 72deg,#3a2810 90deg,#281c0e 108deg,#3a2810 126deg,
-              #1e1408 144deg,#3a2810 162deg,#281c0e 180deg,#3a2810 198deg,
-              #1e1408 216deg,#3a2810 234deg,#281c0e 252deg,#3a2810 270deg
-            );
-            box-shadow:inset 0 2px 6px rgba(0,0,0,.6);
-          "></div>
-          <div style="position:absolute;width:16px;height:16px;border-radius:50%;
-            top:50%;left:50%;transform:translate(-50%,-50%);z-index:3;
-            background:radial-gradient(circle,#aaa,#777 40%,#444);
-            box-shadow:0 1px 5px rgba(0,0,0,.8),inset 0 1px 2px rgba(255,255,255,.25);"></div>
+          <div style="position:absolute;width:20px;height:20px;border-radius:50%;z-index:3;background:radial-gradient(circle at 34% 28%,#d0d0d0,#888 48%,#555 100%);box-shadow:0 2px 6px rgba(0,0,0,.85),inset 0 1px 3px rgba(255,255,255,.3);">
+            <svg style="position:absolute;inset:0;width:100%;height:100%;" viewBox="0 0 20 20">
+              <polygon points="10,1 12.8,5 16,3.8 16,7.2 19,10 16,12.8 16,16.2 12.8,15 10,19 7.2,15 4,16.2 4,12.8 1,10 4,7.2 4,3.8 7.2,5" fill="none" stroke="rgba(90,68,28,.45)" stroke-width="1.2"/>
+            </svg>
+          </div>
         </div>
       </div>
 
-      <!-- 进度条 + 时间 + 计数器 -->
+      <!-- 进度条 + 计数器 -->
       <div style="display:flex;align-items:center;gap:8px;position:relative;z-index:5;">
-        <span id="wkT1" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#5a4a28;min-width:28px;">0:00</span>
-        <div id="wkSeekBar" onclick="wkSeek(event)" style="flex:1;height:4px;cursor:pointer;border-radius:2px;
-          background:rgba(255,255,255,.07);
-          box-shadow:inset 0 1px 4px rgba(0,0,0,.7),0 1px 0 rgba(255,255,255,.04);">
-          <div id="wkProg" style="height:100%;width:0%;border-radius:2px;
-            background:linear-gradient(90deg,#7a5a18,#c89030);
-            box-shadow:0 0 6px rgba(200,150,40,.5);transition:.35s linear;"></div>
+        <span id="wkT1" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#5a4820;min-width:28px;">0:00</span>
+        <div id="wkSeekBar" onclick="wkSeek(event)" style="flex:1;height:4px;cursor:pointer;border-radius:2px;background:rgba(255,255,255,.07);box-shadow:inset 0 1px 5px rgba(0,0,0,.78),0 1px 0 rgba(255,255,255,.04);">
+          <div id="wkProg" style="height:100%;width:0%;border-radius:2px;background:linear-gradient(90deg,#7a5410,#d09030);box-shadow:0 0 8px rgba(210,150,40,.6);transition:.35s linear;"></div>
         </div>
-        <span id="wkT2" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#5a4a28;min-width:28px;text-align:right;">0:00</span>
-        <!-- 机械计数器 -->
-        <div style="display:flex;gap:1px;padding:3px 5px;border-radius:4px;
-          background:#080604;
-          box-shadow:inset 0 3px 8px rgba(0,0,0,.9),0 1px 0 rgba(255,255,255,.04);">
-          <span id="wkC0" style="font-family:'Share Tech Mono',monospace;font-size:13px;color:#e0aa20;text-shadow:0 0 8px #a07010;width:11px;text-align:center;">0</span>
-          <span id="wkC1" style="font-family:'Share Tech Mono',monospace;font-size:13px;color:#e0aa20;text-shadow:0 0 8px #a07010;width:11px;text-align:center;">0</span>
-          <span id="wkC2" style="font-family:'Share Tech Mono',monospace;font-size:13px;color:#e0aa20;text-shadow:0 0 8px #a07010;width:11px;text-align:center;">0</span>
+        <span id="wkT2" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#5a4820;min-width:28px;text-align:right;">0:00</span>
+        <div style="display:flex;gap:1px;padding:3px 6px;border-radius:4px;background:#050302;box-shadow:inset 0 4px 12px rgba(0,0,0,.99),0 1px 0 rgba(255,255,255,.03);">
+          <span id="wkC0" style="font-family:'Share Tech Mono',monospace;font-size:13px;font-weight:700;color:#e0a820;text-shadow:0 0 10px #a07010,0 0 22px #604008;width:12px;text-align:center;">0</span>
+          <span id="wkC1" style="font-family:'Share Tech Mono',monospace;font-size:13px;font-weight:700;color:#e0a820;text-shadow:0 0 10px #a07010,0 0 22px #604008;width:12px;text-align:center;">0</span>
+          <span id="wkC2" style="font-family:'Share Tech Mono',monospace;font-size:13px;font-weight:700;color:#e0a820;text-shadow:0 0 10px #a07010,0 0 22px #604008;width:12px;text-align:center;">0</span>
         </div>
       </div>
+    </div><!-- /视窗 -->
+  </div>
 
-    </div><!-- /视窗凹陷框 -->
-  </div><!-- /磁带视窗 -->
-
-  <!-- ──────── 歌词 / 聊天区 ──────── -->
-  <div style="position:relative;z-index:5;flex:1;margin:8px 18px 6px;min-height:0;
-    border-radius:14px;overflow:hidden;
-    background:linear-gradient(180deg,rgba(8,6,2,.8),rgba(6,4,0,.9));
-    box-shadow:
-      inset 0 3px 10px rgba(0,0,0,.7),
-      inset 0 0 0 1px rgba(255,255,255,.04),
-      0 1px 0 rgba(255,255,255,.03);
-    display:flex;flex-direction:column;
-  ">
-    <!-- 标签栏 -->
+  <!-- ─── 歌词/聊天区 ─── -->
+  <div style="position:relative;z-index:5;flex:1;margin:8px 18px 6px;min-height:0;border-radius:14px;overflow:hidden;
+    background:linear-gradient(180deg,rgba(6,4,2,.84),rgba(4,2,0,.94));
+    box-shadow:inset 0 3px 14px rgba(0,0,0,.78),inset 0 0 0 1px rgba(255,255,255,.035);
+    display:flex;flex-direction:column;">
+    <!-- 标签 -->
     <div style="display:flex;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,.05);">
-      <button id="wkTL" onclick="wkTab('lyric')" style="flex:1;padding:7px 0;border:none;background:transparent;cursor:pointer;
-        font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;
-        color:#c89030;border-bottom:2px solid #c89030;">LYRICS</button>
-      <button id="wkTC" onclick="wkTab('chat')" style="flex:1;padding:7px 0;border:none;background:transparent;cursor:pointer;
-        font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;
-        color:#3a3020;border-bottom:2px solid transparent;">CHAT</button>
+      <button id="wkTL" onclick="wkTab('lyric')" style="flex:1;padding:7px 0;border:none;background:transparent;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2.5px;color:#c89030;border-bottom:2px solid #c89030;">LYRICS</button>
+      <button id="wkTC" onclick="wkTab('chat')" style="flex:1;padding:7px 0;border:none;background:transparent;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2.5px;color:#3c3018;border-bottom:2px solid transparent;">CHAT</button>
     </div>
-
-    <!-- 歌词面板 -->
+    <!-- 歌词 -->
     <div id="wkLP" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;overflow:hidden;">
-      <div id="wkLPrev" style="font-family:'Caveat',cursive;font-size:13px;color:#3a3020;text-align:center;opacity:.5;margin-bottom:10px;line-height:1.4;"></div>
-      <div id="wkLCur"  style="font-family:'Caveat',cursive;font-size:18px;font-weight:700;color:#d4a030;text-align:center;line-height:1.6;
-        text-shadow:0 0 24px rgba(200,160,30,.35);
-        animation:wkLyricUp 4.5s ease-in-out both;padding:0 10px;"></div>
-      <div id="wkLNext" style="font-family:'Caveat',cursive;font-size:13px;color:#3a3020;text-align:center;opacity:.5;margin-top:10px;line-height:1.4;"></div>
+      <div id="wkLPrev" style="font-family:'Caveat',cursive;font-size:13px;color:#3a2e18;text-align:center;opacity:.42;margin-bottom:12px;line-height:1.5;"></div>
+      <div id="wkLCur" style="font-family:'Caveat',cursive;font-size:19px;font-weight:700;color:#d4a030;text-align:center;line-height:1.6;text-shadow:0 0 28px rgba(200,160,30,.4);animation:wkLyricUp 4.5s ease-in-out both;padding:0 12px;"></div>
+      <div id="wkLNext" style="font-family:'Caveat',cursive;font-size:13px;color:#3a2e18;text-align:center;opacity:.42;margin-top:12px;line-height:1.5;"></div>
     </div>
-
-    <!-- 聊天面板 -->
+    <!-- 聊天 -->
     <div id="wkCP" style="flex:1;display:none;flex-direction:column;overflow:hidden;">
-      <div id="wkCMsgs" style="flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:7px;
-        scrollbar-width:thin;scrollbar-color:#3a2e18 transparent;"></div>
-      <div style="display:flex;gap:6px;padding:7px 10px;border-top:1px solid rgba(255,255,255,.05);flex-shrink:0;">
-        <input id="wkCI" type=text placeholder="说点什么…" maxlength=200 style="
-          flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
-          border-radius:16px;padding:8px 13px;font-size:14px;color:#d8c890;
-          outline:none;font-family:'Caveat',cursive;caret-color:#c89030;
-        " onkeydown="if(event.key==='Enter'){event.preventDefault();wkSend();}">
-        <button onclick="wkSend()" style="padding:8px 16px;border-radius:16px;border:none;cursor:pointer;
-          background:linear-gradient(135deg,#7a5818,#5a3c0c);color:#f0c840;
-          font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:1px;
-          box-shadow:0 3px 0 #2a1600,0 4px 8px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,220,80,.15);">SEND</button>
+      <div id="wkCMsgs" style="flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:7px;scrollbar-width:thin;scrollbar-color:#3a2e18 transparent;"></div>
+      <!-- 输入栏：单行textarea + 小狗AI头像 + SEND -->
+      <div style="display:flex;gap:6px;padding:7px 10px;border-top:1px solid rgba(255,255,255,.05);flex-shrink:0;align-items:flex-end;">
+        <textarea id="wkCI" rows=1 placeholder="说点什么…" maxlength=300
+          style="flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:7px 13px;font-size:14px;color:#d8c890;outline:none;font-family:'Caveat',cursive;caret-color:#c89030;resize:none;overflow-y:hidden;min-height:34px;max-height:90px;box-sizing:border-box;line-height:1.45;height:34px;"
+          oninput="this.style.height='34px';if(this.scrollHeight>38)this.style.height=Math.min(this.scrollHeight,90)+'px';"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();wkSend();}"></textarea>
+        <!-- 小狗AI头像 — 触发char回应 -->
+        <div id="wkBtnAI" onclick="wkAIReply()" title="让对方回应" style="width:34px;height:34px;border-radius:50%;flex-shrink:0;cursor:pointer;background-color:#f0f2f5;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 8px rgba(0,0,0,.55);transition:transform .12s;" onmousedown="this.style.transform='scale(.88)'" onmouseup="this.style.transform='scale(1)'">🐶</div>
+        <button onclick="wkSend()" style="padding:8px 14px;border-radius:16px;border:none;cursor:pointer;flex-shrink:0;background:linear-gradient(135deg,#7a5818,#5a3c0c);color:#f0c840;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:1px;box-shadow:0 3px 0 #2a1600,0 4px 8px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,220,80,.15);">SEND</button>
       </div>
     </div>
   </div>
 
-  <!-- ──────── 便利贴 ──────── -->
-  <div id="wkSticky" style="position:absolute;bottom:152px;right:12px;z-index:8;display:none;
-    width:74px;padding:8px 8px 12px;
-    background:linear-gradient(155deg,#fefba0,#f8ef60,#fef880);
-    border-radius:2px;transform:rotate(3.5deg);
-    box-shadow:3px 5px 14px rgba(0,0,0,.5),inset 0 -2px 5px rgba(160,130,0,.2);
-    animation:wkNoteWag 5s ease-in-out infinite;
-  ">
-    <div style="position:absolute;top:-6px;left:50%;transform:translateX(-50%);
-      width:24px;height:8px;background:rgba(240,200,0,.55);border-radius:2px;
-      box-shadow:0 1px 4px rgba(0,0,0,.25);"></div>
-    <div style="font-family:'Caveat',cursive;font-size:11px;color:#4a3008;line-height:1.5;text-align:center;">
-      💌<br><span id="wkStickyTxt">这首不错♪</span>
-    </div>
+  <!-- ─── 便利贴（真实纸张感）─── -->
+  <div id="wkSticky" style="position:absolute;bottom:158px;right:12px;z-index:8;display:none;
+    width:84px;min-height:58px;padding:10px 8px 14px;border-radius:2px 2px 3px 2px;
+    --wr:3.5deg;transform:rotate(var(--wr));
+    background:repeating-linear-gradient(93deg,transparent 0px,transparent 5px,rgba(175,152,0,.032) 5px,rgba(175,152,0,.032) 6px),linear-gradient(158deg,#fefba5 0%,#f8ef60 42%,#fef882 100%);
+    box-shadow:3px 5px 18px rgba(0,0,0,.56),inset 0 -3px 7px rgba(145,118,0,.18),inset 0 0 0 1px rgba(175,148,0,.14);
+    animation:wkStickyWag 5.5s ease-in-out infinite;overflow:hidden;">
+    <!-- 胶带 -->
+    <div style="position:absolute;top:-6px;left:50%;transform:translateX(-50%);width:26px;height:9px;background:rgba(232,198,0,.55);border-radius:2px;box-shadow:0 1px 4px rgba(0,0,0,.2);"></div>
+    <!-- 折痕 -->
+    <div style="position:absolute;top:47%;left:0;right:0;height:1px;background:rgba(125,98,0,.09);"></div>
+    <!-- 右下卷角 -->
+    <div style="position:absolute;bottom:0;right:0;width:12px;height:12px;background:linear-gradient(225deg,rgba(95,75,0,.16) 0%,transparent 70%);border-radius:0 0 2px 0;"></div>
+    <div style="font-family:'Caveat',cursive;font-size:11.5px;color:#4a3006;line-height:1.55;text-align:center;font-weight:700;position:relative;z-index:1;">💌<br><span id="wkStickyTxt">这首不错♪</span></div>
   </div>
 
-  <!-- ──────── 机械按键区 ──────── -->
-  <div style="position:relative;z-index:5;flex-shrink:0;padding:0 16px 18px;
-    display:flex;align-items:flex-end;justify-content:space-between;gap:7px;">
-    <!-- 上一首 -->
-    <button class="wk-key" id="wkBPrev" onclick="wkPrev()" style="width:52px;height:46px;font-size:17px;">⏮</button>
-    <!-- 播放 -->
-    <button class="wk-key wk-key-play" id="wkBPlay" onclick="wkPlay()" style="width:62px;height:58px;font-size:25px;border-radius:12px;">▶</button>
-    <!-- 暂停 -->
-    <button class="wk-key" id="wkBPause" onclick="wkPause()" style="width:62px;height:58px;font-size:21px;border-radius:12px;">⏸</button>
-    <!-- 下一首 -->
-    <button class="wk-key" id="wkBNext" onclick="wkNext()" style="width:52px;height:46px;font-size:17px;">⏭</button>
-    <!-- 添加歌曲 -->
-    <button class="wk-key" id="wkBAdd" onclick="wkOpenAdd()" style="width:52px;height:46px;font-size:14px;">＋♫</button>
+  <!-- ─── AI回复loading ─── -->
+  <div id="wkAILoader" style="display:none;position:absolute;bottom:168px;left:50%;transform:translateX(-50%);z-index:15;background:rgba(0,0,0,.88);border-radius:20px;padding:8px 18px;font-family:'Share Tech Mono',monospace;font-size:11px;color:#c89030;letter-spacing:1px;animation:wkBreath .85s ease-in-out infinite;white-space:nowrap;">♪ 对方正在回应…</div>
+
+  <!-- ─── 机械按键区 ─── -->
+  <div style="position:relative;z-index:5;flex-shrink:0;padding:0 14px 18px;display:flex;align-items:flex-end;justify-content:space-between;gap:6px;">
+    <div class="wk-slot" style="width:54px;height:52px;"><button class="wk-key" onclick="wkPrev()" style="width:46px;height:44px;font-size:17px;">⏮</button></div>
+    <div class="wk-slot" style="width:66px;height:64px;"><button class="wk-key wk-gold" id="wkBPlay" onclick="wkPlay()" style="width:58px;height:56px;font-size:26px;border-radius:11px;">▶</button></div>
+    <div class="wk-slot" style="width:66px;height:64px;"><button class="wk-key" onclick="wkPause()" style="width:58px;height:56px;font-size:22px;border-radius:11px;">⏸</button></div>
+    <div class="wk-slot" style="width:54px;height:52px;"><button class="wk-key" onclick="wkNext()" style="width:46px;height:44px;font-size:17px;">⏭</button></div>
+    <div class="wk-slot" style="width:54px;height:52px;"><button class="wk-key" onclick="wkOpenAdd()" style="width:46px;height:44px;font-size:14px;">＋♫</button></div>
   </div>
 
-  <!-- ──────── 添加歌曲浮层 ──────── -->
-  <div id="wkAddPanel" style="display:none;position:absolute;inset:0;z-index:20;
-    background:rgba(0,0,0,.78);backdrop-filter:blur(10px);
-    flex-direction:column;justify-content:flex-end;">
-    <div style="
-      background:linear-gradient(165deg,#2a2018,#201810);
-      border-radius:22px 22px 0 0;padding:18px 18px 30px;max-height:80vh;overflow-y:auto;
-      border-top:1px solid rgba(255,255,255,.09);
-      box-shadow:0 -10px 40px rgba(0,0,0,.7);
-    ">
-      <div style="text-align:center;font-family:'Share Tech Mono',monospace;font-size:12px;
-        letter-spacing:3px;color:#c89030;margin-bottom:14px;">── ADD TRACK ──</div>
-
-      <!-- 歌曲列表 -->
-      <div id="wkSongBox" style="margin-bottom:12px;max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;"></div>
-
-      <!-- 输入区 -->
-      <div style="background:rgba(255,255,255,.04);border-radius:12px;padding:12px;
-        border:1px solid rgba(255,255,255,.07);margin-bottom:12px;">
-        <input id="wkIN" type=text placeholder="歌曲名称（必填）" style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:9px 12px;font-size:14px;color:#d8c890;outline:none;font-family:'Caveat',cursive;box-sizing:border-box;margin-bottom:8px;caret-color:#c89030;">
-        <input id="wkIA" type=text placeholder="歌手名（可选）" style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:9px 12px;font-size:14px;color:#d8c890;outline:none;font-family:'Caveat',cursive;box-sizing:border-box;margin-bottom:8px;caret-color:#c89030;">
-        <input id="wkIU" type=url placeholder="音频 URL（https://…mp3）" style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:9px 12px;font-size:12px;color:#90b890;outline:none;font-family:'Share Tech Mono',monospace;box-sizing:border-box;margin-bottom:8px;">
-        <textarea id="wkIL" placeholder="歌词（每行一句，可选）" rows=3 style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:9px 12px;font-size:13px;color:#d8c890;outline:none;font-family:'Caveat',cursive;box-sizing:border-box;resize:none;"></textarea>
+  <!-- ─── 添加歌曲浮层 ─── -->
+  <div id="wkAddPanel" style="display:none;position:absolute;inset:0;z-index:20;background:rgba(0,0,0,.82);backdrop-filter:blur(12px);flex-direction:column;justify-content:flex-end;">
+    <div style="background:linear-gradient(168deg,#2c2018,#201810,#181410);border-radius:22px 22px 0 0;padding:18px 18px 30px;max-height:80vh;overflow-y:auto;border-top:1px solid rgba(255,255,255,.10);box-shadow:0 -12px 40px rgba(0,0,0,.78);">
+      <div style="text-align:center;font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:3px;color:#c89030;margin-bottom:14px;">── ADD TRACK ──</div>
+      <div id="wkSongBox" style="margin-bottom:12px;max-height:190px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;"></div>
+      <div style="background:rgba(255,255,255,.04);border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,.07);margin-bottom:12px;">
+        <input id="wkIN" type=text placeholder="歌曲名称（必填）" style="width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);border-radius:8px;padding:9px 12px;font-size:14px;color:#d8c890;outline:none;font-family:'Caveat',cursive;box-sizing:border-box;margin-bottom:8px;caret-color:#c89030;">
+        <input id="wkIA" type=text placeholder="歌手名（可选）" style="width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);border-radius:8px;padding:9px 12px;font-size:14px;color:#d8c890;outline:none;font-family:'Caveat',cursive;box-sizing:border-box;margin-bottom:8px;caret-color:#c89030;">
+        <input id="wkIU" type=url placeholder="音频 URL (https://…mp3)" style="width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);border-radius:8px;padding:9px 12px;font-size:12px;color:#90c890;outline:none;font-family:'Share Tech Mono',monospace;box-sizing:border-box;margin-bottom:8px;">
+        <textarea id="wkIL" placeholder="歌词（每行一句，可选）" rows=3 style="width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);border-radius:8px;padding:9px 12px;font-size:13px;color:#d8c890;outline:none;font-family:'Caveat',cursive;box-sizing:border-box;resize:none;"></textarea>
       </div>
-
       <div style="display:flex;gap:8px;">
-        <button onclick="wkAddSong()" style="flex:1;padding:12px;border-radius:12px;border:none;cursor:pointer;
-          background:linear-gradient(135deg,#8a5c18,#5a3808);color:#f0c840;
-          font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:2px;
-          box-shadow:0 4px 0 #2a1400,0 6px 10px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,220,80,.15);">CONFIRM</button>
-        <button onclick="wkCloseAdd()" style="flex:1;padding:12px;border-radius:12px;border:none;cursor:pointer;
-          background:linear-gradient(135deg,#3a3020,#28201a);color:#9a8858;
-          font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:2px;
-          box-shadow:0 4px 0 #100c06,0 6px 10px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.06);">CANCEL</button>
+        <button onclick="wkAddSong()" style="flex:1;padding:12px;border-radius:12px;border:none;cursor:pointer;background:linear-gradient(135deg,#8a5c18,#5a3808);color:#f0c840;font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:2px;box-shadow:0 4px 0 #2a1400,0 6px 12px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,220,80,.15);">CONFIRM</button>
+        <button onclick="wkCloseAdd()" style="flex:1;padding:12px;border-radius:12px;border:none;cursor:pointer;background:linear-gradient(135deg,#3c3020,#28201a);color:#9a8858;font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:2px;box-shadow:0 4px 0 #10100a,0 6px 12px rgba(0,0,0,.5);">CANCEL</button>
       </div>
     </div>
   </div>
 
 </div><!-- /wkShell -->
 </div><!-- /scrWalkman -->
+
+<script>
+// ════════════════════════════════════════════════════
+// ★ 随身听引擎 v3  (一起听歌)
+// ════════════════════════════════════════════════════
+(function(){
+'use strict';
+const WK={
+  songs:[],chats:[],cur:-1,playing:false,
+  audio:null,angle:0,rafId:null,lyricIdx:0,lyricTimer:null,gyroOn:false,
+  SK:'wk_songs_v3',CK:'wk_chats_v2',
+};
+const WK_NOTES=['这首不错♪','副歌好温柔…','想起你了','一起的感觉','鼓点好温柔','这段旋律❤','单曲循环中','悄悄喜欢','嗯，很配你','静静听着'];
+
+// ── 持久化 ──
+const wkSave=()=>localforage.setItem(WK.SK,WK.songs).catch(()=>{});
+const wkSaveC=()=>localforage.setItem(WK.CK,WK.chats).catch(()=>{});
+const wkLoadDB=async()=>{
+  try{let s=await localforage.getItem(WK.SK);if(Array.isArray(s))WK.songs=s;}catch(e){}
+  try{let c=await localforage.getItem(WK.CK);if(Array.isArray(c))WK.chats=c;}catch(e){}
+};
+
+// ── 工具 ──
+const el=id=>document.getElementById(id);
+const fmt=s=>{s=isFinite(s)&&s>=0?s:0;return Math.floor(s/60)+':'+(s=Math.floor(s%60),s<10?'0':'')+s;};
+const setLcd=txt=>{let e=el('wkLcdTxt');if(!e)return;e.style.animation='none';e.offsetHeight;e.innerText=txt;e.style.animation='wkLcdScroll 18s linear infinite';};
+const setCnt=v=>{let s=String(Math.min(999,Math.floor(v))).padStart(3,'0');['wkC0','wkC1','wkC2'].forEach((id,i)=>{let e=el(id);if(!e||e.innerText===s[i])return;e.style.animation='none';e.offsetHeight;e.style.animation='wkCntFlick .12s ease';e.innerText=s[i];});};
+
+// ── rAF: 轴旋转 + 磁带厚度 ──
+function wkTick(){
+  if(!WK.playing){WK.rafId=null;return;}
+  WK.angle=(WK.angle+3)%360;
+  let rl=el('wkReelL'),rr=el('wkReelR');
+  if(rl)rl.style.transform=`rotate(${WK.angle}deg)`;
+  if(rr)rr.style.transform=`rotate(${-WK.angle}deg)`;
+  let p=WK.audio&&WK.audio.duration>0?WK.audio.currentTime/WK.audio.duration:0;
+  let lw=Math.round(58-p*32),rw=Math.round(28+p*32);
+  let tl=el('wkTapeL'),tr=el('wkTapeR');
+  if(tl){tl.style.width=lw+'px';tl.style.height=lw+'px';}
+  if(tr){tr.style.width=rw+'px';tr.style.height=rw+'px';}
+  WK.rafId=requestAnimationFrame(wkTick);
+}
+
+// ── 进度 ──
+function wkUpdateProg(){
+  if(!WK.audio)return;
+  let cur=WK.audio.currentTime||0,dur=WK.audio.duration||0,pct=dur>0?cur/dur*100:0;
+  let pb=el('wkProg');if(pb)pb.style.width=pct+'%';
+  let t1=el('wkT1');if(t1)t1.innerText=fmt(cur);
+  let t2=el('wkT2');if(t2)t2.innerText=fmt(dur);
+  setCnt(pct*9.99);
+}
+
+// ── 歌词 ──
+function wkStartLyrics(lyrics){
+  clearInterval(WK.lyricTimer);WK.lyricIdx=0;
+  let n=lyrics.length;
+  function show(){
+    let lp=el('wkLPrev'),lc=el('wkLCur'),ln=el('wkLNext');if(!lc)return;
+    if(!n){if(lp)lp.innerText='';lc.innerText='♪';if(ln)ln.innerText='';return;}
+    if(lp)lp.innerText=lyrics[((WK.lyricIdx-1)%n+n)%n];
+    lc.style.animation='none';lc.offsetHeight;lc.style.animation='wkLyricUp 4.5s ease-in-out both';
+    lc.innerText=lyrics[WK.lyricIdx%n];
+    if(ln)ln.innerText=lyrics[(WK.lyricIdx+1)%n];
+    WK.lyricIdx++;
+  }
+  show();WK.lyricTimer=setInterval(show,4200);
+}
+
+// ── 加载歌曲 ──
+function wkLoadSong(idx){
+  if(idx<0||idx>=WK.songs.length)return;
+  WK.cur=idx;let s=WK.songs[idx];
+  let sn=el('wkSongName'),an=el('wkArtistName');
+  if(sn)sn.innerText=s.name||'unknown';
+  if(an)an.innerText=s.artist||'';
+  setLcd('🎵 '+(s.name||'')+(s.artist?' · '+s.artist:'')+'   ──   ');
+  // 便利贴：随机语料 + 随机倾斜
+  let stk=el('wkSticky'),stxt=el('wkStickyTxt');
+  if(stk)stk.style.display='block';
+  if(stxt)stxt.innerText=WK_NOTES[Math.floor(Math.random()*WK_NOTES.length)];
+  if(stk){let d=(3+Math.random()*2.5).toFixed(1);stk.style.setProperty('--wr',d+'deg');stk.style.right=(10+Math.random()*8)+'px';stk.style.bottom=(152+Math.floor(Math.random()*14))+'px';}
+  if(WK.audio){WK.audio.pause();WK.audio.ontimeupdate=null;WK.audio.onended=null;}
+  WK.audio=new Audio();
+  WK.audio.ontimeupdate=wkUpdateProg;
+  WK.audio.onended=()=>wkNext();
+  WK.audio.onerror=()=>{setLcd('⚠ 无法播放，请检查URL');WK.playing=false;let bp=el('wkBPlay');if(bp)bp.classList.remove('wk-playing');};
+  if(s.url)WK.audio.src=s.url;
+  let pb=el('wkProg');if(pb)pb.style.width='0%';
+  let t1=el('wkT1');if(t1)t1.innerText='0:00';
+  let t2=el('wkT2');if(t2)t2.innerText='0:00';
+  setCnt(0);wkStartLyrics(s.lyrics||[]);
+}
+window.wkLoad_=wkLoadSong;
+
+// ── 播放控制 ──
+window.wkPlay=function(){
+  if(!WK.songs.length){wkOpenAdd();return;}
+  if(WK.cur<0)wkLoadSong(0);
+  if(!WK.audio||!WK.audio.src)return;
+  WK.audio.play().catch(()=>{});
+  WK.playing=true;
+  let bp=el('wkBPlay');if(bp)bp.classList.add('wk-playing');
+  if(!WK.rafId)WK.rafId=requestAnimationFrame(wkTick);
+};
+window.wkPause=function(){
+  if(WK.audio)WK.audio.pause();
+  WK.playing=false;
+  let bp=el('wkBPlay');if(bp)bp.classList.remove('wk-playing');
+};
+window.wkNext=function(){if(!WK.songs.length)return;wkLoadSong((WK.cur+1)%WK.songs.length);if(WK.playing)wkPlay();};
+window.wkPrev=function(){if(!WK.songs.length)return;wkLoadSong((WK.cur-1+WK.songs.length)%WK.songs.length);if(WK.playing)wkPlay();};
+window.wkSeek=function(e){let bar=el('wkSeekBar');if(!bar||!WK.audio||!WK.audio.duration)return;let r=bar.getBoundingClientRect();WK.audio.currentTime=((e.clientX-r.left)/r.width)*WK.audio.duration;};
+
+// ── 出仓 ──
+window.wkEject=function(){
+  let scr=el('scrWalkman');if(!scr)return;
+  scr.style.transition='transform .42s cubic-bezier(.4,0,.2,1)';
+  scr.style.transform='translateY(100%)';
+  setTimeout(()=>{scr.style.display='none';scr.style.transform='';scr.style.transition='';},450);
+  if(typeof toggleMenuDrawer==='function')toggleMenuDrawer(false);
+};
+
+// ── 标签 ──
+window.wkTab=function(t){
+  let lp=el('wkLP'),cp=el('wkCP'),tl=el('wkTL'),tc=el('wkTC');
+  let isL=t==='lyric';
+  if(lp)lp.style.display=isL?'flex':'none';
+  if(cp)cp.style.display=isL?'none':'flex';
+  if(tl){tl.style.color=isL?'#c89030':'#3c3018';tl.style.borderBottomColor=isL?'#c89030':'transparent';}
+  if(tc){tc.style.color=isL?'#3c3018':'#c89030';tc.style.borderBottomColor=isL?'transparent':'#c89030';}
+  if(!isL){wkRenderChat();wkSyncDogAvatar();}
+};
+
+// 同步小狗头像（和主聊天页面一致）
+function wkSyncDogAvatar(){
+  let btn=el('wkBtnAI');if(!btn)return;
+  let img=window.currentLoadedAiI;
+  if(img){btn.style.backgroundImage='url('+img+')';btn.style.backgroundSize='cover';btn.innerHTML='';}
+  else{btn.style.backgroundImage='';btn.innerHTML='🐶';}
+}
+
+// ── 聊天渲染 ──
+function wkRenderChat(){
+  let box=el('wkCMsgs');if(!box)return;
+  box.innerHTML=WK.chats.map(m=>{
+    let align=m.isMe?'flex-end':'flex-start',
+        bg=m.isMe?'linear-gradient(135deg,#7a5818,#5a3808)':'rgba(255,255,255,.09)',
+        col=m.isMe?'#f0c840':'#d4c890';
+    return `<div style="display:flex;justify-content:${align}"><div style="max-width:78%;padding:8px 13px;border-radius:14px;font-family:'Caveat',cursive;font-size:15px;color:${col};background:${bg};line-height:1.5;word-break:break-word;box-shadow:0 2px 10px rgba(0,0,0,.45);">${m.text.replace(/</g,'&lt;')}</div></div>`;
+  }).join('');
+  box.scrollTop=box.scrollHeight;
+}
+
+// ── 发送消息 ──
+window.wkSend=function(){
+  let inp=el('wkCI');if(!inp)return;
+  let txt=(inp.value||'').trim();if(!txt)return;
+  WK.chats.push({text:txt,isMe:true,ts:Date.now()});
+  wkSaveC();wkRenderChat();inp.value='';inp.style.height='34px';
+  let lp=el('wkLP');if(lp&&lp.style.display!=='none')setLcd('💬 你：'+txt+'   ──   ');
+};
+
+// ── AI 回复（调用真实API，和主聊天逻辑一致）──
+window.wkAIReply=async function(){
+  let pxy=(el('apiPxy')?.value||'').trim();
+  let key=(el('apiK')?.value||'').trim();
+  let mod=(el('apiMod')?.value||'').trim();
+  let temp=parseFloat(el('apiTemp')?.value)||0.8;
+  if(!pxy||!key||!mod){wkAddChat('（请先在设置里配置API密钥）',false);return;}
+  if(!pxy.includes('chat/completions'))pxy=pxy.replace(/\/$/,'')+'/chat/completions';
+  let charName=(el('cfgRem')?.value||el('cfgName')?.value||'专属恋人');
+  let songInfo=WK.cur>=0&&WK.songs[WK.cur]?`你们正在一起听《${WK.songs[WK.cur].name||''}》${WK.songs[WK.cur].artist?' - '+WK.songs[WK.cur].artist:''}`:'';
+  let loader=el('wkAILoader');if(loader)loader.style.display='block';
+  let msgs=[
+    {role:'system',content:`你是${charName}，正在和玩家通过随身听一起听歌，这是一个私密温馨的双人听歌空间。${songInfo}。用自然简短的语气回应（50字以内），不要加任何格式符号，就像真实聊天一样。`},
+    ...WK.chats.slice(-8).map(m=>({role:m.isMe?'user':'assistant',content:m.text})),
+  ];
+  try{
+    let res=await fetch(pxy,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({model:mod,max_tokens:120,temperature:temp,messages:msgs})});
+    let data=await res.json();
+    let reply=(data.choices?.[0]?.message?.content||'').trim();
+    if(!reply)throw new Error('empty');
+    wkAddChat(reply,false);
+  }catch(e){wkAddChat('…（信号不太好）',false);}
+  if(loader)loader.style.display='none';
+};
+
+function wkAddChat(text,isMe){
+  WK.chats.push({text,isMe,ts:Date.now()});wkSaveC();wkRenderChat();
+  if(!isMe){
+    let lp=el('wkLP');
+    if(lp&&lp.style.display!=='none'){
+      let nm=el('cfgRem')?.value||el('cfgName')?.value||'对方';
+      setLcd('💬 '+nm+'：'+text+'   ──   ');
+      let stxt=el('wkStickyTxt');if(stxt)stxt.innerText=text.slice(0,16)+(text.length>16?'…':'');
+      let stk=el('wkSticky');if(stk)stk.style.display='block';
+    }
+  }
+}
+
+// ── 歌曲列表管理 ──
+function wkRenderList(){
+  let box=el('wkSongBox');if(!box)return;
+  if(!WK.songs.length){box.innerHTML='<div style="text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:11px;color:#4a3818;padding:10px;letter-spacing:1px;">NO TRACKS YET</div>';return;}
+  box.innerHTML=WK.songs.map((s,i)=>`
+    <div style="display:flex;align-items:center;padding:8px 10px;border-radius:10px;gap:8px;background:${i===WK.cur?'rgba(200,144,48,.14)':'rgba(255,255,255,.04)'};border:1px solid ${i===WK.cur?'rgba(200,144,48,.3)':'rgba(255,255,255,.07)'};">
+      <div style="flex:1;cursor:pointer;" onclick="wkLoad_(${i});wkPlay();wkCloseAdd();">
+        <div style="font-family:'Caveat',cursive;font-size:15px;color:#d8c068;font-weight:700;">${s.name||'未知'}</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#6a5828;letter-spacing:1px;">${s.artist||''} ${s.url?'▶ AUDIO':'⚠ NO URL'}</div>
+      </div>
+      <button onclick="wkDel(${i})" style="padding:4px 10px;border-radius:8px;border:none;cursor:pointer;background:linear-gradient(135deg,#6a1810,#4a1008);color:#ff9878;font-size:12px;box-shadow:0 2px 0 #2a0800;">DEL</button>
+    </div>`).join('');
+}
+window.wkOpenAdd=function(){let p=el('wkAddPanel');if(p){p.style.display='flex';wkRenderList();}};
+window.wkCloseAdd=function(){let p=el('wkAddPanel');if(p)p.style.display='none';};
+window.wkAddSong=function(){
+  let n=(el('wkIN')?.value||'').trim(),a=(el('wkIA')?.value||'').trim(),u=(el('wkIU')?.value||'').trim(),l=(el('wkIL')?.value||'').trim();
+  if(!n){alert('请填写歌曲名称');return;}
+  WK.songs.push({name:n,artist:a,url:u,lyrics:l?l.split('\n').map(x=>x.trim()).filter(Boolean):[]});
+  wkSave();['wkIN','wkIA','wkIU','wkIL'].forEach(id=>{let e=el(id);if(e)e.value='';});
+  wkRenderList();if(WK.songs.length===1)wkLoadSong(0);
+};
+window.wkDel=function(idx){
+  if(!confirm('删除这首歌吗？'))return;
+  WK.songs.splice(idx,1);WK.cur=Math.min(WK.cur,WK.songs.length-1);
+  if(WK.cur>=0)wkLoadSong(WK.cur);else{let sn=el('wkSongName');if(sn)sn.innerText='— no tape loaded —';}
+  wkSave();wkRenderList();
+};
+
+// ── 打开随身听 ──
+window.wkOpen=async function(){
+  await wkLoadDB();
+  let scr=el('scrWalkman');if(!scr)return;
+  scr.style.display='flex';scr.style.transform='translateY(100%)';scr.style.transition='transform .42s cubic-bezier(.4,0,.2,1)';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{scr.style.transform='translateY(0)';}));
+  setTimeout(()=>{scr.style.transition='';},450);
+  if(typeof toggleMenuDrawer==='function')toggleMenuDrawer(false);
+  if(WK.songs.length>0&&WK.cur<0)wkLoadSong(0);
+  wkRenderChat();wkSyncDogAvatar();
+  if(!WK.gyroOn&&window.DeviceOrientationEvent){
+    window.addEventListener('deviceorientation',e=>{
+      let g=el('wkGlow');if(!g)return;
+      let b=Math.max(-25,Math.min(25,e.beta||0)),gm=Math.max(-25,Math.min(25,e.gamma||0));
+      g.style.top=((-30)+b*.4)+'%';g.style.left=((-20)+gm*.5)+'%';
+    },{passive:true});
+    WK.gyroOn=true;
+  }
+};
+
+// ── 外部消息推入 ──
+window.wkPushMsg=function(text){wkAddChat(text,false);};
+
+})();
+</script>
 
 <!-- ===== 语音通话界面 ===== -->
 <div id="scrVoiceCall" style="display:none;position:fixed;inset:0;z-index:9990;flex-direction:column;background:linear-gradient(160deg,#0a0f1e 0%,#141b35 60%,#1a0a2e 100%);overflow:hidden;">
@@ -3117,11 +3231,11 @@ if(typeof localforage === 'undefined') {
             <input id=olWordCount type=number placeholder="例如：200（不填则由AI自行决定）" style="width:100%;padding:11px 13px;border:1.5px solid #e8e4ff;border-radius:14px;font-size:13px;outline:none;box-sizing:border-box;background:rgba(255,255,255,0.9);color:#333;font-family:inherit;transition:border-color 0.2s;" onfocus="this.style.borderColor='#a29bfe'" onblur="this.style.borderColor='#e8e4ff'">
         </div>
         <div style="margin-bottom:16px;">
-            <label style="display:block;font-size:12px;font-weight:600;color:#6c5ce7;margin-bottom:6px;">👁️ 叙述视角（char如何叙述）</label>
+            <label style="display:block;font-size:12px;font-weight:600;color:#6c5ce7;margin-bottom:6px;">👁️ char叙述视角</label>
             <select id=olPerson style="width:100%;padding:11px 13px;border:1.5px solid #e8e4ff;border-radius:14px;font-size:13px;outline:none;box-sizing:border-box;background:rgba(255,255,255,0.9);color:#333;font-family:inherit;appearance:none;-webkit-appearance:none;cursor:pointer;transition:border-color 0.2s;" onfocus="this.style.borderColor='#a29bfe'" onblur="this.style.borderColor='#e8e4ff'">
                 <option value="">不限制</option>
-                <option value="first">第一人称（"我今天很开心"）</option>
-                <option value="third">第三人称（"他今天很开心"）</option>
+                <option value="first">第一人称（char说"我…"）</option>
+                <option value="third">第三人称（char说"他/她…"）</option>
             </select>
         </div>
         <div style="margin-bottom:20px;">
@@ -6390,9 +6504,9 @@ if(charStickers.length > 0) {
             + '▶ 互动核心：描写肢体动作（呼吸温度、眼神流转、指尖触碰）、面部表情、环境声音。\n'
             + '▶ 台词规范：所有说话内容必须只用「」包裹，禁止使用其他引号符号。'
             + '（示例：他侧身看你。「今天怎么了？」）\n'
-            + '▶ 【玩家称谓 - 硬性规定】叙述中必须始终用"你"指代玩家角色（如"他把你的头发拨开"、"你感受到他的目光"），严禁用"她/他/名字"称呼玩家，这是不可覆盖的基础规则。\n'
-            + (_olPerson === 'first'  ? '▶ 【叙述视角】以角色第一人称"我"叙述自身的动作和感受（如"我的心跳加快了"），营造角色独白感。\n' : '')
-            + (_olPerson === 'third'  ? '▶ 【叙述视角】以第三人称叙述角色自身的动作（如"他心跳加快了"），保持旁观叙述腔调。\n' : '')
+            + '▶ 【玩家称谓·不可覆盖】全程必须用"你"指代玩家（如"他把你的手握住"），严禁用任何名字或"她/他"称呼玩家。\n'
+            + (_olPerson === 'first'  ? '▶ 【叙述视角】以角色第一人称"我"叙述自身动作感受（如"我的心跳快了"）。\n' : '')
+            + (_olPerson === 'third'  ? '▶ 【叙述视角】以第三人称叙述角色自身（如"他的心跳快了"）。\n' : '')
             + (_olScene ? '▶ 场景：' + _olScene + '\n' : '')
             + (_olRelation ? '▶ 关系氛围：' + _olRelation + '\n' : '')
             + (_olWords ? `▶ 【字数硬性限制 - 极度重要】每次回复的【回复】正文总字数必须严格控制在${_olWords}字以内，不得超出！这是最高优先级规定，绝对不允许以任何理由（情节紧张、描写丰富等）突破此限制！超出即视为严重错误。\n` : '')
@@ -7636,10 +7750,14 @@ iptMsg.onclick = () =>{
 };
 // ★ 输入框自动拓展高度
 function _autoResizeIptMsg() {
-    iptMsg.style.height = 'auto';
-    let newH = Math.min(iptMsg.scrollHeight, 120);
-    iptMsg.style.height = newH + 'px';
-    iptMsg.style.overflowY = iptMsg.scrollHeight > 120 ? 'auto' : 'hidden';
+    iptMsg.style.height = '34px';
+    if (iptMsg.scrollHeight > 38) {
+        let newH = Math.min(iptMsg.scrollHeight, 120);
+        iptMsg.style.height = newH + 'px';
+        iptMsg.style.overflowY = newH >= 120 ? 'auto' : 'hidden';
+    } else {
+        iptMsg.style.overflowY = 'hidden';
+    }
 }
 iptMsg.addEventListener('input', _autoResizeIptMsg);
 iptMsg.addEventListener('keydown', e => {
@@ -16792,257 +16910,7 @@ if(document.getElementById('offlineModePanel')) {
     });
 }
 
-// ════════════════════════════════════════════════
-// ★ 一起听歌 · 随身听引擎
-// ════════════════════════════════════════════════
-(function(){
-  'use strict';
-  const WK = {
-    songs:[], chats:[], cur:-1, playing:false,
-    audio:null, angle:0, rafId:null, lyricIdx:0, lyricTimer:null, gyroOn:false,
-    SK:'wk_songs_v2', CK:'wk_chats_v1',
-  };
 
-  // ── 持久化 ──
-  const wkSave  = () => localforage.setItem(WK.SK, WK.songs).catch(()=>{});
-  const wkSaveC = () => localforage.setItem(WK.CK, WK.chats).catch(()=>{});
-  const wkLoad  = async () => {
-    try { let s=await localforage.getItem(WK.SK); if(Array.isArray(s)) WK.songs=s; } catch(e){}
-    try { let c=await localforage.getItem(WK.CK); if(Array.isArray(c)) WK.chats=c; } catch(e){}
-  };
 
-  // ── 工具 ──
-  const fmt = s => { s=isFinite(s)&&s>=0?s:0; return Math.floor(s/60)+':'+(s=Math.floor(s%60),s<10?'0':'')+s; };
-  const el  = id => document.getElementById(id);
-  const setLcd = txt => {
-    let e=el('wkLcdTxt'); if(!e) return;
-    e.style.animation='none'; e.offsetHeight; e.innerText=txt;
-    e.style.animation='wkLcdScroll 16s linear infinite';
-  };
-  const setCnt = v => {
-    let s=String(Math.min(999,Math.floor(v))).padStart(3,'0');
-    ['wkC0','wkC1','wkC2'].forEach((id,i)=>{
-      let e=el(id); if(!e||e.innerText===s[i]) return;
-      e.style.animation='none'; e.offsetHeight;
-      e.style.animation='wkCntFlick .12s ease'; e.innerText=s[i];
-    });
-  };
 
-  // ── rAF 旋转 + 厚度 ──
-  function wkTick() {
-    if(!WK.playing){ WK.rafId=null; return; }
-    WK.angle=(WK.angle+3)%360;
-    let rl=el('wkReelL'), rr=el('wkReelR');
-    if(rl) rl.style.transform=`rotate(${WK.angle}deg)`;
-    if(rr) rr.style.transform=`rotate(${-WK.angle}deg)`;
-    let p=WK.audio&&WK.audio.duration>0?WK.audio.currentTime/WK.audio.duration:0;
-    let lw=Math.round(56-p*30), rw=Math.round(26+p*32);
-    let tl=el('wkTapeL'), tr=el('wkTapeR');
-    if(tl){tl.style.width=lw+'px';tl.style.height=lw+'px';}
-    if(tr){tr.style.width=rw+'px';tr.style.height=rw+'px';}
-    WK.rafId=requestAnimationFrame(wkTick);
-  }
-
-  // ── 进度更新 ──
-  function wkUpdateProg() {
-    if(!WK.audio) return;
-    let cur=WK.audio.currentTime||0, dur=WK.audio.duration||0, pct=dur>0?cur/dur*100:0;
-    let pb=el('wkProg'); if(pb) pb.style.width=pct+'%';
-    let t1=el('wkT1'); if(t1) t1.innerText=fmt(cur);
-    let t2=el('wkT2'); if(t2) t2.innerText=fmt(dur);
-    setCnt(pct*9.99);
-  }
-
-  // ── 歌词 ──
-  function wkStartLyrics(lyrics) {
-    clearInterval(WK.lyricTimer); WK.lyricIdx=0;
-    let n=lyrics.length;
-    function show(){
-      let lp=el('wkLPrev'), lc=el('wkLCur'), ln=el('wkLNext'); if(!lc) return;
-      if(n===0){ if(lp)lp.innerText=''; lc.innerText='♪'; if(ln)ln.innerText=''; return; }
-      if(lp) lp.innerText=lyrics[((WK.lyricIdx-1)%n+n)%n];
-      lc.style.animation='none'; lc.offsetHeight;
-      lc.style.animation='wkLyricUp 4.5s ease-in-out both';
-      lc.innerText=lyrics[WK.lyricIdx%n];
-      if(ln) ln.innerText=lyrics[(WK.lyricIdx+1)%n];
-      WK.lyricIdx++;
-    }
-    show();
-    WK.lyricTimer=setInterval(show,4200);
-  }
-
-  // ── 加载曲目 ──
-  function wkLoadSong(idx) {
-    if(idx<0||idx>=WK.songs.length) return;
-    WK.cur=idx; let s=WK.songs[idx];
-    let sn=el('wkSongName'), an=el('wkArtistName');
-    if(sn) sn.innerText=s.name||'unknown';
-    if(an) an.innerText=s.artist||'';
-    setLcd('🎵 '+(s.name||'')+(s.artist?' · '+s.artist:'')+'   ──   ');
-    let stk=el('wkSticky'); if(stk) stk.style.display='block';
-    if(WK.audio){WK.audio.pause();WK.audio.ontimeupdate=null;WK.audio.onended=null;}
-    WK.audio=new Audio();
-    WK.audio.ontimeupdate=wkUpdateProg;
-    WK.audio.onended=()=>wkNext();
-    WK.audio.onerror=()=>{setLcd('⚠ URL无法播放，请检查格式');WK.playing=false;};
-    if(s.url) WK.audio.src=s.url;
-    let pb=el('wkProg'); if(pb) pb.style.width='0%';
-    let t1=el('wkT1'); if(t1) t1.innerText='0:00';
-    let t2=el('wkT2'); if(t2) t2.innerText='0:00';
-    setCnt(0);
-    wkStartLyrics(s.lyrics||[]);
-  }
-  // expose for song list click
-  window.wkLoad_=wkLoadSong;
-
-  // ── 播放控制 ──
-  window.wkPlay=function(){
-    if(!WK.songs.length){wkOpenAdd();return;}
-    if(WK.cur<0) wkLoadSong(0);
-    if(!WK.audio||!WK.audio.src) return;
-    WK.audio.play().catch(()=>{});
-    WK.playing=true;
-    let bp=el('wkBPlay'); if(bp) bp.classList.add('wk-playing');
-    if(!WK.rafId) WK.rafId=requestAnimationFrame(wkTick);
-  };
-  window.wkPause=function(){
-    if(WK.audio) WK.audio.pause();
-    WK.playing=false;
-    let bp=el('wkBPlay'); if(bp) bp.classList.remove('wk-playing');
-  };
-  window.wkNext=function(){
-    if(!WK.songs.length) return;
-    wkLoadSong((WK.cur+1)%WK.songs.length);
-    if(WK.playing) wkPlay();
-  };
-  window.wkPrev=function(){
-    if(!WK.songs.length) return;
-    wkLoadSong((WK.cur-1+WK.songs.length)%WK.songs.length);
-    if(WK.playing) wkPlay();
-  };
-  window.wkSeek=function(e){
-    let bar=el('wkSeekBar'); if(!bar||!WK.audio||!WK.audio.duration) return;
-    let r=bar.getBoundingClientRect(); WK.audio.currentTime=((e.clientX-r.left)/r.width)*WK.audio.duration;
-  };
-
-  // ── 出仓 ──
-  window.wkEject=function(){
-    let scr=el('scrWalkman'); if(!scr) return;
-    scr.style.transition='transform .42s cubic-bezier(.4,0,.2,1)';
-    scr.style.transform='translateY(100%)';
-    setTimeout(()=>{scr.style.display='none';scr.style.transform='';scr.style.transition='';},450);
-    if(typeof toggleMenuDrawer==='function') toggleMenuDrawer(false);
-  };
-
-  // ── 标签切换 ──
-  window.wkTab=function(t){
-    let lp=el('wkLP'),cp=el('wkCP'),tl=el('wkTL'),tc=el('wkTC');
-    let isL=t==='lyric';
-    if(lp) lp.style.display=isL?'flex':'none';
-    if(cp) cp.style.display=isL?'none':'flex';
-    if(tl){tl.style.color=isL?'#c89030':'#3a3020';tl.style.borderBottomColor=isL?'#c89030':'transparent';}
-    if(tc){tc.style.color=isL?'#3a3020':'#c89030';tc.style.borderBottomColor=isL?'transparent':'#c89030';}
-    if(!isL) wkRenderChat();
-  };
-
-  // ── 聊天 ──
-  function wkRenderChat(){
-    let box=el('wkCMsgs'); if(!box) return;
-    box.innerHTML=WK.chats.map(m=>{
-      let a=m.isMe?'flex-end':'flex-start',
-          bg=m.isMe?'linear-gradient(135deg,#7a5818,#5a3808)':'rgba(255,255,255,.08)',
-          c=m.isMe?'#f0c840':'#c8b888';
-      return `<div style="display:flex;justify-content:${a}"><div style="max-width:78%;padding:7px 12px;border-radius:14px;font-family:'Caveat',cursive;font-size:15px;color:${c};background:${bg};line-height:1.5;word-break:break-word;box-shadow:0 2px 8px rgba(0,0,0,.4);">${m.text}</div></div>`;
-    }).join('');
-    box.scrollTop=box.scrollHeight;
-  }
-  window.wkSend=function(){
-    let inp=el('wkCI'); if(!inp) return;
-    let txt=(inp.value||'').trim(); if(!txt) return;
-    WK.chats.push({text:txt,isMe:true,ts:Date.now()});
-    wkSaveC(); wkRenderChat(); inp.value='';
-    let lp=el('wkLP'); if(lp&&lp.style.display!=='none') setLcd('💬 你：'+txt+'   ──   ');
-  };
-
-  // ── 歌曲面板 ──
-  function wkRenderList(){
-    let box=el('wkSongBox'); if(!box) return;
-    if(!WK.songs.length){
-      box.innerHTML='<div style="text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:11px;color:#4a3a18;padding:10px;letter-spacing:1px;">NO TRACKS YET</div>';
-      return;
-    }
-    box.innerHTML=WK.songs.map((s,i)=>`
-      <div style="display:flex;align-items:center;padding:8px 10px;border-radius:10px;gap:8px;
-        background:${i===WK.cur?'rgba(200,144,48,.14)':'rgba(255,255,255,.04)'};
-        border:1px solid ${i===WK.cur?'rgba(200,144,48,.3)':'rgba(255,255,255,.07)'};">
-        <div style="flex:1;cursor:pointer;" onclick="wkLoad_(${i});wkPlay();wkCloseAdd();">
-          <div style="font-family:'Caveat',cursive;font-size:15px;color:#d8c068;font-weight:700;">${s.name||'未知'}</div>
-          <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#6a5828;letter-spacing:1px;">${s.artist||''} ${s.url?'▶ AUDIO':'⚠ NO URL'}</div>
-        </div>
-        <button onclick="wkDel(${i})" style="padding:4px 10px;border-radius:8px;border:none;cursor:pointer;
-          background:linear-gradient(135deg,#6a1810,#4a1008);color:#ff9878;font-size:12px;
-          box-shadow:0 2px 0 #2a0800;">DEL</button>
-      </div>`).join('');
-  }
-  window.wkOpenAdd=function(){let p=el('wkAddPanel');if(p){p.style.display='flex';wkRenderList();}};
-  window.wkCloseAdd=function(){let p=el('wkAddPanel');if(p)p.style.display='none';};
-  window.wkAddSong=function(){
-    let n=(el('wkIN')?.value||'').trim(), a=(el('wkIA')?.value||'').trim(),
-        u=(el('wkIU')?.value||'').trim(), l=(el('wkIL')?.value||'').trim();
-    if(!n){alert('请填写歌曲名称');return;}
-    WK.songs.push({name:n,artist:a,url:u,lyrics:l?l.split('\n').map(x=>x.trim()).filter(Boolean):[]});
-    wkSave();
-    ['wkIN','wkIA','wkIU','wkIL'].forEach(id=>{let e=el(id);if(e)e.value='';});
-    wkRenderList();
-    if(WK.songs.length===1) wkLoadSong(0);
-  };
-  window.wkDel=function(idx){
-    if(!confirm('删除这首歌吗？')) return;
-    WK.songs.splice(idx,1);
-    WK.cur=Math.min(WK.cur,WK.songs.length-1);
-    if(WK.cur>=0) wkLoadSong(WK.cur);
-    else{ let sn=el('wkSongName');if(sn)sn.innerText='— no tape loaded —'; }
-    wkSave(); wkRenderList();
-  };
-
-  // ── 打开 ──
-  window.wkOpen=async function(){
-    await wkLoad();
-    let scr=el('scrWalkman'); if(!scr) return;
-    scr.style.display='flex';
-    scr.style.transform='translateY(100%)';
-    scr.style.transition='transform .42s cubic-bezier(.4,0,.2,1)';
-    requestAnimationFrame(()=>requestAnimationFrame(()=>{scr.style.transform='translateY(0)';}));
-    setTimeout(()=>{scr.style.transition='';},450);
-    if(typeof toggleMenuDrawer==='function') toggleMenuDrawer(false);
-    if(WK.songs.length>0&&WK.cur<0) wkLoadSong(0);
-    wkRenderChat();
-    // 陀螺仪
-    if(!WK.gyroOn&&window.DeviceOrientationEvent){
-      window.addEventListener('deviceorientation',e=>{
-        let g=el('wkGlow'); if(!g) return;
-        let b=Math.max(-25,Math.min(25,e.beta||0)), gm=Math.max(-25,Math.min(25,e.gamma||0));
-        g.style.top=((-30)+b*.4)+'%'; g.style.left=((-20)+gm*.5)+'%';
-      },{passive:true});
-      WK.gyroOn=true;
-    }
-  };
-
-  // ── 外部消息推入 ──
-  window.wkPushMsg=function(text){
-    WK.chats.push({text,isMe:false,ts:Date.now()}); wkSaveC();
-    let scr=el('scrWalkman');
-    if(scr&&scr.style.display!=='none'){
-      let cp=el('wkCP'); if(cp&&cp.style.display!=='none') wkRenderChat();
-      let lp=el('wkLP');
-      if(lp&&lp.style.display!=='none'){
-        let nm=(typeof $==='function'&&$('cfgName'))?($('cfgName').value||'对方'):'对方';
-        setLcd('💬 '+nm+'：'+text+'   ──   ');
-        let stk=el('wkStickyTxt'); if(stk) stk.innerText=text.slice(0,18)+(text.length>18?'…':'');
-        el('wkSticky')&&(el('wkSticky').style.display='block');
-      }
-    }
-  };
-
-})();
 </script>
