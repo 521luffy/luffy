@@ -351,24 +351,98 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
     </div>
     
     <div id=scrHome class=scr-home>
-        <div class=desktop-widgets>
-            <div class=greeting>欢迎回来</div>
-            <div class=greeting-sub>今天想做点什么呢？</div>
-        </div>
-                        <div class="app-grid">
-            <div id="btnHomeChat" class="app-item"><div class="icon-chat">💬</div><div class="app-name">聊天</div></div>
-            <div id="btnHomeApi" class="app-item"><div class="icon-api">⚙️</div><div class="app-name">网络配置</div></div>
-                        <div id="btnHomeWb" class="app-item"><div class="icon-wb">📖</div><div class="app-name">世界书</div></div>
-            <div id="btnHomeSpace" class="app-item"><div class="icon-space">⭐</div><div class="app-name">我的空间</div></div>
-                        <div id="btnHomeFont" class="app-item"><div class="icon-font">Aa</div><div class="app-name">字体</div></div>
-            <div id="btnHomeSpy" class="app-item"><div class="char-app-icon" style="background: linear-gradient(135deg, #ff9a9e, #fecfef); font-size:24px;">📱</div><div class="app-name">查手机</div></div>
-        </div>
-     
-        <div class=dock>
+      <!-- ── 新桌面布局 ── -->
+      <style>
+        .scr-home { background: #fce8ea !important; background-image: radial-gradient(#f5c6cb 1px, transparent 1px) !important; background-size: 18px 18px !important; }
+        #hdDateCard { background:white; border-radius:18px; margin:12px 14px 0; padding:14px 20px; box-shadow:0 2px 10px rgba(0,0,0,.08); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+        #hdDate { font-size:22px; font-weight:900; color:#111; letter-spacing:.5px; }
+        #hdDay  { font-family:'Georgia',serif; font-size:22px; color:#333; font-style:italic; }
+        #hdTime { font-size:22px; font-weight:900; color:#111; }
+        #hdCal  { background:white; border-radius:18px; margin:10px 14px 0; padding:12px 16px; box-shadow:0 2px 10px rgba(0,0,0,.06); flex-shrink:0; }
+        #hdCal .cal-month { text-align:right; font-size:13px; color:#333; margin-bottom:6px; font-weight:600; }
+        #hdCal .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+        #hdCal .cal-head { font-size:11px; color:#888; text-align:center; padding:2px 0; }
+        #hdCal .cal-day  { font-size:12px; text-align:center; padding:3px 1px; color:#333; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; margin:auto; cursor:default; }
+        #hdCal .cal-day.today { background:#e8556a; color:white; font-weight:700; }
+        #hdCal .cal-day.other { color:#ccc; }
+        #hdBotRow { display:flex; gap:10px; margin:10px 14px 0; flex:1; min-height:0; }
+        #hdTodo { background:white; border-radius:18px; padding:12px 14px; box-shadow:0 2px 10px rgba(0,0,0,.06); flex:1; display:flex; flex-direction:column; }
+        #hdTodo .todo-title { font-size:18px; font-weight:900; color:#111; margin-bottom:8px; }
+        .todo-item { display:flex; align-items:center; gap:6px; margin-bottom:6px; }
+        .todo-cb { width:18px; height:18px; border:2px solid #555; border-radius:4px; flex-shrink:0; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:13px; }
+        .todo-cb.done { background:#444; border-color:#444; color:white; }
+        .todo-txt { font-size:14px; color:#222; outline:none; border:none; background:transparent; flex:1; font-family:inherit; caret-color:#e8556a; padding:1px 0; }
+        .todo-txt:focus { border-bottom:1px solid #eeb8c0; }
+        #hdApps { display:grid; grid-template-columns:1fr 1fr; gap:8px; width:130px; flex-shrink:0; }
+        .hd-app { background:white; border-radius:16px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:10px 4px 8px; box-shadow:0 2px 8px rgba(0,0,0,.07); cursor:pointer; gap:4px; aspect-ratio:1; }
+        .hd-app:active { transform:scale(.92); }
+        .hd-app-icon { font-size:26px; line-height:1; display:flex; align-items:center; justify-content:center; width:42px; height:42px; border-radius:12px; }
+        .hd-app-lbl { font-size:11px; color:#333; font-weight:500; }
+        #hdDock { position:absolute; bottom:14px; left:14px; right:14px; height:68px; background:rgba(255,255,255,.7); backdrop-filter:blur(18px); border-radius:24px; display:flex; justify-content:space-around; align-items:center; padding:0 18px; box-shadow:0 4px 18px rgba(0,0,0,.1); }
+        .hd-dock-item { display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; }
+        .hd-dock-icon { width:44px; height:44px; background:white; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:22px; box-shadow:0 2px 8px rgba(0,0,0,.1); }
+        .hd-dock-lbl { font-size:10px; color:#555; font-weight:500; }
+      </style>
 
-            <div class=dock-icon>📞</div><div class=dock-icon>📷</div><div class=dock-icon>🎵</div><div class=dock-icon>🌐</div>
+      <!-- date/time card -->
+      <div id="hdDateCard">
+        <span id="hdDate"></span>
+        <span id="hdDay"></span>
+        <span id="hdTime"></span>
+      </div>
 
+      <!-- calendar -->
+      <div id="hdCal">
+        <div class="cal-month" id="hdCalMonth"></div>
+        <div class="cal-grid" id="hdCalHead">
+          <div class="cal-head">日</div><div class="cal-head">一</div><div class="cal-head">二</div>
+          <div class="cal-head">三</div><div class="cal-head">四</div><div class="cal-head">五</div><div class="cal-head">六</div>
         </div>
+        <div class="cal-grid" id="hdCalBody"></div>
+      </div>
+
+      <!-- bottom row: todo + apps -->
+      <div id="hdBotRow">
+        <!-- to-do list -->
+        <div id="hdTodo">
+          <div class="todo-title">to do list</div>
+          <div id="hdTodoItems"></div>
+        </div>
+        <!-- 2×2 app grid -->
+        <div id="hdApps">
+          <div class="hd-app" id="btnHomeCfg">
+            <div class="hd-app-icon" style="background:#f2f2f2;">⚙️</div>
+            <span class="hd-app-lbl">设置</span>
+          </div>
+          <div class="hd-app" id="btnHomeWb">
+            <div class="hd-app-icon" style="background:#f2f2f2;">📖</div>
+            <span class="hd-app-lbl">世界书</span>
+          </div>
+          <div class="hd-app" id="btnHomeChat">
+            <div class="hd-app-icon" style="background:#f2f2f2;">💬</div>
+            <span class="hd-app-lbl">QQ</span>
+          </div>
+          <div class="hd-app" id="btnHomeFont">
+            <div class="hd-app-icon" style="background:#f2f2f2; font-size:20px; font-weight:700; font-family:serif;">Aa</div>
+            <span class="hd-app-lbl">字体</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- dock -->
+      <div id="hdDock">
+        <div class="hd-dock-item" id="btnHomeSpy">
+          <div class="hd-dock-icon">📱</div>
+          <span class="hd-dock-lbl">查手机</span>
+        </div>
+        <div class="hd-dock-item" id="btnHomeApi">
+          <div class="hd-dock-icon">🌐</div>
+          <span class="hd-dock-lbl">API设置</span>
+        </div>
+      </div>
+
+      <!-- hidden: keep old id so onclick hooks still work -->
+      <div id="btnHomeSpace" style="display:none;"></div>
     </div>
     
         <div id=scrList class=scr-list>
@@ -1353,6 +1427,13 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
                 </div>
                 <div class=me-menu-right>＞</div>
             </div>
+            <div id=btnMeSpace class=me-menu-item>
+                <div class=me-menu-left>
+                    <div class=me-menu-title>⭐ 我的空间</div>
+                    <div class=me-menu-sub>私密日志与记忆空间</div>
+                </div>
+                <div class=me-menu-right>＞</div>
+            </div>
         </div>
         
         <div class=bottom-nav>
@@ -1398,7 +1479,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
     </div>
   <div id="scrSpace" class="scr-flex">
     <div class="room-header">
-        <span id="btnSpaceBack" class="back-btn">＜</span>
+        <span id="btnSpaceBack" class="back-btn" onclick="showScreen('scrMe')">＜</span>
         <span class="header-center">我的空间</span>
         <span class="empty-btn"></span>
     </div>
@@ -1957,13 +2038,13 @@ window.wkAIReply=async function(){
   }catch(e){}
   let sysPrompt=(charPersona?'你的人设如下，必须严格遵守：\n'+charPersona+'\n\n':'')+
     mainCtx+'【当前情景】'+songInfo+'。私密温馨的双人听歌空间。结合近期聊天背景自然融入。'+
-    '回复要自然完整（60-150字），符合人设性格，像真实聊天，不要任何格式符号，必须输出完整句子不要截断。';
+    '回复用你的性格自然聊天（80-200字），必须把话说完整，不可以在句子中途停止，禁止使用任何格式符号。';
   let loader=el('wkAILoader');if(loader)loader.style.display='block';
   let validChats=WK.chats.filter(m=>!m.isErr).slice(-10);
   let msgs=[{role:'system',content:sysPrompt},...validChats.map(m=>({role:m.isMe?'user':'assistant',content:m.text}))];
   try{
     let res=await fetch(pxy,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-      body:JSON.stringify({model:mod,max_tokens:800,temperature:temp,messages:msgs})});
+      body:JSON.stringify({model:mod,max_tokens:1500,temperature:temp,messages:msgs})});
     let data=await res.json();
     let reply=(data.choices?.[0]?.message?.content||'').trim();
     if(reply){wkAddChat(reply,false);}
@@ -4168,6 +4249,126 @@ lock.onclick = () =>{ showScreen(`scrHome`); };
 $(`btnHomeChat`).onclick = () =>showScreen(`scrList`);
 $(`btnListBack`).onclick = () =>showScreen(`scrHome`);
 $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
+
+// ══════════════════════════════════════
+// ★ 新桌面 - 时钟 / 日历 / todo
+// ══════════════════════════════════════
+(function initNewHome(){
+  const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const DAYMAP = {0:'Sunday',1:'Monday',2:'Tuesday',3:'Wednesday',4:'Thursday',5:'Friday',6:'Saturday'};
+  const CHN_MON = ['一','二','三','四','五','六','七','八','九','十','十一','十二'];
+
+  // ── clock ──
+  function tickClock(){
+    let now=new Date();
+    let mo=String(now.getMonth()+1).padStart(2,'0');
+    let dd=String(now.getDate()).padStart(2,'0');
+    let h=String(now.getHours()).padStart(2,'0');
+    let m=String(now.getMinutes()).padStart(2,'0');
+    let el_=id=>document.getElementById(id);
+    if(el_('hdDate'))el_('hdDate').innerText=mo+'-'+dd;
+    if(el_('hdDay'))el_('hdDay').innerText=DAYS[now.getDay()];
+    if(el_('hdTime'))el_('hdTime').innerText=h+':'+m;
+  }
+  tickClock();
+  setInterval(tickClock,10000);
+
+  // ── calendar ──
+  function buildCal(){
+    let now=new Date();
+    let year=now.getFullYear();
+    let mon=now.getMonth();
+    let today=now.getDate();
+    let body=document.getElementById('hdCalBody');
+    let monthEl=document.getElementById('hdCalMonth');
+    if(!body||!monthEl)return;
+    monthEl.innerText=CHN_MON[mon]+'月';
+    let firstDay=new Date(year,mon,1).getDay();
+    let daysInMonth=new Date(year,mon+1,0).getDate();
+    let prevDays=new Date(year,mon,0).getDate();
+    let html='';
+    // prev month filler
+    for(let i=firstDay-1;i>=0;i--){
+      html+=`<div class="cal-day other">${prevDays-i}</div>`;
+    }
+    // this month
+    for(let d=1;d<=daysInMonth;d++){
+      let cls=d===today?'cal-day today':'cal-day';
+      html+=`<div class="${cls}">${d}</div>`;
+    }
+    // next month filler
+    let remaining=(7-((firstDay+daysInMonth)%7))%7;
+    for(let d=1;d<=remaining;d++){
+      html+=`<div class="cal-day other">${d}</div>`;
+    }
+    body.innerHTML=html;
+  }
+  buildCal();
+
+  // ── to-do list ──
+  const TODO_KEY='hd_todo_items';
+  const DEFAULT_TODOS=[
+    {txt:'准时起床',done:false},
+    {txt:'喝八杯水',done:false},
+    {txt:'努力打工',done:false},
+    {txt:'早睡早起',done:false}
+  ];
+  let todos=DEFAULT_TODOS;
+  (async function loadTodos(){
+    try{
+      let v=await localforage.getItem(TODO_KEY);
+      if(Array.isArray(v)&&v.length)todos=v;
+    }catch(e){
+      let r=localStorage.getItem(TODO_KEY);
+      if(r)try{todos=JSON.parse(r);}catch(e2){}
+    }
+    renderTodos();
+  })();
+
+  function saveTodos(){
+    localforage.setItem(TODO_KEY,todos).catch(()=>{});
+    try{localStorage.setItem(TODO_KEY,JSON.stringify(todos));}catch(e){}
+  }
+
+  function renderTodos(){
+    let box=document.getElementById('hdTodoItems');
+    if(!box)return;
+    box.innerHTML='';
+    todos.forEach((item,i)=>{
+      let row=document.createElement('div');
+      row.className='todo-item';
+      // checkbox
+      let cb=document.createElement('div');
+      cb.className='todo-cb'+(item.done?' done':'');
+      if(item.done)cb.innerText='✓';
+      cb.onclick=()=>{todos[i].done=!todos[i].done;saveTodos();renderTodos();};
+      // text input
+      let inp=document.createElement('input');
+      inp.type='text';inp.className='todo-txt';
+      inp.value=item.txt;
+      inp.style.textDecoration=item.done?'line-through':'none';
+      inp.style.color=item.done?'#aaa':'#222';
+      inp.onblur=()=>{todos[i].txt=inp.value.trim()||item.txt;saveTodos();};
+      inp.onkeydown=e=>{if(e.key==='Enter'){inp.blur();}};
+      row.appendChild(cb);row.appendChild(inp);
+      box.appendChild(row);
+    });
+  }
+
+  // click outside to save all
+  document.addEventListener('click',e=>{
+    if(document.getElementById('scrHome')&&document.getElementById('scrHome').style.display!=='none'){
+      let inTodo=document.getElementById('hdTodo')?.contains(e.target);
+      if(!inTodo){
+        document.querySelectorAll('.todo-txt').forEach(inp=>{inp.blur();});
+      }
+    }
+  });
+
+  // btnHomeCfg: placeholder - reserved for next round
+  let cfgBtn=document.getElementById('btnHomeCfg');
+  if(cfgBtn)cfgBtn.onclick=()=>alert('设置功能下一轮开发，敬请期待 🔧');
+})();
 $(`btnSetApiBack`).onclick = () =>showScreen(`scrHome`);
 
 if($(`btnHomeFont`)) {
@@ -8396,7 +8597,8 @@ if($("upMeAvatar")) {
 
 
 if($("btnHomeSpace")) $("btnHomeSpace").onclick = () =>showScreen("scrSpace");
-if($("btnSpaceBack")) $("btnSpaceBack").onclick = () =>showScreen("scrHome");
+if($("btnMeSpace")) $("btnMeSpace").onclick = () =>showScreen("scrSpace");
+if($("btnSpaceBack")) $("btnSpaceBack").onclick = () =>showScreen("scrMe");
 
 if($("btnEditSpace")) $("btnEditSpace").onclick = async () =>{
     // 读取空间独立数据
