@@ -5538,15 +5538,26 @@ $(`btnSaveChat`).onclick = async () => {
         dataObj.cStatusBarTpl = _tplSel ? _tplSel.replace(`tplRadio`,``) : ``;
 
         for (let key in dataObj) {
-            ls.setItem(key, dataObj[key]);
-            let finalKey = (typeof isolatedKeys !== `undefined` && isolatedKeys.includes(key)) ? key + `_` + currentChatId : key;
-            await localforage.setItem(finalKey, dataObj[key]);
-            // 名字写入内存缓存，确保 loadChatSettings 下次即时读到
-            if(key === `cMyN`) {
-                if(!window._nameCache) window._nameCache = {};
-                window._nameCache[currentChatId] = dataObj[key];
-            }
+    let finalKey = (typeof isolatedKeys !== `undefined` && isolatedKeys.includes(key)) ? key + `_` + currentChatId : key;
+    
+    try {
+        ls.setItem(key, dataObj[key]);
+        if (key !== finalKey) {
+            ls.setItem(finalKey, dataObj[key]);
         }
+    } catch (error) {
+        console.warn(`小仓库容量已满，已跳过并强制存入大仓库`);
+    }
+
+    await localforage.setItem(finalKey, dataObj[key]);
+    
+    // 名字写入内存缓存，确保 loadChatSettings 下次即时读到
+    if(key === `cMyN`) {
+        if(!window._nameCache) window._nameCache = {};
+        window._nameCache[currentChatId] = dataObj[key];
+    }
+}
+
 
         let checkImg = async (preId, key) => {
             let el = $(preId);
