@@ -362,7 +362,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
           overflow-y: auto;
           overflow-x: hidden;
           -webkit-overflow-scrolling: touch;
-          padding: 28px 12px 0; /* 顶部留空，日期不要太靠边 */
+          padding: 42px 12px 0; /* 顶部留空更多，日期下移 */
           box-sizing: border-box;
         }
         /* Date card */
@@ -370,7 +370,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
           background: white; border-radius: 18px;
           padding: 14px 20px; box-shadow: 0 2px 10px rgba(0,0,0,.08);
           display: flex; align-items: center; justify-content: space-between;
-          margin-bottom: 12px; flex-shrink: 0;
+          margin-bottom: 22px; flex-shrink: 0;
         }
         #hdDate { font-size: 22px; font-weight: 900; color: #111; }
         #hdDay  { font-family: 'Georgia',serif; font-size: 22px; color: #333; font-style: italic; }
@@ -378,7 +378,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 
         /* Middle section: big-left-img | right-col(small-img + calendar) */
         #hdMidRow {
-          display: flex; gap: 10px; margin-bottom: 12px; flex-shrink: 0;
+          display: flex; gap: 10px; margin-bottom: 20px; flex-shrink: 0;
           align-items: stretch;
         }
         #hdImgBig {
@@ -431,16 +431,14 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
           -webkit-tap-highlight-color: transparent;
         }
         .todo-cb.done { background:#444; border-color:#444; color:white; }
-        /* contenteditable代替input，避免键盘弹出跳屏 */
+        /* todo text - 只读，不可编辑 */
         .todo-ce {
-          font-size:14px; color:#222; outline:none; flex:1; font-family:inherit;
-          caret-color:#e8556a; min-width:0; word-break:break-all;
-          -webkit-tap-highlight-color:transparent;
-          /* 关键：不允许换行 */
-          white-space: nowrap; overflow: hidden;
+          font-size:14px; color:#222; flex:1; font-family:inherit;
+          min-width:0; white-space:nowrap; overflow:hidden;
+          text-overflow:ellipsis; user-select:none;
+          -webkit-user-select:none; pointer-events:none;
         }
         .todo-ce.done-txt { text-decoration:line-through; color:#aaa; }
-        .todo-ce:empty:before { content:attr(data-ph); color:#ccc; }
 
         /* 2×2 apps */
         #hdApps { display:grid; grid-template-columns:1fr 1fr; gap:8px; flex-shrink:0; }
@@ -462,9 +460,11 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
           -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px);
           border-radius:24px 24px 0 0;
           display:flex; justify-content:space-around; align-items:center;
-          padding:10px 20px 16px; margin:0 -12px;
+          padding:10px 20px 22px; margin:0 -12px;
           box-shadow:0 -2px 14px rgba(0,0,0,.08);
         }
+        /* push dock down from bottom edge */
+        #hdDockSpacer { height: 22px; flex-shrink:0; }
         .hd-dock-item { display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; -webkit-tap-highlight-color:transparent; }
         .hd-dock-icon {
           width:50px; height:50px; background:white; border-radius:16px;
@@ -531,7 +531,8 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         </div>
       </div>
 
-      <!-- Dock -->
+      <!-- Dock spacer + Dock -->
+      <div id="hdDockSpacer"></div>
       <div id="hdDock">
         <div class="hd-dock-item" id="btnHomeSpy">
           <div class="hd-dock-icon">📱</div>
@@ -3940,6 +3941,11 @@ let currentQuote ="";
 function showScreen(showId) {
     [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrSpace, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet"), $("scrContact"), $("scrSetFont"), $("scrCharPhone"), $("scrSpyDiary"), $("scrSpyZhihu"), $("scrSpySecret"), $("scrSpyMeituan"), $("scrSpyFootprint"), $("scrSpyWallet"), $("scrSpyShop"), $("scrSpyIqiyi"), $("scrSpySettings"), $("scrMoment"), $("scrGroupRoom"), $("scrGroupSettings"), $("scrOurSongs")].forEach(s => { if(s) s.style.display = "none"; });
     let target = $(showId);
+    // Reset chat input height when entering room
+    if(showId === "scrRoom") {
+        let _im = document.getElementById("iptMsg");
+        if(_im){ _im.style.height="34px"; _im.style.overflowY="hidden"; }
+    }
     if(target) {
         if(showId === "scrRoom" || showId === "scrList" || showId === "scrSetApi" || showId === "scrSetChat" || showId === "scrWb" || showId === "scrWbEdit" || showId === "scrMe" || showId === "scrCharSticker" || showId === "scrSpace" || showId === "scrLogList" || showId === "scrLogEdit" || showId === "scrFav" || showId === "scrWallet" || showId === "scrContact" || showId === "scrSetFont" || showId === "scrSpyDiary" || showId === "scrSpyZhihu" || showId === "scrSpySecret" || showId === "scrSpyMeituan" || showId === "scrSpyFootprint" || showId === "scrSpyWallet" || showId === "scrSpyShop" || showId === "scrSpyIqiyi" || showId === "scrSpySettings" || showId === "scrMoment" || showId === "scrGroupRoom" || showId === "scrGroupSettings" || showId === "scrOurSongs") {
             target.style.display = "flex";
@@ -4437,47 +4443,20 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
     box.innerHTML='';
     todos.forEach((item,i)=>{
       let row=document.createElement('div');row.className='todo-item';
-      // checkbox（点击时不会触发键盘）
+      // checkbox only - no editing
       let cb=document.createElement('div');
       cb.className='todo-cb'+(item.done?' done':'');
       if(item.done)cb.textContent='✓';
       cb.addEventListener('touchend',e=>{e.preventDefault();e.stopPropagation();todos[i].done=!todos[i].done;saveTodos();renderTodos();});
       cb.onclick=e=>{e.stopPropagation();todos[i].done=!todos[i].done;saveTodos();renderTodos();};
-      // contenteditable div — 不会触发 scrollIntoView，也不会跳屏
+      // 只读文字
       let ce=document.createElement('div');
       ce.className='todo-ce'+(item.done?' done-txt':'');
-      ce.contentEditable='true';
-      ce.setAttribute('data-ph','点击编辑');
       ce.textContent=item.txt;
-      // 阻止回车换行
-      ce.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();ce.blur();}});
-      // 保存
-      ce.addEventListener('blur',()=>{
-        let t=(ce.textContent||'').trim();
-        todos[i].txt=t||item.txt;
-        if(!t){ce.textContent=item.txt;}
-        saveTodos();
-      });
-      // 阻止点击时跳屏：在 touchstart 记录 scrHome.scrollTop，blur 后恢复
-      ce.addEventListener('touchstart',()=>{
-        let sh=el_('scrHome');
-        if(sh){let savedTop=sh.scrollTop;
-          setTimeout(()=>{sh.scrollTop=savedTop;},30);
-          setTimeout(()=>{sh.scrollTop=savedTop;},200);}
-      },{passive:true});
       row.appendChild(cb);row.appendChild(ce);
       box.appendChild(row);
     });
   }
-
-  // 点击空白处 blur（只在首页显示时触发）
-  document.addEventListener('touchend',e=>{
-    let sh=el_('scrHome');
-    if(!sh||sh.style.display==='none')return;
-    if(!el_('hdTodo')?.contains(e.target)){
-      document.querySelectorAll('.todo-ce').forEach(ce=>{if(document.activeElement===ce)ce.blur();});
-    }
-  });
 
   // btnHomeCfg: 占位
   let cfgBtn=el_('btnHomeCfg');
@@ -4509,14 +4488,31 @@ async function renderSpyPhone() {
     let sel = $("spyCharSelect");
     if(!sel) return;
     sel.innerHTML = `<option value="">切换角色📱</option>`;
-    // 双读：localStorage+localforage（LS满时备用）
-    let _mc = ls.getItem(`myContacts`);
-    if(!_mc){try{let _lf=await localforage.getItem(`myContacts`);if(_lf)_mc=typeof _lf==='string'?_lf:JSON.stringify(_lf);}catch(e){}}
-    let contacts = _mc ? JSON.parse(_mc) : [];
-    contacts.forEach(c => {
-        let name = originalGetItem.call(ls, `cN_` + c.id) || c.name;
-        sel.add(new Option(name, c.id));
-    });
+    // 三重读取：全局变量 → localforage → localStorage
+    let spyContacts = [];
+    // 1. 先尝试 localforage（最完整）
+    try{
+        let lf = await localforage.getItem(`myContacts`);
+        if(lf) spyContacts = Array.isArray(lf) ? lf : JSON.parse(lf);
+    }catch(e){}
+    // 2. 如果 localforage 为空，用全局 contacts 变量
+    if(!spyContacts.length && typeof contacts !== 'undefined' && Array.isArray(contacts) && contacts.length) {
+        spyContacts = contacts;
+    }
+    // 3. 最后兜底 localStorage
+    if(!spyContacts.length){
+        try{let r=originalGetItem.call(ls,`myContacts`);if(r)spyContacts=JSON.parse(r);}catch(e){}
+    }
+    // 同步全局变量（确保其他地方能用到最新数据）
+    if(spyContacts.length > (typeof contacts !== 'undefined' ? contacts.length : 0)) {
+        try{ contacts = spyContacts; }catch(e){}
+    }
+    for(let ct of spyContacts){
+        let name = originalGetItem.call(ls, `cN_`+ct.id);
+        if(!name){try{name=await localforage.getItem(`cN_`+ct.id)||'';}catch(e){}}
+        if(!name)name=ct.name;
+        sel.add(new Option(name, ct.id));
+    }
     
     // 核心改造1：下拉框选中后直接切换角色，并且同步大脑ID
     sel.onchange = async function() {
@@ -4540,11 +4536,12 @@ async function updateSpyPhoneUI(charId) {
         }
     } else {
         let charName = "未知角色";
-        // 双读 myContacts
-        let _mc = ls.getItem(`myContacts`);
-        if(!_mc){try{let _lf=await localforage.getItem(`myContacts`);if(_lf)_mc=typeof _lf==='string'?_lf:JSON.stringify(_lf);}catch(e){}}
-        let contacts = _mc ? JSON.parse(_mc) : [];
-        let c = contacts.find(x => String(x.id) === String(charId));
+        // 三重读取 myContacts
+        let _spyC = [];
+        try{let lf=await localforage.getItem(`myContacts`);if(lf)_spyC=Array.isArray(lf)?lf:JSON.parse(lf);}catch(e){}
+        if(!_spyC.length&&typeof contacts!=='undefined'&&Array.isArray(contacts))_spyC=contacts;
+        if(!_spyC.length){try{let r=originalGetItem.call(ls,`myContacts`);if(r)_spyC=JSON.parse(r);}catch(e){}}
+        let c = _spyC.find(x => String(x.id) === String(charId));
         // 双读 cN_ 名字
         if(c){
           charName = originalGetItem.call(ls,`cN_`+c.id);
@@ -8415,11 +8412,14 @@ iptMsg.onclick = () =>{
 // ★ 输入框自动拓展高度
 function _autoResizeIptMsg() {
     iptMsg.style.height = '34px';
+    // Force reflow before reading scrollHeight
+    void iptMsg.offsetHeight;
     if (iptMsg.scrollHeight > 38) {
         let newH = Math.min(iptMsg.scrollHeight, 120);
         iptMsg.style.height = newH + 'px';
         iptMsg.style.overflowY = newH >= 120 ? 'auto' : 'hidden';
     } else {
+        iptMsg.style.height = '34px';
         iptMsg.style.overflowY = 'hidden';
     }
 }
