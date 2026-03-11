@@ -1338,6 +1338,13 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
                 </div>
                 <div class=me-menu-right>＞</div>
             </div>
+            <div id=btnGoOurSongs class=me-menu-item>
+                <div class=me-menu-left>
+                    <div class=me-menu-title>🎵 我们的歌</div>
+                    <div class=me-menu-sub>听歌记录与收藏的聊天片段</div>
+                </div>
+                <div class=me-menu-right>＞</div>
+            </div>
 
             <div id=btnOpenWallet class=me-menu-item>
                 <div class=me-menu-left>
@@ -1430,6 +1437,18 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
     </div>
 </div>
 
+
+<!-- ═══════════════════════════════════════════════
+     我们的歌 (scrOurSongs)
+     ═══════════════════════════════════════════════ -->
+<div id="scrOurSongs" class="scr-flex" style="display:none;flex-direction:column;background:#f8f6ff;">
+  <div class="room-header" style="background:linear-gradient(135deg,#7c5ce7,#a29bfe);color:white;">
+    <span id="btnOurSongsBack" class="back-btn" style="color:white;" onclick="showScreen('scrMe')">＜</span>
+    <span class="header-center" style="color:white;">🎵 我们的歌</span>
+    <span class="empty-btn"></span>
+  </div>
+  <div id="ourSongsBody" style="flex:1;overflow-y:auto;padding:12px 14px 40px;"></div>
+</div>
 
 <!-- ═══════════════════════════════════════════════
      一起听歌 · 复古随身听 Skeuomorphic v3
@@ -1531,113 +1550,59 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
     <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#145220;margin-left:8px;flex-shrink:0;animation:wkBreath 1.9s ease-in-out infinite;">REC●</div>
   </div>
 
-  <!-- ─── 磁带视窗 ─── -->
-  <div style="position:relative;z-index:5;margin:10px 18px 0;flex-shrink:0;">
-    <!-- 深凹槽外框 -->
-    <div style="border-radius:18px;position:relative;overflow:hidden;
-      background:linear-gradient(150deg,#100c06 0%,#1a1408 50%,#120e06 100%);
-      box-shadow:inset 0 8px 22px rgba(0,0,0,.99),inset 0 0 0 1px rgba(255,255,255,.04),0 2px 0 rgba(255,255,255,.04),0 -1px 0 rgba(0,0,0,.9);
-      padding:14px 16px 12px;">
-
-      <!-- 亚克力透明盖板 -->
-      <div style="position:absolute;top:0;left:0;right:0;height:45%;border-radius:18px 18px 0 0;pointer-events:none;z-index:10;background:linear-gradient(180deg,rgba(255,255,255,.08) 0%,rgba(255,255,255,.015) 100%);"></div>
-      <div style="position:absolute;top:0;left:0;width:32%;height:100%;border-radius:18px 0 0 18px;pointer-events:none;z-index:10;background:linear-gradient(90deg,rgba(255,255,255,.03),transparent);"></div>
-
-      <!-- 歌名手写贴条 -->
-      <div style="position:relative;z-index:5;border-radius:3px;padding:6px 14px;margin-bottom:12px;text-align:center;overflow:hidden;
-        background:linear-gradient(108deg,#fffde6 0%,#faf6be 35%,#fefce2 70%,#faf8c6 100%);
-        box-shadow:2px 3px 11px rgba(0,0,0,.56),inset 0 1px 0 rgba(255,255,255,.9),0 0 0 1px rgba(185,165,25,.28);">
-        <!-- 纸纹 -->
-        <div style="position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(92deg,transparent 0px,transparent 4px,rgba(170,148,0,.028) 4px,rgba(170,148,0,.028) 5px);"></div>
-        <!-- 折痕 -->
-        <div style="position:absolute;top:49%;left:0;right:0;height:1px;background:rgba(140,118,0,.07);pointer-events:none;"></div>
-        <div id="wkSongName" style="font-family:'Caveat',cursive;font-size:18px;font-weight:700;color:#271606;letter-spacing:.5px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:relative;z-index:1;">— no tape loaded —</div>
-        <div id="wkArtistName" style="font-family:'Caveat',cursive;font-size:12px;color:#6a4c16;margin-top:1px;position:relative;z-index:1;"></div>
+  <!-- ─── 圆形唱片播放器 ─── -->
+  <div style="position:relative;z-index:5;margin:6px 18px 0;flex-shrink:0;display:flex;flex-direction:column;align-items:center;">
+    <!-- 手写体歌名（保留） -->
+    <div style="width:100%;border-radius:4px;padding:7px 14px;margin-bottom:8px;overflow:hidden;position:relative;
+      background:linear-gradient(108deg,#fffde6 0%,#faf6be 35%,#fefce2 70%,#faf8c6 100%);
+      box-shadow:2px 3px 10px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.9),0 0 0 1px rgba(185,165,25,.25);">
+      <div style="position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(92deg,transparent 0px,transparent 4px,rgba(170,148,0,.025) 4px,rgba(170,148,0,.025) 5px);"></div>
+      <div id="wkSongName" style="font-family:'Caveat',cursive;font-size:18px;font-weight:700;color:#271606;letter-spacing:.5px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:relative;z-index:1;">— no tape loaded —</div>
+      <div id="wkArtistName" style="font-family:'Caveat',cursive;font-size:12px;color:#6a4c16;margin-top:1px;position:relative;z-index:1;"></div>
+    </div>
+    <div style="position:relative;width:196px;height:196px;">
+      <!-- 外发光环 -->
+      <div style="position:absolute;inset:-4px;border-radius:50%;box-shadow:0 0 30px rgba(120,80,200,.18),0 8px 24px rgba(0,0,0,.8);"></div>
+      <!-- 旋转唱片盘 -->
+      <div id="wkDisc" style="position:absolute;inset:0;border-radius:50%;
+        background:conic-gradient(from 0deg,#18082a 0%,#2a1540 14%,#08152a 28%,#121f06 42%,#281508 57%,#14051a 72%,#18082a 100%);
+        box-shadow:inset 0 0 32px rgba(0,0,0,.95),0 4px 20px rgba(0,0,0,.85);">
+        <div style="position:absolute;inset:0;border-radius:50%;background:repeating-radial-gradient(circle at 50%,transparent 0,transparent 3px,rgba(255,255,255,.011) 3px,rgba(255,255,255,.011) 4px);pointer-events:none;"></div>
+        <div style="position:absolute;inset:17%;border-radius:50%;background:rgba(0,0,0,.38);"></div>
+        <div style="position:absolute;inset:25%;border-radius:50%;background:rgba(0,0,0,.28);"></div>
       </div>
-
-      <!-- 磁带轴 -->
-      <div style="display:flex;align-items:center;padding:0 4px 8px;position:relative;z-index:5;">
-
-        <!-- 左轴 -->
-        <div id="wkReelL" style="width:84px;height:84px;flex-shrink:0;border-radius:50%;position:relative;display:flex;align-items:center;justify-content:center;
-          background:radial-gradient(circle at 30% 25%,#7a5c28 0%,#4a3412 35%,#281c08 65%,#140e04 100%);
-          box-shadow:0 5px 16px rgba(0,0,0,.9),inset 0 2px 8px rgba(255,210,78,.06),inset 0 -5px 10px rgba(0,0,0,.78);">
-          <!-- 磁带卷层 -->
-          <div id="wkTapeL" style="position:absolute;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);width:58px;height:58px;
-            background:radial-gradient(circle at 50%,rgba(255,255,255,.018) 0%,transparent 65%),
-            conic-gradient(#1a1006 0deg,#3a2810 16deg,#221608 32deg,#3a2810 48deg,#1a1006 64deg,#3a2810 80deg,#221608 96deg,#3a2810 112deg,#1a1006 128deg,#3a2810 144deg,#221608 160deg,#3a2810 176deg,#1a1006 192deg,#3a2810 208deg,#221608 224deg,#3a2810 240deg,#1a1006 256deg,#3a2810 272deg,#221608 288deg,#3a2810 304deg,#1a1006 320deg,#3a2810 336deg,#221608 352deg);
-            box-shadow:inset 0 3px 8px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.04);">
-          </div>
-          <!-- 六辐条 + 磁带边缘光泽 -->
-          <svg style="position:absolute;width:100%;height:100%;z-index:2;" viewBox="0 0 84 84">
-            <g transform="translate(42,42)">
-              <line x1="0" y1="-38" x2="0" y2="-18" stroke="rgba(210,185,120,.14)" stroke-width="2.5" stroke-linecap="round"/>
-              <line x1="-32.9" y1="-19" x2="-15.6" y2="-9" stroke="rgba(210,185,120,.14)" stroke-width="2.5" stroke-linecap="round"/>
-              <line x1="32.9" y1="-19" x2="15.6" y2="-9" stroke="rgba(210,185,120,.14)" stroke-width="2.5" stroke-linecap="round"/>
-              <line x1="0" y1="38" x2="0" y2="18" stroke="rgba(210,185,120,.14)" stroke-width="2.5" stroke-linecap="round"/>
-              <line x1="-32.9" y1="19" x2="-15.6" y2="9" stroke="rgba(210,185,120,.14)" stroke-width="2.5" stroke-linecap="round"/>
-              <line x1="32.9" y1="19" x2="15.6" y2="9" stroke="rgba(210,185,120,.14)" stroke-width="2.5" stroke-linecap="round"/>
-              <circle r="29" fill="none" stroke="rgba(200,160,55,.07)" stroke-width="3.5"/>
-              <circle r="28" fill="none" stroke="rgba(255,255,255,.04)" stroke-width="1"/>
-              <circle r="12" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="1.5"/>
-            </g>
-          </svg>
-          <!-- 六齿银轴 -->
-          <div style="position:absolute;width:20px;height:20px;border-radius:50%;z-index:3;background:radial-gradient(circle at 34% 28%,#d0d0d0,#888 48%,#555 100%);box-shadow:0 2px 6px rgba(0,0,0,.85),inset 0 1px 3px rgba(255,255,255,.3),0 0 0 2px rgba(70,52,22,.5);">
-            <svg style="position:absolute;inset:0;width:100%;height:100%;" viewBox="0 0 20 20">
-              <polygon points="10,1 12.8,5 16,3.8 16,7.2 19,10 16,12.8 16,16.2 12.8,15 10,19 7.2,15 4,16.2 4,12.8 1,10 4,7.2 4,3.8 7.2,5" fill="none" stroke="rgba(90,68,28,.45)" stroke-width="1.2"/>
-            </svg>
-          </div>
-        </div>
-
-        <!-- 带子 -->
-        <div style="flex:1;height:5px;background:linear-gradient(90deg,#1a1006 0%,#2e2010 20%,#3e2c1a 50%,#2e2010 80%,#1a1006 100%);box-shadow:0 2px 7px rgba(0,0,0,.82),0 -1px 0 rgba(255,255,255,.04);border-radius:2px;margin-top:-3px;"></div>
-
-        <!-- 右轴 -->
-        <div id="wkReelR" style="width:84px;height:84px;flex-shrink:0;border-radius:50%;position:relative;display:flex;align-items:center;justify-content:center;
-          background:radial-gradient(circle at 30% 25%,#7a5c28 0%,#4a3412 35%,#281c08 65%,#140e04 100%);
-          box-shadow:0 5px 16px rgba(0,0,0,.9),inset 0 2px 8px rgba(255,210,78,.06),inset 0 -5px 10px rgba(0,0,0,.78);">
-          <div id="wkTapeR" style="position:absolute;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);width:28px;height:28px;
-            background:conic-gradient(#1a1006 0deg,#3a2810 16deg,#221608 32deg,#3a2810 48deg,#1a1006 64deg,#3a2810 80deg,#221608 96deg,#3a2810 112deg,#1a1006 128deg,#3a2810 144deg,#221608 160deg,#3a2810 176deg,#1a1006 192deg,#3a2810 208deg,#221608 224deg,#3a2810 240deg);
-            box-shadow:inset 0 2px 7px rgba(0,0,0,.65),0 0 0 1px rgba(255,255,255,.04);">
-          </div>
-          <svg style="position:absolute;width:100%;height:100%;z-index:2;" viewBox="0 0 84 84">
-            <g transform="translate(42,42)">
-              <line x1="0" y1="-38" x2="0" y2="-18" stroke="rgba(210,185,120,.14)" stroke-width="2.5" stroke-linecap="round"/>
-              <line x1="-32.9" y1="-19" x2="-15.6" y2="-9" stroke="rgba(210,185,120,.14)" stroke-width="2.5" stroke-linecap="round"/>
-              <line x1="32.9" y1="-19" x2="15.6" y2="-9" stroke="rgba(210,185,120,.14)" stroke-width="2.5" stroke-linecap="round"/>
-              <line x1="0" y1="38" x2="0" y2="18" stroke="rgba(210,185,120,.14)" stroke-width="2.5" stroke-linecap="round"/>
-              <line x1="-32.9" y1="19" x2="-15.6" y2="9" stroke="rgba(210,185,120,.14)" stroke-width="2.5" stroke-linecap="round"/>
-              <line x1="32.9" y1="19" x2="15.6" y2="9" stroke="rgba(210,185,120,.14)" stroke-width="2.5" stroke-linecap="round"/>
-              <circle r="29" fill="none" stroke="rgba(200,160,55,.07)" stroke-width="3.5"/>
-              <circle r="12" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="1.5"/>
-            </g>
-          </svg>
-          <div style="position:absolute;width:20px;height:20px;border-radius:50%;z-index:3;background:radial-gradient(circle at 34% 28%,#d0d0d0,#888 48%,#555 100%);box-shadow:0 2px 6px rgba(0,0,0,.85),inset 0 1px 3px rgba(255,255,255,.3);">
-            <svg style="position:absolute;inset:0;width:100%;height:100%;" viewBox="0 0 20 20">
-              <polygon points="10,1 12.8,5 16,3.8 16,7.2 19,10 16,12.8 16,16.2 12.8,15 10,19 7.2,15 4,16.2 4,12.8 1,10 4,7.2 4,3.8 7.2,5" fill="none" stroke="rgba(90,68,28,.45)" stroke-width="1.2"/>
-            </svg>
-          </div>
-        </div>
+      <!-- 中心静止：char头像 -->
+      <div id="wkDiscCenter" style="position:absolute;inset:31%;border-radius:50%;z-index:3;
+        background:radial-gradient(circle at 35% 30%,#c8a870,#7a5828 48%,#3a2810);
+        box-shadow:0 2px 12px rgba(0,0,0,.9),inset 0 1px 3px rgba(255,230,100,.18);
+        display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden;
+        background-size:cover;background-position:center;">🎵</div>
+      <!-- 金属轴 -->
+      <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:8px;height:8px;border-radius:50%;z-index:4;
+        background:radial-gradient(circle at 35% 28%,#e0e0e0,#888 48%,#444);
+        box-shadow:0 1px 4px rgba(0,0,0,.8);"></div>
+      <!-- 顶面高光 -->
+      <div style="position:absolute;inset:0;border-radius:50%;background:linear-gradient(140deg,rgba(255,255,255,.09) 0%,transparent 50%);pointer-events:none;z-index:2;"></div>
+      <!-- 装饰音符 -->
+      <div style="position:absolute;top:3%;right:-1%;font-size:14px;color:#c08040;opacity:.45;animation:wkBreath 3s ease-in-out infinite;z-index:5;">♪</div>
+      <div style="position:absolute;bottom:5%;left:0%;font-size:11px;color:#8080b8;opacity:.35;animation:wkBreath 4.5s ease-in-out 1.5s infinite;z-index:5;">♫</div>
+    </div>
+    <!-- 进度条 -->
+    <div style="display:flex;align-items:center;gap:8px;width:100%;margin-top:10px;">
+      <span id="wkT1" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#7a6040;min-width:28px;">0:00</span>
+      <div id="wkSeekBar" onclick="wkSeek(event)" style="flex:1;height:5px;cursor:pointer;border-radius:3px;background:rgba(255,255,255,.1);box-shadow:inset 0 1px 3px rgba(0,0,0,.7);">
+        <div id="wkProg" style="height:100%;width:0%;border-radius:3px;background:linear-gradient(90deg,#a060c8,#d4a030);box-shadow:0 0 6px rgba(170,90,200,.4);transition:.35s linear;"></div>
       </div>
-
-      <!-- 进度条 + 计数器 -->
-      <div style="display:flex;align-items:center;gap:8px;position:relative;z-index:5;">
-        <span id="wkT1" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#5a4820;min-width:28px;">0:00</span>
-        <div id="wkSeekBar" onclick="wkSeek(event)" style="flex:1;height:4px;cursor:pointer;border-radius:2px;background:rgba(255,255,255,.07);box-shadow:inset 0 1px 5px rgba(0,0,0,.78),0 1px 0 rgba(255,255,255,.04);">
-          <div id="wkProg" style="height:100%;width:0%;border-radius:2px;background:linear-gradient(90deg,#7a5410,#d09030);box-shadow:0 0 8px rgba(210,150,40,.6);transition:.35s linear;"></div>
-        </div>
-        <span id="wkT2" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#5a4820;min-width:28px;text-align:right;">0:00</span>
-        <div style="display:flex;gap:1px;padding:3px 6px;border-radius:4px;background:#050302;box-shadow:inset 0 4px 12px rgba(0,0,0,.99),0 1px 0 rgba(255,255,255,.03);">
-          <span id="wkC0" style="font-family:'Share Tech Mono',monospace;font-size:13px;font-weight:700;color:#e0a820;text-shadow:0 0 10px #a07010,0 0 22px #604008;width:12px;text-align:center;">0</span>
-          <span id="wkC1" style="font-family:'Share Tech Mono',monospace;font-size:13px;font-weight:700;color:#e0a820;text-shadow:0 0 10px #a07010,0 0 22px #604008;width:12px;text-align:center;">0</span>
-          <span id="wkC2" style="font-family:'Share Tech Mono',monospace;font-size:13px;font-weight:700;color:#e0a820;text-shadow:0 0 10px #a07010,0 0 22px #604008;width:12px;text-align:center;">0</span>
-        </div>
+      <span id="wkT2" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#7a6040;min-width:28px;text-align:right;">0:00</span>
+      <div style="padding:2px 5px;border-radius:3px;background:#050302;box-shadow:inset 0 2px 8px rgba(0,0,0,.99);display:flex;gap:1px;">
+        <span id="wkC0" style="font-family:'Share Tech Mono',monospace;font-size:11px;font-weight:700;color:#e0a820;text-shadow:0 0 8px #a07010;width:10px;text-align:center;">0</span>
+        <span id="wkC1" style="font-family:'Share Tech Mono',monospace;font-size:11px;font-weight:700;color:#e0a820;text-shadow:0 0 8px #a07010;width:10px;text-align:center;">0</span>
+        <span id="wkC2" style="font-family:'Share Tech Mono',monospace;font-size:11px;font-weight:700;color:#e0a820;text-shadow:0 0 8px #a07010;width:10px;text-align:center;">0</span>
       </div>
-    </div><!-- /视窗 -->
+    </div>
   </div>
 
-  <!-- ─── 歌词/聊天区 ─── -->
+    <!-- ─── 歌词/聊天区 ─── -->
   <div style="position:relative;z-index:5;flex:1;margin:8px 18px 6px;min-height:0;border-radius:14px;overflow:hidden;
     background:linear-gradient(180deg,rgba(6,4,2,.84),rgba(4,2,0,.94));
     box-shadow:inset 0 3px 14px rgba(0,0,0,.78),inset 0 0 0 1px rgba(255,255,255,.035);
@@ -1688,16 +1653,21 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
   <!-- ─── AI回复loading ─── -->
   <div id="wkAILoader" style="display:none;position:absolute;bottom:168px;left:50%;transform:translateX(-50%);z-index:15;background:rgba(0,0,0,.88);border-radius:20px;padding:8px 18px;font-family:'Share Tech Mono',monospace;font-size:11px;color:#c89030;letter-spacing:1px;animation:wkBreath .85s ease-in-out infinite;white-space:nowrap;">♪ 对方正在回应…</div>
 
-  <!-- ─── 机械按键区 ─── -->
-  <div style="position:relative;z-index:5;flex-shrink:0;padding:0 14px 18px;display:flex;align-items:flex-end;justify-content:space-between;gap:6px;">
-    <div class="wk-slot" style="width:54px;height:52px;"><button class="wk-key" onclick="wkPrev()" style="width:46px;height:44px;font-size:17px;">⏮</button></div>
-    <div class="wk-slot" style="width:66px;height:64px;"><button class="wk-key wk-gold" id="wkBPlay" onclick="wkPlay()" style="width:58px;height:56px;font-size:26px;border-radius:11px;">▶</button></div>
-    <div class="wk-slot" style="width:66px;height:64px;"><button class="wk-key" onclick="wkPause()" style="width:58px;height:56px;font-size:22px;border-radius:11px;">⏸</button></div>
-    <div class="wk-slot" style="width:54px;height:52px;"><button class="wk-key" onclick="wkNext()" style="width:46px;height:44px;font-size:17px;">⏭</button></div>
-    <div class="wk-slot" style="width:54px;height:52px;"><button class="wk-key" onclick="wkOpenAdd()" style="width:46px;height:44px;font-size:14px;">＋♫</button></div>
+  <!-- ─── 控制按钮区 (kawaii) ─── -->
+  <div style="position:relative;z-index:5;flex-shrink:0;padding:6px 22px 16px;display:flex;align-items:center;justify-content:space-between;">
+    <button id="wkBtnLike" onclick="wkToggleLike()" title="喜欢这首歌"
+      style="width:46px;height:46px;border-radius:50%;border:none;cursor:pointer;background:rgba(255,255,255,.07);color:#d090b8;font-size:22px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.5);transition:transform .12s,color .2s;">♡</button>
+    <button onclick="wkPrev()"
+      style="width:46px;height:46px;border-radius:50%;border:none;cursor:pointer;background:rgba(255,255,255,.07);color:#80b0d8;font-size:20px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.5);">⏮</button>
+    <button id="wkBPlay" onclick="wkTogglePlay()"
+      style="width:62px;height:62px;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(135deg,#5ecba8,#3aab88);color:white;font-size:26px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 18px rgba(70,185,135,.4),0 2px 6px rgba(0,0,0,.5);transition:transform .1s;">▶</button>
+    <button onclick="wkNext()"
+      style="width:46px;height:46px;border-radius:50%;border:none;cursor:pointer;background:rgba(255,255,255,.07);color:#80b0d8;font-size:20px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.5);">⏭</button>
+    <button onclick="wkOpenAdd()"
+      style="width:46px;height:46px;border-radius:50%;border:none;cursor:pointer;background:rgba(255,255,255,.07);color:#a898c8;font-size:19px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.5);">☰</button>
   </div>
 
-  <!-- ─── 添加歌曲浮层 ─── -->
+    <!-- ─── 添加歌曲浮层 ─── -->
   <div id="wkAddPanel" style="display:none;position:absolute;inset:0;z-index:20;background:rgba(0,0,0,.82);backdrop-filter:blur(12px);flex-direction:column;justify-content:flex-end;">
     <div style="background:linear-gradient(168deg,#2c2018,#201810,#181410);border-radius:22px 22px 0 0;padding:18px 18px 30px;max-height:80vh;overflow-y:auto;border-top:1px solid rgba(255,255,255,.10);box-shadow:0 -12px 40px rgba(0,0,0,.78);">
       <div style="text-align:center;font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:3px;color:#c89030;margin-bottom:14px;">── ADD TRACK ──</div>
@@ -1720,14 +1690,14 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 
 <script>
 // ════════════════════════════════════════════════════
-// ★ 随身听引擎 v3  (一起听歌)
+// ★ 随身听引擎 v4  (一起听歌)
 // ════════════════════════════════════════════════════
 (function(){
 'use strict';
 const WK={
   songs:[],chats:[],cur:-1,playing:false,
   audio:null,angle:0,rafId:null,lyricIdx:0,lyricTimer:null,gyroOn:false,
-  SK:'wk_songs_v3',CK:'wk_chats_v2',
+  SK:'wk_songs_v4',CK:'wk_chats_v2',
 };
 const WK_NOTES=['这首不错♪','副歌好温柔…','想起你了','一起的感觉','鼓点好温柔','这段旋律❤','单曲循环中','悄悄喜欢','嗯，很配你','静静听着'];
 
@@ -1745,18 +1715,12 @@ const fmt=s=>{s=isFinite(s)&&s>=0?s:0;return Math.floor(s/60)+':'+(s=Math.floor(
 const setLcd=txt=>{let e=el('wkLcdTxt');if(!e)return;e.style.animation='none';e.offsetHeight;e.innerText=txt;e.style.animation='wkLcdScroll 18s linear infinite';};
 const setCnt=v=>{let s=String(Math.min(999,Math.floor(v))).padStart(3,'0');['wkC0','wkC1','wkC2'].forEach((id,i)=>{let e=el(id);if(!e||e.innerText===s[i])return;e.style.animation='none';e.offsetHeight;e.style.animation='wkCntFlick .12s ease';e.innerText=s[i];});};
 
-// ── rAF: 轴旋转 + 磁带厚度 ──
+// ── rAF: 唱片旋转 ──
 function wkTick(){
   if(!WK.playing){WK.rafId=null;return;}
-  WK.angle=(WK.angle+3)%360;
-  let rl=el('wkReelL'),rr=el('wkReelR');
-  if(rl)rl.style.transform=`rotate(${WK.angle}deg)`;
-  if(rr)rr.style.transform=`rotate(${-WK.angle}deg)`;
-  let p=WK.audio&&WK.audio.duration>0?WK.audio.currentTime/WK.audio.duration:0;
-  let lw=Math.round(58-p*32),rw=Math.round(28+p*32);
-  let tl=el('wkTapeL'),tr=el('wkTapeR');
-  if(tl){tl.style.width=lw+'px';tl.style.height=lw+'px';}
-  if(tr){tr.style.width=rw+'px';tr.style.height=rw+'px';}
+  WK.angle=(WK.angle+1.2)%360;
+  let disc=el('wkDisc');
+  if(disc)disc.style.transform=`rotate(${WK.angle}deg)`;
   WK.rafId=requestAnimationFrame(wkTick);
 }
 
@@ -1790,27 +1754,43 @@ function wkStartLyrics(lyrics){
 function wkLoadSong(idx){
   if(idx<0||idx>=WK.songs.length)return;
   WK.cur=idx;let s=WK.songs[idx];
+  // 初始化缺失字段
+  if(typeof s.liked==='undefined')s.liked=false;
+  if(!s.favMsgs)s.favMsgs=[];
+  if(!s.playCount)s.playCount=0;
   let sn=el('wkSongName'),an=el('wkArtistName');
   if(sn)sn.innerText=s.name||'unknown';
   if(an)an.innerText=s.artist||'';
   setLcd('🎵 '+(s.name||'')+(s.artist?' · '+s.artist:'')+'   ──   ');
-  // 便利贴：随机语料 + 随机倾斜
+  // 便利贴：随机语料
   let stk=el('wkSticky'),stxt=el('wkStickyTxt');
   if(stk)stk.style.display='block';
   if(stxt)stxt.innerText=WK_NOTES[Math.floor(Math.random()*WK_NOTES.length)];
-  if(stk){let d=(3+Math.random()*2.5).toFixed(1);stk.style.setProperty('--wr',d+'deg');stk.style.right=(10+Math.random()*8)+'px';stk.style.bottom=(152+Math.floor(Math.random()*14))+'px';}
+  if(stk){let d=(3+Math.random()*2.5).toFixed(1);stk.style.setProperty('--wr',d+'deg');stk.style.right=(10+Math.random()*8)+'px';stk.style.bottom=(130+Math.floor(Math.random()*14))+'px';}
   if(WK.audio){WK.audio.pause();WK.audio.ontimeupdate=null;WK.audio.onended=null;}
   WK.audio=new Audio();
   WK.audio.ontimeupdate=wkUpdateProg;
   WK.audio.onended=()=>wkNext();
-  WK.audio.onerror=()=>{setLcd('⚠ 无法播放，请检查URL');WK.playing=false;let bp=el('wkBPlay');if(bp)bp.classList.remove('wk-playing');};
+  WK.audio.onerror=()=>{setLcd('⚠ 无法播放，请检查URL');WK.playing=false;let bp=el('wkBPlay');if(bp)bp.innerText='▶';};
   if(s.url)WK.audio.src=s.url;
   let pb=el('wkProg');if(pb)pb.style.width='0%';
   let t1=el('wkT1');if(t1)t1.innerText='0:00';
   let t2=el('wkT2');if(t2)t2.innerText='0:00';
   setCnt(0);wkStartLyrics(s.lyrics||[]);
+  // 更新喜欢按钮
+  let likeBtn=el('wkBtnLike');
+  if(likeBtn){likeBtn.innerText=s.liked?'♥':'♡';likeBtn.style.color=s.liked?'#ff6090':'#d090b8';}
+  // 更新唱片中心（char头像）
+  wkUpdateDiscCenter();
 }
 window.wkLoad_=wkLoadSong;
+
+function wkUpdateDiscCenter(){
+  let dc=el('wkDiscCenter');if(!dc)return;
+  let img=window.currentLoadedAiI;
+  if(img){dc.style.backgroundImage='url('+img+')';dc.style.backgroundSize='cover';dc.style.backgroundPosition='center';dc.innerHTML='';}
+  else{dc.style.backgroundImage='';dc.innerHTML='🎵';}
+}
 
 // ── 播放控制 ──
 window.wkPlay=function(){
@@ -1819,17 +1799,42 @@ window.wkPlay=function(){
   if(!WK.audio||!WK.audio.src)return;
   WK.audio.play().catch(()=>{});
   WK.playing=true;
-  let bp=el('wkBPlay');if(bp)bp.classList.add('wk-playing');
+  let bp=el('wkBPlay');if(bp){bp.innerText='⏸';bp.style.background='linear-gradient(135deg,#5ecba8,#3aab88)';}
   if(!WK.rafId)WK.rafId=requestAnimationFrame(wkTick);
+  // 记录播放
+  if(WK.cur>=0&&WK.songs[WK.cur]){
+    WK.songs[WK.cur].playCount=(WK.songs[WK.cur].playCount||0)+1;
+    WK.songs[WK.cur].lastPlayed=Date.now();
+    wkSave();
+  }
 };
 window.wkPause=function(){
   if(WK.audio)WK.audio.pause();
   WK.playing=false;
-  let bp=el('wkBPlay');if(bp)bp.classList.remove('wk-playing');
+  let bp=el('wkBPlay');if(bp){bp.innerText='▶';bp.style.background='linear-gradient(135deg,#5ecba8,#3aab88)';}
 };
+window.wkTogglePlay=function(){if(WK.playing)wkPause();else wkPlay();};
 window.wkNext=function(){if(!WK.songs.length)return;wkLoadSong((WK.cur+1)%WK.songs.length);if(WK.playing)wkPlay();};
 window.wkPrev=function(){if(!WK.songs.length)return;wkLoadSong((WK.cur-1+WK.songs.length)%WK.songs.length);if(WK.playing)wkPlay();};
 window.wkSeek=function(e){let bar=el('wkSeekBar');if(!bar||!WK.audio||!WK.audio.duration)return;let r=bar.getBoundingClientRect();WK.audio.currentTime=((e.clientX-r.left)/r.width)*WK.audio.duration;};
+
+// ── 喜欢 ──
+window.wkToggleLike=function(){
+  if(WK.cur<0||!WK.songs[WK.cur])return;
+  WK.songs[WK.cur].liked=!WK.songs[WK.cur].liked;
+  wkSave();
+  let btn=el('wkBtnLike');
+  if(btn){btn.innerText=WK.songs[WK.cur].liked?'♥':'♡';btn.style.color=WK.songs[WK.cur].liked?'#ff6090':'#d090b8';}
+  // 心跳动画
+  if(btn&&WK.songs[WK.cur].liked){btn.style.transform='scale(1.4)';setTimeout(()=>btn.style.transform='',250);}
+};
+window.wkToggleLikeByIdx=function(idx){
+  if(!WK.songs[idx])return;
+  WK.songs[idx].liked=!WK.songs[idx].liked;
+  if(WK.cur===idx){let btn=el('wkBtnLike');if(btn){btn.innerText=WK.songs[idx].liked?'♥':'♡';btn.style.color=WK.songs[idx].liked?'#ff6090':'#d090b8';}}
+  wkSave();
+  if(typeof loadOurSongs==='function')loadOurSongs();
+};
 
 // ── 出仓 ──
 window.wkEject=function(){
@@ -1851,7 +1856,6 @@ window.wkTab=function(t){
   if(!isL){wkRenderChat();wkSyncDogAvatar();}
 };
 
-// 同步小狗头像（和主聊天页面一致）
 function wkSyncDogAvatar(){
   let btn=el('wkBtnAI');if(!btn)return;
   let img=window.currentLoadedAiI;
@@ -1859,28 +1863,96 @@ function wkSyncDogAvatar(){
   else{btn.style.backgroundImage='';btn.innerHTML='🐶';}
 }
 
-// ── 聊天渲染 ──
+// ── 聊天渲染 (支持长按菜单 + 收藏标记) ──
 function wkRenderChat(){
   let box=el('wkCMsgs');if(!box)return;
-  box.innerHTML=WK.chats.map(m=>{
-    let align=m.isMe?'flex-end':'flex-start',
-        bg=m.isMe?'linear-gradient(135deg,#7a5818,#5a3808)':'rgba(255,255,255,.09)',
-        col=m.isMe?'#f0c840':'#d4c890';
-    return `<div style="display:flex;justify-content:${align}"><div style="max-width:78%;padding:8px 13px;border-radius:14px;font-family:'Caveat',cursive;font-size:15px;color:${col};background:${bg};line-height:1.5;word-break:break-word;box-shadow:0 2px 10px rgba(0,0,0,.45);">${m.text.replace(/</g,'&lt;')}</div></div>`;
-  }).join('');
+  box.innerHTML='';
+  WK.chats.forEach((m,idx)=>{
+    let row=document.createElement('div');
+    row.style.cssText='display:flex;justify-content:'+(m.isMe?'flex-end':'flex-start')+';';
+    let bg=m.isErr?'rgba(180,60,40,.25)':m.isMe?'linear-gradient(135deg,#7a5818,#5a3808)':'rgba(255,255,255,.09)';
+    let col=m.isErr?'#e08868':m.isMe?'#f0c840':'#d4c890';
+    let border=m.isErr?'1px solid rgba(200,80,60,.35)':'none';
+    let star=m.starred?'<span style="margin-left:4px;font-size:10px;color:#f0c840;vertical-align:middle;">★</span>':'';
+    let bub=document.createElement('div');
+    bub.style.cssText='max-width:82%;padding:9px 14px;border-radius:16px;font-family:\'Caveat\',cursive;font-size:15px;color:'+col+';background:'+bg+';line-height:1.5;word-break:break-word;box-shadow:0 2px 10px rgba(0,0,0,.45);border:'+border+';cursor:pointer;user-select:none;';
+    bub.innerHTML=(m.text||'').replace(/</g,'&lt;')+star;
+    let pressT;
+    bub.addEventListener('touchstart',e=>{pressT=setTimeout(()=>_wkShowMenu(idx,m),520);},{passive:true});
+    bub.addEventListener('touchend',()=>clearTimeout(pressT));
+    bub.addEventListener('touchmove',()=>clearTimeout(pressT));
+    bub.addEventListener('contextmenu',e=>{e.preventDefault();_wkShowMenu(idx,m);});
+    row.appendChild(bub);box.appendChild(row);
+  });
   box.scrollTop=box.scrollHeight;
 }
+
+// ── 消息长按菜单 ──
+function _wkShowMenu(idx,msg){
+  let scrWk=el('scrWalkman');if(!scrWk)return;
+  let old=el('wkMsgMenu');if(old)old.remove();
+  let menu=document.createElement('div');
+  menu.id='wkMsgMenu';
+  menu.style.cssText='position:absolute;bottom:0;left:0;right:0;z-index:9999;background:linear-gradient(168deg,#2c2018,#201810,#181410);border-radius:22px 22px 0 0;border-top:1px solid rgba(255,255,255,.1);box-shadow:0 -8px 30px rgba(0,0,0,.7);';
+  let items=[
+    msg.starred?
+      {t:'⭐ 取消收藏',c:'#e0c060',fn:'wkUnstarMsg('+idx+')'}:
+      {t:'☆ 收藏到「我们的歌」',c:'#c0a840',fn:'wkStarMsg('+idx+')'},
+    ...(!msg.isMe&&!msg.isErr?[{t:'↺ 重新生成',c:'#80c0e0',fn:'wkRegenMsg('+idx+')'}]:[]),
+    {t:'🗑 删除',c:'#e07060',fn:'wkDelMsg('+idx+')'},
+    {t:'取消',c:'#8a7858',fn:'wkCloseMenu()'},
+  ];
+  menu.innerHTML='<div style="padding:8px 0 4px;">'+
+    items.map(it=>`<div onclick="${it.fn}" style="padding:15px 24px;font-size:15px;color:${it.c};border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer;font-family:inherit;">${it.t}</div>`).join('')+
+    '</div>';
+  scrWk.appendChild(menu);
+  setTimeout(()=>{
+    let close=e=>{if(!menu.contains(e.target)){wkCloseMenu();document.removeEventListener('touchstart',close);document.removeEventListener('mousedown',close);}};
+    document.addEventListener('touchstart',close,{passive:true});
+    document.addEventListener('mousedown',close);
+  },100);
+}
+window.wkCloseMenu=function(){let m=el('wkMsgMenu');if(m)m.remove();};
+
+window.wkStarMsg=function(idx){
+  if(!WK.chats[idx])return;
+  WK.chats[idx].starred=true;
+  if(WK.cur>=0&&WK.songs[WK.cur]){
+    if(!WK.songs[WK.cur].favMsgs)WK.songs[WK.cur].favMsgs=[];
+    WK.songs[WK.cur].favMsgs.push({text:WK.chats[idx].text,isMe:WK.chats[idx].isMe,ts:WK.chats[idx].ts||Date.now()});
+    wkSave();
+  }
+  wkSaveC();wkRenderChat();wkCloseMenu();
+};
+window.wkUnstarMsg=function(idx){
+  if(!WK.chats[idx])return;
+  WK.chats[idx].starred=false;
+  wkSaveC();wkRenderChat();wkCloseMenu();
+};
+window.wkDelMsg=function(idx){WK.chats.splice(idx,1);wkSaveC();wkRenderChat();wkCloseMenu();};
+window.wkRegenMsg=function(idx){
+  // 删掉idx及其后的所有AI消息
+  WK.chats.splice(idx,WK.chats.length-idx);
+  wkSaveC();wkRenderChat();wkCloseMenu();
+  setTimeout(()=>window.wkAIReply(),50);
+};
+window.wkMoveSong=function(idx,dir){
+  let ni=idx+dir;if(ni<0||ni>=WK.songs.length)return;
+  [WK.songs[idx],WK.songs[ni]]=[WK.songs[ni],WK.songs[idx]];
+  if(WK.cur===idx)WK.cur=ni;else if(WK.cur===ni)WK.cur=idx;
+  wkSave();if(typeof loadOurSongs==='function')loadOurSongs();
+};
 
 // ── 发送消息 ──
 window.wkSend=function(){
   let inp=el('wkCI');if(!inp)return;
   let txt=(inp.value||'').trim();if(!txt)return;
-  WK.chats.push({text:txt,isMe:true,ts:Date.now()});
+  WK.chats.push({text:txt,isMe:true,ts:Date.now(),songIdx:WK.cur});
   wkSaveC();wkRenderChat();inp.value='';inp.style.height='34px';
   let lp=el('wkLP');if(lp&&lp.style.display!=='none')setLcd('💬 你：'+txt+'   ──   ');
 };
 
-// ── AI 回复（调用真实API，和主聊天逻辑一致）──
+// ── AI 回复 (带人设+主聊天上下文+足够字数) ──
 window.wkAIReply=async function(){
   let pxy=(el('apiPxy')?.value||'').trim();
   let key=(el('apiK')?.value||'').trim();
@@ -1888,25 +1960,49 @@ window.wkAIReply=async function(){
   let temp=parseFloat(el('apiTemp')?.value)||0.8;
   if(!pxy||!key||!mod){wkAddChat('（请先在设置里配置API密钥）',false);return;}
   if(!pxy.includes('chat/completions'))pxy=pxy.replace(/\/$/,'')+'/chat/completions';
-  let charName=(el('cfgRem')?.value||el('cfgName')?.value||'专属恋人');
-  let songInfo=WK.cur>=0&&WK.songs[WK.cur]?`你们正在一起听《${WK.songs[WK.cur].name||''}》${WK.songs[WK.cur].artist?' - '+WK.songs[WK.cur].artist:''}`:'';
+  let charName=(el('cfgRem')?.value||el('cfgName')?.value||'恋人');
+  let charPersona=(el('cfgAiP')?.value||'').trim();
+  let myName=(el('cfgMyName')?.value||'').trim();
+  let songInfo=WK.cur>=0&&WK.songs[WK.cur]?`你们现在正一起在听《${WK.songs[WK.cur].name||''}》${WK.songs[WK.cur].artist?' - '+WK.songs[WK.cur].artist:''}`:'你们正在一起听歌';
+  // 读取主聊天最近15条
+  let mainCtx='';
+  try{
+    let raw=localStorage.getItem('chatHistory');
+    if(raw){
+      let h=JSON.parse(raw).slice(-15);
+      if(h.length)mainCtx='【与'+charName+'的近期聊天背景（最近'+h.length+'条）】\n'+
+        h.map(m=>(m.role==='user'?(myName||'用户'):charName)+': '+m.content).join('\n')+'\n\n';
+    }
+  }catch(e){}
+  let sysPrompt=`${charPersona?'你的人设如下，必须严格遵守，不得偏离：\n'+charPersona+'\n\n':''}${mainCtx}【当前情景】${songInfo}。这是一个私密温馨的双人听歌空间。请结合上方聊天背景自然融入情景——如果对方之前没有提过要一起听歌，应表现出合理的惊喜或好奇反应；如有铺垫则顺势投入。回复要自然简短（100字以内），符合你的人设性格，就像真实聊天，不要用任何格式符号。`;
   let loader=el('wkAILoader');if(loader)loader.style.display='block';
+  let validChats=WK.chats.filter(m=>!m.isErr).slice(-12);
   let msgs=[
-    {role:'system',content:`你是${charName}，正在和玩家通过随身听一起听歌，这是一个私密温馨的双人听歌空间。${songInfo}。用自然简短的语气回应（50字以内），不要加任何格式符号，就像真实聊天一样。`},
-    ...WK.chats.slice(-8).map(m=>({role:m.isMe?'user':'assistant',content:m.text})),
+    {role:'system',content:sysPrompt},
+    ...validChats.map(m=>({role:m.isMe?'user':'assistant',content:m.text})),
   ];
   try{
-    let res=await fetch(pxy,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({model:mod,max_tokens:120,temperature:temp,messages:msgs})});
+    let res=await fetch(pxy,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+      body:JSON.stringify({model:mod,max_tokens:400,temperature:temp,messages:msgs})});
     let data=await res.json();
     let reply=(data.choices?.[0]?.message?.content||'').trim();
-    if(!reply)throw new Error('empty');
-    wkAddChat(reply,false);
-  }catch(e){wkAddChat('…（信号不太好）',false);}
+    if(reply){
+      wkAddChat(reply,false);
+    }else{
+      let errMsg=data.error?.message||JSON.stringify(data).slice(0,80);
+      WK.chats.push({text:'[请求失败: '+errMsg+']',isMe:false,isErr:true,ts:Date.now(),songIdx:WK.cur});
+      wkSaveC();wkRenderChat();
+    }
+  }catch(e){
+    WK.chats.push({text:'[请求失败: '+e.message+']',isMe:false,isErr:true,ts:Date.now(),songIdx:WK.cur});
+    wkSaveC();wkRenderChat();
+  }
   if(loader)loader.style.display='none';
 };
 
 function wkAddChat(text,isMe){
-  WK.chats.push({text,isMe,ts:Date.now()});wkSaveC();wkRenderChat();
+  WK.chats.push({text,isMe,ts:Date.now(),songIdx:WK.cur});
+  wkSaveC();wkRenderChat();
   if(!isMe){
     let lp=el('wkLP');
     if(lp&&lp.style.display!=='none'){
@@ -1926,7 +2022,7 @@ function wkRenderList(){
     <div style="display:flex;align-items:center;padding:8px 10px;border-radius:10px;gap:8px;background:${i===WK.cur?'rgba(200,144,48,.14)':'rgba(255,255,255,.04)'};border:1px solid ${i===WK.cur?'rgba(200,144,48,.3)':'rgba(255,255,255,.07)'};">
       <div style="flex:1;cursor:pointer;" onclick="wkLoad_(${i});wkPlay();wkCloseAdd();">
         <div style="font-family:'Caveat',cursive;font-size:15px;color:#d8c068;font-weight:700;">${s.name||'未知'}</div>
-        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#6a5828;letter-spacing:1px;">${s.artist||''} ${s.url?'▶ AUDIO':'⚠ NO URL'}</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#6a5828;letter-spacing:1px;">${s.artist||''} ${s.url?'▶ AUDIO':'⚠ NO URL'} ${s.liked?'♥':''}</div>
       </div>
       <button onclick="wkDel(${i})" style="padding:4px 10px;border-radius:8px;border:none;cursor:pointer;background:linear-gradient(135deg,#6a1810,#4a1008);color:#ff9878;font-size:12px;box-shadow:0 2px 0 #2a0800;">DEL</button>
     </div>`).join('');
@@ -1936,7 +2032,7 @@ window.wkCloseAdd=function(){let p=el('wkAddPanel');if(p)p.style.display='none';
 window.wkAddSong=function(){
   let n=(el('wkIN')?.value||'').trim(),a=(el('wkIA')?.value||'').trim(),u=(el('wkIU')?.value||'').trim(),l=(el('wkIL')?.value||'').trim();
   if(!n){alert('请填写歌曲名称');return;}
-  WK.songs.push({name:n,artist:a,url:u,lyrics:l?l.split('\n').map(x=>x.trim()).filter(Boolean):[]});
+  WK.songs.push({name:n,artist:a,url:u,lyrics:l?l.split('\n').map(x=>x.trim()).filter(Boolean):[],liked:false,playCount:0,favMsgs:[],addedAt:Date.now()});
   wkSave();['wkIN','wkIA','wkIU','wkIL'].forEach(id=>{let e=el(id);if(e)e.value='';});
   wkRenderList();if(WK.songs.length===1)wkLoadSong(0);
 };
@@ -1956,7 +2052,12 @@ window.wkOpen=async function(){
   setTimeout(()=>{scr.style.transition='';},450);
   if(typeof toggleMenuDrawer==='function')toggleMenuDrawer(false);
   if(WK.songs.length>0&&WK.cur<0)wkLoadSong(0);
-  wkRenderChat();wkSyncDogAvatar();
+  wkRenderChat();wkSyncDogAvatar();wkUpdateDiscCenter();
+  if(WK.cur>=0&&WK.songs[WK.cur]){
+    let btn=el('wkBtnLike');
+    if(btn){btn.innerText=WK.songs[WK.cur].liked?'♥':'♡';btn.style.color=WK.songs[WK.cur].liked?'#ff6090':'#d090b8';}
+  }
+  let bp=el('wkBPlay');if(bp){bp.innerText=WK.playing?'⏸':'▶';}
   if(!WK.gyroOn&&window.DeviceOrientationEvent){
     window.addEventListener('deviceorientation',e=>{
       let g=el('wkGlow');if(!g)return;
@@ -1970,10 +2071,92 @@ window.wkOpen=async function(){
 // ── 外部消息推入 ──
 window.wkPushMsg=function(text){wkAddChat(text,false);};
 
+// ── 「我们的歌」数据访问入口（供外部函数使用）──
+window._WK=WK;
+
+
 })();
 </script>
 
-<!-- ===== 语音通话界面 ===== -->
+<script>
+// ════════════════════════════════════════════
+// ★ 我们的歌 (loadOurSongs)
+// ════════════════════════════════════════════
+async function loadOurSongs(){
+  // ensure WK data is loaded
+  if(window._WK&&!window._WK.songs.length){
+    try{let s=await localforage.getItem(window._WK.SK);if(Array.isArray(s))window._WK.songs=s;}catch(e){}
+  }
+  let songs=window._WK?window._WK.songs:[];
+  let body=document.getElementById('ourSongsBody');
+  if(!body)return;
+  if(!songs.length){
+    body.innerHTML='<div style="text-align:center;color:#a090c0;padding:48px 0 20px;font-size:15px;line-height:2;">还没有一起听过歌哦 ～<br><span style="font-size:28px;">🎵</span><br>快去「一起听歌」开始吧</div>';
+    return;
+  }
+  // sort by lastPlayed desc, fallback by index
+  let sorted=songs.map((s,i)=>({...s,_origIdx:i})).sort((a,b)=>(b.lastPlayed||b.addedAt||0)-(a.lastPlayed||a.addedAt||0));
+  body.innerHTML='';
+  sorted.forEach(s=>{
+    let origIdx=s._origIdx;
+    let liked=s.liked;
+    let favMsgs=s.favMsgs||[];
+    let hasFav=favMsgs.length>0;
+    let card=document.createElement('div');
+    card.style.cssText='background:white;border-radius:18px;margin-bottom:14px;overflow:hidden;box-shadow:0 2px 14px rgba(108,92,231,.1);';
+    // build fav messages html
+    let favHtml=hasFav?
+      '<div style="padding:10px 14px 14px;background:linear-gradient(180deg,#faf8ff,#f5f2ff);">'+
+        '<div style="font-size:11px;color:#9080c0;letter-spacing:1.5px;font-weight:700;margin-bottom:8px;text-transform:uppercase;">✨ 收藏的对话</div>'+
+        favMsgs.map((m,mi)=>`
+          <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px;">
+            <div style="flex:1;padding:8px 12px;background:${m.isMe?'linear-gradient(135deg,#ede4ff,#dfd5f8)':'white'};border-radius:12px;font-size:14px;color:${m.isMe?'#5040a0':'#2d2040'};line-height:1.5;word-break:break-word;box-shadow:0 1px 6px rgba(108,92,231,.1);">${(m.text||'').replace(/</g,'&lt;')}</div>
+            <button onclick="event.stopPropagation();wkDelFavMsg(${origIdx},${mi})" style="padding:4px 7px;border-radius:8px;border:none;cursor:pointer;background:#f5f0ff;color:#c8aae0;font-size:13px;flex-shrink:0;margin-top:3px;">✕</button>
+          </div>`).join('')+
+      '</div>':
+      '<div style="padding:10px 14px 12px;background:#faf8ff;font-size:13px;color:#c0b8d8;text-align:center;">长按听歌聊天中的消息来收藏 ★</div>';
+
+    card.innerHTML=`
+      <div style="padding:14px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;border-bottom:1px solid #f0eeff;"
+        onclick="this.parentElement.querySelector('.os-expand').style.display=this.parentElement.querySelector('.os-expand').style.display==='none'?'block':'none'">
+        <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#a29bfe,#6c5ce7);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;box-shadow:0 2px 8px rgba(108,92,231,.3);">🎵</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:15px;font-weight:700;color:#2d2040;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${(s.name||'未知歌曲').replace(/</g,'&lt;')}</div>
+          <div style="font-size:12px;color:#9080b0;margin-top:2px;">
+            ${s.artist?'<span>'+s.artist.replace(/</g,'&lt;')+'</span> · ':''}
+            ${s.playCount?'<span>▶ '+s.playCount+'次</span> · ':''}
+            ${s.lastPlayed?'<span>'+new Date(s.lastPlayed).toLocaleDateString('zh-CN')+'</span>':''}
+            ${hasFav?'<span style="color:#a29bfe;"> · ★'+favMsgs.length+'条收藏</span>':''}
+          </div>
+        </div>
+        <div style="display:flex;gap:4px;flex-shrink:0;align-items:center;">
+          <button onclick="event.stopPropagation();wkToggleLikeByIdx(${origIdx})" style="background:none;border:none;cursor:pointer;font-size:24px;color:${liked?'#ff4088':'#d0c0d8'};line-height:1;padding:4px;">${liked?'♥':'♡'}</button>
+          <button onclick="event.stopPropagation();wkMoveSong(${origIdx},-1)" style="background:#f0eeff;border:none;cursor:pointer;border-radius:6px;width:26px;height:26px;color:#a090c0;font-size:14px;display:flex;align-items:center;justify-content:center;">↑</button>
+          <button onclick="event.stopPropagation();wkMoveSong(${origIdx},1)" style="background:#f0eeff;border:none;cursor:pointer;border-radius:6px;width:26px;height:26px;color:#a090c0;font-size:14px;display:flex;align-items:center;justify-content:center;">↓</button>
+          <button onclick="event.stopPropagation();if(confirm('删除「${(s.name||'').replace(/'/g,'\\\'').replace(/</g,'&lt;')}」的记录？'))wkDelSongRecord(${origIdx})" style="background:#fff0f0;border:none;cursor:pointer;border-radius:6px;width:26px;height:26px;color:#e08080;font-size:13px;display:flex;align-items:center;justify-content:center;">🗑</button>
+        </div>
+      </div>
+      <div class="os-expand" style="display:none;">${favHtml}</div>`;
+    body.appendChild(card);
+  });
+}
+
+window.wkDelFavMsg=function(songIdx,msgIdx){
+  let songs=window._WK?window._WK.songs:[];
+  if(!songs[songIdx]||!songs[songIdx].favMsgs)return;
+  songs[songIdx].favMsgs.splice(msgIdx,1);
+  if(window._WK)localforage.setItem(window._WK.SK,songs).catch(()=>{});
+  loadOurSongs();
+};
+
+window.wkDelSongRecord=function(idx){
+  let songs=window._WK?window._WK.songs:[];
+  songs.splice(idx,1);
+  if(window._WK){window._WK.cur=Math.min(window._WK.cur,songs.length-1);localforage.setItem(window._WK.SK,songs).catch(()=>{});}
+  loadOurSongs();
+};
+</script>
+ -->
 <div id="scrVoiceCall" style="display:none;position:fixed;inset:0;z-index:9990;flex-direction:column;background:linear-gradient(160deg,#0a0f1e 0%,#141b35 60%,#1a0a2e 100%);overflow:hidden;">
   <style>
     @keyframes vcBreath { 0%,100%{transform:scale(1);box-shadow:0 0 30px rgba(162,155,254,0.4),0 0 60px rgba(108,92,231,0.2)} 50%{transform:scale(1.06);box-shadow:0 0 50px rgba(162,155,254,0.7),0 0 100px rgba(108,92,231,0.4)} }
@@ -3501,10 +3684,10 @@ let pressTimer = null;
 let selEl = null;
 let currentQuote ="";
 function showScreen(showId) {
-    [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrSpace, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet"), $("scrContact"), $("scrSetFont"), $("scrCharPhone"), $("scrSpyDiary"), $("scrSpyZhihu"), $("scrSpySecret"), $("scrSpyMeituan"), $("scrSpyFootprint"), $("scrSpyWallet"), $("scrSpyShop"), $("scrSpyIqiyi"), $("scrSpySettings"), $("scrMoment"), $("scrGroupRoom"), $("scrGroupSettings")].forEach(s => { if(s) s.style.display = "none"; });
+    [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrSpace, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet"), $("scrContact"), $("scrSetFont"), $("scrCharPhone"), $("scrSpyDiary"), $("scrSpyZhihu"), $("scrSpySecret"), $("scrSpyMeituan"), $("scrSpyFootprint"), $("scrSpyWallet"), $("scrSpyShop"), $("scrSpyIqiyi"), $("scrSpySettings"), $("scrMoment"), $("scrGroupRoom"), $("scrGroupSettings"), $("scrOurSongs")].forEach(s => { if(s) s.style.display = "none"; });
     let target = $(showId);
     if(target) {
-        if(showId === "scrRoom" || showId === "scrList" || showId === "scrSetApi" || showId === "scrSetChat" || showId === "scrWb" || showId === "scrWbEdit" || showId === "scrMe" || showId === "scrCharSticker" || showId === "scrSpace" || showId === "scrLogList" || showId === "scrLogEdit" || showId === "scrFav" || showId === "scrWallet" || showId === "scrContact" || showId === "scrSetFont" || showId === "scrSpyDiary" || showId === "scrSpyZhihu" || showId === "scrSpySecret" || showId === "scrSpyMeituan" || showId === "scrSpyFootprint" || showId === "scrSpyWallet" || showId === "scrSpyShop" || showId === "scrSpyIqiyi" || showId === "scrSpySettings" || showId === "scrMoment" || showId === "scrGroupRoom" || showId === "scrGroupSettings") {
+        if(showId === "scrRoom" || showId === "scrList" || showId === "scrSetApi" || showId === "scrSetChat" || showId === "scrWb" || showId === "scrWbEdit" || showId === "scrMe" || showId === "scrCharSticker" || showId === "scrSpace" || showId === "scrLogList" || showId === "scrLogEdit" || showId === "scrFav" || showId === "scrWallet" || showId === "scrContact" || showId === "scrSetFont" || showId === "scrSpyDiary" || showId === "scrSpyZhihu" || showId === "scrSpySecret" || showId === "scrSpyMeituan" || showId === "scrSpyFootprint" || showId === "scrSpyWallet" || showId === "scrSpyShop" || showId === "scrSpyIqiyi" || showId === "scrSpySettings" || showId === "scrMoment" || showId === "scrGroupRoom" || showId === "scrGroupSettings" || showId === "scrOurSongs") {
             target.style.display = "flex";
         } else if (showId === "scrCharPhone") {
             target.style.display = "flex";
@@ -9022,6 +9205,12 @@ if($(`btnGoFav`)) {
 }
 if($(`btnFavBack`)) {
     $(`btnFavBack`).onclick = () => showScreen(`scrMe`);
+}
+if($(`btnGoOurSongs`)) {
+    $(`btnGoOurSongs`).onclick = async () => {
+        await loadOurSongs();
+        showScreen(`scrOurSongs`);
+    };
 }
 let myWallet = ls.getItem(`myWallet`) ? JSON.parse(ls.getItem(`myWallet`)) : { balance: 0.00, bank: 0.00, bills: [] };
 
