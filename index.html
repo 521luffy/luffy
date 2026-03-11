@@ -3675,6 +3675,26 @@ ls.removeItem = function(key) {
         }
     } catch(e) {}
 };
+
+// ★ 通用 localforage 读取辅助（localStorage 满时的权威来源）
+// 优先读 localStorage（同步），为空则异步从 localforage 补充并回填
+window._lfGet = async function(baseKey, chatId) {
+    let cid = chatId !== undefined ? chatId : currentChatId;
+    let isoKey = isolatedKeys.includes(baseKey) ? baseKey + '_' + cid : baseKey;
+    // 1. 先查 localStorage
+    let lsv = originalGetItem.call(ls, isoKey);
+    if (lsv !== null && lsv !== undefined && lsv !== '') return lsv;
+    // 2. 回退到 localforage（大仓库）
+    try {
+        let lfv = await localforage.getItem(isoKey);
+        if (lfv !== null && lfv !== undefined && lfv !== '') {
+            // 回写到 localStorage 以便下次同步读取（容量允许时）
+            try { originalSetItem.call(ls, isoKey, String(lfv)); } catch(e) {}
+            return String(lfv);
+        }
+    } catch(e) {}
+    return null;
+};
 let history = ls.getItem("chatHistory") ? JSON.parse(ls.getItem("chatHistory")) : [];
 let aiStatus = ls.getItem("aiStatus") ? JSON.parse(ls.getItem("aiStatus")) : {weather:"等待连接...",clothing:"等待连接...",action:"等待连接...",thought:"等待连接..."};
 let wbData = ls.getItem(`wbData`) ? JSON.parse(ls.getItem(`wbData`)) : [];
@@ -3702,11 +3722,18 @@ function showScreen(showId) {
 
 
 
-function applyCustomFont() {
-    let url = ls.getItem('customFontUrl') || '';
-    let size = ls.getItem('customFontSize') || '14';
-    let cColor = ls.getItem('customFontColorChar') || '';
-    let uColor = ls.getItem('customFontColorUser') || '';
+async function applyCustomFont() {
+    // localStorage 优先，为空则从 localforage 读（解决 LS 满时字体配置丢失）
+    let _fget = async (k) => {
+        let v = originalGetItem.call(ls, k);
+        if (v !== null && v !== undefined && v !== '') return v;
+        try { let lf = await localforage.getItem(k); if(lf) return String(lf); } catch(e) {}
+        return null;
+    };
+    let url    = (await _fget('customFontUrl'))       || '';
+    let size   = (await _fget('customFontSize'))      || '14';
+    let cColor = (await _fget('customFontColorChar')) || '';
+    let uColor = (await _fget('customFontColorUser')) || '';
 
     let styleTag = $('customFontStyleTag');
     if(!styleTag) {
@@ -4091,12 +4118,18 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
 $(`btnSetApiBack`).onclick = () =>showScreen(`scrHome`);
 
 if($(`btnHomeFont`)) {
-    $(`btnHomeFont`).onclick = () => {
-        $(`fontUrl`).value = ls.getItem('customFontUrl') || '';
-        $(`fontSizeSlider`).value = ls.getItem('customFontSize') || '14';
+    $(`btnHomeFont`).onclick = async () => {
+        let _fg = async (k, def) => {
+            let v = originalGetItem.call(ls, k);
+            if(v !== null && v !== undefined && v !== '') return v;
+            try { let lf = await localforage.getItem(k); if(lf) return String(lf); } catch(e){}
+            return def || '';
+        };
+        $(`fontUrl`).value = await _fg('customFontUrl', '');
+        $(`fontSizeSlider`).value = await _fg('customFontSize', '14');
         $(`fontSizeVal`).innerText = $(`fontSizeSlider`).value;
-        $(`fontColorChar`).value = ls.getItem('customFontColorChar') || '#6B6B8E';
-        $(`fontColorUser`).value = ls.getItem('customFontColorUser') || '#8E6B7A';
+        $(`fontColorChar`).value = await _fg('customFontColorChar', '#6B6B8E');
+        $(`fontColorUser`).value = await _fg('customFontColorUser', '#8E6B7A');
         showScreen(`scrSetFont`);
     };
 }
@@ -4526,12 +4559,20 @@ if($(`fontSizeSlider`)) {
 
 }
 if($(`btnSaveFont`)) {
-    $(`btnSaveFont`).onclick = () => {
-        ls.setItem('customFontUrl', $(`fontUrl`).value.trim());
-        ls.setItem('customFontSize', $(`fontSizeSlider`).value);
-        ls.setItem('customFontColorChar', $(`fontColorChar`).value);
-        ls.setItem('customFontColorUser', $(`fontColorUser`).value);
-        applyCustomFont();
+    $(`btnSaveFont`).onclick = async () => {
+        let fontData = {
+            customFontUrl:       $(`fontUrl`).value.trim(),
+            customFontSize:      $(`fontSizeSlider`).value,
+            customFontColorChar: $(`fontColorChar`).value,
+            customFontColorUser: $(`fontColorUser`).value,
+        };
+        // 同时写 localStorage 和 localforage（双保险，解决 LS 满时字体设置丢失）
+        for(let [k, v] of Object.entries(fontData)) {
+            ls.setItem(k, v); // 代理写（含 localforage）
+            // 强制直接写 localforage 备份
+            try { await localforage.setItem(k, v); } catch(e) {}
+        }
+        await applyCustomFont();
         alert('🎨 字体与排版设置已生效！快去聊天室看看吧。');
         showScreen('scrHome');
     };
@@ -4539,14 +4580,20 @@ if($(`btnSaveFont`)) {
 
 $(`btnListToRoom`).onclick = async () =>{ 
     currentChatId = `default`;
-    $(`cfgName`).value = originalGetItem.call(ls, `cN_default`) || originalGetItem.call(ls, `cN`) || ``;
-    $(`cfgRem`).value = originalGetItem.call(ls, `cR_default`) || originalGetItem.call(ls, `cR`) || ``;
-    // 修复：优先从 localforage 读取，不 fallback 全局旧 cMyN
+    // 【存储修复】localStorage+localforage双读（解决LS满时设置消失）
+    let _lrGet = async (baseKey, cid) => {
+        let raw = originalGetItem.call(ls, baseKey+'_'+cid) || originalGetItem.call(ls, baseKey);
+        if(raw !== null && raw !== undefined && raw !== '') return raw;
+        try { let lf = await localforage.getItem(baseKey+'_'+cid); if(lf) return String(lf); } catch(e){}
+        return '';
+    };
+    $(`cfgName`).value = await _lrGet('cN', 'default');
+    $(`cfgRem`).value  = await _lrGet('cR', 'default');
     let _cMyN_def = (window._nameCache && window._nameCache[`default`]) || await localforage.getItem(`cMyN_default`) || originalGetItem.call(ls, `cMyN_default`) || ``;
     $(`cfgMyName`).value = _cMyN_def;
     if(_cMyN_def) { if(!window._nameCache) window._nameCache={}; window._nameCache[`default`]=_cMyN_def; }
-    $(`cfgAiP`).value = originalGetItem.call(ls, `cAP_default`) || originalGetItem.call(ls, `cAP`) || ``;
-    $(`cfgMyP`).value = originalGetItem.call(ls, `cMP_default`) || originalGetItem.call(ls, `cMP`) || ``;
+    $(`cfgAiP`).value = await _lrGet('cAP', 'default');
+    $(`cfgMyP`).value = await _lrGet('cMP', 'default');
 
     let savedHist = await localforage.getItem(`chatHistory_` + currentChatId) ||
 originalGetItem.call(ls, `chatHistory_` + currentChatId);
@@ -4681,47 +4728,53 @@ async function renderContacts() {
             window._storyCurrentTimeMs = null; // 切换char时重置剧情时间
             // 恢复新char自己的线下模式状态（会先清空再按存档恢复）
             if(typeof window._restoreOfflineState === 'function') window._restoreOfflineState(c.id);
-            $(`cfgName`).value = originalGetItem.call(ls, `cN_` + c.id) || c.name;
-            $(`cfgRem`).value = originalGetItem.call(ls, `cR_` + c.id) || ``;
-            // 修复：优先从 localforage 读取，不 fallback 到全局 cMyN（避免显示旧全局名"檬檬"）
+            // ★【存储修复】全部字段使用 localforage 兜底读取
+            let _ctGet = async (key) => {
+                let v = originalGetItem.call(ls, key + '_' + c.id);
+                if(v !== null && v !== undefined && v !== '') return v;
+                try { let lf = await localforage.getItem(key + '_' + c.id); if(lf) return String(lf); } catch(e){}
+                return '';
+            };
+            $(`cfgName`).value = await _ctGet('cN') || c.name;
+            $(`cfgRem`).value  = await _ctGet('cR') || ``;
             let _cMyN_c = (window._nameCache && window._nameCache[c.id]) || await localforage.getItem(`cMyN_` + c.id) || originalGetItem.call(ls, `cMyN_` + c.id) || ``;
             $(`cfgMyName`).value = _cMyN_c;
             if(_cMyN_c) { if(!window._nameCache) window._nameCache={}; window._nameCache[c.id]=_cMyN_c; }
-            $(`cfgAiP`).value = originalGetItem.call(ls, `cAP_` + c.id) || c.prompt;
+            // ★ _ctGet defined above
+            $(`cfgAiP`).value = await _ctGet('cAP') || c.prompt;
 
-            $(`cfgMyP`).value = originalGetItem.call(ls, `cMP_` + c.id) || ``;
-            if($(`cfgBubbleCss`)) $(`cfgBubbleCss`).value = originalGetItem.call(ls, `cBubbleCss_` + c.id) || ``;
+            $(`cfgMyP`).value = await _ctGet('cMP') || ``;
+            if($(`cfgBubbleCss`)) $(`cfgBubbleCss`).value = await _ctGet('cBubbleCss') || ``;
             let ctxVal = originalGetItem.call(ls, `cCtx_` + c.id);
             if(ctxVal) $(`cfgCtx`).value = ctxVal;
             else $(`cfgCtx`).value = originalGetItem.call(ls, `cCtx`) || 100;
             let tVal = originalGetItem.call(ls, `cT_` + c.id);
             if(tVal !== null) $(`cfgTime`).checked = tVal === `true`;
             else $(`cfgTime`).checked = originalGetItem.call(ls, `cT`) !== `false`;
-            let aMemVal = originalGetItem.call(ls, `cAMem_` + c.id);
-            if(aMemVal !== null) $(`cfgAutoMem`).checked = aMemVal === `true`;
-            else $(`cfgAutoMem`).checked = originalGetItem.call(ls, `cAMem`) === `true`;
-            let memTVal = originalGetItem.call(ls, `cMemT_` + c.id);
-            if(memTVal) $(`cfgMemTrig`).value = memTVal;
-            else $(`cfgMemTrig`).value = originalGetItem.call(ls, `cMemT`) || 10;
-            let memPVal = originalGetItem.call(ls, `cMemP_` + c.id);
-            if(memPVal) $(`cfgMemPmt`).value = memPVal;
-            else $(`cfgMemPmt`).value = originalGetItem.call(ls, `cMemP`) || `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。必须准确写出当前实际参与对话的【具体人物姓名】（包括user、char或任何出场的NPC）。`;
+            // ★【存储修复】localforage 兜底读取
+            let aMemVal = await _ctGet('cAMem');
+            if(aMemVal !== null && aMemVal !== '') $(`cfgAutoMem`).checked = (aMemVal === `true` || aMemVal === true);
+            else $(`cfgAutoMem`).checked = false;
+            let memTVal = await _ctGet('cMemT');
+            $(`cfgMemTrig`).value = memTVal || 10;
+            let memPVal = await _ctGet('cMemP');
+            $(`cfgMemPmt`).value = memPVal || `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。必须准确写出当前实际参与对话的【具体人物姓名】（包括user、char或任何出场的NPC）。`;
             let savedHist = await localforage.getItem(`chatHistory_` + currentChatId) || originalGetItem.call(ls, `chatHistory_` + currentChatId);
             history = savedHist ? (typeof savedHist === 'string' ? JSON.parse(savedHist) : savedHist) : [];
             let savedAiStatus = await localforage.getItem(`aiStatus_` + currentChatId) || ls.getItem(`aiStatus_` + currentChatId);
             aiStatus = savedAiStatus ? (typeof savedAiStatus === `string` ? JSON.parse(savedAiStatus) : savedAiStatus) : {weather:`等待连接...`,clothing:`等待连接...`,action:`等待连接...`,thought:`等待连接...`};
-            // 强制状态栏加载（per-char，绝不fallback到其他char或全局）
-            if($(`cfgStatusBarOn`)) {
-                let _sbon = originalGetItem.call(ls, `cStatusBarOn_` + c.id);
-                $(`cfgStatusBarOn`).checked = (_sbon === `true`);
-            }
+            // 强制状态栏加载（per-char，双读兜底）
+            let _sbonC = originalGetItem.call(ls, `cStatusBarOn_` + c.id);
+            if(_sbonC === null) { try { _sbonC = await localforage.getItem(`cStatusBarOn_` + c.id); } catch(e){} }
+            if($(`cfgStatusBarOn`)) $(`cfgStatusBarOn`).checked = (_sbonC === `true` || _sbonC === true);
             let _charSbv = ``;
-            if($(`cfgStatusBar`)) {
-                _charSbv = originalGetItem.call(ls, `cStatusBar_` + c.id) || ``;
-                $(`cfgStatusBar`).value = _charSbv;
-            }
-            // 恢复模板选中状态（含已保存的自定义内容，避免跨char残留）
-            if(typeof _restoreStatusBarTpl === `function`) _restoreStatusBarTpl(originalGetItem.call(ls, `cStatusBarTpl_` + c.id) || ``, _charSbv);
+            let _sbvC = originalGetItem.call(ls, `cStatusBar_` + c.id);
+            if(!_sbvC) { try { _sbvC = await localforage.getItem(`cStatusBar_` + c.id); } catch(e){} }
+            _charSbv = _sbvC || ``;
+            if($(`cfgStatusBar`)) $(`cfgStatusBar`).value = _charSbv;
+            let _tplC = originalGetItem.call(ls, `cStatusBarTpl_` + c.id);
+            if(!_tplC) { try { _tplC = await localforage.getItem(`cStatusBarTpl_` + c.id); } catch(e){} }
+            if(typeof _restoreStatusBarTpl === `function`) _restoreStatusBarTpl(_tplC || ``, _charSbv);
             await applyVis();
             if (typeof msgs !== `undefined` && msgs) msgs.innerHTML = ``;
             redrawChat();
@@ -4963,26 +5016,31 @@ $(`btnListToRoom`).onclick = async () => {
     $(`cfgRem`).value = ls.getItem(`cR`) || ``;
     $(`cfgAiP`).value = ls.getItem(`cAP`) || ``;
     $(`cfgMyP`).value = ls.getItem(`cMP`) || ``;
-    if($(`cfgBubbleCss`)) $(`cfgBubbleCss`).value = ls.getItem(`cBubbleCss`) || ``;
+    // ★【存储修复】所有设置字段使用 localStorage+localforage 双读
+    let _ltrBubble = await _lrGet('cBubbleCss', currentChatId);
+    if($(`cfgBubbleCss`)) $(`cfgBubbleCss`).value = _ltrBubble || ``;
     
-    if(ls.getItem(`cCtx`)) $(`cfgCtx`).value = ls.getItem(`cCtx`); else $(`cfgCtx`).value = 100;
-    $(`cfgTime`).checked = ls.getItem(`cT`) !== `false`;
-    // 强制状态栏 load（用 originalGetItem 直接读 per-char key，绝不走proxy fallback）
-    if($(`cfgStatusBarOn`)) {
-        let _sbonKey = currentChatId === `default` ? `cStatusBarOn_default` : `cStatusBarOn_` + currentChatId;
-        let sbon = originalGetItem.call(ls, _sbonKey);
-        $(`cfgStatusBarOn`).checked = (sbon === `true`);
-    }
+    let _ltrCtx = await _lrGet('cCtx', currentChatId);
+    if(_ltrCtx) $(`cfgCtx`).value = _ltrCtx; else $(`cfgCtx`).value = 100;
+    let _ltrT = await _lrGet('cT', currentChatId);
+    $(`cfgTime`).checked = _ltrT !== `false`;
+    // 强制状态栏（双读）
+    let _sbonKey = `cStatusBarOn_` + currentChatId;
+    let _sbon_ltr = originalGetItem.call(ls, _sbonKey);
+    if(_sbon_ltr === null) { try { _sbon_ltr = await localforage.getItem(_sbonKey); } catch(e){} }
+    if($(`cfgStatusBarOn`)) $(`cfgStatusBarOn`).checked = (_sbon_ltr === `true` || _sbon_ltr === true);
     let _sbvForTpl = ``;
-    if($(`cfgStatusBar`)) {
-        let _sbvKey = currentChatId === `default` ? `cStatusBar_default` : `cStatusBar_` + currentChatId;
-        _sbvForTpl = originalGetItem.call(ls, _sbvKey) || ``;
-        $(`cfgStatusBar`).value = _sbvForTpl;
-    }
-    // 恢复模板选中状态（含已保存的自定义内容）
-    let _tplKey = currentChatId === `default` ? `cStatusBarTpl_default` : `cStatusBarTpl_` + currentChatId;
-    if(typeof _restoreStatusBarTpl === `function`) _restoreStatusBarTpl(originalGetItem.call(ls, _tplKey) || ``, _sbvForTpl);
-    $(`cfgAutoMem`).checked = ls.getItem(`cAMem`) === `true`;
+    let _sbvKey = `cStatusBar_` + currentChatId;
+    let _sbv_ltr = originalGetItem.call(ls, _sbvKey);
+    if(!_sbv_ltr) { try { _sbv_ltr = await localforage.getItem(_sbvKey); } catch(e){} }
+    _sbvForTpl = _sbv_ltr || ``;
+    if($(`cfgStatusBar`)) $(`cfgStatusBar`).value = _sbvForTpl;
+    let _tplKey = `cStatusBarTpl_` + currentChatId;
+    let _tplv_ltr = originalGetItem.call(ls, _tplKey);
+    if(!_tplv_ltr) { try { _tplv_ltr = await localforage.getItem(_tplKey); } catch(e){} }
+    if(typeof _restoreStatusBarTpl === `function`) _restoreStatusBarTpl(_tplv_ltr || ``, _sbvForTpl);
+    let _ltrAMem = await _lrGet('cAMem', currentChatId);
+    $(`cfgAutoMem`).checked = (_ltrAMem === `true` || _ltrAMem === true);
     if(ls.getItem(`cMemT`)) $(`cfgMemTrig`).value = ls.getItem(`cMemT`); else $(`cfgMemTrig`).value = 10;
     if(ls.getItem(`cMemP`)) $(`cfgMemPmt`).value = ls.getItem(`cMemP`); else $(`cfgMemPmt`).value = `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。必须准确写出当前实际参与对话的【具体人物姓名】（包括user、char或任何出场的NPC）。`;
     
@@ -5442,40 +5500,47 @@ $(`btnCloseMem`).onclick = () =>{ $(`memModal`).style.display = `none`; };
 
 $(`btnGenMem`).onclick = () =>{ runMemorySummary(false); };
 
-window.loadChatSettings = function() {
-    if(ls.getItem(`cN`)) $(`cfgName`).value = ls.getItem(`cN`); else $(`cfgName`).value = '';
-    if(ls.getItem(`cR`)) $(`cfgRem`).value = ls.getItem(`cR`); else $(`cfgRem`).value = '';
-    // 【名字修复v3】同步读 localStorage per-char 值（不fallback全局，避免旧名污染）
-    // 再异步用 localforage 补充（btnSaveChat 两边都写，localforage 是权威来源）
-    // 先查内存缓存（即时可用），再异步从 localforage 更新
-    let _cachedName = (window._nameCache && window._nameCache[currentChatId]) || ``;
-    if(!_cachedName) _cachedName = originalGetItem.call(ls, `cMyN_` + currentChatId) || ``;
-    $(`cfgMyName`).value = _cachedName;
-    localforage.getItem(`cMyN_` + currentChatId).then(v => {
-        if(v !== null && v !== undefined && v !== ``) {
-            $(`cfgMyName`).value = v;
-            if(!window._nameCache) window._nameCache = {};
-            window._nameCache[currentChatId] = v;
-        }
-    }).catch(() => {});
-    if(ls.getItem(`cAP`)) $(`cfgAiP`).value = ls.getItem(`cAP`); else $(`cfgAiP`).value = '';
-    if(ls.getItem(`cMP`)) $(`cfgMyP`).value = ls.getItem(`cMP`); else $(`cfgMyP`).value = '';
-    if($(`cfgBubbleCss`)) {
-        let _lsBubble = ls.getItem(`cBubbleCss`);
-        if(_lsBubble) $(`cfgBubbleCss`).value = _lsBubble; 
-        else $(`cfgBubbleCss`).value = '';
-        // ★ 异步从 localforage 补充（localStorage 满时优先从大仓库读取）
-        localforage.getItem(`cBubbleCss_` + currentChatId).then(v => {
-            if(v !== null && v !== undefined && String(v).trim() !== '') {
-                if($(`cfgBubbleCss`)) $(`cfgBubbleCss`).value = String(v);
-            }
-        }).catch(()=>{});
+window.loadChatSettings = async function() {
+    let cid = currentChatId;
+    // ★ 通用读取：localStorage 优先，localforage 兜底（解决 localStorage 已满时设置丢失问题）
+    let _get = async (key) => await window._lfGet(key, cid);
+
+    // 角色真名 & 备注
+    let _cN = await _get('cN');
+    $(`cfgName`).value = _cN || '';
+    let _cR = await _get('cR');
+    $(`cfgRem`).value = _cR || '';
+
+    // 我的名字（走缓存 → localStorage → localforage）
+    let _cachedName = (window._nameCache && window._nameCache[cid]) || ``;
+    if (!_cachedName) _cachedName = originalGetItem.call(ls, `cMyN_` + cid) || ``;
+    if (!_cachedName) {
+        try { _cachedName = (await localforage.getItem(`cMyN_` + cid)) || ``; } catch(e) {}
     }
-    if(ls.getItem(`cCtx`)) $(`cfgCtx`).value = ls.getItem(`cCtx`); else $(`cfgCtx`).value = 100;
-    
-    $(`cfgTime`).checked = ls.getItem(`cT`) !== `false`;
-    
-    if(ls.getItem(`cCTon`) === `true`) {
+    $(`cfgMyName`).value = _cachedName;
+    if (_cachedName) { if(!window._nameCache) window._nameCache={}; window._nameCache[cid]=_cachedName; }
+
+    // 对方人设 & 我的人设
+    let _cAP = await _get('cAP');
+    $(`cfgAiP`).value = _cAP || '';
+    let _cMP = await _get('cMP');
+    $(`cfgMyP`).value = _cMP || '';
+
+    // 气泡 CSS
+    if ($(`cfgBubbleCss`)) {
+        let _bubble = await _get('cBubbleCss');
+        $(`cfgBubbleCss`).value = _bubble || '';
+    }
+
+    // 上下文条数
+    let _ctx = await _get('cCtx');
+    $(`cfgCtx`).value = _ctx || 100;
+
+    // 时间设置
+    let _cT = await _get('cT');
+    $(`cfgTime`).checked = _cT !== `false`;
+    let _cCTon = await _get('cCTon');
+    if (_cCTon === `true`) {
         $(`cfgCustomTime`).checked = true;
         if($(`customTimePanel`)) $(`customTimePanel`).style.display = `flex`;
         $(`cfgTime`).checked = false;
@@ -5483,18 +5548,36 @@ window.loadChatSettings = function() {
         $(`cfgCustomTime`).checked = false;
         if($(`customTimePanel`)) $(`customTimePanel`).style.display = `none`;
     }
-    
-    if(ls.getItem(`cCTy`)) $(`ctYear`).value = ls.getItem(`cCTy`);
-    if(ls.getItem(`cCTm`)) $(`ctMonth`).value = ls.getItem(`cCTm`);
-    if(ls.getItem(`cCTd`)) $(`ctDay`).value = ls.getItem(`cCTd`);
-    if(ls.getItem(`cCTh`)) $(`ctHour`).value = ls.getItem(`cCTh`);
-    if(ls.getItem(`cCTmin`)) $(`ctMinute`).value = ls.getItem(`cCTmin`);
+    let _cCTy = await _get('cCTy'); if(_cCTy) $(`ctYear`).value = _cCTy;
+    let _cCTm = await _get('cCTm'); if(_cCTm) $(`ctMonth`).value = _cCTm;
+    let _cCTd = await _get('cCTd'); if(_cCTd) $(`ctDay`).value = _cCTd;
+    let _cCTh = await _get('cCTh'); if(_cCTh) $(`ctHour`).value = _cCTh;
+    let _cCTmin = await _get('cCTmin'); if(_cCTmin) $(`ctMinute`).value = _cCTmin;
     if(typeof updateWeekday === 'function') updateWeekday();
 
-    $(`cfgAutoMem`).checked = ls.getItem(`cAMem`) === `true`;
-    if(ls.getItem(`cMemT`)) $(`cfgMemTrig`).value = ls.getItem(`cMemT`); else $(`cfgMemTrig`).value = 10;
-    if(ls.getItem(`cMemP`)) $(`cfgMemPmt`).value = ls.getItem(`cMemP`); 
-    else $(`cfgMemPmt`).value = `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。必须准确写出当前实际参与对话的【具体人物姓名】（包括user、char或任何出场的NPC）。`;
+    // 强制状态栏（这些key在proxy中会返回null作fallback保护，必须直接读带id的key）
+    let _sbonKey = `cStatusBarOn_` + cid;
+    let _sbon = originalGetItem.call(ls, _sbonKey);
+    if (_sbon === null) { try { _sbon = await localforage.getItem(_sbonKey); } catch(e){} }
+    if ($(`cfgStatusBarOn`)) $(`cfgStatusBarOn`).checked = (_sbon === `true` || _sbon === true);
+
+    let _sbKey = `cStatusBar_` + cid;
+    let _sbv = originalGetItem.call(ls, _sbKey);
+    if (_sbv === null) { try { _sbv = await localforage.getItem(_sbKey); } catch(e){} }
+    if ($(`cfgStatusBar`)) $(`cfgStatusBar`).value = _sbv || '';
+
+    let _tplKey = `cStatusBarTpl_` + cid;
+    let _tplv = originalGetItem.call(ls, _tplKey);
+    if (_tplv === null) { try { _tplv = await localforage.getItem(_tplKey); } catch(e){} }
+    if(typeof _restoreStatusBarTpl === `function`) _restoreStatusBarTpl(_tplv || ``, _sbv || ``);
+
+    // 自动记忆
+    let _cAMem = await _get('cAMem');
+    $(`cfgAutoMem`).checked = (_cAMem === `true` || _cAMem === true);
+    let _cMemT = await _get('cMemT');
+    $(`cfgMemTrig`).value = _cMemT || 10;
+    let _cMemP = await _get('cMemP');
+    $(`cfgMemPmt`).value = _cMemP || `请用第三人称视角，在50字以内精炼概括刚才发生的核心剧情与情绪变化。绝对禁止包含日期或换行！直接输出剧情结果。必须准确写出当前实际参与对话的【具体人物姓名】（包括user、char或任何出场的NPC）。`;
 };
 
         $(`btnCancelChat`).onclick = () => {
@@ -5537,38 +5620,16 @@ $(`btnSaveChat`).onclick = async () => {
         let _tplSel = [`tplRadioA`,`tplRadioB`,`tplRadioC`].find(id => { let el=$(id); return el && el.checked; });
         dataObj.cStatusBarTpl = _tplSel ? _tplSel.replace(`tplRadio`,``) : ``;
 
-                for (let key in dataObj) {
-            // 恢复原版后缀逻辑：所有配置项都必须强制加上角色专属后缀
-            let finalKey = key + `_` + currentChatId;
-            
-            try {
-                ls.setItem(key, dataObj[key]); // 全局兜底
-                ls.setItem(finalKey, dataObj[key]); // 专属角色设定
-            } catch (error) {
-                // 小仓库空间爆满时，紧急清理体积最大的冗余历史项腾出空间
-                // 聊天记录在大仓库和专属键值中已有完整备份，这里安全清理以确保核心人设能存入
-                ls.removeItem(`chatHistory`); 
-                try {
-                    ls.setItem(finalKey, dataObj[key]);
-                } catch(e) {}
-            }
-
-            // 强制大仓库同步双重备份
+        for (let key in dataObj) {
+            ls.setItem(key, dataObj[key]);
+            let finalKey = (typeof isolatedKeys !== `undefined` && isolatedKeys.includes(key)) ? key + `_` + currentChatId : key;
             await localforage.setItem(finalKey, dataObj[key]);
-            
-            if (currentChatId === `default`) {
-                try { ls.setItem(key, dataObj[key]); } catch(e){}
-                await localforage.setItem(key, dataObj[key]);
-            }
-
-            // 名字写入内存缓存，确保即时读到
+            // 名字写入内存缓存，确保 loadChatSettings 下次即时读到
             if(key === `cMyN`) {
                 if(!window._nameCache) window._nameCache = {};
                 window._nameCache[currentChatId] = dataObj[key];
             }
         }
-
-
 
         let checkImg = async (preId, key) => {
             let el = $(preId);
@@ -5613,12 +5674,15 @@ function escapeHtml(str) {
     return str.replace(/&/g, `&amp;`).replace(/</g, `&lt;`).replace(/>/g, `&gt;`).replace(/"/g, `&quot;`).replace(/'/g, `&#039;`);
 }
 
-function renderNpcList() {
+async function renderNpcList() {
     let list = $(`npcList`);
     if(!list) return;
     list.innerHTML = ``;
-    let npcData = originalGetItem.call(ls, `npcList_` + currentChatId);
-    let npcs = npcData ? JSON.parse(npcData) : [];
+    let npcKey = `npcList_` + currentChatId;
+    let npcData = originalGetItem.call(ls, npcKey);
+    // localforage 兜底
+    if (!npcData) { try { let lf = await localforage.getItem(npcKey); if(lf) npcData = typeof lf === 'string' ? lf : JSON.stringify(lf); } catch(e){} }
+    let npcs = npcData ? (typeof npcData === 'string' ? JSON.parse(npcData) : npcData) : [];
     
     if(npcs.length === 0) {
         list.innerHTML = `<div style="font-size:12px;color:#999;width:100%;text-align:center;padding:10px 0;">该角色目前还没有关联的机密对象。</div>`;
@@ -5727,7 +5791,7 @@ window.delNpc = function(index, e) {
     }
 };
 
-window.saveNpc = function(index, e) {
+window.saveNpc = async function(index, e) {
     if(e) e.stopPropagation();
     let newName = $(`editNpcName_${index}`).value.trim();
     let newDesc = $(`editNpcDesc_${index}`).value.trim(); 
@@ -5735,28 +5799,38 @@ window.saveNpc = function(index, e) {
         if(typeof showCustomText === `function`) showCustomText(`机密代号/姓名不能为空哦！`);
         return;
     }
-    let npcData = originalGetItem.call(ls, `npcList_` + currentChatId);
-    let npcs = npcData ? JSON.parse(npcData) : [];
+    let npcKey = `npcList_` + currentChatId;
+    let npcData = originalGetItem.call(ls, npcKey);
+    if (!npcData) { try { let lf = await localforage.getItem(npcKey); if(lf) npcData = typeof lf === 'string' ? lf : JSON.stringify(lf); } catch(e){} }
+    let npcs = npcData ? (typeof npcData === 'string' ? JSON.parse(npcData) : npcData) : [];
     if(npcs[index]) {
         npcs[index].name = newName;
         npcs[index].desc = newDesc; 
-        originalSetItem.call(ls, `npcList_` + currentChatId, JSON.stringify(npcs));
+        let npcJson = JSON.stringify(npcs);
+        try { originalSetItem.call(ls, npcKey, npcJson); } catch(e) {}
+        try { await localforage.setItem(npcKey, npcJson); } catch(e) {}
         renderNpcList();
         if(typeof showCustomText === `function`) showCustomText(`机密对象【${newName}】的情报已更新并收起！`);
     }
 };
 
-if($(`btnAddNpc`)) $(`btnAddNpc`).onclick = () => {
+if($(`btnAddNpc`)) $(`btnAddNpc`).onclick = async () => {
     let name = $(`newNpcName`).value.trim();
     let color = $(`newNpcColor`).value;
     if(!name) {
         if(typeof showCustomText === `function`) showCustomText(`请先填写机密对象的姓名或身份！`);
         return;
     }
-    let npcData = originalGetItem.call(ls, `npcList_` + currentChatId);
-    let npcs = npcData ? JSON.parse(npcData) : [];
+    let npcKey = `npcList_` + currentChatId;
+    let npcData = originalGetItem.call(ls, npcKey);
+    // localforage 兜底读取
+    if (!npcData) { try { let lf = await localforage.getItem(npcKey); if(lf) npcData = typeof lf === 'string' ? lf : JSON.stringify(lf); } catch(e){} }
+    let npcs = npcData ? (typeof npcData === 'string' ? JSON.parse(npcData) : npcData) : [];
     npcs.push({ name: name, desc: ``, color: color }); 
-    originalSetItem.call(ls, `npcList_` + currentChatId, JSON.stringify(npcs));
+    let npcJson = JSON.stringify(npcs);
+    // 同时写 localStorage 和 localforage（兜底）
+    try { originalSetItem.call(ls, npcKey, npcJson); } catch(e) {}
+    try { await localforage.setItem(npcKey, npcJson); } catch(e) {}
     $(`newNpcName`).value = ``;
     renderNpcList();
 };
