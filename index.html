@@ -62,7 +62,7 @@ textarea { resize: none; }
 .clear-btn { background: #fff0f0; color: #ff7675; border: 1px solid #ff7675; padding: 10px; border-radius: 10px; font-size: 12px; cursor: pointer; text-align: center; font-weight: bold; flex: 1; }
 .upload-btn { background: #f8f9fa; color: #666; border: 1px dashed #bbb; padding: 12px; border-radius: 10px; font-size: 12px; cursor: pointer; text-align: center; display: flex; justify-content: center; align-items: center; gap: 5px; }
 .scr-list { display: none; height: 100%; position: absolute; top: 0; width: 100%; flex-direction: column; background-color: #f5f6fa; color: black; z-index: 20; }
-.chat-header { background-color: #ffffff; padding: 25px 20px 15px 15px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 20px; border-bottom: 1px solid #eeeeee; flex-shrink: 0; }
+.chat-header { background-color: #ffffff; padding: 15px 20px 15px 15px; padding-top: max(calc(env(safe-area-inset-top, 0px) + 10px), 28px); display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 20px; border-bottom: 1px solid #eeeeee; flex-shrink: 0; }
 .back-btn { font-size: 20px; cursor: pointer; color: #555555; width: 30px; font-weight: normal; }
 .plus-btn { font-size: 28px; cursor: pointer; line-height: 1; margin-top: -5px; position: relative; }
 .header-center { flex: 1; text-align: center; margin-right: 30px; } 
@@ -87,7 +87,7 @@ overflow: hidden; text-overflow: ellipsis; }
 z-index: 100; overflow: hidden; }
 .menu-item { padding: 15px 20px; border-bottom: 1px solid #f0f2f5; font-size: 14px; color: #333; cursor: pointer; }
 .scr-room { display: none; height: 100%; position: absolute; top: 0; width: 100%; flex-direction: column; background-color: #f5f6fa; color: black; z-index: 25; background-size: cover; background-position: center; }
-.room-header { background-color: rgba(255,255,255,0.9); backdrop-filter: blur(10px); padding: 25px 15px 15px 15px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 18px; border-bottom: 1px solid #eeeeee; flex-shrink: 0; }
+.room-header { background-color: rgba(255,255,255,0.9); backdrop-filter: blur(10px); padding: 15px 15px 12px 15px; padding-top: max(calc(env(safe-area-inset-top, 0px) + 10px), 28px); display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 18px; border-bottom: 1px solid #eeeeee; flex-shrink: 0; }
 .settings-btn { font-size: 20px; cursor: pointer; color: #555555; width: 30px; text-align: right; }
 .empty-btn { width: 30px; }
 .room-center { flex: 1; text-align: center; font-size: 16px; }
@@ -465,7 +465,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
           position:relative;overflow:hidden;cursor:pointer;
         }
         #hdCalBg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;z-index:0;pointer-events:none;border-radius:14px;}
-        #hdCalContent{position:relative;z-index:1;}
+        #hdCalContent{position:relative;z-index:1;pointer-events:none;}
         #hdCal .cal-month{text-align:right;font-size:12px;color:#333;margin-bottom:2px;font-weight:600;}
         #hdCal .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);}
         #hdCal .cal-head{font-size:9px;color:#aaa;text-align:center;padding:2px 0;}
@@ -482,9 +482,11 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
           position:relative;overflow:hidden;cursor:pointer;
         }
         #hdTodoBg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;z-index:0;pointer-events:none;border-radius:14px;}
-        #hdTodoContent{position:relative;z-index:1;}
+        #hdTodoContent{position:relative;z-index:1;pointer-events:none;}
         #hdTodoHeader{display:flex;align-items:center;gap:4px;margin-bottom:5px;}
-        #hdTodo .todo-title{font-size:14px;font-weight:900;color:#111;flex:1;}
+        #hdTodo .todo-title{font-size:14px;font-weight:900;color:#111;flex:1;pointer-events:auto;}
+        #hdTodoHeader *{pointer-events:auto;}
+        #hdTodoItems *{pointer-events:auto;}
         #hdTodoEmoji{
           font-size:15px;cursor:pointer;border:none;background:transparent;
           padding:0 1px;outline:none;-webkit-tap-highlight-color:transparent;font-family:inherit;
@@ -593,7 +595,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
           <div id="hdCal" onclick="if(event.target===document.getElementById('hdCal')||event.target===document.getElementById('hdCalBg')){document.getElementById('hdCalBgInp').click();}">
             <img id="hdCalBg" alt="">
             <div id="hdCalContent">
-              <div id="hdCalMonth" class="cal-month" style="display:flex;align-items:center;justify-content:space-between;"><span onclick="document.getElementById('hdCalBgInp').click()" style="font-size:10px;cursor:pointer;color:rgba(0,0,0,.2);padding:0 2px;-webkit-tap-highlight-color:transparent;" title="换背景">🖼</span><span id="hdCalMonthTxt"></span></div>
+              <div id="hdCalMonth" class="cal-month"><span id="hdCalMonthTxt"></span></div>
               <div class="cal-grid">
                 <div class="cal-head">日</div><div class="cal-head">一</div><div class="cal-head">二</div>
                 <div class="cal-head">三</div><div class="cal-head">四</div><div class="cal-head">五</div><div class="cal-head">六</div>
@@ -607,12 +609,11 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 
       <!-- ══ todo | 四图标 ══ -->
       <div id="hdBotRow">
-        <div id="hdTodo">
+        <div id="hdTodo" onclick="if(event.target===this||event.target===document.getElementById('hdTodoBg')){document.getElementById('hdTodoBgInp').click();}">
           <img id="hdTodoBg" alt="">
           <div id="hdTodoContent">
             <div id="hdTodoHeader">
               <span class="todo-title">to do list</span>
-              <span onclick="document.getElementById('hdTodoBgInp').click()" style="font-size:11px;cursor:pointer;color:rgba(0,0,0,.22);padding:0 2px;-webkit-tap-highlight-color:transparent;" title="换背景">🖼</span>
               <span id="hdTodoEmoji" onclick="hdToggleTodoEmoji()" style="font-size:15px;cursor:pointer;padding:0 1px;-webkit-tap-highlight-color:transparent;flex-shrink:0;display:inline-block;position:relative;z-index:2;">✨</span><input id="hdTodoEmojiInp" type="text" maxlength="4" placeholder="✨" style="display:none;font-size:14px;width:40px;border:none;border-bottom:2px solid #f5b8d4;text-align:center;padding:1px 2px;outline:none;font-family:inherit;background:transparent;color:#555;position:relative;z-index:2;" onblur="hdSaveTodoEmoji()" onkeydown="if(event.key==='Enter')this.blur()">
             </div>
             <div id="hdTodoItems"></div>
@@ -4987,11 +4988,8 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
         let lblEl=document.getElementById(this.getAttribute('data-lblid'));
         if(lblEl)lblEl.textContent=v;
       };
-      // 防键盘顶起：input focus时scroll into view
-      lblInp.onfocus=function(){
-        let scroll=document.getElementById('hsScrollArea');
-        if(scroll){setTimeout(()=>{this.scrollIntoView({block:'center',behavior:'smooth'});},300);}
-      };
+      // blur时保存即可，不做 scrollIntoView（会导致整页飞走）
+      lblInp.onfocus=function(){};
 
       cell.appendChild(preview);cell.appendChild(actions);cell.appendChild(lblInp);
       container.appendChild(cell);
@@ -5044,17 +5042,52 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
   (async function _loadAllPgBgs(){for(let pg of['list','contact','me'])await _applyPgBg(pg);})();
   function _setupPgBgInp(pg){
     let n=pg.charAt(0).toUpperCase()+pg.slice(1);
-    let inp=el_('hs'+n+'BgInp');if(!inp)return;
+    let inp=el_('hs'+n+'BgInp');if(!inp||inp._pgBound)return;
+    inp._pgBound=true;
     inp.onchange=function(){
       let file=this.files[0];if(!file)return;
-      let r=new FileReader();
-      r.onload=async ev=>{let d=ev.target.result;lfSet(_PBK[pg],d);await _applyPgBg(pg);};
-      r.readAsDataURL(file);
+      let reader=new FileReader();
+      reader.onload=ev=>{
+        let d=ev.target.result;
+        // 先存入 localforage（大仓库）
+        localforage.setItem(_PBK[pg],d).catch(()=>{});
+        try{localStorage.setItem(_PBK[pg],d);}catch(e){}
+        // 直接用读取到的 data 更新 UI（不再异步重读，避免时序问题）
+        let img=el_('hs'+n+'BgImg'),hint=el_('hs'+n+'BgHint');
+        if(img){img.src=d;img.style.display='block';}
+        if(hint)hint.style.display='none';
+        let scr=document.getElementById(_PSC[pg]);
+        if(scr){scr.style.backgroundImage='url('+d+')';scr.style.backgroundSize='cover';scr.style.backgroundPosition='center';}
+      };
+      reader.readAsDataURL(file);
     };
   }
   ['list','contact','me'].forEach(_setupPgBgInp);
+  // 每次打开设置页时重新绑定（防止 DOM 重建导致失效）
+  let _origHsOpen=window.hsRenderGrid;
+  window.hsRenderGrid=function(){
+    if(typeof _origHsOpen==='function')_origHsOpen();
+    ['list','contact','me'].forEach(_setupPgBgInp);
+    // 刷新壁纸预览缩略图
+    ['list','contact','me'].forEach(async function(pg){
+      let n=pg.charAt(0).toUpperCase()+pg.slice(1);
+      let d=await lfGet(_PBK[pg]);
+      let img=el_('hs'+n+'BgImg'),hint=el_('hs'+n+'BgHint');
+      if(d&&d.length>10){
+        if(img){img.src=d;img.style.display='block';}
+        if(hint)hint.style.display='none';
+      }
+    });
+  };
   window.hsRemovePageBg=function(pg){
-    lfSet(_PBK[pg],'');_applyPgBg(pg);
+    localforage.removeItem(_PBK[pg]).catch(()=>{});
+    try{localStorage.removeItem(_PBK[pg]);}catch(e){}
+    let n=pg.charAt(0).toUpperCase()+pg.slice(1);
+    let img=el_('hs'+n+'BgImg'),hint=el_('hs'+n+'BgHint');
+    if(img){img.src='';img.style.display='none';}
+    if(hint)hint.style.display='';
+    let scr=document.getElementById(_PSC[pg]);
+    if(scr){scr.style.backgroundImage='';scr.style.backgroundSize='';}
   };
 
   // 保存所有（点击保存按钮时）
@@ -5082,24 +5115,14 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
     });
   })();
 
-  // 防键盘顶起：监听visualViewport
+  // 防键盘顶起：仅用 padding-bottom 给滚动区补偿，绝不修改 scr 的 top/height
   (function fixSettingsKeyboard(){
-    let scr=document.getElementById('scrHomeSettings');
     let scroll=document.getElementById('hsScrollArea');
-    if(!scr||!scroll)return;
-    // 输入框聚焦时不让整页移动
-    scr.addEventListener('focusin',function(e){
-      if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'){
-        e.target.scrollIntoView({block:'center',behavior:'smooth'});
-      }
-    });
+    if(!scroll)return;
     if(window.visualViewport){
       window.visualViewport.addEventListener('resize',function(){
-        let h=window.visualViewport.height;
-        if(scr.style.display==='flex'){
-          scr.style.height=h+'px';
-          scr.style.top=window.visualViewport.offsetTop+'px';
-        }
+        let kbH=Math.max(0, window.innerHeight-window.visualViewport.height);
+        scroll.style.paddingBottom=(kbH+20)+'px';
       });
     }
   })();
@@ -8236,10 +8259,13 @@ let hasAccept = txt.includes(`[收取转账]`);
                     ? history.filter(m=>m.role===`assistant`).length
                     : history.length;
                 let _leKey = `lastMemEff_`+_cid_am;
-                let lastEffective = parseInt(originalGetItem.call(ls,_leKey)||`0`);
+                // 优先从内存缓存读（避免异步），再降级 localStorage
+                let lastEffective = parseInt(window[`_lme_cache_`+_cid_am] || originalGetItem.call(ls,_leKey) || `0`);
                 if((effectiveCount - lastEffective) >= trigCount && effectiveCount > 0) {
-                    originalSetItem.call(ls,_leKey, effectiveCount.toString());
-                    originalSetItem.call(ls,`lastMemCount_`+_cid_am, history.length.toString());
+                    window[`_lme_cache_`+_cid_am] = effectiveCount; // 内存缓存，即时可读
+                    // 存 localforage，不写满的 localStorage
+                    localforage.setItem(_leKey, effectiveCount.toString()).catch(()=>{});
+                    localforage.setItem(`lastMemCount_`+_cid_am, history.length.toString()).catch(()=>{});
                     runMemorySummary(true);
                 }
             }
