@@ -359,22 +359,24 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
           background-size: 18px 18px !important;
           display: none; flex-direction: column;
           overflow: hidden;   /* 不可滚动 */
-          padding: 20px 10px 0;
+          padding: 30px 10px 0;
           box-sizing: border-box;
         }
 
         /* ══ 纪念日卡片 ══ */
         #hdAnnCard {
           border-radius: 18px; overflow: hidden; position: relative;
-          margin-bottom: 8px; flex-shrink: 0; height: 138px;
+          margin-top: 6px; margin-bottom: 8px; flex-shrink: 0; height: 138px;
           background: linear-gradient(135deg,#c9b8e8,#f7b8d4,#f0cde0);
         }
         #hdAnnBgImg { position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none; }
         #hdAnnBgBtn {
           position:absolute;bottom:6px;right:8px;z-index:5;
-          background:rgba(255,255,255,.5);border:none;border-radius:10px;
-          font-size:11px;padding:2px 6px;cursor:pointer;color:#444;
-          backdrop-filter:blur(4px);-webkit-tap-highlight-color:transparent;
+          background:rgba(255,255,255,.45);border:none;border-radius:50%;
+          font-size:16px;width:28px;height:28px;
+          display:flex;align-items:center;justify-content:center;
+          cursor:pointer;backdrop-filter:blur(4px);-webkit-tap-highlight-color:transparent;
+          padding:0;
         }
         /* 两侧头像 */
         .ann-ava {
@@ -385,7 +387,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
           box-shadow:0 3px 12px rgba(0,0,0,.2);
         }
         #hdAnnAvaL{left:12px;} #hdAnnAvaR{right:12px;}
-        .ann-ava img{width:100%;height:100%;object-fit:cover;display:none;}
+        .ann-ava img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;}
         .ann-ava-hint{font-size:26px;pointer-events:none;color:rgba(255,255,255,.85);}
         /* 横线 */
         #hdAnnLine {
@@ -517,14 +519,14 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         .hd-app-lbl{font-size:10px;color:#444;font-weight:500;}
 
         /* ══ Dock ══ */
-        #hdDockSpacer{height:5px;flex-shrink:0;}
+        #hdDockSpacer{height:10px;flex-shrink:0;}
         #hdDock{
           position:sticky;bottom:0;z-index:2;
           background:rgba(255,255,255,.92);
           -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
           border-radius:20px 20px 0 0;
           display:flex;justify-content:space-around;align-items:center;
-          padding:11px 30px 18px;margin:0 -10px;
+          padding:14px 30px 24px;margin:0 -10px;
           box-shadow:0 -2px 12px rgba(0,0,0,.07);
         }
         .hd-dock-item{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
@@ -553,7 +555,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
             onblur="hdAnnSave('name')" onkeydown="if(event.key==='Enter')this.blur()">
           <div id="hdAnnDaysWrap">
             <span id="hdAnnDaysNum" onclick="hdAnnEdit('days')">0</span>
-            <span id="hdAnnDaysSuffix" onclick="hdAnnEdit('days')">天了</span>
+            <span id="hdAnnDaysSuffix" onclick="hdAnnEdit('days')">天</span>
           </div>
           <input id="hdAnnDaysEdit" type="text" maxlength="20" placeholder="起始日期 2020-01-01"
             onblur="hdAnnSave('days')" onkeydown="if(event.key==='Enter')this.blur()">
@@ -565,7 +567,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
           onblur="hdAnnSave('botL')" onkeydown="if(event.key==='Enter')this.blur()">
         <input class="ann-bot-edit" id="hdAnnBotREdit" type="text" maxlength="12"
           onblur="hdAnnSave('botR')" onkeydown="if(event.key==='Enter')this.blur()">
-        <button id="hdAnnBgBtn" onclick="document.getElementById('hdAnnBgInp').click()">🖼 换背景</button>
+        <button id="hdAnnBgBtn" onclick="document.getElementById('hdAnnBgInp').click()" title="换背景">🖼️</button>
         <input type="file" id="hdAnnBgInp" accept="image/*" style="display:none">
       </div>
 
@@ -574,6 +576,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         <span id="hdTagline" onclick="hdEditTagline()">青春就是用来怀念的。</span>
         <input id="hdTaglineEdit" type="text" maxlength="40"
           onblur="hdSaveTagline()" onkeydown="if(event.key==='Enter')this.blur()">
+        <button id="hdTaglineEmoji" onclick="hdEditTaglineEmoji()" style="font-size:15px;border:none;background:transparent;padding:0 2px;cursor:pointer;outline:none;font-family:inherit;-webkit-tap-highlight-color:transparent;flex-shrink:0;">❤️</button>
       </div>
 
       <!-- ══ 大图 | 小图+日历 ══ -->
@@ -4247,13 +4250,21 @@ async function updateListPreview() {
 async function applyVis() {
     let dn = $(`cfgRem`).value || $(`cfgName`).value || `专属恋人`;
     if($(`roomTitle`)) $(`roomTitle`).innerText = dn;
-    let curStatusTxt = originalGetItem.call(ls, `cStatusTxt_` + currentChatId) || `在线`;
-    let curStatusCol = originalGetItem.call(ls, `cStatusColor_` + currentChatId) || `status-online`;
-    let curSign = originalGetItem.call(ls, `cSign_` + currentChatId) || `（暂无个性签名）`;
-    if (currentChatId === `default`) {
-         curStatusTxt = originalGetItem.call(ls, `cStatusTxt`) || `在线`;
-         curStatusCol = originalGetItem.call(ls, `cStatusColor`) || `status-online`;
-         curSign = originalGetItem.call(ls, `cSign`) || `（暂无个性签名）`;
+    // 双读：localforage（最新）优先，降级到 localStorage
+    async function _readStatus(lsKey,lfKey,def){
+        let v=originalGetItem.call(ls,lsKey);
+        if(!v||v==='null'){try{v=await localforage.getItem(lfKey);}catch(e){}}
+        return v||def;
+    }
+    let curStatusTxt,curStatusCol,curSign;
+    if(currentChatId===`default`){
+        curStatusTxt=await _readStatus(`cStatusTxt`,`cStatusTxt_default`,`在线`);
+        curStatusCol=await _readStatus(`cStatusColor`,`cStatusColor_default`,`status-online`);
+        curSign=await _readStatus(`cSign`,`cSign_default`,`（暂无个性签名）`);
+    }else{
+        curStatusTxt=await _readStatus(`cStatusTxt_`+currentChatId,`cStatusTxt_`+currentChatId,`在线`);
+        curStatusCol=await _readStatus(`cStatusColor_`+currentChatId,`cStatusColor_`+currentChatId,`status-online`);
+        curSign=await _readStatus(`cSign_`+currentChatId,`cSign_`+currentChatId,`（暂无个性签名）`);
     }
     if($(`roomStatus`)) $(`roomStatus`).innerHTML = `<div class="status-dot ` + curStatusCol + `"></div>` + curStatusTxt;
     if($(`roomSignature`)) $(`roomSignature`).innerText = curSign;
@@ -4573,6 +4584,17 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
     let lbl=el_('hdTagline'),inp=el_('hdTaglineEdit');
     let t=inp.value.trim()||DEFAULT_TGL;
     lbl.textContent=t;lbl.style.display='';inp.style.display='none';lfSet(TGL_KEY,t);
+  };
+  // 签名行 emoji
+  const TGL_EMO_KEY='hd_tagline_emoji';
+  (async function loadTaglineEmoji(){
+    let e=await lfGet(TGL_EMO_KEY);
+    if(el_('hdTaglineEmoji'))el_('hdTaglineEmoji').textContent=e||'❤️';
+  })();
+  window.hdEditTaglineEmoji=function(){
+    let cur=el_('hdTaglineEmoji')?.textContent||'❤️';
+    let v=prompt('输入emoji（1-2个）：',cur);
+    if(v!==null){let t=(v.trim()||'❤️').slice(0,4);if(el_('hdTaglineEmoji'))el_('hdTaglineEmoji').textContent=t;lfSet(TGL_EMO_KEY,t);}
   };
 
   // ── Todo emoji ──
@@ -7737,10 +7759,15 @@ let hasAccept = txt.includes(`[收取转账]`);
             if(isAutoOn) {
                 let trigCount = parseInt(ls.getItem(`cMemT`)) || parseInt($(`cfgMemTrig`).value) || 10;
                 let lastMemCount = parseInt(ls.getItem(`lastMemCount`) || `0`);
-                if((history.length - lastMemCount) >= trigCount && history.length > 0) {
+                // 线下模式：按完整气泡数（AI回复次数）计算；线上：按history条数
+                let effectiveCount = window._offlineMode
+                    ? history.filter(m=>m.role==='assistant').length
+                    : history.length;
+                let lastEffective = parseInt(ls.getItem(`lastMemEffective`) || `0`);
+                if((effectiveCount - lastEffective) >= trigCount && effectiveCount > 0) {
+                    ls.setItem(`lastMemEffective`, effectiveCount.toString());
                     ls.setItem(`lastMemCount`, history.length.toString());
                     runMemorySummary(true);
-
                 }
             }
             
