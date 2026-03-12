@@ -593,7 +593,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
           <div id="hdCal" onclick="if(event.target===document.getElementById('hdCal')||event.target===document.getElementById('hdCalBg')){document.getElementById('hdCalBgInp').click();}">
             <img id="hdCalBg" alt="">
             <div id="hdCalContent">
-              <div id="hdCalMonth" class="cal-month"></div>
+              <div id="hdCalMonth" class="cal-month" style="display:flex;align-items:center;justify-content:space-between;"><span onclick="document.getElementById('hdCalBgInp').click()" style="font-size:10px;cursor:pointer;color:rgba(0,0,0,.2);padding:0 2px;-webkit-tap-highlight-color:transparent;" title="换背景">🖼</span><span id="hdCalMonthTxt"></span></div>
               <div class="cal-grid">
                 <div class="cal-head">日</div><div class="cal-head">一</div><div class="cal-head">二</div>
                 <div class="cal-head">三</div><div class="cal-head">四</div><div class="cal-head">五</div><div class="cal-head">六</div>
@@ -607,11 +607,12 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 
       <!-- ══ todo | 四图标 ══ -->
       <div id="hdBotRow">
-        <div id="hdTodo" onclick="if(event.target===document.getElementById('hdTodo')||event.target===document.getElementById('hdTodoBg')){document.getElementById('hdTodoBgInp').click();}">
+        <div id="hdTodo">
           <img id="hdTodoBg" alt="">
           <div id="hdTodoContent">
             <div id="hdTodoHeader">
               <span class="todo-title">to do list</span>
+              <span onclick="document.getElementById('hdTodoBgInp').click()" style="font-size:11px;cursor:pointer;color:rgba(0,0,0,.22);padding:0 2px;-webkit-tap-highlight-color:transparent;" title="换背景">🖼</span>
               <span id="hdTodoEmoji" onclick="hdToggleTodoEmoji()" style="font-size:15px;cursor:pointer;padding:0 1px;-webkit-tap-highlight-color:transparent;flex-shrink:0;display:inline-block;position:relative;z-index:2;">✨</span><input id="hdTodoEmojiInp" type="text" maxlength="4" placeholder="✨" style="display:none;font-size:14px;width:40px;border:none;border-bottom:2px solid #f5b8d4;text-align:center;padding:1px 2px;outline:none;font-family:inherit;background:transparent;color:#555;position:relative;z-index:2;" onblur="hdSaveTodoEmoji()" onkeydown="if(event.key==='Enter')this.blur()">
             </div>
             <div id="hdTodoItems"></div>
@@ -655,7 +656,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
     
     <!-- ══ 桌面设置 ══ -->
     <style>
-      #scrHomeSettings { position:absolute !important; top:0; left:0; width:100%; }
+      #scrHomeSettings { width:100%; }
       #scrHomeSettings .hs-scroll {
         flex:1; overflow-y:scroll; -webkit-overflow-scrolling:touch;
         padding:14px 14px 0; display:flex; flex-direction:column; gap:12px;
@@ -725,6 +726,40 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         <div class="hs-card">
           <div class="hs-card-title">📌 底部栏图标 &amp; 名称</div>
           <div id="hsDockIconGrid"><!-- rendered by JS --></div>
+        </div>
+
+        <!-- 页面壁纸 -->
+        <div class="hs-card">
+          <div class="hs-card-title">🎨 页面壁纸</div>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:12px;color:#555;width:60px;flex-shrink:0;">💬 消息页</span>
+              <div onclick="document.getElementById('hsListBgInp').click()" style="width:46px;height:46px;border-radius:10px;background:#f0e8ff;border:2px dashed #c9b8e8;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;flex-shrink:0;font-size:18px;">
+                <img id="hsListBgImg" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;" alt=""><span id="hsListBgHint">🌸</span>
+              </div>
+              <button onclick="document.getElementById('hsListBgInp').click()" class="hs-btn-pick" style="flex:1;">换图</button>
+              <button onclick="hsRemovePageBg('list')" class="hs-btn-reset">恢复</button>
+              <input type="file" id="hsListBgInp" accept="image/*" style="display:none">
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:12px;color:#555;width:60px;flex-shrink:0;">👥 联系人</span>
+              <div onclick="document.getElementById('hsContactBgInp').click()" style="width:46px;height:46px;border-radius:10px;background:#f0e8ff;border:2px dashed #c9b8e8;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;flex-shrink:0;font-size:18px;">
+                <img id="hsContactBgImg" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;" alt=""><span id="hsContactBgHint">🌸</span>
+              </div>
+              <button onclick="document.getElementById('hsContactBgInp').click()" class="hs-btn-pick" style="flex:1;">换图</button>
+              <button onclick="hsRemovePageBg('contact')" class="hs-btn-reset">恢复</button>
+              <input type="file" id="hsContactBgInp" accept="image/*" style="display:none">
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:12px;color:#555;width:60px;flex-shrink:0;">👤 我的</span>
+              <div onclick="document.getElementById('hsMeBgInp').click()" style="width:46px;height:46px;border-radius:10px;background:#f0e8ff;border:2px dashed #c9b8e8;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;flex-shrink:0;font-size:18px;">
+                <img id="hsMeBgImg" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;" alt=""><span id="hsMeBgHint">🌸</span>
+              </div>
+              <button onclick="document.getElementById('hsMeBgInp').click()" class="hs-btn-pick" style="flex:1;">换图</button>
+              <button onclick="hsRemovePageBg('me')" class="hs-btn-reset">恢复</button>
+              <input type="file" id="hsMeBgInp" accept="image/*" style="display:none">
+            </div>
+          </div>
         </div>
 
         <div style="height:12px;flex-shrink:0;"></div>
@@ -4132,7 +4167,7 @@ let pressTimer = null;
 let selEl = null;
 let currentQuote ="";
 function showScreen(showId) {
-    [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrSpace, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet"), $("scrContact"), $("scrSetFont"), $("scrCharPhone"), $("scrSpyDiary"), $("scrSpyZhihu"), $("scrSpySecret"), $("scrSpyMeituan"), $("scrSpyFootprint"), $("scrSpyWallet"), $("scrSpyShop"), $("scrSpyIqiyi"), $("scrSpySettings"), $("scrMoment"), $("scrGroupRoom"), $("scrGroupSettings"), $("scrOurSongs")].forEach(s => { if(s) s.style.display = "none"; });
+    [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrSpace, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet"), $("scrContact"), $("scrSetFont"), $("scrCharPhone"), $("scrSpyDiary"), $("scrSpyZhihu"), $("scrSpySecret"), $("scrSpyMeituan"), $("scrSpyFootprint"), $("scrSpyWallet"), $("scrSpyShop"), $("scrSpyIqiyi"), $("scrSpySettings"), $("scrMoment"), $("scrGroupRoom"), $("scrGroupSettings"), $("scrOurSongs"), $("scrHomeSettings")].forEach(s => { if(s) s.style.display = "none"; });
     let target = $(showId);
     // Reset chat input height when entering room
     if(showId === "scrRoom") {
@@ -4140,7 +4175,7 @@ function showScreen(showId) {
         if(_im){ _im.style.height="34px"; _im.style.overflowY="hidden"; }
     }
     if(target) {
-        if(showId === "scrRoom" || showId === "scrList" || showId === "scrSetApi" || showId === "scrSetChat" || showId === "scrWb" || showId === "scrWbEdit" || showId === "scrMe" || showId === "scrCharSticker" || showId === "scrSpace" || showId === "scrLogList" || showId === "scrLogEdit" || showId === "scrFav" || showId === "scrWallet" || showId === "scrContact" || showId === "scrSetFont" || showId === "scrSpyDiary" || showId === "scrSpyZhihu" || showId === "scrSpySecret" || showId === "scrSpyMeituan" || showId === "scrSpyFootprint" || showId === "scrSpyWallet" || showId === "scrSpyShop" || showId === "scrSpyIqiyi" || showId === "scrSpySettings" || showId === "scrMoment" || showId === "scrGroupRoom" || showId === "scrGroupSettings" || showId === "scrOurSongs") {
+        if(showId === "scrRoom" || showId === "scrList" || showId === "scrSetApi" || showId === "scrSetChat" || showId === "scrWb" || showId === "scrWbEdit" || showId === "scrMe" || showId === "scrCharSticker" || showId === "scrSpace" || showId === "scrLogList" || showId === "scrLogEdit" || showId === "scrFav" || showId === "scrWallet" || showId === "scrContact" || showId === "scrSetFont" || showId === "scrSpyDiary" || showId === "scrSpyZhihu" || showId === "scrSpySecret" || showId === "scrSpyMeituan" || showId === "scrSpyFootprint" || showId === "scrSpyWallet" || showId === "scrSpyShop" || showId === "scrSpyIqiyi" || showId === "scrSpySettings" || showId === "scrMoment" || showId === "scrGroupRoom" || showId === "scrGroupSettings" || showId === "scrOurSongs" || showId === "scrHomeSettings") {
             target.style.display = "flex";
         } else if (showId === "scrCharPhone") {
             target.style.display = "flex";
@@ -4579,7 +4614,7 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
   function buildCal(){
     let now=new Date(),y=now.getFullYear(),mo=now.getMonth(),td=now.getDate();
     let body=el_('hdCalBody'),me=el_('hdCalMonth');if(!body||!me)return;
-    me.innerText=CHN_MON[mo]+'月';
+    let meTxt=el_('hdCalMonthTxt')||me;meTxt.innerText=CHN_MON[mo]+'月';
     let fd=new Date(y,mo,1).getDay(),dim=new Date(y,mo+1,0).getDate(),pd=new Date(y,mo,0).getDate();
     let h='';
     for(let i=fd-1;i>=0;i--)h+=`<div class="cal-day other">${pd-i}</div>`;
@@ -4986,6 +5021,40 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
         hsRenderIconRow(d,'hd_dock_img_','hd_dock_lbl_',d.imgId,d.emojiId,d.lblId,d.defaultLbl,d.defaultEmoji,dockRow);
       });
     }
+  };
+
+  // ══ 页面壁纸 ══
+  const _PBK={list:'hd_pg_bg_list',contact:'hd_pg_bg_contact',me:'hd_pg_bg_me'};
+  const _PSC={list:'scrList',contact:'scrContact',me:'scrMe'};
+  async function _applyPgBg(pg){
+    let d=await lfGet(_PBK[pg]);
+    let n=pg.charAt(0).toUpperCase()+pg.slice(1);
+    let img=el_('hs'+n+'BgImg'),hint=el_('hs'+n+'BgHint');
+    let scr=document.getElementById(_PSC[pg]);
+    if(d&&d.length>10){
+      if(scr){scr.style.backgroundImage='url('+d+')';scr.style.backgroundSize='cover';scr.style.backgroundPosition='center';}
+      if(img){img.src=d;img.style.display='block';}
+      if(hint)hint.style.display='none';
+    } else {
+      if(scr){scr.style.backgroundImage='';scr.style.backgroundSize='';}
+      if(img){img.src='';img.style.display='none';}
+      if(hint)hint.style.display='';
+    }
+  }
+  (async function _loadAllPgBgs(){for(let pg of['list','contact','me'])await _applyPgBg(pg);})();
+  function _setupPgBgInp(pg){
+    let n=pg.charAt(0).toUpperCase()+pg.slice(1);
+    let inp=el_('hs'+n+'BgInp');if(!inp)return;
+    inp.onchange=function(){
+      let file=this.files[0];if(!file)return;
+      let r=new FileReader();
+      r.onload=async ev=>{let d=ev.target.result;lfSet(_PBK[pg],d);await _applyPgBg(pg);};
+      r.readAsDataURL(file);
+    };
+  }
+  ['list','contact','me'].forEach(_setupPgBgInp);
+  window.hsRemovePageBg=function(pg){
+    lfSet(_PBK[pg],'');_applyPgBg(pg);
   };
 
   // 保存所有（点击保存按钮时）
@@ -6730,21 +6799,21 @@ window.uploadNpcAvatar = function(index, e) {
     input.click();
 };
 
-window.delNpc = function(index, e) {
-    if(e) e.stopPropagation();
-    if($(`customConfirmModal`)) {
-        $(`customConfirmText`).innerText = `确定要从机密图鉴中永久销毁这个对象吗？`;
-        $(`customConfirmModal`).style.display = `flex`;
-        $(`btnCustomConfirmOk`).onclick = () => {
-            $(`customConfirmModal`).style.display = `none`;
-            let npcData = originalGetItem.call(ls, `npcList_` + currentChatId);
-            let npcs = npcData ? JSON.parse(npcData) : [];
-            npcs.splice(index, 1);
-            originalSetItem.call(ls, `npcList_` + currentChatId, JSON.stringify(npcs));
-            renderNpcList();
-        };
-        $(`btnCustomConfirmCancel`).onclick = () => $(`customConfirmModal`).style.display = `none`;
-    }
+window.delNpc = async function(index, e) {
+    if(e) { e.stopPropagation(); e.preventDefault(); }
+    // 使用独立小弹窗而不是共享的 customConfirmModal（避免 onclick 被覆盖）
+    let confirmed = await window._customConfirm(`确定要从机密图鉴中永久销毁这个对象吗？
+此操作不可撤销！`);
+    if(!confirmed) return;
+    let npcKey = `npcList_` + currentChatId;
+    let npcData = originalGetItem.call(ls, npcKey);
+    if(!npcData){try{let lf=await localforage.getItem(npcKey);if(lf)npcData=typeof lf==='string'?lf:JSON.stringify(lf);}catch(ex){}}
+    let npcs = npcData ? (typeof npcData==='string'?JSON.parse(npcData):npcData) : [];
+    npcs.splice(index, 1);
+    let npcJson = JSON.stringify(npcs);
+    try{originalSetItem.call(ls, npcKey, npcJson);}catch(ex){}
+    try{await localforage.setItem(npcKey, npcJson);}catch(ex){}
+    renderNpcList();
 };
 
 window.saveNpc = async function(index, e) {
@@ -8153,18 +8222,24 @@ let hasAccept = txt.includes(`[收取转账]`);
             
                         // 推进外卖配送进度（每次char回复后+1轮）
                 if(typeof _advanceFoodDelivery === `function`) _advanceFoodDelivery();
-                let isAutoOn = ls.getItem(`cAMem`) === `true` || $(`cfgAutoMem`).checked;
+                // 每次用 per-char key，防止跨角色污染触发频率
+                let _cid_am = currentChatId;
+                let _amKey = `cAMem_`+_cid_am;
+                let _amRaw = originalGetItem.call(ls,_amKey);
+                let isAutoOn = (_amRaw!==null ? _amRaw===`true` : false) || $(`cfgAutoMem`).checked;
             if(isAutoOn) {
-                let trigCount = parseInt(ls.getItem(`cMemT`)) || parseInt($(`cfgMemTrig`).value) || 10;
-                let lastMemCount = parseInt(ls.getItem(`lastMemCount`) || `0`);
-                // 线下模式：按完整气泡数（AI回复次数）计算；线上：按history条数
+                let _mtKey = `cMemT_`+_cid_am;
+                let _mtRaw = originalGetItem.call(ls,_mtKey) || originalGetItem.call(ls,`cMemT`);
+                let trigCount = parseInt(_mtRaw) || parseInt($(`cfgMemTrig`).value) || 10;
+                // 线下模式：按AI回复次数；线上：按history条数
                 let effectiveCount = window._offlineMode
-                    ? history.filter(m=>m.role==='assistant').length
+                    ? history.filter(m=>m.role===`assistant`).length
                     : history.length;
-                let lastEffective = parseInt(ls.getItem(`lastMemEffective`) || `0`);
+                let _leKey = `lastMemEff_`+_cid_am;
+                let lastEffective = parseInt(originalGetItem.call(ls,_leKey)||`0`);
                 if((effectiveCount - lastEffective) >= trigCount && effectiveCount > 0) {
-                    ls.setItem(`lastMemEffective`, effectiveCount.toString());
-                    ls.setItem(`lastMemCount`, history.length.toString());
+                    originalSetItem.call(ls,_leKey, effectiveCount.toString());
+                    originalSetItem.call(ls,`lastMemCount_`+_cid_am, history.length.toString());
                     runMemorySummary(true);
                 }
             }
@@ -8892,15 +8967,16 @@ function mkBub(txt, side, isT=false) {
         let img = window.currentLoadedAiI || ``;
         if(img) { a.style.backgroundImage = `url(`+img+`)`; a.innerText = ``; } else a.innerText = `👤`;
         if(!isT) a.onclick = async () => {
-                // 先读 localforage 最新状态再显示
-                let _lfs = null;
-                try{_lfs=await localforage.getItem(`aiStatus_`+currentChatId);}catch(e){}
-                if(!_lfs){try{let _s=originalGetItem.call(ls,`aiStatus_`+currentChatId);if(_s)_lfs=typeof _s===`string`?JSON.parse(_s):_s;}catch(e){}}
-                let _as=_lfs||aiStatus;
-                stW.innerText=_as.weather||aiStatus.weather;
-                stC.innerText=_as.clothing||aiStatus.clothing;
-                stA.innerText=_as.action||aiStatus.action;
-                stT.innerText=_as.thought||aiStatus.thought;
+                // 每次点击都重新读取当前char的最新状态
+                let _cid=currentChatId;
+                let _lfs=null;
+                try{_lfs=await localforage.getItem(`aiStatus_`+_cid);}catch(e){}
+                if(!_lfs){try{let _s=originalGetItem.call(ls,`aiStatus_`+_cid);if(_s)_lfs=typeof _s===`string`?JSON.parse(_s):_s;}catch(e){}}
+                // 也刷新header上的签名和状态
+                if(typeof applyVis==='function')applyVis();
+                let _def='等待连接...';
+                if(_lfs){stW.innerText=_lfs.weather||_def;stC.innerText=_lfs.clothing||_def;stA.innerText=_lfs.action||_def;stT.innerText=_lfs.thought||_def;}
+                else{stW.innerText=_def;stC.innerText=_def;stA.innerText=_def;stT.innerText=_def;}
                 modal.style.display=`flex`;
             };
         row.appendChild(a); row.appendChild(b);
@@ -8936,14 +9012,14 @@ function mkBubSync(txt, side) {
         let img = window.currentLoadedAiI || ``;
         if(img) { a.style.backgroundImage = `url(`+img+`)`; a.innerText = ``; } else a.innerText = `👤`;
         a.onclick = async () => {
+                let _cid2=currentChatId;
                 let _lfs2=null;
-                try{_lfs2=await localforage.getItem(`aiStatus_`+currentChatId);}catch(e){}
-                if(!_lfs2){try{let _s2=originalGetItem.call(ls,`aiStatus_`+currentChatId);if(_s2)_lfs2=typeof _s2===`string`?JSON.parse(_s2):_s2;}catch(e){}}
-                let _as2=_lfs2||aiStatus;
-                stW.innerText=_as2.weather||aiStatus.weather;
-                stC.innerText=_as2.clothing||aiStatus.clothing;
-                stA.innerText=_as2.action||aiStatus.action;
-                stT.innerText=_as2.thought||aiStatus.thought;
+                try{_lfs2=await localforage.getItem(`aiStatus_`+_cid2);}catch(e){}
+                if(!_lfs2){try{let _s2=originalGetItem.call(ls,`aiStatus_`+_cid2);if(_s2)_lfs2=typeof _s2===`string`?JSON.parse(_s2):_s2;}catch(e){}}
+                if(typeof applyVis==='function')applyVis();
+                let _def2='等待连接...';
+                if(_lfs2){stW.innerText=_lfs2.weather||_def2;stC.innerText=_lfs2.clothing||_def2;stA.innerText=_lfs2.action||_def2;stT.innerText=_lfs2.thought||_def2;}
+                else{stW.innerText=_def2;stC.innerText=_def2;stA.innerText=_def2;stT.innerText=_def2;}
                 modal.style.display=`flex`;
             };
         row.appendChild(a); row.appendChild(b);
