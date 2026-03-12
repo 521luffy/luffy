@@ -531,8 +531,8 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
           -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
           border-radius:20px 20px 0 0;
           display:flex;justify-content:space-around;align-items:center;
-          padding:12px 30px calc(env(safe-area-inset-bottom,0px) + 16px);
-          margin:0 -10px;
+          padding:12px 20px 16px;
+          margin:0 -10px -10px;
           box-shadow:0 -2px 12px rgba(0,0,0,.07);
         }
         .hd-dock-item{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
@@ -649,12 +649,162 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         <div class="hd-dock-item" id="btnHomeApi">
           <div class="hd-dock-icon" id="hdDockIconApi" style="position:relative;overflow:hidden;"><img id="hdDockImgApi" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:15px;" alt=""><span id="hdDockEmoApi">🌐</span></div><span class="hd-dock-lbl" id="hdDockLblApi">API设置</span>
         </div>
+        <div class="hd-dock-item" id="btnHomeCoupleSpace">
+          <div class="hd-dock-icon" id="hdDockIconCS" style="position:relative;overflow:hidden;background:linear-gradient(135deg,#ffb6c1,#ff8fab);"><img id="hdDockImgCS" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:15px;" alt=""><span id="hdDockEmoCS">💑</span></div><span class="hd-dock-lbl" id="hdDockLblCS">情侣空间</span>
+        </div>
       </div>
 
       <div id="btnHomeSpace" style="display:none;"></div>
     </div>
     
     
+<!-- ═══════════════════════════════════════════════
+     情侣空间 (scrCoupleSpace)
+     ═══════════════════════════════════════════════ -->
+<div id="scrCoupleSpace" class="scr-flex" style="display:none;flex-direction:column;overflow:hidden;position:absolute;top:0;width:100%;height:100%;z-index:35;background:#fff5f7;background-size:cover;background-position:center;">
+  <style>
+    /* ── 情侣空间样式 ── */
+    #csTopBar{display:flex;align-items:center;justify-content:space-between;padding:max(calc(env(safe-area-inset-top,0px)+8px),28px) 14px 10px;flex-shrink:0;background:rgba(255,245,247,.85);backdrop-filter:blur(10px);position:relative;z-index:2;}
+    #csBack{font-size:20px;color:#c77d98;cursor:pointer;width:32px;}
+    #csTitle{font-size:16px;font-weight:700;color:#c44f7a;flex:1;text-align:center;}
+    #csBgBtn{font-size:18px;cursor:pointer;width:32px;text-align:right;}
+    /* 顶部情侣头像+木牌区 */
+    #csHeroRow{display:flex;align-items:center;padding:10px 14px 4px;gap:10px;flex-shrink:0;}
+    #csAvatarBox{display:flex;gap:-8px;flex-shrink:0;}
+    .cs-ava{width:58px;height:58px;border-radius:50%;background:rgba(255,200,220,.4);border:2.5px solid #ffb6c1;overflow:hidden;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;position:relative;}
+    .cs-ava:last-child{margin-left:-12px;border-color:#ffa0c0;}
+    .cs-ava img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;}
+    /* 小木牌 */
+    #csBoard{flex:1;min-width:0;background:linear-gradient(135deg,#d4a574,#b8895a);border-radius:12px;padding:10px 14px;box-shadow:2px 4px 10px rgba(0,0,0,.15),inset 0 1px 0 rgba(255,255,255,.2);position:relative;overflow:hidden;}
+    #csBoard::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent,transparent 18px,rgba(0,0,0,.04) 18px,rgba(0,0,0,.04) 19px);pointer-events:none;}
+    #csBoardTop{font-size:11px;color:rgba(255,255,255,.75);margin-bottom:2px;}
+    #csBoardDays{font-size:28px;font-weight:900;color:#fff;line-height:1.1;text-shadow:1px 2px 4px rgba(0,0,0,.3);}
+    #csBoardDayLbl{font-size:11px;color:rgba(255,255,255,.8);}
+    /* 主体区 flex row: 左竖栏 + 右内容 */
+    #csBody{flex:1;display:flex;overflow:hidden;}
+    /* 左侧恋爱打卡竖栏 */
+    #csLeftBar{width:52px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;padding:10px 0;gap:8px;background:rgba(255,200,220,.18);border-right:1px solid rgba(255,180,200,.3);}
+    .cs-vbtn{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;-webkit-tap-highlight-color:transparent;padding:6px 4px;border-radius:10px;transition:background .15s;}
+    .cs-vbtn:active{background:rgba(255,150,180,.2);}
+    .cs-vbtn-icon{font-size:20px;}
+    .cs-vbtn-lbl{font-size:9px;color:#c44f7a;font-weight:600;writing-mode:vertical-lr;text-orientation:upright;letter-spacing:2px;line-height:1.2;}
+    /* 右侧主内容区 */
+    #csMain{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 10px 16px;}
+    /* 五个功能按钮网格 */
+    #csFuncGrid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:4px 0 10px;}
+    .cs-func{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+    .cs-func-icon{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 2px 8px rgba(0,0,0,.08);}
+    .cs-func-lbl{font-size:9px;color:#555;font-weight:500;text-align:center;line-height:1.2;}
+    /* 打卡面板 */
+    #csDailyPanel{background:rgba(255,255,255,.85);border-radius:16px;padding:14px;margin-bottom:10px;box-shadow:0 2px 10px rgba(255,120,160,.12);}
+    #csDailyTitle{font-size:13px;font-weight:700;color:#c44f7a;margin-bottom:10px;}
+    .cs-checkin-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,200,220,.3);}
+    .cs-checkin-row:last-child{border-bottom:none;}
+    .cs-checkin-lbl{font-size:13px;color:#333;}
+    .cs-checkin-btn{background:linear-gradient(135deg,#ff8fab,#c44f7a);color:white;border:none;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:600;cursor:pointer;}
+    .cs-checkin-btn.done{background:#f0f0f0;color:#aaa;}
+    /* 恋语卡片 */
+    #csLoveCard{background:linear-gradient(135deg,rgba(255,200,220,.4),rgba(255,230,240,.6));border-radius:16px;padding:14px;box-shadow:0 2px 10px rgba(255,120,160,.1);}
+    #csLoveCardTitle{font-size:12px;color:#c44f7a;font-weight:600;margin-bottom:6px;}
+    #csLoveQuote{font-size:14px;color:#555;line-height:1.6;font-style:italic;}
+  </style>
+
+  <!-- 顶栏 -->
+  <div id="csTopBar">
+    <span id="csBack">＜</span>
+    <span id="csTitle">💕 情侣空间</span>
+    <span id="csBgBtn" title="换壁纸">🖼</span>
+    <input type="file" id="csBgInput" accept="image/*" style="display:none">
+  </div>
+
+  <!-- 头像 + 木牌 -->
+  <div id="csHeroRow">
+    <div id="csAvatarBox">
+      <div class="cs-ava" id="csAvaL" title="点击换头像">
+        <span>👩</span>
+        <img id="csAvaLImg" alt="">
+        <input type="file" id="csAvaLInp" accept="image/*" style="display:none">
+      </div>
+      <div class="cs-ava" id="csAvaR" title="点击换头像">
+        <span>👨</span>
+        <img id="csAvaRImg" alt="">
+        <input type="file" id="csAvaRInp" accept="image/*" style="display:none">
+      </div>
+    </div>
+    <div id="csBoard">
+      <div id="csBoardTop">我们在一起</div>
+      <div id="csBoardDays">—</div>
+      <div id="csBoardDayLbl">天 ❤️</div>
+    </div>
+  </div>
+
+  <!-- 主体：左竖栏 + 右内容 -->
+  <div id="csBody">
+    <!-- 左竖栏 恋爱打卡 -->
+    <div id="csLeftBar">
+      <div class="cs-vbtn" id="csBtnCheckin">
+        <span class="cs-vbtn-icon">📅</span>
+        <span class="cs-vbtn-lbl">恋爱打卡</span>
+      </div>
+    </div>
+
+    <!-- 右主内容 -->
+    <div id="csMain">
+      <!-- 五个功能按钮 -->
+      <div id="csFuncGrid">
+        <div class="cs-func" id="csFuncPeriod">
+          <div class="cs-func-icon" style="background:linear-gradient(135deg,#ffb3ba,#ff6b8a);">🩸</div>
+          <span class="cs-func-lbl">大姨妈</span>
+        </div>
+        <div class="cs-func" id="csFuncLoveList">
+          <div class="cs-func-icon" style="background:linear-gradient(135deg,#ffd1dc,#ff8fab);">💌</div>
+          <span class="cs-func-lbl">恋爱清单</span>
+        </div>
+        <div class="cs-func" id="csFuncPet">
+          <div class="cs-func-icon" style="background:linear-gradient(135deg,#ffeaa7,#fdcb6e);">🐾</div>
+          <span class="cs-func-lbl">我的宠物</span>
+        </div>
+        <div class="cs-func" id="csFuncHoroscope">
+          <div class="cs-func-icon" style="background:linear-gradient(135deg,#a29bfe,#6c5ce7);">⭐</div>
+          <span class="cs-func-lbl">每日星运</span>
+        </div>
+        <div class="cs-func" id="csFuncChallenge">
+          <div class="cs-func-icon" style="background:linear-gradient(135deg,#fd79a8,#e84393);">💑</div>
+          <span class="cs-func-lbl">情侣挑战</span>
+        </div>
+      </div>
+
+      <!-- 恋爱打卡面板（点左栏按钮展开） -->
+      <div id="csDailyPanel">
+        <div id="csDailyTitle">📅 今日恋爱打卡</div>
+        <div class="cs-checkin-row">
+          <span class="cs-checkin-lbl">🌅 早安问候</span>
+          <button class="cs-checkin-btn" id="csCkMorning" onclick="csCkToggle('morning',this)">打卡</button>
+        </div>
+        <div class="cs-checkin-row">
+          <span class="cs-checkin-lbl">🌙 晚安道晚</span>
+          <button class="cs-checkin-btn" id="csCkNight" onclick="csCkToggle('night',this)">打卡</button>
+        </div>
+        <div class="cs-checkin-row">
+          <span class="cs-checkin-lbl">💬 今日通话</span>
+          <button class="cs-checkin-btn" id="csCkCall" onclick="csCkToggle('call',this)">打卡</button>
+        </div>
+        <div class="cs-checkin-row">
+          <span class="cs-checkin-lbl">❤️ 表白一次</span>
+          <button class="cs-checkin-btn" id="csCkLove" onclick="csCkToggle('love',this)">打卡</button>
+        </div>
+      </div>
+
+      <!-- 每日恋语 -->
+      <div id="csLoveCard">
+        <div id="csLoveCardTitle">💬 今日恋语</div>
+        <div id="csLoveQuote">世界上最幸运的事，就是在茫茫人海中遇见了你。❤️</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
     <!-- ══ 桌面设置 ══ -->
     <style>
       #scrHomeSettings { width:100%; }
@@ -4168,7 +4318,18 @@ let pressTimer = null;
 let selEl = null;
 let currentQuote ="";
 function showScreen(showId) {
-    [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrSpace, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet"), $("scrContact"), $("scrSetFont"), $("scrCharPhone"), $("scrSpyDiary"), $("scrSpyZhihu"), $("scrSpySecret"), $("scrSpyMeituan"), $("scrSpyFootprint"), $("scrSpyWallet"), $("scrSpyShop"), $("scrSpyIqiyi"), $("scrSpySettings"), $("scrMoment"), $("scrGroupRoom"), $("scrGroupSettings"), $("scrOurSongs"), $("scrHomeSettings")].forEach(s => { if(s) s.style.display = "none"; });
+    [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrSpace, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet"), $("scrContact"), $("scrSetFont"), $("scrCharPhone"), $("scrSpyDiary"), $("scrSpyZhihu"), $("scrSpySecret"), $("scrSpyMeituan"), $("scrSpyFootprint"), $("scrSpyWallet"), $("scrSpyShop"), $("scrSpyIqiyi"), $("scrSpySettings"), $("scrMoment"), $("scrGroupRoom"), $("scrGroupSettings"), $("scrOurSongs"), $("scrHomeSettings"), $("scrCoupleSpace")].forEach(s => { if(s) s.style.display = "none"; });
+    // 应用页面壁纸（从内存缓存即时取）
+    var _pgBgMap={scrList:'list',scrContact:'contact',scrMe:'me'};
+    if(_pgBgMap[showId]&&window._pgBgCache){
+      var _pg=_pgBgMap[showId];var _d=window._pgBgCache[_pg];
+      var _sc=document.getElementById(showId);
+      if(_sc&&_d&&_d.length>10){
+        _sc.style.backgroundImage='url('+_d+')';
+        _sc.style.backgroundSize='cover';
+        _sc.style.backgroundPosition='center';
+      }
+    }
     let target = $(showId);
     // Reset chat input height when entering room
     if(showId === "scrRoom") {
@@ -4908,6 +5069,7 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
   const HA_DOCK=[
     {id:'Spy',defaultEmoji:'📱',defaultLbl:'查手机',imgId:'hdDockImgSpy',emojiId:'hdDockEmoSpy',lblId:'hdDockLblSpy'},
     {id:'Api',defaultEmoji:'🌐',defaultLbl:'API设置',imgId:'hdDockImgApi',emojiId:'hdDockEmoApi',lblId:'hdDockLblApi'},
+    {id:'CS',defaultEmoji:'💑',defaultLbl:'情侣空间',imgId:'hdDockImgCS',emojiId:'hdDockEmoCS',lblId:'hdDockLblCS'},
   ];
 
   // 加载Dock图标
@@ -5039,7 +5201,21 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
       if(hint)hint.style.display='';
     }
   }
-  (async function _loadAllPgBgs(){for(let pg of['list','contact','me'])await _applyPgBg(pg);})();
+  (async function _loadAllPgBgs(){
+    if(!window._pgBgCache)window._pgBgCache={};
+    for(let pg of['list','contact','me']){
+      let d=await lfGet(_PBK[pg]);
+      if(d&&d.length>10){
+        window._pgBgCache[pg]=d;
+        let scr=document.getElementById(_PSC[pg]);
+        if(scr){scr.style.backgroundImage='url('+d+')';scr.style.backgroundSize='cover';scr.style.backgroundPosition='center';}
+        let n=pg.charAt(0).toUpperCase()+pg.slice(1);
+        let img=el_('hs'+n+'BgImg'),hint=el_('hs'+n+'BgHint');
+        if(img){img.src=d;img.style.display='block';}
+        if(hint)hint.style.display='none';
+      }
+    }
+  })();
   function _setupPgBgInp(pg){
     let n=pg.charAt(0).toUpperCase()+pg.slice(1);
     let inp=el_('hs'+n+'BgInp');if(!inp||inp._pgBound)return;
@@ -5049,10 +5225,13 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
       let reader=new FileReader();
       reader.onload=ev=>{
         let d=ev.target.result;
-        // 先存入 localforage（大仓库）
+        // 存入 localforage（大仓库）
         localforage.setItem(_PBK[pg],d).catch(()=>{});
         try{localStorage.setItem(_PBK[pg],d);}catch(e){}
-        // 直接用读取到的 data 更新 UI（不再异步重读，避免时序问题）
+        // 内存缓存，让 showScreen patch 可以即时取用
+        if(!window._pgBgCache)window._pgBgCache={};
+        window._pgBgCache[pg]=d;
+        // 直接更新 UI
         let img=el_('hs'+n+'BgImg'),hint=el_('hs'+n+'BgHint');
         if(img){img.src=d;img.style.display='block';}
         if(hint)hint.style.display='none';
@@ -5082,6 +5261,7 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
   window.hsRemovePageBg=function(pg){
     localforage.removeItem(_PBK[pg]).catch(()=>{});
     try{localStorage.removeItem(_PBK[pg]);}catch(e){}
+    if(window._pgBgCache)delete window._pgBgCache[pg];
     let n=pg.charAt(0).toUpperCase()+pg.slice(1);
     let img=el_('hs'+n+'BgImg'),hint=el_('hs'+n+'BgHint');
     if(img){img.src='';img.style.display='none';}
@@ -18285,6 +18465,130 @@ if(document.getElementById('offlineModePanel')) {
 
 </script>
 <script>
+
+// ═══════════════════════════════════════════════
+// 情侣空间 (scrCoupleSpace) 逻辑
+// ═══════════════════════════════════════════════
+(function initCoupleSpace(){
+  // 绑定返回
+  var csBack=document.getElementById('csBack');
+  if(csBack)csBack.onclick=function(){showScreen('scrHome');};
+
+  // 绑定dock按钮
+  var dockBtn=document.getElementById('btnHomeCoupleSpace');
+  if(dockBtn)dockBtn.onclick=function(){showScreen('scrCoupleSpace');csUpdateDays();csLoadBg();};
+
+  // 计算在一起天数（复用纪念日卡片的数据 ANN.date）
+  function csUpdateDays(){
+    var daysEl=document.getElementById('csBoardDays');if(!daysEl)return;
+    // 从 localforage 读纪念日天数
+    var lfKey='hd_ann_date';
+    Promise.resolve().then(async function(){
+      var v=null;
+      try{v=await localforage.getItem(lfKey);}catch(e){}
+      if(v===null){try{v=localStorage.getItem(lfKey);}catch(e){}}
+      if(v!==null&&!isNaN(parseInt(v))){daysEl.textContent=parseInt(v);}
+      else{daysEl.textContent='?';}
+    });
+  }
+
+  // 壁纸
+  function csLoadBg(){
+    var scr=document.getElementById('scrCoupleSpace');if(!scr)return;
+    Promise.resolve().then(async function(){
+      var d=null;
+      try{d=await localforage.getItem('cs_bg');}catch(e){}
+      if(!d){try{d=localStorage.getItem('cs_bg');}catch(e){}}
+      if(d&&d.length>10){scr.style.backgroundImage='url('+d+')';scr.style.backgroundSize='cover';scr.style.backgroundPosition='center';}
+    });
+  }
+  var csBgBtn=document.getElementById('csBgBtn');
+  var csBgInput=document.getElementById('csBgInput');
+  if(csBgBtn&&csBgInput){
+    csBgBtn.onclick=function(){csBgInput.click();};
+    csBgInput.onchange=function(){
+      var file=this.files[0];if(!file)return;
+      var r=new FileReader();
+      r.onload=function(ev){
+        var d=ev.target.result;
+        localforage.setItem('cs_bg',d).catch(function(){});
+        try{localStorage.setItem('cs_bg',d);}catch(e){}
+        var scr=document.getElementById('scrCoupleSpace');
+        if(scr){scr.style.backgroundImage='url('+d+')';scr.style.backgroundSize='cover';scr.style.backgroundPosition='center';}
+      };r.readAsDataURL(file);
+    };
+  }
+
+  // 头像
+  function bindAva(btnId,inpId,imgId,lsKey){
+    var btn=document.getElementById(btnId),inp=document.getElementById(inpId),img=document.getElementById(imgId);
+    if(!btn||!inp||!img)return;
+    btn.onclick=function(e){if(e.target!==inp)inp.click();};
+    inp.onclick=function(e){e.stopPropagation();};
+    // 加载已存图
+    Promise.resolve().then(async function(){
+      var d=null;try{d=await localforage.getItem(lsKey);}catch(e){}
+      if(!d){try{d=localStorage.getItem(lsKey);}catch(e){}}
+      if(d&&d.length>10){img.src=d;img.style.display='block';}
+    });
+    inp.onchange=function(){
+      var file=this.files[0];if(!file)return;
+      var r=new FileReader();
+      r.onload=function(ev){
+        var d=ev.target.result;
+        localforage.setItem(lsKey,d).catch(function(){});
+        try{localStorage.setItem(lsKey,d);}catch(e){}
+        img.src=d;img.style.display='block';
+      };r.readAsDataURL(file);
+    };
+  }
+  bindAva('csAvaL','csAvaLInp','csAvaLImg','cs_ava_l');
+  bindAva('csAvaR','csAvaRInp','csAvaRImg','cs_ava_r');
+
+  // 打卡
+  window.csCkToggle=function(key,btn){
+    var today=new Date().toDateString();
+    var lsKey='cs_ck_'+key+'_'+today;
+    var done=localStorage.getItem(lsKey)==='1';
+    if(!done){
+      localStorage.setItem(lsKey,'1');
+      btn.textContent='✅';btn.classList.add('done');btn.disabled=true;
+    }
+  };
+  // 加载今日打卡状态
+  function csLoadCheckin(){
+    var today=new Date().toDateString();
+    [['morning','csCkMorning'],['night','csCkNight'],['call','csCkCall'],['love','csCkLove']].forEach(function(pair){
+      var btn=document.getElementById(pair[1]);if(!btn)return;
+      if(localStorage.getItem('cs_ck_'+pair[0]+'_'+today)==='1'){
+        btn.textContent='✅';btn.classList.add('done');btn.disabled=true;
+      }
+    });
+  }
+  // 功能入口提示（后续可扩展）
+  function bindFuncToast(id,name){
+    var el=document.getElementById(id);if(!el)return;
+    el.onclick=function(){
+      var t=document.createElement('div');
+      t.style.cssText='position:fixed;bottom:120px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.7);color:white;padding:8px 18px;border-radius:20px;font-size:13px;z-index:9999;pointer-events:none;';
+      t.textContent=name+' 功能即将开放 ✨';
+      document.body.appendChild(t);
+      setTimeout(function(){t.remove();},2000);
+    };
+  }
+  ['csFuncPeriod,大姨妈','csFuncLoveList,恋爱清单','csFuncPet,我的宠物','csFuncHoroscope,每日星运','csFuncChallenge,情侣挑战'].forEach(function(s){
+    var p=s.split(',');bindFuncToast(p[0],p[1]);
+  });
+
+  // 打开情侣空间时执行初始化
+  var origShowScreen=window.showScreen;
+  window.showScreen=function(id){
+    origShowScreen(id);
+    if(id==='scrCoupleSpace'){csUpdateDays();csLoadBg();csLoadCheckin();}
+  };
+
+})();
+
 // ═══ 动态视口高度适配（跨浏览器：Via/X/Chrome/Edge/Safari）═══
 (function fixVH(){
   // 桌面壁纸应用（每次home显示时重新应用）
