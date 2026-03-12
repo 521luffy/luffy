@@ -410,9 +410,10 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         }
         #hdAnnDaysSuffix{font-size:14px;color:rgba(255,255,255,.9);font-weight:600;cursor:pointer;}
         #hdAnnDaysEdit {
-          display:none;font-size:11px;text-align:center;border:none;
-          background:rgba(255,255,255,.3);color:white;border-radius:8px;
-          padding:2px 8px;outline:none;font-family:inherit;width:110px;margin-top:4px;
+          display:none;font-size:22px;font-weight:900;text-align:center;border:none;
+          background:rgba(255,255,255,.25);color:white;border-radius:10px;
+          padding:2px 6px;outline:none;font-family:inherit;width:90px;
+          -webkit-appearance:none;appearance:none;
         }
         /* 底部左右文字 */
         .ann-bot-txt {
@@ -434,7 +435,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         /* ══ 签名行 ══ */
         #hdTaglineWrap {
           display:flex;align-items:center;justify-content:center;
-          margin-bottom:14px;flex-shrink:0;
+          margin-bottom:10px;margin-top:4px;flex-shrink:0;
         }
         #hdTagline {
           font-size:12px;color:#999;font-style:italic;
@@ -448,7 +449,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         }
 
         /* ══ 中间两图 + 日历 ══ */
-        #hdMidRow{display:flex;gap:8px;margin-bottom:6px;flex-shrink:0;align-items:stretch;}
+        #hdMidRow{display:flex;gap:8px;margin-top:6px;margin-bottom:14px;flex-shrink:0;align-items:stretch;}
         #hdImgBig{
           flex:0 0 47%;background:white;border-radius:14px;
           box-shadow:0 2px 8px rgba(0,0,0,.06);height:195px;
@@ -461,7 +462,10 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         #hdCal{
           background:white;border-radius:14px;padding:5px 7px 7px;
           box-shadow:0 2px 8px rgba(0,0,0,.06);flex:1;
+          position:relative;overflow:hidden;cursor:pointer;
         }
+        #hdCalBg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;z-index:0;pointer-events:none;border-radius:14px;}
+        #hdCalContent{position:relative;z-index:1;}
         #hdCal .cal-month{text-align:right;font-size:12px;color:#333;margin-bottom:2px;font-weight:600;}
         #hdCal .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);}
         #hdCal .cal-head{font-size:9px;color:#aaa;text-align:center;padding:2px 0;}
@@ -471,11 +475,14 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         #hdCal .cal-day.other{color:#ddd;}
 
         /* ══ 底部行 ══ */
-        #hdBotRow{display:flex;gap:8px;margin-bottom:7px;flex-shrink:0;align-items:stretch;}
+        #hdBotRow{display:flex;gap:8px;margin-top:0px;margin-bottom:7px;flex-shrink:0;align-items:stretch;}
         #hdTodo{
           flex:0 0 47%;background:white;border-radius:14px;
           padding:9px 11px;box-shadow:0 2px 8px rgba(0,0,0,.06);box-sizing:border-box;
+          position:relative;overflow:hidden;cursor:pointer;
         }
+        #hdTodoBg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;z-index:0;pointer-events:none;border-radius:14px;}
+        #hdTodoContent{position:relative;z-index:1;}
         #hdTodoHeader{display:flex;align-items:center;gap:4px;margin-bottom:5px;}
         #hdTodo .todo-title{font-size:14px;font-weight:900;color:#111;flex:1;}
         #hdTodoEmoji{
@@ -546,7 +553,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
             <span id="hdAnnDaysNum" onclick="hdAnnEdit('days')">0</span>
             <span id="hdAnnDaysSuffix" onclick="hdAnnEdit('days')">天</span>
           </div>
-          <input id="hdAnnDaysEdit" type="text" maxlength="20" placeholder="起始日期 2020-01-01"
+          <input id="hdAnnDaysEdit" type="number" min="0" max="99999" placeholder="输入天数"
             onblur="hdAnnSave('days')" onkeydown="if(event.key==='Enter')this.blur()">
         </div>
         <div id="hdAnnLine"></div>
@@ -575,31 +582,51 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
           <input type="file" id="hdImgBigInput" accept="image/*" style="display:none">
         </div>
         <div id="hdRightCol">
-          <div id="hdCal">
-            <div id="hdCalMonth" class="cal-month"></div>
-            <div class="cal-grid">
-              <div class="cal-head">日</div><div class="cal-head">一</div><div class="cal-head">二</div>
-              <div class="cal-head">三</div><div class="cal-head">四</div><div class="cal-head">五</div><div class="cal-head">六</div>
+          <div id="hdCal" onclick="if(event.target===document.getElementById('hdCal')||event.target===document.getElementById('hdCalBg')){document.getElementById('hdCalBgInp').click();}">
+            <img id="hdCalBg" alt="">
+            <div id="hdCalContent">
+              <div id="hdCalMonth" class="cal-month"></div>
+              <div class="cal-grid">
+                <div class="cal-head">日</div><div class="cal-head">一</div><div class="cal-head">二</div>
+                <div class="cal-head">三</div><div class="cal-head">四</div><div class="cal-head">五</div><div class="cal-head">六</div>
+              </div>
+              <div class="cal-grid" id="hdCalBody"></div>
             </div>
-            <div class="cal-grid" id="hdCalBody"></div>
+            <input type="file" id="hdCalBgInp" accept="image/*" style="display:none">
           </div>
         </div>
       </div>
 
       <!-- ══ todo | 四图标 ══ -->
       <div id="hdBotRow">
-        <div id="hdTodo">
-          <div id="hdTodoHeader">
-            <span class="todo-title">to do list</span>
-            <button id="hdTodoEmoji" onclick="hdEditTodoEmoji()">✨</button>
+        <div id="hdTodo" onclick="if(event.target===document.getElementById('hdTodo')||event.target===document.getElementById('hdTodoBg')){document.getElementById('hdTodoBgInp').click();}">
+          <img id="hdTodoBg" alt="">
+          <div id="hdTodoContent">
+            <div id="hdTodoHeader">
+              <span class="todo-title">to do list</span>
+              <button id="hdTodoEmoji" onclick="hdEditTodoEmoji()" style="position:relative;z-index:2;">✨</button>
+            </div>
+            <div id="hdTodoItems"></div>
           </div>
-          <div id="hdTodoItems"></div>
+          <input type="file" id="hdTodoBgInp" accept="image/*" style="display:none">
         </div>
         <div id="hdApps">
-          <div class="hd-app" id="btnHomeCfg"><div class="hd-app-icon">⚙️</div><span class="hd-app-lbl">设置</span></div>
-          <div class="hd-app" id="btnHomeWb"><div class="hd-app-icon">📖</div><span class="hd-app-lbl">世界书</span></div>
-          <div class="hd-app" id="btnHomeChat"><div class="hd-app-icon">💬</div><span class="hd-app-lbl">QQ</span></div>
-          <div class="hd-app" id="btnHomeFont"><div class="hd-app-icon" style="font-size:22px;font-weight:700;font-family:serif;">Aa</div><span class="hd-app-lbl">字体</span></div>
+          <div class="hd-app" id="btnHomeCfg">
+            <div class="hd-app-icon" id="haIconCfg" style="position:relative;overflow:hidden;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:26px;"><img id="haImgCfg" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;border-radius:10px;" alt=""><span id="haEmojiCfg">⚙️</span></div>
+            <span class="hd-app-lbl" id="haLblCfg">设置</span>
+          </div>
+          <div class="hd-app" id="btnHomeWb">
+            <div class="hd-app-icon" id="haIconWb" style="position:relative;overflow:hidden;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:26px;"><img id="haImgWb" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;border-radius:10px;" alt=""><span id="haEmojiWb">📖</span></div>
+            <span class="hd-app-lbl" id="haLblWb">世界书</span>
+          </div>
+          <div class="hd-app" id="btnHomeChat">
+            <div class="hd-app-icon" id="haIconChat" style="position:relative;overflow:hidden;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:26px;"><img id="haImgChat" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;border-radius:10px;" alt=""><span id="haEmojiChat">💬</span></div>
+            <span class="hd-app-lbl" id="haLblChat">QQ</span>
+          </div>
+          <div class="hd-app" id="btnHomeFont">
+            <div class="hd-app-icon" id="haIconFont" style="position:relative;overflow:hidden;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;font-family:serif;"><img id="haImgFont" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;border-radius:10px;" alt=""><span id="haEmojiFont">Aa</span></div>
+            <span class="hd-app-lbl" id="haLblFont">字体</span>
+          </div>
         </div>
       </div>
 
@@ -617,7 +644,53 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
       <div id="btnHomeSpace" style="display:none;"></div>
     </div>
     
-        <div id=scrList class=scr-list>
+    
+    <!-- ══ 桌面设置 ══ -->
+    <div id="scrHomeSettings" class="scr-flex" style="background:#f5f6fa;">
+      <div class="chat-header">
+        <span id="btnHomeSettingsBack" class="back-btn" onclick="showScreen('scrHome')">＜</span>
+        <span class="header-title">桌面设置 🎨</span>
+        <span class="empty-btn"></span>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:16px 14px;display:flex;flex-direction:column;gap:14px;">
+
+        <!-- 桌面壁纸 -->
+        <div style="background:white;border-radius:16px;padding:14px 16px;box-shadow:0 2px 8px rgba(0,0,0,.06);">
+          <div style="font-size:14px;font-weight:700;color:#333;margin-bottom:10px;">🖼️ 桌面壁纸</div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div id="hsWallpaperPreview" onclick="document.getElementById('hsWallpaperInp').click()" style="width:70px;height:70px;border-radius:12px;background:#f0e8ff;border:2px dashed #c9b8e8;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;flex-shrink:0;">
+              <img id="hsWallpaperImg" style="width:100%;height:100%;object-fit:cover;display:none;" alt="">
+              <span id="hsWallpaperHint" style="font-size:22px;">🌸</span>
+            </div>
+            <div style="flex:1;">
+              <div style="font-size:12px;color:#888;margin-bottom:6px;">点击左侧图片区域可更换桌面背景壁纸</div>
+              <button onclick="document.getElementById('hsWallpaperInp').click()" style="background:linear-gradient(135deg,#c9b8e8,#f7b8d4);border:none;border-radius:20px;padding:6px 14px;color:white;font-size:12px;font-weight:600;cursor:pointer;">选择图片</button>
+              <button onclick="hsRemoveWallpaper()" style="background:#fee;border:1px solid #fcc;border-radius:20px;padding:6px 14px;color:#e66;font-size:12px;font-weight:600;cursor:pointer;margin-left:6px;">恢复默认</button>
+            </div>
+          </div>
+          <input type="file" id="hsWallpaperInp" accept="image/*" style="display:none">
+        </div>
+
+        <!-- 应用图标自定义 -->
+        <div style="background:white;border-radius:16px;padding:14px 16px;box-shadow:0 2px 8px rgba(0,0,0,.06);">
+          <div style="font-size:14px;font-weight:700;color:#333;margin-bottom:10px;">📱 自定义应用图标</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;" id="hsAppIconGrid">
+            <!-- rendered by JS -->
+          </div>
+        </div>
+
+        <!-- 应用标签自定义 -->
+        <div style="background:white;border-radius:16px;padding:14px 16px;box-shadow:0 2px 8px rgba(0,0,0,.06);">
+          <div style="font-size:14px;font-weight:700;color:#333;margin-bottom:10px;">✏️ 自定义应用名称</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;" id="hsAppLblGrid">
+            <!-- rendered by JS -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div id=scrList class=scr-list>
                 <div class=chat-header>
             <span id=btnListBack class=back-btn>＜</span>
             <span class=header-center>消息</span>
@@ -4494,6 +4567,46 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
   }
   setupImg('hdImgBigInput','hd_img_big','hdImgBigEl','hdImgBigHint');
 
+  // Todo背景
+  (async function loadTodoBg(){
+    let bg=el_('hdTodoBg');if(!bg)return;
+    let data=await lfGet('hd_todo_bg');
+    if(data){bg.src=data;bg.style.display='block';}
+  })();
+  (function setupTodoBg(){
+    let inp=el_('hdTodoBgInp');if(!inp)return;
+    inp.onchange=function(){
+      let file=this.files[0];if(!file)return;
+      let r=new FileReader();
+      r.onload=ev=>{
+        let data=ev.target.result;
+        lfSet('hd_todo_bg',data);
+        let bg=el_('hdTodoBg');
+        if(bg){bg.src=data;bg.style.display='block';}
+      };r.readAsDataURL(file);
+    };
+  })();
+
+  // 日历背景
+  (async function loadCalBg(){
+    let bg=el_('hdCalBg');if(!bg)return;
+    let data=await lfGet('hd_cal_bg');
+    if(data){bg.src=data;bg.style.display='block';}
+  })();
+  (function setupCalBg(){
+    let inp=el_('hdCalBgInp');if(!inp)return;
+    inp.onchange=function(){
+      let file=this.files[0];if(!file)return;
+      let r=new FileReader();
+      r.onload=ev=>{
+        let data=ev.target.result;
+        lfSet('hd_cal_bg',data);
+        let bg=el_('hdCalBg');
+        if(bg){bg.src=data;bg.style.display='block';}
+      };r.readAsDataURL(file);
+    };
+  })();
+
   // ── 纪念日卡片 ──
   const ANN={bg:'hd_ann_bg',avaL:'hd_ann_ava_l',avaR:'hd_ann_ava_r',
     name:'hd_ann_name',date:'hd_ann_date',botL:'hd_ann_bot_l',botR:'hd_ann_bot_r'};
@@ -4503,13 +4616,10 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
   setupImg('hdAnnAvaRInp',ANN.avaR,'hdAnnAvaRImg','hdAnnAvaRHint');
 
   async function updateDays(){
-    let sd=await lfGet(ANN.date);
+    let n=await lfGet(ANN.date); // now stores direct number
     let el=el_('hdAnnDaysNum');if(!el)return;
-    if(!sd){el.textContent='0';return;}
-    let start=new Date(sd),now=new Date();
-    start.setHours(0,0,0,0);now.setHours(0,0,0,0);
-    let days=Math.round((now-start)/(864e5));
-    el.textContent=days>=0?days:0;
+    let num=parseInt(n);
+    el.textContent=(!isNaN(num)&&num>=0)?num:0;
   }
   updateDays();
 
@@ -4529,7 +4639,11 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
     }else if(field==='days'){
       let wrap=el_('hdAnnDaysWrap'),inp=el_('hdAnnDaysEdit');
       wrap.style.display='none';inp.style.display='block';
-      lfGet(ANN.date).then(v=>{inp.value=v||'';inp.focus();inp.select();});
+      lfGet(ANN.date).then(v=>{
+        let n=parseInt(v);
+        inp.value=(!isNaN(n)&&n>=0)?n:0;
+        inp.focus();inp.select();
+      });
     }else if(field==='botL'){
       let lbl=el_('hdAnnBotL'),inp=el_('hdAnnBotLEdit');
       inp.value=lbl.textContent;lbl.style.display='none';inp.style.display='block';inp.focus();inp.select();
@@ -4545,7 +4659,8 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
       lbl.textContent=t;lbl.style.display='';inp.style.display='none';lfSet(ANN.name,t);
     }else if(field==='days'){
       let wrap=el_('hdAnnDaysWrap'),inp=el_('hdAnnDaysEdit');
-      let v=inp.value.trim();if(v)lfSet(ANN.date,v);
+      let n=parseInt(inp.value);
+      if(!isNaN(n)&&n>=0)lfSet(ANN.date,String(n));
       wrap.style.display='';inp.style.display='none';updateDays();
     }else if(field==='botL'){
       let lbl=el_('hdAnnBotL'),inp=el_('hdAnnBotLEdit');
@@ -4627,9 +4742,139 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
     });
   }
 
-  // btnHomeCfg: 占位
+  // ── 桌面壁纸 ──
+  const HD_WP_KEY='hd_wallpaper';
+  (async function loadWallpaper(){
+    let data=await lfGet(HD_WP_KEY);
+    if(data){
+      let home=document.getElementById('scrHome');
+      if(home){home.style.backgroundImage=`url(${data})`;home.style.backgroundSize='cover';home.style.backgroundPosition='center';}
+      let img=document.getElementById('hsWallpaperImg'),hint=document.getElementById('hsWallpaperHint');
+      if(img){img.src=data;img.style.display='block';}
+      if(hint)hint.style.display='none';
+    }
+  })();
+
+  // ── 应用图标数据 ──
+  const HA_APPS=[
+    {id:'Cfg',defaultEmoji:'⚙️',defaultLbl:'设置',imgId:'haImgCfg',emojiId:'haEmojiCfg',lblId:'haLblCfg'},
+    {id:'Wb', defaultEmoji:'📖',defaultLbl:'世界书',imgId:'haImgWb', emojiId:'haEmojiWb', lblId:'haLblWb'},
+    {id:'Chat',defaultEmoji:'💬',defaultLbl:'QQ',  imgId:'haImgChat',emojiId:'haEmojiChat',lblId:'haLblChat'},
+    {id:'Font',defaultEmoji:'Aa', defaultLbl:'字体',imgId:'haImgFont',emojiId:'haEmojiFont',lblId:'haLblFont'},
+  ];
+  (async function loadAppIcons(){
+    for(let app of HA_APPS){
+      let imgData=await lfGet('hd_app_img_'+app.id);
+      let lbl=await lfGet('hd_app_lbl_'+app.id);
+      let img=el_(app.imgId),emoji=el_(app.emojiId),lblEl=el_(app.lblId);
+      if(imgData&&img){img.src=imgData;img.style.display='block';if(emoji)emoji.style.display='none';}
+      if(lbl&&lblEl)lblEl.textContent=lbl;
+    }
+  })();
+
+  // ── btnHomeCfg: 打开设置 ──
   let cfgBtn=el_('btnHomeCfg');
-  if(cfgBtn)cfgBtn.onclick=()=>alert('设置功能下一轮开发，敬请期待 🔧');
+  if(cfgBtn)cfgBtn.onclick=()=>{
+    showScreen('scrHomeSettings');
+    hsRenderGrid();
+  };
+
+  // 桌面壁纸设置
+  window.hsRemoveWallpaper=function(){
+    lfSet(HD_WP_KEY,'');
+    let home=document.getElementById('scrHome');
+    if(home){home.style.backgroundImage='';home.style.backgroundSize='';}
+    let img=document.getElementById('hsWallpaperImg'),hint=document.getElementById('hsWallpaperHint');
+    if(img){img.src='';img.style.display='none';}
+    if(hint)hint.style.display='';
+  };
+
+  document.addEventListener('DOMContentLoaded',function(){
+    let wpInp=document.getElementById('hsWallpaperInp');
+    if(wpInp)wpInp.onchange=function(){
+      let file=this.files[0];if(!file)return;
+      let r=new FileReader();
+      r.onload=async ev=>{
+        let data=ev.target.result;
+        lfSet(HD_WP_KEY,data);
+        let home=document.getElementById('scrHome');
+        if(home){home.style.backgroundImage=`url(${data})`;home.style.backgroundSize='cover';home.style.backgroundPosition='center';}
+        let img=document.getElementById('hsWallpaperImg'),hint=document.getElementById('hsWallpaperHint');
+        if(img){img.src=data;img.style.display='block';}
+        if(hint)hint.style.display='none';
+      };r.readAsDataURL(file);
+    };
+  });
+
+  // 渲染应用图标编辑格
+  window.hsRenderGrid=function(){
+    let iconGrid=document.getElementById('hsAppIconGrid');
+    let lblGrid=document.getElementById('hsAppLblGrid');
+    if(!iconGrid||!lblGrid)return;
+    iconGrid.innerHTML='';lblGrid.innerHTML='';
+    HA_APPS.forEach(async app=>{
+      let imgData=await lfGet('hd_app_img_'+app.id);
+      let lbl=await lfGet('hd_app_lbl_'+app.id)||app.defaultLbl;
+      // Icon cell
+      let iconCell=document.createElement('div');
+      iconCell.style.cssText='display:flex;flex-direction:column;align-items:center;gap:6px;';
+      let previewDiv=document.createElement('div');
+      previewDiv.style.cssText='width:56px;height:56px;border-radius:14px;background:#f0e8ff;border:2px dashed #c9b8e8;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;font-size:24px;';
+      if(imgData){let pi=document.createElement('img');pi.src=imgData;pi.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;';previewDiv.appendChild(pi);}
+      else{previewDiv.textContent=app.defaultEmoji;}
+      let fileInp=document.createElement('input');fileInp.type='file';fileInp.accept='image/*';fileInp.style.display='none';
+      fileInp.onchange=function(){
+        let file=this.files[0];if(!file)return;
+        let reader=new FileReader();
+        reader.onload=ev=>{
+          let data=ev.target.result;
+          lfSet('hd_app_img_'+app.id,data);
+          // update preview in grid
+          previewDiv.innerHTML='';
+          let pi=document.createElement('img');pi.src=data;pi.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;';
+          previewDiv.style.position='relative';previewDiv.appendChild(pi);
+          // update actual icon on home
+          let homeImg=document.getElementById(app.imgId);
+          let homeEmoji=document.getElementById(app.emojiId);
+          if(homeImg){homeImg.src=data;homeImg.style.display='block';}
+          if(homeEmoji)homeEmoji.style.display='none';
+        };reader.readAsDataURL(file);
+      };
+      document.body.appendChild(fileInp);
+      previewDiv.onclick=()=>fileInp.click();
+      let resetBtn=document.createElement('button');
+      resetBtn.textContent='恢复';
+      resetBtn.style.cssText='font-size:10px;border:1px solid #ddd;background:white;border-radius:8px;padding:2px 8px;cursor:pointer;color:#888;';
+      resetBtn.onclick=()=>{
+        lfSet('hd_app_img_'+app.id,'');
+        previewDiv.innerHTML=app.defaultEmoji;previewDiv.style.position='';
+        let homeImg=document.getElementById(app.imgId);
+        let homeEmoji=document.getElementById(app.emojiId);
+        if(homeImg){homeImg.src='';homeImg.style.display='none';}
+        if(homeEmoji)homeEmoji.style.display='';
+      };
+      let nameLbl=document.createElement('div');
+      nameLbl.textContent=lbl;nameLbl.style.cssText='font-size:11px;color:#666;';
+      iconCell.appendChild(previewDiv);iconCell.appendChild(resetBtn);iconCell.appendChild(nameLbl);
+      iconGrid.appendChild(iconCell);
+
+      // Label cell
+      let lblCell=document.createElement('div');lblCell.style.cssText='display:flex;flex-direction:column;gap:4px;';
+      let lblTitle=document.createElement('div');lblTitle.textContent=lbl;lblTitle.style.cssText='font-size:11px;color:#888;';
+      let lblInput=document.createElement('input');
+      lblInput.type='text';lblInput.value=lbl;lblInput.maxLength=6;
+      lblInput.style.cssText='border:1px solid #e0d8ff;border-radius:8px;padding:5px 8px;font-size:12px;outline:none;width:100%;box-sizing:border-box;';
+      lblInput.onchange=function(){
+        let v=this.value.trim()||app.defaultLbl;
+        lfSet('hd_app_lbl_'+app.id,v);
+        let lblEl=document.getElementById(app.lblId);
+        if(lblEl)lblEl.textContent=v;
+        lblTitle.textContent=v;
+      };
+      lblCell.appendChild(lblTitle);lblCell.appendChild(lblInput);
+      lblGrid.appendChild(lblCell);
+    });
+  };
 })();
 $(`btnSetApiBack`).onclick = () =>showScreen(`scrHome`);
 
@@ -17780,6 +18025,26 @@ if(document.getElementById('offlineModePanel')) {
 <script>
 // ═══ 动态视口高度适配（跨浏览器：Via/X/Chrome/Edge/Safari）═══
 (function fixVH(){
+  // 桌面壁纸应用（每次home显示时重新应用）
+  async function applyHomeWallpaper(){
+    let data=null;
+    try{data=await localforage.getItem('hd_wallpaper');}catch(e){}
+    if(!data){try{data=localStorage.getItem('hd_wallpaper');}catch(e){}}
+    let home=document.getElementById('scrHome');
+    if(!home)return;
+    if(data&&data.length>10){
+      home.style.backgroundImage='url('+data+')';
+      home.style.backgroundSize='cover';
+      home.style.backgroundPosition='center';
+      // keep dot pattern on top via pseudo element - use overlay div instead
+      home.style.backgroundRepeat='no-repeat';
+    }else{
+      home.style.backgroundImage='';
+      home.style.backgroundSize='';
+    }
+  }
+  window._applyHomeWallpaper=applyHomeWallpaper;
+
   function setVH(){
     let vh=window.visualViewport?window.visualViewport.height:window.innerHeight;
     document.documentElement.style.setProperty('--real-vh',vh+'px');
@@ -17793,15 +18058,17 @@ if(document.getElementById('offlineModePanel')) {
   if(window.visualViewport){
     window.visualViewport.addEventListener('resize',setVH,{passive:true});
   }
-  // patch showScreen so scrHome always gets correct height
+  // patch showScreen so scrHome always gets correct height + wallpaper
   document.addEventListener('DOMContentLoaded',function(){
     let _orig=window.showScreen;
     if(typeof _orig==='function'){
       window.showScreen=function(s){
         _orig(s);
-        if(s==='scrHome'){setTimeout(setVH,30);}
+        if(s==='scrHome'){setTimeout(setVH,30);setTimeout(applyHomeWallpaper,50);}
       };
     }
+    // initial wallpaper apply
+    setTimeout(applyHomeWallpaper,200);
   });
 })();
 </script>
