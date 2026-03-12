@@ -449,7 +449,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         }
 
         /* ══ 中间两图 + 日历 ══ */
-        #hdMidRow{display:flex;gap:8px;margin-top:6px;margin-bottom:14px;flex-shrink:0;align-items:stretch;}
+        #hdMidRow{display:flex;gap:8px;margin-top:6px;margin-bottom:28px;flex-shrink:0;align-items:stretch;}
         #hdImgBig{
           flex:0 0 47%;background:white;border-radius:14px;
           box-shadow:0 2px 8px rgba(0,0,0,.06);height:195px;
@@ -475,7 +475,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         #hdCal .cal-day.other{color:#ddd;}
 
         /* ══ 底部行 ══ */
-        #hdBotRow{display:flex;gap:8px;margin-top:0px;margin-bottom:7px;flex-shrink:0;align-items:stretch;}
+        #hdBotRow{display:flex;gap:8px;margin-top:0;margin-bottom:7px;flex-shrink:0;align-items:stretch;}
         #hdTodo{
           flex:0 0 47%;background:white;border-radius:14px;
           padding:9px 11px;box-shadow:0 2px 8px rgba(0,0,0,.06);box-sizing:border-box;
@@ -505,13 +505,21 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         #hdApps{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:7px;box-sizing:border-box;}
         .hd-app{
           background:white;border-radius:14px;display:flex;flex-direction:column;
-          align-items:center;justify-content:center;
-          box-shadow:0 2px 7px rgba(0,0,0,.07);cursor:pointer;gap:4px;
-          padding:8px 4px;-webkit-tap-highlight-color:transparent;transition:transform .1s;
+          align-items:center;overflow:hidden;
+          box-shadow:0 2px 7px rgba(0,0,0,.07);cursor:pointer;gap:0;
+          padding:0 0 5px;-webkit-tap-highlight-color:transparent;transition:transform .1s;
         }
-        .hd-app:active{transform:scale(.9);}
-        .hd-app-icon{font-size:26px;line-height:1;}
-        .hd-app-lbl{font-size:10px;color:#444;font-weight:500;}
+        .hd-app:active{transform:scale(.95);}
+        .hd-app-icon{
+          width:100%;flex:1;min-height:56px;position:relative;
+          display:flex;align-items:center;justify-content:center;
+          font-size:28px;line-height:1;overflow:hidden;
+        }
+        .hd-app-icon img{
+          position:absolute;inset:0;width:100%;height:100%;
+          object-fit:cover;border-radius:14px 14px 0 0;
+        }
+        .hd-app-lbl{font-size:10px;color:#444;font-weight:500;margin-top:4px;text-align:center;}
 
         /* ══ Dock ══ */
         #hdDockSpacer{flex:1;min-height:6px;}
@@ -571,7 +579,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         <span id="hdTagline" onclick="hdEditTagline()">青春就是用来怀念的。</span>
         <input id="hdTaglineEdit" type="text" maxlength="40"
           onblur="hdSaveTagline()" onkeydown="if(event.key==='Enter')this.blur()">
-        <button id="hdTaglineEmoji" onclick="hdEditTaglineEmoji()" style="font-size:15px;border:none;background:transparent;padding:0 2px;cursor:pointer;outline:none;font-family:inherit;-webkit-tap-highlight-color:transparent;flex-shrink:0;">❤️</button>
+        <span id="hdTaglineEmoji" onclick="hdToggleTglEmoji()" style="font-size:15px;cursor:pointer;padding:0 2px;-webkit-tap-highlight-color:transparent;flex-shrink:0;display:inline-block;">❤️</span><input id="hdTaglineEmojiInp" type="text" maxlength="4" placeholder="❤️" style="display:none;font-size:14px;width:42px;border:none;border-bottom:2px solid #f5b8d4;text-align:center;padding:1px 2px;outline:none;font-family:inherit;background:transparent;color:#555;" onblur="hdSaveTglEmoji()" onkeydown="if(event.key==='Enter')this.blur()">
       </div>
 
       <!-- ══ 大图 | 小图+日历 ══ -->
@@ -604,7 +612,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
           <div id="hdTodoContent">
             <div id="hdTodoHeader">
               <span class="todo-title">to do list</span>
-              <button id="hdTodoEmoji" onclick="hdEditTodoEmoji()" style="position:relative;z-index:2;">✨</button>
+              <span id="hdTodoEmoji" onclick="hdToggleTodoEmoji()" style="font-size:15px;cursor:pointer;padding:0 1px;-webkit-tap-highlight-color:transparent;flex-shrink:0;display:inline-block;position:relative;z-index:2;">✨</span><input id="hdTodoEmojiInp" type="text" maxlength="4" placeholder="✨" style="display:none;font-size:14px;width:40px;border:none;border-bottom:2px solid #f5b8d4;text-align:center;padding:1px 2px;outline:none;font-family:inherit;background:transparent;color:#555;position:relative;z-index:2;" onblur="hdSaveTodoEmoji()" onkeydown="if(event.key==='Enter')this.blur()">
             </div>
             <div id="hdTodoItems"></div>
           </div>
@@ -612,19 +620,19 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         </div>
         <div id="hdApps">
           <div class="hd-app" id="btnHomeCfg">
-            <div class="hd-app-icon" id="haIconCfg" style="position:relative;overflow:hidden;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:26px;"><img id="haImgCfg" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;border-radius:10px;" alt=""><span id="haEmojiCfg">⚙️</span></div>
+            <div class="hd-app-icon" id="haIconCfg"><img id="haImgCfg" style="display:none;" alt=""><span id="haEmojiCfg">⚙️</span></div>
             <span class="hd-app-lbl" id="haLblCfg">设置</span>
           </div>
           <div class="hd-app" id="btnHomeWb">
-            <div class="hd-app-icon" id="haIconWb" style="position:relative;overflow:hidden;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:26px;"><img id="haImgWb" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;border-radius:10px;" alt=""><span id="haEmojiWb">📖</span></div>
+            <div class="hd-app-icon" id="haIconWb"><img id="haImgWb" style="display:none;" alt=""><span id="haEmojiWb">📖</span></div>
             <span class="hd-app-lbl" id="haLblWb">世界书</span>
           </div>
           <div class="hd-app" id="btnHomeChat">
-            <div class="hd-app-icon" id="haIconChat" style="position:relative;overflow:hidden;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:26px;"><img id="haImgChat" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;border-radius:10px;" alt=""><span id="haEmojiChat">💬</span></div>
+            <div class="hd-app-icon" id="haIconChat"><img id="haImgChat" style="display:none;" alt=""><span id="haEmojiChat">💬</span></div>
             <span class="hd-app-lbl" id="haLblChat">QQ</span>
           </div>
           <div class="hd-app" id="btnHomeFont">
-            <div class="hd-app-icon" id="haIconFont" style="position:relative;overflow:hidden;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;font-family:serif;"><img id="haImgFont" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;border-radius:10px;" alt=""><span id="haEmojiFont">Aa</span></div>
+            <div class="hd-app-icon" id="haIconFont" style="font-size:22px;font-weight:700;font-family:serif;"><img id="haImgFont" style="display:none;" alt=""><span id="haEmojiFont">Aa</span></div>
             <span class="hd-app-lbl" id="haLblFont">字体</span>
           </div>
         </div>
@@ -634,10 +642,10 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
       <div id="hdDockSpacer"></div>
       <div id="hdDock">
         <div class="hd-dock-item" id="btnHomeSpy">
-          <div class="hd-dock-icon">📱</div><span class="hd-dock-lbl">查手机</span>
+          <div class="hd-dock-icon" id="hdDockIconSpy" style="position:relative;overflow:hidden;"><img id="hdDockImgSpy" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:15px;" alt=""><span id="hdDockEmoSpy">📱</span></div><span class="hd-dock-lbl" id="hdDockLblSpy">查手机</span>
         </div>
         <div class="hd-dock-item" id="btnHomeApi">
-          <div class="hd-dock-icon">🌐</div><span class="hd-dock-lbl">API设置</span>
+          <div class="hd-dock-icon" id="hdDockIconApi" style="position:relative;overflow:hidden;"><img id="hdDockImgApi" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:15px;" alt=""><span id="hdDockEmoApi">🌐</span></div><span class="hd-dock-lbl" id="hdDockLblApi">API设置</span>
         </div>
       </div>
 
@@ -646,47 +654,85 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
     
     
     <!-- ══ 桌面设置 ══ -->
+    <style>
+      #scrHomeSettings { position:absolute !important; top:0; left:0; width:100%; }
+      #scrHomeSettings .hs-scroll {
+        flex:1; overflow-y:scroll; -webkit-overflow-scrolling:touch;
+        padding:14px 14px 0; display:flex; flex-direction:column; gap:12px;
+      }
+      #scrHomeSettings .hs-card {
+        background:white; border-radius:16px; padding:14px 16px;
+        box-shadow:0 2px 8px rgba(0,0,0,.06); flex-shrink:0;
+      }
+      #scrHomeSettings .hs-card-title {
+        font-size:14px; font-weight:700; color:#333; margin-bottom:10px;
+      }
+      .hs-app-row {
+        display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;
+      }
+      .hs-app-cell {
+        display:flex; flex-direction:column; gap:6px;
+      }
+      .hs-icon-preview {
+        width:100%; height:70px; border-radius:12px; background:#f0e8ff;
+        border:2px dashed #c9b8e8; display:flex; align-items:center;
+        justify-content:center; cursor:pointer; overflow:hidden;
+        position:relative; font-size:26px;
+      }
+      .hs-icon-preview img {
+        position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
+      }
+      .hs-icon-actions { display:flex; gap:4px; }
+      .hs-btn-pick { flex:1; font-size:11px; border:none; border-radius:10px; padding:5px 4px; cursor:pointer; background:linear-gradient(135deg,#c9b8e8,#f7b8d4); color:white; font-weight:600; }
+      .hs-btn-reset { font-size:11px; border:1px solid #ddd; border-radius:10px; padding:5px 8px; cursor:pointer; background:white; color:#999; }
+      .hs-lbl-input { border:1px solid #e0d8ff; border-radius:8px; padding:5px 8px; font-size:12px; outline:none; width:100%; box-sizing:border-box; font-family:inherit; }
+    </style>
     <div id="scrHomeSettings" class="scr-flex" style="background:#f5f6fa;">
-      <div class="chat-header">
-        <span id="btnHomeSettingsBack" class="back-btn" onclick="showScreen('scrHome')">＜</span>
+      <div class="chat-header" style="flex-shrink:0; z-index:10;">
+        <span class="back-btn" id="btnHSBack" style="-webkit-tap-highlight-color:transparent;cursor:pointer;">＜</span>
         <span class="header-title">桌面设置 🎨</span>
         <span class="empty-btn"></span>
       </div>
-      <div style="flex:1;overflow-y:auto;padding:16px 14px;display:flex;flex-direction:column;gap:14px;">
+
+      <div class="hs-scroll" id="hsScrollArea">
 
         <!-- 桌面壁纸 -->
-        <div style="background:white;border-radius:16px;padding:14px 16px;box-shadow:0 2px 8px rgba(0,0,0,.06);">
-          <div style="font-size:14px;font-weight:700;color:#333;margin-bottom:10px;">🖼️ 桌面壁纸</div>
+        <div class="hs-card">
+          <div class="hs-card-title">🖼️ 桌面壁纸</div>
           <div style="display:flex;align-items:center;gap:12px;">
-            <div id="hsWallpaperPreview" onclick="document.getElementById('hsWallpaperInp').click()" style="width:70px;height:70px;border-radius:12px;background:#f0e8ff;border:2px dashed #c9b8e8;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;flex-shrink:0;">
-              <img id="hsWallpaperImg" style="width:100%;height:100%;object-fit:cover;display:none;" alt="">
+            <div onclick="document.getElementById('hsWallpaperInp').click()" style="width:64px;height:64px;border-radius:12px;background:#f0e8ff;border:2px dashed #c9b8e8;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;flex-shrink:0;position:relative;">
+              <img id="hsWallpaperImg" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;" alt="">
               <span id="hsWallpaperHint" style="font-size:22px;">🌸</span>
             </div>
-            <div style="flex:1;">
-              <div style="font-size:12px;color:#888;margin-bottom:6px;">点击左侧图片区域可更换桌面背景壁纸</div>
-              <button onclick="document.getElementById('hsWallpaperInp').click()" style="background:linear-gradient(135deg,#c9b8e8,#f7b8d4);border:none;border-radius:20px;padding:6px 14px;color:white;font-size:12px;font-weight:600;cursor:pointer;">选择图片</button>
-              <button onclick="hsRemoveWallpaper()" style="background:#fee;border:1px solid #fcc;border-radius:20px;padding:6px 14px;color:#e66;font-size:12px;font-weight:600;cursor:pointer;margin-left:6px;">恢复默认</button>
+            <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+              <div style="font-size:11px;color:#888;">点击图片或按钮更换桌面壁纸</div>
+              <div style="display:flex;gap:6px;">
+                <button onclick="document.getElementById('hsWallpaperInp').click()" class="hs-btn-pick" style="flex:0 0 auto;padding:5px 12px;">选图片</button>
+                <button onclick="hsRemoveWallpaper()" style="font-size:11px;border:1px solid #fcc;border-radius:10px;padding:5px 10px;cursor:pointer;background:#fee;color:#e66;">恢复</button>
+              </div>
             </div>
           </div>
           <input type="file" id="hsWallpaperInp" accept="image/*" style="display:none">
         </div>
 
-        <!-- 应用图标自定义 -->
-        <div style="background:white;border-radius:16px;padding:14px 16px;box-shadow:0 2px 8px rgba(0,0,0,.06);">
-          <div style="font-size:14px;font-weight:700;color:#333;margin-bottom:10px;">📱 自定义应用图标</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;" id="hsAppIconGrid">
-            <!-- rendered by JS -->
-          </div>
+        <!-- 应用图标 + 名称 (4个应用 + 2个Dock) -->
+        <div class="hs-card">
+          <div class="hs-card-title">📱 应用图标 &amp; 名称</div>
+          <div id="hsAppIconGrid"><!-- rendered by JS --></div>
         </div>
 
-        <!-- 应用标签自定义 -->
-        <div style="background:white;border-radius:16px;padding:14px 16px;box-shadow:0 2px 8px rgba(0,0,0,.06);">
-          <div style="font-size:14px;font-weight:700;color:#333;margin-bottom:10px;">✏️ 自定义应用名称</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;" id="hsAppLblGrid">
-            <!-- rendered by JS -->
-          </div>
+        <!-- Dock图标 -->
+        <div class="hs-card">
+          <div class="hs-card-title">📌 底部栏图标 &amp; 名称</div>
+          <div id="hsDockIconGrid"><!-- rendered by JS --></div>
         </div>
 
+        <div style="height:12px;flex-shrink:0;"></div>
+      </div>
+
+      <!-- 保存按钮 -->
+      <div style="flex-shrink:0;padding:10px 14px calc(env(safe-area-inset-bottom,0px)+10px);background:#f5f6fa;border-top:1px solid #ece8f5;">
+        <button onclick="hsSaveAll()" style="width:100%;background:linear-gradient(135deg,#c9b8e8,#f7b8d4);border:none;border-radius:22px;padding:13px;color:white;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:1px;box-shadow:0 3px 12px rgba(200,150,220,.3);">💾 保存设置</button>
       </div>
     </div>
 
@@ -4694,11 +4740,19 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
     let e=await lfGet(TGL_EMO_KEY);
     if(el_('hdTaglineEmoji'))el_('hdTaglineEmoji').textContent=e||'❤️';
   })();
-  window.hdEditTaglineEmoji=function(){
-    let cur=el_('hdTaglineEmoji')?.textContent||'❤️';
-    let v=prompt('输入emoji（1-2个）：',cur);
-    if(v!==null){let t=(v.trim()||'❤️').slice(0,4);if(el_('hdTaglineEmoji'))el_('hdTaglineEmoji').textContent=t;lfSet(TGL_EMO_KEY,t);}
+  window.hdToggleTglEmoji=function(){
+    let sp=el_('hdTaglineEmoji'),inp=el_('hdTaglineEmojiInp');if(!sp||!inp)return;
+    if(inp.style.display==='none'||inp.style.display===''){
+      inp.value=sp.textContent.trim()||'❤️';
+      sp.style.display='none';inp.style.display='inline-block';inp.focus();inp.select();
+    } else {hdSaveTglEmoji();}
   };
+  window.hdSaveTglEmoji=function(){
+    let sp=el_('hdTaglineEmoji'),inp=el_('hdTaglineEmojiInp');if(!sp||!inp)return;
+    let t=(inp.value.trim()||'❤️').slice(0,4);
+    sp.textContent=t;sp.style.display='inline-block';inp.style.display='none';lfSet(TGL_EMO_KEY,t);
+  };
+  window.hdEditTaglineEmoji=window.hdToggleTglEmoji;
 
   // ── Todo emoji ──
   const EMO_KEY='hd_todo_emoji';
@@ -4706,15 +4760,19 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
     let e=await lfGet(EMO_KEY);
     if(el_('hdTodoEmoji'))el_('hdTodoEmoji').textContent=e||'✨';
   })();
-  window.hdEditTodoEmoji=function(){
-    let cur=el_('hdTodoEmoji')?.textContent||'✨';
-    let v=prompt('输入emoji（1-2个）：',cur);
-    if(v!==null){
-      let t=(v.trim()||'✨').slice(0,4);
-      if(el_('hdTodoEmoji'))el_('hdTodoEmoji').textContent=t;
-      lfSet(EMO_KEY,t);
-    }
+  window.hdToggleTodoEmoji=function(){
+    let sp=el_('hdTodoEmoji'),inp=el_('hdTodoEmojiInp');if(!sp||!inp)return;
+    if(inp.style.display==='none'||inp.style.display===''){
+      inp.value=sp.textContent.trim()||'✨';
+      sp.style.display='none';inp.style.display='inline-block';inp.focus();inp.select();
+    } else {hdSaveTodoEmoji();}
   };
+  window.hdSaveTodoEmoji=function(){
+    let sp=el_('hdTodoEmoji'),inp=el_('hdTodoEmojiInp');if(!sp||!inp)return;
+    let t=(inp.value.trim()||'✨').slice(0,4);
+    sp.textContent=t;sp.style.display='inline-block';inp.style.display='none';lfSet(EMO_KEY,t);
+  };
+  window.hdEditTodoEmoji=window.hdToggleTodoEmoji;
 
   // ── To-do list ──
   const TODO_KEY='hd_todo_items';
@@ -4767,7 +4825,11 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
       let imgData=await lfGet('hd_app_img_'+app.id);
       let lbl=await lfGet('hd_app_lbl_'+app.id);
       let img=el_(app.imgId),emoji=el_(app.emojiId),lblEl=el_(app.lblId);
-      if(imgData&&img){img.src=imgData;img.style.display='block';if(emoji)emoji.style.display='none';}
+      if(imgData&&img){
+        img.src=imgData;
+        img.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:14px 14px 0 0;display:block;';
+        if(emoji)emoji.style.display='none';
+      }
       if(lbl&&lblEl)lblEl.textContent=lbl;
     }
   })();
@@ -4806,75 +4868,173 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
     };
   });
 
-  // 渲染应用图标编辑格
-  window.hsRenderGrid=function(){
-    let iconGrid=document.getElementById('hsAppIconGrid');
-    let lblGrid=document.getElementById('hsAppLblGrid');
-    if(!iconGrid||!lblGrid)return;
-    iconGrid.innerHTML='';lblGrid.innerHTML='';
-    HA_APPS.forEach(async app=>{
-      let imgData=await lfGet('hd_app_img_'+app.id);
-      let lbl=await lfGet('hd_app_lbl_'+app.id)||app.defaultLbl;
-      // Icon cell
-      let iconCell=document.createElement('div');
-      iconCell.style.cssText='display:flex;flex-direction:column;align-items:center;gap:6px;';
-      let previewDiv=document.createElement('div');
-      previewDiv.style.cssText='width:56px;height:56px;border-radius:14px;background:#f0e8ff;border:2px dashed #c9b8e8;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;font-size:24px;';
-      if(imgData){let pi=document.createElement('img');pi.src=imgData;pi.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;';previewDiv.appendChild(pi);}
-      else{previewDiv.textContent=app.defaultEmoji;}
+  // Dock图标数据
+  const HA_DOCK=[
+    {id:'Spy',defaultEmoji:'📱',defaultLbl:'查手机',imgId:'hdDockImgSpy',emojiId:'hdDockEmoSpy',lblId:'hdDockLblSpy'},
+    {id:'Api',defaultEmoji:'🌐',defaultLbl:'API设置',imgId:'hdDockImgApi',emojiId:'hdDockEmoApi',lblId:'hdDockLblApi'},
+  ];
+
+  // 加载Dock图标
+  (async function loadDockIcons(){
+    for(let d of HA_DOCK){
+      let imgData=await lfGet('hd_dock_img_'+d.id);
+      let lbl=await lfGet('hd_dock_lbl_'+d.id);
+      let img=el_(d.imgId),emo=el_(d.emojiId),lblEl=el_(d.lblId);
+      if(imgData&&img){
+        img.src=imgData;img.style.display='block';
+        if(emo)emo.style.display='none';
+      }
+      if(lbl&&lblEl)lblEl.textContent=lbl;
+    }
+  })();
+
+  // 渲染单个图标编辑行
+  function hsRenderIconRow(app,imgKeyPrefix,lblKeyPrefix,imgId,emojiId,lblId,defaultLbl,defaultEmoji,container){
+    return lfGet(imgKeyPrefix+app.id).then(async imgData=>{
+      let lbl=await lfGet(lblKeyPrefix+app.id)||defaultLbl;
+      let cell=document.createElement('div');cell.className='hs-app-cell';
+
+      // 图标预览
+      let preview=document.createElement('div');preview.className='hs-icon-preview';
+      if(imgData){
+        let pi=document.createElement('img');pi.src=imgData;pi.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;';
+        preview.appendChild(pi);
+      } else {
+        preview.textContent=defaultEmoji;preview.style.fontSize='28px';
+      }
+
+      // 隐藏file input
       let fileInp=document.createElement('input');fileInp.type='file';fileInp.accept='image/*';fileInp.style.display='none';
       fileInp.onchange=function(){
         let file=this.files[0];if(!file)return;
         let reader=new FileReader();
         reader.onload=ev=>{
           let data=ev.target.result;
-          lfSet('hd_app_img_'+app.id,data);
-          // update preview in grid
-          previewDiv.innerHTML='';
+          lfSet(imgKeyPrefix+app.id,data);
+          preview.innerHTML='';
           let pi=document.createElement('img');pi.src=data;pi.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;';
-          previewDiv.style.position='relative';previewDiv.appendChild(pi);
-          // update actual icon on home
-          let homeImg=document.getElementById(app.imgId);
-          let homeEmoji=document.getElementById(app.emojiId);
-          if(homeImg){homeImg.src=data;homeImg.style.display='block';}
-          if(homeEmoji)homeEmoji.style.display='none';
+          preview.appendChild(pi);
+          // 实时更新桌面图标
+          let homeImg=document.getElementById(imgId);
+          let homeEmo=document.getElementById(emojiId);
+          if(homeImg){homeImg.src=data;homeImg.style.cssText='display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit;';}
+          if(homeEmo)homeEmo.style.display='none';
         };reader.readAsDataURL(file);
       };
       document.body.appendChild(fileInp);
-      previewDiv.onclick=()=>fileInp.click();
-      let resetBtn=document.createElement('button');
-      resetBtn.textContent='恢复';
-      resetBtn.style.cssText='font-size:10px;border:1px solid #ddd;background:white;border-radius:8px;padding:2px 8px;cursor:pointer;color:#888;';
-      resetBtn.onclick=()=>{
-        lfSet('hd_app_img_'+app.id,'');
-        previewDiv.innerHTML=app.defaultEmoji;previewDiv.style.position='';
-        let homeImg=document.getElementById(app.imgId);
-        let homeEmoji=document.getElementById(app.emojiId);
-        if(homeImg){homeImg.src='';homeImg.style.display='none';}
-        if(homeEmoji)homeEmoji.style.display='';
-      };
-      let nameLbl=document.createElement('div');
-      nameLbl.textContent=lbl;nameLbl.style.cssText='font-size:11px;color:#666;';
-      iconCell.appendChild(previewDiv);iconCell.appendChild(resetBtn);iconCell.appendChild(nameLbl);
-      iconGrid.appendChild(iconCell);
+      preview.onclick=()=>fileInp.click();
 
-      // Label cell
-      let lblCell=document.createElement('div');lblCell.style.cssText='display:flex;flex-direction:column;gap:4px;';
-      let lblTitle=document.createElement('div');lblTitle.textContent=lbl;lblTitle.style.cssText='font-size:11px;color:#888;';
-      let lblInput=document.createElement('input');
-      lblInput.type='text';lblInput.value=lbl;lblInput.maxLength=6;
-      lblInput.style.cssText='border:1px solid #e0d8ff;border-radius:8px;padding:5px 8px;font-size:12px;outline:none;width:100%;box-sizing:border-box;';
-      lblInput.onchange=function(){
-        let v=this.value.trim()||app.defaultLbl;
-        lfSet('hd_app_lbl_'+app.id,v);
-        let lblEl=document.getElementById(app.lblId);
-        if(lblEl)lblEl.textContent=v;
-        lblTitle.textContent=v;
+      // 操作按钮
+      let actions=document.createElement('div');actions.className='hs-icon-actions';
+      let pickBtn=document.createElement('button');pickBtn.textContent='换图';pickBtn.className='hs-btn-pick';
+      pickBtn.onclick=()=>fileInp.click();
+      let resetBtn=document.createElement('button');resetBtn.textContent='恢复';resetBtn.className='hs-btn-reset';
+      resetBtn.onclick=()=>{
+        lfSet(imgKeyPrefix+app.id,'');
+        preview.innerHTML='';preview.textContent=defaultEmoji;preview.style.fontSize='28px';
+        let homeImg=document.getElementById(imgId);let homeEmo=document.getElementById(emojiId);
+        if(homeImg){homeImg.src='';homeImg.style.display='none';}
+        if(homeEmo)homeEmo.style.display='';
       };
-      lblCell.appendChild(lblTitle);lblCell.appendChild(lblInput);
-      lblGrid.appendChild(lblCell);
+      actions.appendChild(pickBtn);actions.appendChild(resetBtn);
+
+      // 名称输入
+      let lblInp=document.createElement('input');lblInp.type='text';lblInp.value=lbl;lblInp.maxLength=6;
+      lblInp.className='hs-lbl-input';lblInp.placeholder='名称';
+      lblInp.setAttribute('data-appid',app.id);
+      lblInp.setAttribute('data-prefix',lblKeyPrefix);
+      lblInp.setAttribute('data-default',defaultLbl);
+      lblInp.setAttribute('data-lblid',lblId);
+      // blur保存
+      lblInp.onblur=function(){
+        let v=this.value.trim()||this.getAttribute('data-default');
+        lfSet(this.getAttribute('data-prefix')+this.getAttribute('data-appid'),v);
+        let lblEl=document.getElementById(this.getAttribute('data-lblid'));
+        if(lblEl)lblEl.textContent=v;
+      };
+      // 防键盘顶起：input focus时scroll into view
+      lblInp.onfocus=function(){
+        let scroll=document.getElementById('hsScrollArea');
+        if(scroll){setTimeout(()=>{this.scrollIntoView({block:'center',behavior:'smooth'});},300);}
+      };
+
+      cell.appendChild(preview);cell.appendChild(actions);cell.appendChild(lblInp);
+      container.appendChild(cell);
     });
+  }
+
+  // 渲染整个设置格
+  window.hsRenderGrid=function(){
+    let iconGrid=document.getElementById('hsAppIconGrid');
+    let dockGrid=document.getElementById('hsDockIconGrid');
+    if(!iconGrid)return;
+    iconGrid.innerHTML='';
+    if(dockGrid)dockGrid.innerHTML='';
+
+    // 应用：2列网格
+    let appRow=document.createElement('div');appRow.className='hs-app-row';
+    iconGrid.appendChild(appRow);
+    HA_APPS.forEach(app=>{
+      hsRenderIconRow(app,'hd_app_img_','hd_app_lbl_',app.imgId,app.emojiId,app.lblId,app.defaultLbl,app.defaultEmoji,appRow);
+    });
+
+    // Dock：2列网格
+    if(dockGrid){
+      let dockRow=document.createElement('div');dockRow.className='hs-app-row';
+      dockGrid.appendChild(dockRow);
+      HA_DOCK.forEach(d=>{
+        hsRenderIconRow(d,'hd_dock_img_','hd_dock_lbl_',d.imgId,d.emojiId,d.lblId,d.defaultLbl,d.defaultEmoji,dockRow);
+      });
+    }
   };
+
+  // 保存所有（点击保存按钮时）
+  window.hsSaveAll=function(){
+    // 找所有name inputs并保存
+    let inputs=document.querySelectorAll('#hsAppIconGrid .hs-lbl-input, #hsDockIconGrid .hs-lbl-input');
+    inputs.forEach(inp=>{
+      let v=inp.value.trim()||inp.getAttribute('data-default');
+      lfSet(inp.getAttribute('data-prefix')+inp.getAttribute('data-appid'),v);
+      let lblEl=document.getElementById(inp.getAttribute('data-lblid'));
+      if(lblEl)lblEl.textContent=v;
+    });
+    // 返回主页
+    if(typeof showScreen==='function')showScreen('scrHome');
+  };
+
+  // 返回按钮
+  (function bindBackBtn(){
+    let btn=document.getElementById('btnHSBack');
+    if(btn){btn.onclick=function(e){e.stopPropagation();if(typeof showScreen==='function')showScreen('scrHome');};}
+    // 保险：再次在DOMContentLoaded绑定
+    document.addEventListener('DOMContentLoaded',function(){
+      let b=document.getElementById('btnHSBack');
+      if(b&&!b._bound){b._bound=true;b.onclick=function(e){e.stopPropagation();if(typeof showScreen==='function')showScreen('scrHome');};}
+    });
+  })();
+
+  // 防键盘顶起：监听visualViewport
+  (function fixSettingsKeyboard(){
+    let scr=document.getElementById('scrHomeSettings');
+    let scroll=document.getElementById('hsScrollArea');
+    if(!scr||!scroll)return;
+    // 输入框聚焦时不让整页移动
+    scr.addEventListener('focusin',function(e){
+      if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'){
+        e.target.scrollIntoView({block:'center',behavior:'smooth'});
+      }
+    });
+    if(window.visualViewport){
+      window.visualViewport.addEventListener('resize',function(){
+        let h=window.visualViewport.height;
+        if(scr.style.display==='flex'){
+          scr.style.height=h+'px';
+          scr.style.top=window.visualViewport.offsetTop+'px';
+        }
+      });
+    }
+  })();
+
 })();
 $(`btnSetApiBack`).onclick = () =>showScreen(`scrHome`);
 
