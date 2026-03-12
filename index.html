@@ -358,26 +358,21 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
           background-image: radial-gradient(#f5c6cb 1.2px, transparent 1.2px) !important;
           background-size: 18px 18px !important;
           display: none; flex-direction: column;
-          overflow: hidden;   /* 不可滚动 */
-          padding: 30px 10px 0;
+          overflow: hidden;
+          height: 100%;
+          /* 顶部安全距离：status bar + 额外呼吸 */
+          padding: env(safe-area-inset-top, 20px) 10px 0;
+          padding-top: max(env(safe-area-inset-top, 0px), 20px);
           box-sizing: border-box;
         }
 
         /* ══ 纪念日卡片 ══ */
         #hdAnnCard {
           border-radius: 18px; overflow: hidden; position: relative;
-          margin-top: 6px; margin-bottom: 8px; flex-shrink: 0; height: 138px;
+          margin-top: 4px; margin-bottom: 6px; flex-shrink: 0; height: 140px;
           background: linear-gradient(135deg,#c9b8e8,#f7b8d4,#f0cde0);
         }
         #hdAnnBgImg { position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none; }
-        #hdAnnBgBtn {
-          position:absolute;bottom:6px;right:8px;z-index:5;
-          background:rgba(255,255,255,.45);border:none;border-radius:50%;
-          font-size:16px;width:28px;height:28px;
-          display:flex;align-items:center;justify-content:center;
-          cursor:pointer;backdrop-filter:blur(4px);-webkit-tap-highlight-color:transparent;
-          padding:0;
-        }
         /* 两侧头像 */
         .ann-ava {
           position:absolute;top:12px;width:72px;height:72px;border-radius:50%;
@@ -439,7 +434,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         /* ══ 签名行 ══ */
         #hdTaglineWrap {
           display:flex;align-items:center;justify-content:center;
-          margin-bottom:6px;flex-shrink:0;
+          margin-bottom:14px;flex-shrink:0;
         }
         #hdTagline {
           font-size:12px;color:#999;font-style:italic;
@@ -453,7 +448,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         }
 
         /* ══ 中间两图 + 日历 ══ */
-        #hdMidRow{display:flex;gap:8px;margin-bottom:7px;flex-shrink:0;align-items:stretch;}
+        #hdMidRow{display:flex;gap:8px;margin-bottom:6px;flex-shrink:0;align-items:stretch;}
         #hdImgBig{
           flex:0 0 47%;background:white;border-radius:14px;
           box-shadow:0 2px 8px rgba(0,0,0,.06);height:195px;
@@ -463,13 +458,6 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         #hdImgBig img{width:100%;height:100%;object-fit:cover;display:none;}
         #hdImgBigHint{color:#ddd;font-size:24px;pointer-events:none;}
         #hdRightCol{flex:1;display:flex;flex-direction:column;gap:7px;min-width:0;}
-        #hdImgSmall{
-          background:white;border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.06);
-          height:80px;display:flex;align-items:center;justify-content:center;
-          overflow:hidden;position:relative;flex-shrink:0;cursor:pointer;
-        }
-        #hdImgSmall img{width:100%;height:100%;object-fit:cover;display:none;}
-        #hdImgSmallHint{color:#ddd;font-size:18px;pointer-events:none;}
         #hdCal{
           background:white;border-radius:14px;padding:5px 7px 7px;
           box-shadow:0 2px 8px rgba(0,0,0,.06);flex:1;
@@ -519,14 +507,15 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         .hd-app-lbl{font-size:10px;color:#444;font-weight:500;}
 
         /* ══ Dock ══ */
-        #hdDockSpacer{height:10px;flex-shrink:0;}
+        #hdDockSpacer{flex:1;min-height:6px;}
         #hdDock{
-          position:sticky;bottom:0;z-index:2;
+          flex-shrink:0;z-index:2;
           background:rgba(255,255,255,.92);
           -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
           border-radius:20px 20px 0 0;
           display:flex;justify-content:space-around;align-items:center;
-          padding:14px 30px 24px;margin:0 -10px;
+          padding:12px 30px calc(env(safe-area-inset-bottom,0px) + 16px);
+          margin:0 -10px;
           box-shadow:0 -2px 12px rgba(0,0,0,.07);
         }
         .hd-dock-item{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
@@ -537,7 +526,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
       </style>
 
       <!-- ══ 纪念日卡片 ══ -->
-      <div id="hdAnnCard">
+      <div id="hdAnnCard" onclick="if(event.target===this||event.target===document.getElementById('hdAnnBgImg')){document.getElementById('hdAnnBgInp').click();}">
         <img id="hdAnnBgImg" alt="">
         <div class="ann-ava" id="hdAnnAvaL" onclick="document.getElementById('hdAnnAvaLInp').click()">
           <span class="ann-ava-hint">👤</span>
@@ -567,7 +556,6 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
           onblur="hdAnnSave('botL')" onkeydown="if(event.key==='Enter')this.blur()">
         <input class="ann-bot-edit" id="hdAnnBotREdit" type="text" maxlength="12"
           onblur="hdAnnSave('botR')" onkeydown="if(event.key==='Enter')this.blur()">
-        <button id="hdAnnBgBtn" onclick="document.getElementById('hdAnnBgInp').click()" title="换背景">🖼️</button>
         <input type="file" id="hdAnnBgInp" accept="image/*" style="display:none">
       </div>
 
@@ -587,11 +575,6 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
           <input type="file" id="hdImgBigInput" accept="image/*" style="display:none">
         </div>
         <div id="hdRightCol">
-          <div id="hdImgSmall" onclick="document.getElementById('hdImgSmallInput').click()">
-            <span id="hdImgSmallHint">🖼️</span>
-            <img id="hdImgSmallEl" alt="">
-            <input type="file" id="hdImgSmallInput" accept="image/*" style="display:none">
-          </div>
           <div id="hdCal">
             <div id="hdCalMonth" class="cal-month"></div>
             <div class="cal-grid">
@@ -1999,7 +1982,7 @@ function wkLoadSong(i){
   if(an)an.innerText=s.artist||'';
   setLcd('♪ '+(s.name||'?')+(s.artist?' · '+s.artist:'')+'   ──   ');
   setCnt(s.playCount||0);
-  WK.lyricIdx=0;
+  WK.lyricIdx=-1;  // -1 确保第一行歌词立即触发显示
   let lp=el('wkLPrev'),lc=el('wkLCur'),ln=el('wkLNext');
   if(lp)lp.innerText='';if(lc)lc.innerText='';if(ln)ln.innerText='';
   if(!s.url){if(WK.audio){WK.audio.pause();WK.audio.src='';}return;}
@@ -2050,11 +2033,14 @@ window.wkPlay=function(){
   WK.audio.play().then(()=>{
     WK.playing=true;let bp=el('wkBPlay');if(bp)bp.innerText='⏸';
     if(!WK.rafId)WK.rafId=requestAnimationFrame(wkTick);
+    // 启动歌词轮询（兼容 ontimeupdate 被节流的浏览器）
+    if(!WK.lrcTimer)WK.lrcTimer=setInterval(()=>{if(WK.playing&&WK.audio)wkUpdateProg();},400);
   }).catch(()=>{});
 };
 window.wkPause=function(){
   if(WK.audio)WK.audio.pause();
   WK.playing=false;let bp=el('wkBPlay');if(bp)bp.innerText='▶';
+  if(WK.lrcTimer){clearInterval(WK.lrcTimer);WK.lrcTimer=null;}
 };
 window.wkTogglePlay=function(){
   if(!WK.audio||!WK.audio.src){if(WK.songs.length>0&&WK.cur<0)wkLoadSong(0);else return;}
@@ -2086,6 +2072,7 @@ window.wkToggleLikeByIdx=function(idx,cid){
 window.wkEject=function(){
   if(WK.audio){WK.audio.pause();WK.playing=false;}
   if(WK.rafId){cancelAnimationFrame(WK.rafId);WK.rafId=null;}
+  if(WK.lrcTimer){clearInterval(WK.lrcTimer);WK.lrcTimer=null;}
   let scr=el('scrWalkman');if(!scr)return;
   scr.style.transition='transform .38s cubic-bezier(.4,0,.8,1)';
   scr.style.transform='translateY(100%)';
@@ -4252,8 +4239,10 @@ async function applyVis() {
     if($(`roomTitle`)) $(`roomTitle`).innerText = dn;
     // 双读：localforage（最新）优先，降级到 localStorage
     async function _readStatus(lsKey,lfKey,def){
-        let v=originalGetItem.call(ls,lsKey);
-        if(!v||v==='null'){try{v=await localforage.getItem(lfKey);}catch(e){}}
+        // 优先读 localforage（大仓库，不会满），再降级 localStorage
+        let v=null;
+        try{v=await localforage.getItem(lfKey);}catch(e){}
+        if(!v||v==='null'||v===null){v=originalGetItem.call(ls,lsKey);}
         return v||def;
     }
     let curStatusTxt,curStatusCol,curSign;
@@ -4504,7 +4493,6 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
     loadImg(key,imgId,hintId);
   }
   setupImg('hdImgBigInput','hd_img_big','hdImgBigEl','hdImgBigHint');
-  setupImg('hdImgSmallInput','hd_img_small','hdImgSmallEl','hdImgSmallHint');
 
   // ── 纪念日卡片 ──
   const ANN={bg:'hd_ann_bg',avaL:'hd_ann_ava_l',avaR:'hd_ann_ava_r',
@@ -7503,6 +7491,9 @@ if(charStickers.length > 0) {
                 localforage.setItem(`cStatusTxt_`+currentChatId, sTxt).catch(()=>{});
                 localforage.setItem(`cStatusColor_`+currentChatId, statusMatch[2].trim()).catch(()=>{});
                 localforage.setItem(`cSign_`+currentChatId, statusMatch[3].trim()).catch(()=>{});
+                // 立即更新房间header
+                if($(`roomStatus`))$(`roomStatus`).innerHTML=`<div class="status-dot `+statusMatch[2].trim()+`"></div>`+sTxt;
+                if($(`roomSignature`))$(`roomSignature`).innerText=statusMatch[3].trim();
                 txt = txt.replace(statusMatch[0], ``);
                 if(typeof renderContacts === `function`) renderContacts();
                 if(typeof applyVis === `function`) applyVis();
@@ -7646,6 +7637,8 @@ let hasAccept = txt.includes(`[收取转账]`);
                 if(wM) aiStatus.weather = wM[1].trim(); if(cM) aiStatus.clothing = cM[1].trim();
                 if(aM) aiStatus.action = aM[1].trim(); if(tM) aiStatus.thought = tM[1].trim();
                 ls.setItem(`aiStatus`, JSON.stringify(aiStatus));
+                // 同步写 localforage（防 localStorage 满）
+                localforage.setItem(`aiStatus_`+currentChatId, aiStatus).catch(()=>{});
             }
             // 无论是否有【回复】，都清除可能残留在out里的【状态行】（避免渲染为气泡）
             // 先清除整个 【XX】...（下一个【前）的多行块，再清除单行标签
@@ -8493,8 +8486,16 @@ function mkBub(txt, side, isT=false) {
         a.className = `ava-sm ava-l`;
         let img = window.currentLoadedAiI || ``;
         if(img) { a.style.backgroundImage = `url(`+img+`)`; a.innerText = ``; } else a.innerText = `👤`;
-        if(!isT) a.onclick = () => {
-                stW.innerText=aiStatus.weather; stC.innerText=aiStatus.clothing; stA.innerText=aiStatus.action; stT.innerText=aiStatus.thought;
+        if(!isT) a.onclick = async () => {
+                // 先读 localforage 最新状态再显示
+                let _lfs = null;
+                try{_lfs=await localforage.getItem(`aiStatus_`+currentChatId);}catch(e){}
+                if(!_lfs){try{let _s=originalGetItem.call(ls,`aiStatus_`+currentChatId);if(_s)_lfs=typeof _s===`string`?JSON.parse(_s):_s;}catch(e){}}
+                let _as=_lfs||aiStatus;
+                stW.innerText=_as.weather||aiStatus.weather;
+                stC.innerText=_as.clothing||aiStatus.clothing;
+                stA.innerText=_as.action||aiStatus.action;
+                stT.innerText=_as.thought||aiStatus.thought;
                 modal.style.display=`flex`;
             };
         row.appendChild(a); row.appendChild(b);
@@ -8529,8 +8530,15 @@ function mkBubSync(txt, side) {
         let a = document.createElement(`div`); a.className = `ava-sm ava-l`;
         let img = window.currentLoadedAiI || ``;
         if(img) { a.style.backgroundImage = `url(`+img+`)`; a.innerText = ``; } else a.innerText = `👤`;
-        a.onclick = () => {
-                stW.innerText=aiStatus.weather; stC.innerText=aiStatus.clothing; stA.innerText=aiStatus.action; stT.innerText=aiStatus.thought;
+        a.onclick = async () => {
+                let _lfs2=null;
+                try{_lfs2=await localforage.getItem(`aiStatus_`+currentChatId);}catch(e){}
+                if(!_lfs2){try{let _s2=originalGetItem.call(ls,`aiStatus_`+currentChatId);if(_s2)_lfs2=typeof _s2===`string`?JSON.parse(_s2):_s2;}catch(e){}}
+                let _as2=_lfs2||aiStatus;
+                stW.innerText=_as2.weather||aiStatus.weather;
+                stC.innerText=_as2.clothing||aiStatus.clothing;
+                stA.innerText=_as2.action||aiStatus.action;
+                stT.innerText=_as2.thought||aiStatus.thought;
                 modal.style.display=`flex`;
             };
         row.appendChild(a); row.appendChild(b);
@@ -17768,4 +17776,32 @@ if(document.getElementById('offlineModePanel')) {
 
 
 
+</script>
+<script>
+// ═══ 动态视口高度适配（跨浏览器：Via/X/Chrome/Edge/Safari）═══
+(function fixVH(){
+  function setVH(){
+    let vh=window.visualViewport?window.visualViewport.height:window.innerHeight;
+    document.documentElement.style.setProperty('--real-vh',vh+'px');
+    // scrHome: 始终填满真实可见区域
+    let home=document.getElementById('scrHome');
+    if(home&&home.style.display==='flex'){home.style.height=vh+'px';}
+  }
+  setVH();
+  window.addEventListener('resize',setVH,{passive:true});
+  window.addEventListener('orientationchange',()=>setTimeout(setVH,250),{passive:true});
+  if(window.visualViewport){
+    window.visualViewport.addEventListener('resize',setVH,{passive:true});
+  }
+  // patch showScreen so scrHome always gets correct height
+  document.addEventListener('DOMContentLoaded',function(){
+    let _orig=window.showScreen;
+    if(typeof _orig==='function'){
+      window.showScreen=function(s){
+        _orig(s);
+        if(s==='scrHome'){setTimeout(setVH,30);}
+      };
+    }
+  });
+})();
 </script>
