@@ -352,179 +352,231 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
     
     <div id=scrHome class=scr-home>
       <style>
-        /* ══════ NEW HOME v4 ══════ */
+        /* ══════ NEW HOME v5 ══════ */
         #scrHome.scr-home {
           background: #fce8ea !important;
           background-image: radial-gradient(#f5c6cb 1.2px, transparent 1.2px) !important;
           background-size: 18px 18px !important;
-          display: none;
-          flex-direction: column;
-          overflow-y: auto;
-          overflow-x: hidden;
-          -webkit-overflow-scrolling: touch;
-          /* 上方留出系统状态栏高度，兼容全屏浏览器 */
-          padding: env(safe-area-inset-top, 44px) 12px 0;
+          display: none; flex-direction: column;
+          overflow: hidden;   /* 不可滚动 */
+          padding: 20px 10px 0;
           box-sizing: border-box;
         }
 
-        /* ── 头像区 ── */
-        #hdProfileArea {
-          display: flex; flex-direction: column; align-items: center;
-          margin-bottom: 16px; padding-top: 10px; flex-shrink: 0;
+        /* ══ 纪念日卡片 ══ */
+        #hdAnnCard {
+          border-radius: 18px; overflow: hidden; position: relative;
+          margin-bottom: 8px; flex-shrink: 0; height: 138px;
+          background: linear-gradient(135deg,#c9b8e8,#f7b8d4,#f0cde0);
         }
-        #hdAvatarWrap {
-          width: 72px; height: 72px; border-radius: 50%;
-          background: white; box-shadow: 0 3px 12px rgba(0,0,0,.12);
-          display: flex; align-items: center; justify-content: center;
-          overflow: hidden; cursor: pointer; position: relative;
-          border: 3px solid rgba(255,255,255,.9);
+        #hdAnnBgImg { position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none; }
+        #hdAnnBgBtn {
+          position:absolute;bottom:6px;right:8px;z-index:5;
+          background:rgba(255,255,255,.5);border:none;border-radius:10px;
+          font-size:11px;padding:2px 6px;cursor:pointer;color:#444;
+          backdrop-filter:blur(4px);-webkit-tap-highlight-color:transparent;
         }
-        #hdAvatarImg { width:100%; height:100%; object-fit:cover; display:none; }
-        #hdAvatarHint { font-size:28px; pointer-events:none; }
+        /* 两侧头像 */
+        .ann-ava {
+          position:absolute;top:12px;width:72px;height:72px;border-radius:50%;
+          background:rgba(255,255,255,.3);border:3px solid rgba(255,255,255,.85);
+          overflow:hidden;cursor:pointer;z-index:3;
+          display:flex;align-items:center;justify-content:center;
+          box-shadow:0 3px 12px rgba(0,0,0,.2);
+        }
+        #hdAnnAvaL{left:12px;} #hdAnnAvaR{right:12px;}
+        .ann-ava img{width:100%;height:100%;object-fit:cover;display:none;}
+        .ann-ava-hint{font-size:26px;pointer-events:none;color:rgba(255,255,255,.85);}
+        /* 横线 */
+        #hdAnnLine {
+          position:absolute;bottom:44px;left:10px;right:10px;height:1px;
+          background:rgba(255,255,255,.45);z-index:2;
+        }
+        /* 中间文字区 */
+        #hdAnnCenter {
+          position:absolute;left:50%;top:10px;transform:translateX(-50%);
+          display:flex;flex-direction:column;align-items:center;z-index:3;white-space:nowrap;
+        }
+        #hdAnnNameEl {
+          font-size:13px;color:rgba(255,255,255,.95);font-weight:600;
+          letter-spacing:.5px;cursor:pointer;text-shadow:0 1px 4px rgba(0,0,0,.25);
+        }
+        #hdAnnNameEdit {
+          display:none;font-size:12px;text-align:center;border:none;
+          background:rgba(255,255,255,.3);color:white;border-radius:8px;
+          padding:2px 8px;outline:none;font-family:inherit;width:90px;
+        }
+        #hdAnnDaysWrap{display:flex;align-items:baseline;gap:2px;margin-top:3px;}
+        #hdAnnDaysNum {
+          font-size:38px;font-weight:900;color:white;
+          text-shadow:0 2px 10px rgba(0,0,0,.2);line-height:1;cursor:pointer;
+        }
+        #hdAnnDaysSuffix{font-size:14px;color:rgba(255,255,255,.9);font-weight:600;cursor:pointer;}
+        #hdAnnDaysEdit {
+          display:none;font-size:11px;text-align:center;border:none;
+          background:rgba(255,255,255,.3);color:white;border-radius:8px;
+          padding:2px 8px;outline:none;font-family:inherit;width:110px;margin-top:4px;
+        }
+        /* 底部左右文字 */
+        .ann-bot-txt {
+          position:absolute;bottom:8px;z-index:3;
+          background:rgba(0,0,0,.22);border-radius:12px;
+          padding:3px 8px;font-size:11px;color:rgba(255,255,255,.95);
+          backdrop-filter:blur(4px);cursor:pointer;
+          max-width:42%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+          -webkit-tap-highlight-color:transparent;
+        }
+        #hdAnnBotL{left:10px;} #hdAnnBotR{right:10px;}
+        .ann-bot-edit {
+          display:none;position:absolute;bottom:8px;z-index:10;font-size:11px;
+          border:none;border-radius:10px;background:rgba(255,255,255,.88);color:#333;
+          padding:3px 8px;outline:none;font-family:inherit;width:42%;box-sizing:border-box;
+        }
+        #hdAnnBotLEdit{left:10px;} #hdAnnBotREdit{right:10px;}
+
+        /* ══ 签名行 ══ */
         #hdTaglineWrap {
-          margin-top: 8px; position: relative; display: flex; align-items: center; gap: 4px;
+          display:flex;align-items:center;justify-content:center;
+          margin-bottom:6px;flex-shrink:0;
         }
         #hdTagline {
-          font-size: 12px; color: #888; font-style: italic;
-          text-align: center; cursor: pointer; max-width: 240px;
-          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-          padding: 2px 6px; border-radius: 8px;
-          transition: background .15s;
+          font-size:12px;color:#999;font-style:italic;
+          text-align:center;cursor:pointer;max-width:260px;
+          padding:2px 8px;border-radius:8px;-webkit-tap-highlight-color:transparent;
         }
-        #hdTagline:hover, #hdTagline:active { background: rgba(0,0,0,.05); }
         #hdTaglineEdit {
-          display: none; font-size: 12px; color: #555; border: 1px solid #ddd;
-          border-radius: 10px; padding: 3px 10px; outline: none; background: white;
-          width: 200px; text-align: center; font-family: inherit;
+          display:none;font-size:12px;border:1px solid #ddd;border-radius:10px;
+          padding:3px 10px;outline:none;background:white;
+          width:200px;text-align:center;font-family:inherit;color:#555;
         }
 
-        /* ── 中间两图 + 日历 ── */
-        #hdMidRow {
-          display: flex; gap: 10px; margin-bottom: 16px; flex-shrink: 0;
-          align-items: stretch;
+        /* ══ 中间两图 + 日历 ══ */
+        #hdMidRow{display:flex;gap:8px;margin-bottom:7px;flex-shrink:0;align-items:stretch;}
+        #hdImgBig{
+          flex:0 0 47%;background:white;border-radius:14px;
+          box-shadow:0 2px 8px rgba(0,0,0,.06);height:195px;
+          display:flex;align-items:center;justify-content:center;
+          overflow:hidden;position:relative;cursor:pointer;
         }
-        #hdImgBig {
-          flex: 0 0 48%; background: white; border-radius: 18px;
-          box-shadow: 0 2px 10px rgba(0,0,0,.06);
-          min-height: 280px; display: flex; align-items: center;
-          justify-content: center; overflow: hidden; position: relative;
-          cursor: pointer;
+        #hdImgBig img{width:100%;height:100%;object-fit:cover;display:none;}
+        #hdImgBigHint{color:#ddd;font-size:24px;pointer-events:none;}
+        #hdRightCol{flex:1;display:flex;flex-direction:column;gap:7px;min-width:0;}
+        #hdImgSmall{
+          background:white;border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.06);
+          height:80px;display:flex;align-items:center;justify-content:center;
+          overflow:hidden;position:relative;flex-shrink:0;cursor:pointer;
         }
-        #hdImgBig img { width:100%; height:100%; object-fit:cover; display:none; }
-        #hdImgBigHint { color:#ddd; font-size:28px; pointer-events:none; }
-        #hdRightCol { flex: 1; display: flex; flex-direction: column; gap: 10px; min-width:0; }
-        #hdImgSmall {
-          background: white; border-radius: 18px;
-          box-shadow: 0 2px 10px rgba(0,0,0,.06);
-          height: 110px; display: flex; align-items: center;
-          justify-content: center; overflow: hidden; position: relative;
-          flex-shrink: 0; cursor: pointer;
+        #hdImgSmall img{width:100%;height:100%;object-fit:cover;display:none;}
+        #hdImgSmallHint{color:#ddd;font-size:18px;pointer-events:none;}
+        #hdCal{
+          background:white;border-radius:14px;padding:5px 7px 7px;
+          box-shadow:0 2px 8px rgba(0,0,0,.06);flex:1;
         }
-        #hdImgSmall img { width:100%; height:100%; object-fit:cover; display:none; }
-        #hdImgSmallHint { color:#ddd; font-size:22px; pointer-events:none; }
+        #hdCal .cal-month{text-align:right;font-size:12px;color:#333;margin-bottom:2px;font-weight:600;}
+        #hdCal .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);}
+        #hdCal .cal-head{font-size:9px;color:#aaa;text-align:center;padding:2px 0;}
+        #hdCal .cal-day{font-size:10px;text-align:center;color:#444;border-radius:50%;
+                        width:18px;height:18px;display:flex;align-items:center;justify-content:center;margin:1px auto;}
+        #hdCal .cal-day.today{background:#e8556a;color:white;font-weight:700;}
+        #hdCal .cal-day.other{color:#ddd;}
 
-        /* ── 日历 ── */
-        #hdCal {
-          background: white; border-radius: 18px;
-          padding: 8px 10px 10px; box-shadow: 0 2px 10px rgba(0,0,0,.06);
-          flex: 1; min-height:0;
+        /* ══ 底部行 ══ */
+        #hdBotRow{display:flex;gap:8px;margin-bottom:7px;flex-shrink:0;align-items:stretch;}
+        #hdTodo{
+          flex:0 0 47%;background:white;border-radius:14px;
+          padding:9px 11px;box-shadow:0 2px 8px rgba(0,0,0,.06);box-sizing:border-box;
         }
-        #hdCal .cal-month { text-align:right; font-size:13px; color:#333; margin-bottom:4px; font-weight:600; }
-        #hdCal .cal-grid  { display:grid; grid-template-columns:repeat(7,1fr); }
-        #hdCal .cal-head  { font-size:10px; color:#888; text-align:center; padding:3px 0; }
-        #hdCal .cal-day   { font-size:11px; text-align:center; color:#333; border-radius:50%;
-                            width:22px; height:22px; display:flex; align-items:center; justify-content:center; margin:1px auto; }
-        #hdCal .cal-day.today { background:#e8556a; color:white; font-weight:700; }
-        #hdCal .cal-day.other { color:#ccc; }
+        #hdTodoHeader{display:flex;align-items:center;gap:4px;margin-bottom:5px;}
+        #hdTodo .todo-title{font-size:14px;font-weight:900;color:#111;flex:1;}
+        #hdTodoEmoji{
+          font-size:15px;cursor:pointer;border:none;background:transparent;
+          padding:0 1px;outline:none;-webkit-tap-highlight-color:transparent;font-family:inherit;
+        }
+        .todo-item{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
+        .todo-cb{
+          width:19px;height:19px;border:2px solid #999;border-radius:4px;
+          flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;
+          font-size:12px;-webkit-tap-highlight-color:transparent;
+        }
+        .todo-cb.done{background:#555;border-color:#555;color:white;}
+        .todo-ce{
+          font-size:13px;color:#222;flex:1;font-family:inherit;
+          min-width:0;white-space:nowrap;overflow:hidden;
+          text-overflow:ellipsis;user-select:none;-webkit-user-select:none;pointer-events:none;
+        }
+        .todo-ce.done-txt{text-decoration:line-through;color:#bbb;}
+        #hdApps{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:7px;box-sizing:border-box;}
+        .hd-app{
+          background:white;border-radius:14px;display:flex;flex-direction:column;
+          align-items:center;justify-content:center;
+          box-shadow:0 2px 7px rgba(0,0,0,.07);cursor:pointer;gap:4px;
+          padding:8px 4px;-webkit-tap-highlight-color:transparent;transition:transform .1s;
+        }
+        .hd-app:active{transform:scale(.9);}
+        .hd-app-icon{font-size:26px;line-height:1;}
+        .hd-app-lbl{font-size:10px;color:#444;font-weight:500;}
 
-        /* ── 底部行：todo + 4图标 ── */
-        #hdBotRow {
-          display: flex; gap: 10px; margin-bottom: 16px; flex-shrink: 0;
-          align-items: stretch; /* 等高！ */
+        /* ══ Dock ══ */
+        #hdDockSpacer{height:5px;flex-shrink:0;}
+        #hdDock{
+          position:sticky;bottom:0;z-index:2;
+          background:rgba(255,255,255,.92);
+          -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
+          border-radius:20px 20px 0 0;
+          display:flex;justify-content:space-around;align-items:center;
+          padding:11px 30px 18px;margin:0 -10px;
+          box-shadow:0 -2px 12px rgba(0,0,0,.07);
         }
-        /* todo宽度=大图宽度 48% */
-        #hdTodo {
-          flex: 0 0 48%;
-          background: white; border-radius: 18px; padding: 12px 14px;
-          box-shadow: 0 2px 10px rgba(0,0,0,.06);
-          box-sizing: border-box;
-        }
-        #hdTodo .todo-title { font-size:16px; font-weight:900; color:#111; margin-bottom:8px; }
-        .todo-item { display:flex; align-items:center; gap:8px; margin-bottom:9px; }
-        .todo-cb {
-          width:22px; height:22px; border:2px solid #888; border-radius:5px;
-          flex-shrink:0; cursor:pointer; display:flex; align-items:center; justify-content:center;
-          font-size:14px; -webkit-tap-highlight-color:transparent;
-        }
-        .todo-cb.done { background:#555; border-color:#555; color:white; }
-        .todo-ce {
-          font-size:14px; color:#222; flex:1; font-family:inherit;
-          min-width:0; white-space:nowrap; overflow:hidden;
-          text-overflow:ellipsis; user-select:none; -webkit-user-select:none; pointer-events:none;
-        }
-        .todo-ce.done-txt { text-decoration:line-through; color:#bbb; }
-
-        /* 4图标区宽度=右列宽度（flex:1） */
-        #hdApps {
-          flex: 1;
-          display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
-          box-sizing: border-box;
-        }
-        .hd-app {
-          background:white; border-radius:18px;
-          display:flex; flex-direction:column;
-          align-items:center; justify-content:center;
-          box-shadow:0 2px 8px rgba(0,0,0,.07);
-          cursor:pointer; gap:6px;
-          /* 不写死尺寸，让网格自然撑满 */
-          padding: 12px 6px;
-          -webkit-tap-highlight-color:transparent;
-          transition: transform .1s;
-        }
-        .hd-app:active { transform:scale(.9); }
-        .hd-app-icon { font-size:32px; line-height:1; }
-        .hd-app-lbl  { font-size:11px; color:#444; font-weight:500; }
-
-        /* ── Dock ── */
-        #hdDockSpacer { height: 10px; flex-shrink:0; }
-        #hdDock {
-          position: sticky; bottom: 0; z-index: 2;
-          background: rgba(255,255,255,.9);
-          -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px);
-          border-radius: 24px 24px 0 0;
-          display: flex; justify-content: space-around; align-items: center;
-          /* 底部 padding 加 safe-area，避免卡在浏览器底栏 */
-          padding: 14px 30px calc(20px + env(safe-area-inset-bottom, 10px));
-          margin: 0 -12px;
-          box-shadow: 0 -2px 14px rgba(0,0,0,.08);
-        }
-        .hd-dock-item {
-          display:flex; flex-direction:column; align-items:center; gap:5px;
-          cursor:pointer; -webkit-tap-highlight-color:transparent;
-        }
-        .hd-dock-icon {
-          width:56px; height:56px; background:white; border-radius:18px;
-          display:flex; align-items:center; justify-content:center;
-          font-size:28px; box-shadow:0 2px 10px rgba(0,0,0,.12);
-        }
-        .hd-dock-lbl { font-size:12px; color:#555; font-weight:500; }
+        .hd-dock-item{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+        .hd-dock-icon{width:50px;height:50px;background:white;border-radius:15px;
+          display:flex;align-items:center;justify-content:center;
+          font-size:24px;box-shadow:0 2px 8px rgba(0,0,0,.1);}
+        .hd-dock-lbl{font-size:11px;color:#555;font-weight:500;}
       </style>
 
-      <!-- ── 头像 + 签名 ── -->
-      <div id="hdProfileArea">
-        <div id="hdAvatarWrap" onclick="document.getElementById('hdAvatarInput').click()">
-          <span id="hdAvatarHint">👤</span>
-          <img id="hdAvatarImg" alt="">
-          <input type="file" id="hdAvatarInput" accept="image/*" style="display:none">
+      <!-- ══ 纪念日卡片 ══ -->
+      <div id="hdAnnCard">
+        <img id="hdAnnBgImg" alt="">
+        <div class="ann-ava" id="hdAnnAvaL" onclick="document.getElementById('hdAnnAvaLInp').click()">
+          <span class="ann-ava-hint">👤</span>
+          <img id="hdAnnAvaLImg" alt="">
+          <input type="file" id="hdAnnAvaLInp" accept="image/*" style="display:none">
         </div>
-        <div id="hdTaglineWrap">
-          <span id="hdTagline" onclick="hdEditTagline()">青春就是用来怀念的。</span>
-          <input id="hdTaglineEdit" type="text" maxlength="40"
-            onblur="hdSaveTagline()" onkeydown="if(event.key==='Enter')this.blur()">
+        <div class="ann-ava" id="hdAnnAvaR" onclick="document.getElementById('hdAnnAvaRInp').click()">
+          <span class="ann-ava-hint">👤</span>
+          <img id="hdAnnAvaRImg" alt="">
+          <input type="file" id="hdAnnAvaRInp" accept="image/*" style="display:none">
         </div>
+        <div id="hdAnnCenter">
+          <span id="hdAnnNameEl" onclick="hdAnnEdit('name')">在一起的</span>
+          <input id="hdAnnNameEdit" type="text" maxlength="10"
+            onblur="hdAnnSave('name')" onkeydown="if(event.key==='Enter')this.blur()">
+          <div id="hdAnnDaysWrap">
+            <span id="hdAnnDaysNum" onclick="hdAnnEdit('days')">0</span>
+            <span id="hdAnnDaysSuffix" onclick="hdAnnEdit('days')">天了</span>
+          </div>
+          <input id="hdAnnDaysEdit" type="text" maxlength="20" placeholder="起始日期 2020-01-01"
+            onblur="hdAnnSave('days')" onkeydown="if(event.key==='Enter')this.blur()">
+        </div>
+        <div id="hdAnnLine"></div>
+        <div class="ann-bot-txt" id="hdAnnBotL" onclick="hdAnnEdit('botL')">点击编辑</div>
+        <div class="ann-bot-txt" id="hdAnnBotR" onclick="hdAnnEdit('botR')">点击编辑</div>
+        <input class="ann-bot-edit" id="hdAnnBotLEdit" type="text" maxlength="12"
+          onblur="hdAnnSave('botL')" onkeydown="if(event.key==='Enter')this.blur()">
+        <input class="ann-bot-edit" id="hdAnnBotREdit" type="text" maxlength="12"
+          onblur="hdAnnSave('botR')" onkeydown="if(event.key==='Enter')this.blur()">
+        <button id="hdAnnBgBtn" onclick="document.getElementById('hdAnnBgInp').click()">🖼 换背景</button>
+        <input type="file" id="hdAnnBgInp" accept="image/*" style="display:none">
       </div>
 
-      <!-- ── 大图 | 小图+日历 ── -->
+      <!-- ══ 签名 ══ -->
+      <div id="hdTaglineWrap">
+        <span id="hdTagline" onclick="hdEditTagline()">青春就是用来怀念的。</span>
+        <input id="hdTaglineEdit" type="text" maxlength="40"
+          onblur="hdSaveTagline()" onkeydown="if(event.key==='Enter')this.blur()">
+      </div>
+
+      <!-- ══ 大图 | 小图+日历 ══ -->
       <div id="hdMidRow">
         <div id="hdImgBig" onclick="document.getElementById('hdImgBigInput').click()">
           <span id="hdImgBigHint">🖼️</span>
@@ -548,42 +600,31 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         </div>
       </div>
 
-      <!-- ── todo | 四图标 ── -->
+      <!-- ══ todo | 四图标 ══ -->
       <div id="hdBotRow">
         <div id="hdTodo">
-          <div class="todo-title">to do list</div>
+          <div id="hdTodoHeader">
+            <span class="todo-title">to do list</span>
+            <button id="hdTodoEmoji" onclick="hdEditTodoEmoji()">✨</button>
+          </div>
           <div id="hdTodoItems"></div>
         </div>
         <div id="hdApps">
-          <div class="hd-app" id="btnHomeCfg">
-            <div class="hd-app-icon">⚙️</div>
-            <span class="hd-app-lbl">设置</span>
-          </div>
-          <div class="hd-app" id="btnHomeWb">
-            <div class="hd-app-icon">📖</div>
-            <span class="hd-app-lbl">世界书</span>
-          </div>
-          <div class="hd-app" id="btnHomeChat">
-            <div class="hd-app-icon">💬</div>
-            <span class="hd-app-lbl">QQ</span>
-          </div>
-          <div class="hd-app" id="btnHomeFont">
-            <div class="hd-app-icon" style="font-size:26px;font-weight:700;font-family:serif;">Aa</div>
-            <span class="hd-app-lbl">字体</span>
-          </div>
+          <div class="hd-app" id="btnHomeCfg"><div class="hd-app-icon">⚙️</div><span class="hd-app-lbl">设置</span></div>
+          <div class="hd-app" id="btnHomeWb"><div class="hd-app-icon">📖</div><span class="hd-app-lbl">世界书</span></div>
+          <div class="hd-app" id="btnHomeChat"><div class="hd-app-icon">💬</div><span class="hd-app-lbl">QQ</span></div>
+          <div class="hd-app" id="btnHomeFont"><div class="hd-app-icon" style="font-size:22px;font-weight:700;font-family:serif;">Aa</div><span class="hd-app-lbl">字体</span></div>
         </div>
       </div>
 
-      <!-- ── Dock ── -->
+      <!-- ══ Dock ══ -->
       <div id="hdDockSpacer"></div>
       <div id="hdDock">
         <div class="hd-dock-item" id="btnHomeSpy">
-          <div class="hd-dock-icon">📱</div>
-          <span class="hd-dock-lbl">查手机</span>
+          <div class="hd-dock-icon">📱</div><span class="hd-dock-lbl">查手机</span>
         </div>
         <div class="hd-dock-item" id="btnHomeApi">
-          <div class="hd-dock-icon">🌐</div>
-          <span class="hd-dock-lbl">API设置</span>
+          <div class="hd-dock-icon">🌐</div><span class="hd-dock-lbl">API设置</span>
         </div>
       </div>
 
@@ -4406,129 +4447,162 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
 (function initNewHome(){
   const CHN_MON=['一','二','三','四','五','六','七','八','九','十','十一','十二'];
   const el_=id=>document.getElementById(id);
+  async function lfGet(k){
+    try{let v=await localforage.getItem(k);if(v!==null&&v!==undefined)return v;}catch(e){}
+    try{return localStorage.getItem(k);}catch(e){}return null;
+  }
+  function lfSet(k,v){
+    localforage.setItem(k,v).catch(()=>{});
+    try{localStorage.setItem(k,typeof v==='string'?v:JSON.stringify(v));}catch(e){}
+  }
 
   // ── 日历 ──
   function buildCal(){
-    let now=new Date(),year=now.getFullYear(),mon=now.getMonth(),today=now.getDate();
-    let body=el_('hdCalBody'),monthEl=el_('hdCalMonth');
-    if(!body||!monthEl)return;
-    monthEl.innerText=CHN_MON[mon]+'月';
-    let firstDay=new Date(year,mon,1).getDay();
-    let daysInMonth=new Date(year,mon+1,0).getDate();
-    let prevDays=new Date(year,mon,0).getDate();
-    let html='';
-    for(let i=firstDay-1;i>=0;i--)html+=`<div class="cal-day other">${prevDays-i}</div>`;
-    for(let d=1;d<=daysInMonth;d++)html+=`<div class="${d===today?'cal-day today':'cal-day'}">${d}</div>`;
-    let remaining=(7-((firstDay+daysInMonth)%7))%7;
-    for(let d=1;d<=remaining;d++)html+=`<div class="cal-day other">${d}</div>`;
-    body.innerHTML=html;
+    let now=new Date(),y=now.getFullYear(),mo=now.getMonth(),td=now.getDate();
+    let body=el_('hdCalBody'),me=el_('hdCalMonth');if(!body||!me)return;
+    me.innerText=CHN_MON[mo]+'月';
+    let fd=new Date(y,mo,1).getDay(),dim=new Date(y,mo+1,0).getDate(),pd=new Date(y,mo,0).getDate();
+    let h='';
+    for(let i=fd-1;i>=0;i--)h+=`<div class="cal-day other">${pd-i}</div>`;
+    for(let d=1;d<=dim;d++)h+=`<div class="${d===td?'cal-day today':'cal-day'}">${d}</div>`;
+    let r=(7-((fd+dim)%7))%7;
+    for(let d=1;d<=r;d++)h+=`<div class="cal-day other">${d}</div>`;
+    body.innerHTML=h;
   }
   buildCal();
 
-  // ── 头像 ──
-  const AVA_KEY='hd_avatar';
-  (async function loadAvatar(){
-    let data=null;
-    try{data=await localforage.getItem(AVA_KEY);}catch(e){}
-    if(!data)try{data=localStorage.getItem(AVA_KEY);}catch(e){}
-    if(data){
-      let img=el_('hdAvatarImg'),hint=el_('hdAvatarHint');
-      if(img){img.src=data;img.style.display='block';}
-      if(hint)hint.style.display='none';
-    }
-  })();
-  let avaInp=el_('hdAvatarInput');
-  if(avaInp){
-    avaInp.onchange=function(){
+  // ── 图片上传工具 ──
+  async function loadImg(key,imgId,hintId){
+    let data=await lfGet(key);
+    let img=el_(imgId),hint=el_(hintId);
+    if(data&&img){img.src=data;img.style.display='block';if(hint)hint.style.display='none';}
+  }
+  function setupImg(inputId,key,imgId,hintId){
+    let inp=el_(inputId);if(!inp)return;
+    inp.onchange=function(){
       let file=this.files[0];if(!file)return;
       let r=new FileReader();
       r.onload=async ev=>{
-        let data=ev.target.result;
-        try{await localforage.setItem(AVA_KEY,data);}catch(e){}
-        try{localStorage.setItem(AVA_KEY,data);}catch(e){}
-        let img=el_('hdAvatarImg'),hint=el_('hdAvatarHint');
+        let data=ev.target.result;lfSet(key,data);
+        let img=el_(imgId),hint=el_(hintId);
         if(img){img.src=data;img.style.display='block';}
         if(hint)hint.style.display='none';
       };
       r.readAsDataURL(file);
     };
+    loadImg(key,imgId,hintId);
   }
+  setupImg('hdImgBigInput','hd_img_big','hdImgBigEl','hdImgBigHint');
+  setupImg('hdImgSmallInput','hd_img_small','hdImgSmallEl','hdImgSmallHint');
 
-  // ── 签名文字 ──
-  const TGL_KEY='hd_tagline';
-  const DEFAULT_TGL='青春就是用来怀念的。';
+  // ── 纪念日卡片 ──
+  const ANN={bg:'hd_ann_bg',avaL:'hd_ann_ava_l',avaR:'hd_ann_ava_r',
+    name:'hd_ann_name',date:'hd_ann_date',botL:'hd_ann_bot_l',botR:'hd_ann_bot_r'};
+  // 背景 + 头像
+  setupImg('hdAnnBgInp',ANN.bg,'hdAnnBgImg',null);
+  setupImg('hdAnnAvaLInp',ANN.avaL,'hdAnnAvaLImg','hdAnnAvaLHint');
+  setupImg('hdAnnAvaRInp',ANN.avaR,'hdAnnAvaRImg','hdAnnAvaRHint');
+
+  async function updateDays(){
+    let sd=await lfGet(ANN.date);
+    let el=el_('hdAnnDaysNum');if(!el)return;
+    if(!sd){el.textContent='0';return;}
+    let start=new Date(sd),now=new Date();
+    start.setHours(0,0,0,0);now.setHours(0,0,0,0);
+    let days=Math.round((now-start)/(864e5));
+    el.textContent=days>=0?days:0;
+  }
+  updateDays();
+
+  (async function loadAnnTexts(){
+    let name=await lfGet(ANN.name);
+    let botL=await lfGet(ANN.botL);
+    let botR=await lfGet(ANN.botR);
+    if(el_('hdAnnNameEl'))el_('hdAnnNameEl').textContent=name||'在一起的';
+    if(el_('hdAnnBotL'))el_('hdAnnBotL').textContent=botL||'点击编辑';
+    if(el_('hdAnnBotR'))el_('hdAnnBotR').textContent=botR||'点击编辑';
+  })();
+
+  window.hdAnnEdit=function(field){
+    if(field==='name'){
+      let lbl=el_('hdAnnNameEl'),inp=el_('hdAnnNameEdit');
+      inp.value=lbl.textContent;lbl.style.display='none';inp.style.display='block';inp.focus();inp.select();
+    }else if(field==='days'){
+      let wrap=el_('hdAnnDaysWrap'),inp=el_('hdAnnDaysEdit');
+      wrap.style.display='none';inp.style.display='block';
+      lfGet(ANN.date).then(v=>{inp.value=v||'';inp.focus();inp.select();});
+    }else if(field==='botL'){
+      let lbl=el_('hdAnnBotL'),inp=el_('hdAnnBotLEdit');
+      inp.value=lbl.textContent;lbl.style.display='none';inp.style.display='block';inp.focus();inp.select();
+    }else if(field==='botR'){
+      let lbl=el_('hdAnnBotR'),inp=el_('hdAnnBotREdit');
+      inp.value=lbl.textContent;lbl.style.display='none';inp.style.display='block';inp.focus();inp.select();
+    }
+  };
+  window.hdAnnSave=function(field){
+    if(field==='name'){
+      let lbl=el_('hdAnnNameEl'),inp=el_('hdAnnNameEdit');
+      let t=inp.value.trim()||'在一起的';
+      lbl.textContent=t;lbl.style.display='';inp.style.display='none';lfSet(ANN.name,t);
+    }else if(field==='days'){
+      let wrap=el_('hdAnnDaysWrap'),inp=el_('hdAnnDaysEdit');
+      let v=inp.value.trim();if(v)lfSet(ANN.date,v);
+      wrap.style.display='';inp.style.display='none';updateDays();
+    }else if(field==='botL'){
+      let lbl=el_('hdAnnBotL'),inp=el_('hdAnnBotLEdit');
+      let t=inp.value.trim()||'点击编辑';
+      lbl.textContent=t;lbl.style.display='';inp.style.display='none';lfSet(ANN.botL,t);
+    }else if(field==='botR'){
+      let lbl=el_('hdAnnBotR'),inp=el_('hdAnnBotREdit');
+      let t=inp.value.trim()||'点击编辑';
+      lbl.textContent=t;lbl.style.display='';inp.style.display='none';lfSet(ANN.botR,t);
+    }
+  };
+
+  // ── 签名 ──
+  const TGL_KEY='hd_tagline';const DEFAULT_TGL='青春就是用来怀念的。';
   (async function loadTagline(){
-    let t=null;
-    try{t=await localforage.getItem(TGL_KEY);}catch(e){}
-    if(!t)try{t=localStorage.getItem(TGL_KEY);}catch(e){}
-    let el=el_('hdTagline');
-    if(el)el.textContent=t||DEFAULT_TGL;
+    let t=await lfGet(TGL_KEY);
+    if(el_('hdTagline'))el_('hdTagline').textContent=t||DEFAULT_TGL;
   })();
   window.hdEditTagline=function(){
-    let label=el_('hdTagline'),inp=el_('hdTaglineEdit');
-    if(!label||!inp)return;
-    inp.value=label.textContent;
-    label.style.display='none';
-    inp.style.display='block';
-    inp.focus();
-    inp.select();
+    let lbl=el_('hdTagline'),inp=el_('hdTaglineEdit');
+    inp.value=lbl.textContent;lbl.style.display='none';inp.style.display='block';inp.focus();inp.select();
   };
-  window.hdSaveTagline=async function(){
-    let label=el_('hdTagline'),inp=el_('hdTaglineEdit');
-    if(!label||!inp)return;
-    let t=(inp.value.trim())||DEFAULT_TGL;
-    label.textContent=t;
-    label.style.display='';
-    inp.style.display='none';
-    try{await localforage.setItem(TGL_KEY,t);}catch(e){}
-    try{localStorage.setItem(TGL_KEY,t);}catch(e){}
+  window.hdSaveTagline=function(){
+    let lbl=el_('hdTagline'),inp=el_('hdTaglineEdit');
+    let t=inp.value.trim()||DEFAULT_TGL;
+    lbl.textContent=t;lbl.style.display='';inp.style.display='none';lfSet(TGL_KEY,t);
   };
 
-  // ── 自定义图片（大图 + 小图）──
-  const IMG_KEYS={big:'hd_img_big',small:'hd_img_small'};
-  async function loadImg(key,imgElId,hintElId){
-    let data=null;
-    try{data=await localforage.getItem(key);}catch(e){}
-    if(!data)try{data=localStorage.getItem(key);}catch(e){}
-    let imgEl=el_(imgElId),hintEl=el_(hintElId);
-    if(data&&imgEl){imgEl.src=data;imgEl.style.display='block';if(hintEl)hintEl.style.display='none';}
-  }
-  function setupImgUpload(inputId,key,imgElId,hintElId){
-    let inp=el_(inputId);if(!inp)return;
-    inp.onchange=function(){
-      let file=this.files[0];if(!file)return;
-      let reader=new FileReader();
-      reader.onload=async ev=>{
-        let data=ev.target.result;
-        try{await localforage.setItem(key,data);}catch(e){}
-        try{localStorage.setItem(key,data);}catch(e){}
-        let imgEl=el_(imgElId),hintEl=el_(hintElId);
-        if(imgEl){imgEl.src=data;imgEl.style.display='block';}
-        if(hintEl)hintEl.style.display='none';
-      };
-      reader.readAsDataURL(file);
-    };
-    loadImg(key,imgElId,hintElId);
-  }
-  setupImgUpload('hdImgBigInput',IMG_KEYS.big,'hdImgBigEl','hdImgBigHint');
-  setupImgUpload('hdImgSmallInput',IMG_KEYS.small,'hdImgSmallEl','hdImgSmallHint');
+  // ── Todo emoji ──
+  const EMO_KEY='hd_todo_emoji';
+  (async function loadEmoji(){
+    let e=await lfGet(EMO_KEY);
+    if(el_('hdTodoEmoji'))el_('hdTodoEmoji').textContent=e||'✨';
+  })();
+  window.hdEditTodoEmoji=function(){
+    let cur=el_('hdTodoEmoji')?.textContent||'✨';
+    let v=prompt('输入emoji（1-2个）：',cur);
+    if(v!==null){
+      let t=(v.trim()||'✨').slice(0,4);
+      if(el_('hdTodoEmoji'))el_('hdTodoEmoji').textContent=t;
+      lfSet(EMO_KEY,t);
+    }
+  };
 
   // ── To-do list ──
   const TODO_KEY='hd_todo_items';
-  const DEFAULT_TODOS=[{txt:'准时起床',done:false},{txt:'喝八杯水',done:false},{txt:'努力打工',done:false},{txt:'早睡早起',done:false}];
-  let todos=[...DEFAULT_TODOS];
+  const DTODOS=[{txt:'准时起床',done:false},{txt:'喝八杯水',done:false},{txt:'努力打工',done:false},{txt:'早睡早起',done:false}];
+  let todos=[...DTODOS];
   (async function loadTodos(){
     try{let v=await localforage.getItem(TODO_KEY);if(Array.isArray(v)&&v.length)todos=v;}
     catch(e){let r=localStorage.getItem(TODO_KEY);if(r)try{todos=JSON.parse(r);}catch(e2){}}
     renderTodos();
   })();
-  function saveTodos(){
-    localforage.setItem(TODO_KEY,JSON.parse(JSON.stringify(todos))).catch(()=>{});
-    try{localStorage.setItem(TODO_KEY,JSON.stringify(todos));}catch(e){}
-  }
+  function saveTodos(){lfSet(TODO_KEY,todos);}
   function renderTodos(){
-    let box=el_('hdTodoItems');if(!box)return;
-    box.innerHTML='';
+    let box=el_('hdTodoItems');if(!box)return;box.innerHTML='';
     todos.forEach((item,i)=>{
       let row=document.createElement('div');row.className='todo-item';
       let cb=document.createElement('div');
@@ -4539,8 +4613,7 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
       let ce=document.createElement('div');
       ce.className='todo-ce'+(item.done?' done-txt':'');
       ce.textContent=item.txt;
-      row.appendChild(cb);row.appendChild(ce);
-      box.appendChild(row);
+      row.appendChild(cb);row.appendChild(ce);box.appendChild(row);
     });
   }
 
@@ -8497,16 +8570,14 @@ iptMsg.onclick = () =>{
 };
 // ★ 输入框自动拓展高度
 function _autoResizeIptMsg() {
+    // Always reset to base first, then expand only if content needs it
     iptMsg.style.height = '34px';
-    // Force reflow before reading scrollHeight
-    void iptMsg.offsetHeight;
-    if (iptMsg.scrollHeight > 38) {
+    iptMsg.style.overflowY = 'hidden';
+    void iptMsg.offsetHeight; // force reflow
+    if (iptMsg.value && iptMsg.scrollHeight > 40) {
         let newH = Math.min(iptMsg.scrollHeight, 120);
         iptMsg.style.height = newH + 'px';
         iptMsg.style.overflowY = newH >= 120 ? 'auto' : 'hidden';
-    } else {
-        iptMsg.style.height = '34px';
-        iptMsg.style.overflowY = 'hidden';
     }
 }
 iptMsg.addEventListener('input', _autoResizeIptMsg);
