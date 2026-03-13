@@ -208,7 +208,16 @@ display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 30px
 .batch-modal-btns button { flex: 1; background: none; border: none; padding: 14px; font-size: 15px; color: #1890ff; cursor: pointer; }
 .batch-modal-btns button.cancel { color: #999; border-right: 1px solid #f0f0f0; }
 
-.list-content { flex: 1; overflow-y: auto; background-color: #f5f6fa; }
+.list-content { flex: 1; overflow-y: auto; background-color: transparent; }
+/* ★ 页面壁纸穿透：当页面设了壁纸时，子元素变半透明 */
+.has-pg-wallpaper .list-content,
+.has-pg-wallpaper .me-menu-list { background: transparent !important; }
+.has-pg-wallpaper .chat-header { background-color: rgba(255,255,255,0.75) !important; backdrop-filter: blur(10px); }
+.has-pg-wallpaper .chat-item { background-color: rgba(255,255,255,0.65) !important; }
+.has-pg-wallpaper .me-header { background: rgba(255,255,255,0.75) !important; backdrop-filter: blur(10px); }
+.has-pg-wallpaper .me-menu-item { background: rgba(255,255,255,0.7) !important; }
+.has-pg-wallpaper .bottom-nav { background: rgba(255,255,255,0.8) !important; backdrop-filter: blur(10px); }
+.has-pg-wallpaper #contactTabs { background: rgba(255,255,255,0.75) !important; }
 .bottom-nav { display: flex; justify-content: space-around; align-items: center; background: #ffffff; padding: 10px 0 20px 0; border-top: 1px solid #eeeeee; flex-shrink: 0; z-index: 100; }
 .nav-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; color: #888; transition: 0.2s; }
 .nav-item-active { display: flex; flex-direction: column; align-items: center; cursor: pointer; color: #ff6b81; transition: 0.2s; }
@@ -4880,10 +4889,17 @@ function showScreen(showId) {
       var _pg=_pgBgMap[showId];
       var _sc=document.getElementById(showId);
       function _applyBg(d){
-        if(!_sc||!d||d.length<10)return;
+        if(!_sc) return;
+        if(!d||d.length<10){
+          _sc.style.backgroundImage='';
+          _sc.style.backgroundSize='';
+          _sc.classList.remove('has-pg-wallpaper');
+          return;
+        }
         _sc.style.backgroundImage='url('+d+')';
         _sc.style.backgroundSize='cover';
         _sc.style.backgroundPosition='center';
+        _sc.classList.add('has-pg-wallpaper');
         if(!window._pgBgCache)window._pgBgCache={};
         window._pgBgCache[_pg]=d;
       }
@@ -4896,10 +4912,8 @@ function showScreen(showId) {
         var d=null;
         try{d=await localforage.getItem(_pgBgKeys[_pg]);}catch(e){}
         if(!d){try{d=originalGetItem.call(ls,_pgBgKeys[_pg]);}catch(e){}}
-        if(d&&d.length>10){
-          _applyBg(d);
-          setTimeout(function(){_applyBg(d);},50);
-        }
+        _applyBg(d);
+        if(d&&d.length>10) setTimeout(function(){_applyBg(d);},50);
       })();
     }
     // ★ 桌面壁纸：每次显示scrHome时主动应用
@@ -5792,11 +5806,11 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
     let img=el_('hs'+n+'BgImg'),hint=el_('hs'+n+'BgHint');
     let scr=document.getElementById(_PSC[pg]);
     if(d&&d.length>10){
-      if(scr){scr.style.backgroundImage='url('+d+')';scr.style.backgroundSize='cover';scr.style.backgroundPosition='center';}
+      if(scr){scr.style.backgroundImage='url('+d+')';scr.style.backgroundSize='cover';scr.style.backgroundPosition='center';scr.classList.add('has-pg-wallpaper');}
       if(img){img.src=d;img.style.display='block';}
       if(hint)hint.style.display='none';
     } else {
-      if(scr){scr.style.backgroundImage='';scr.style.backgroundSize='';}
+      if(scr){scr.style.backgroundImage='';scr.style.backgroundSize='';scr.classList.remove('has-pg-wallpaper');}
       if(img){img.src='';img.style.display='none';}
       if(hint)hint.style.display='';
     }
@@ -5808,7 +5822,7 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
       if(d&&d.length>10){
         window._pgBgCache[pg]=d;
         let scr=document.getElementById(_PSC[pg]);
-        if(scr){scr.style.backgroundImage='url('+d+')';scr.style.backgroundSize='cover';scr.style.backgroundPosition='center';}
+        if(scr){scr.style.backgroundImage='url('+d+')';scr.style.backgroundSize='cover';scr.style.backgroundPosition='center';scr.classList.add('has-pg-wallpaper');}
         let n=pg.charAt(0).toUpperCase()+pg.slice(1);
         let img=el_('hs'+n+'BgImg'),hint=el_('hs'+n+'BgHint');
         if(img){img.src=d;img.style.display='block';}
@@ -5842,6 +5856,7 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
             scr.style.backgroundImage='url('+d+')';
             scr.style.backgroundSize='cover';
             scr.style.backgroundPosition='center';
+            scr.classList.add('has-pg-wallpaper');
           }
         });
       };
@@ -5874,7 +5889,7 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
     if(img){img.src='';img.style.display='none';}
     if(hint)hint.style.display='';
     let scr=document.getElementById(_PSC[pg]);
-    if(scr){scr.style.backgroundImage='';scr.style.backgroundSize='';}
+    if(scr){scr.style.backgroundImage='';scr.style.backgroundSize='';scr.classList.remove('has-pg-wallpaper');}
   };
 
   // 保存所有（点击保存按钮时）
@@ -6136,13 +6151,13 @@ async function triggerCaughtMessage() {
 
         // 更新该char的最后聊天时间（用于消息列表排序）
         ls.setItem(`lastChatTime_`+targetId, String(Date.now()));
+        localforage.setItem(`lastChatTime_`+targetId, String(Date.now())).catch(()=>{});
 
         // === 使用全局 loadCharRoom 精确加载目标角色聊天室（不依赖DOM）===
         await window.loadCharRoom(targetId, newHist);
         setTimeout(()=>{
             if(msgs) msgs.scrollTop=msgs.scrollHeight;
             if(typeof renderContacts===`function`) renderContacts();
-renderContacts();
             renderGroupInMsgList().catch(()=>{});
         }, 200);
 
@@ -6490,6 +6505,7 @@ $(`btnCloseModal`).onclick = () =>modal.style.display=`none`;
 let contacts = [];
 try { let _mc = originalGetItem.call(ls, `myContacts`); if(_mc) contacts = JSON.parse(_mc); } catch(e){}
 let isListRendering = false;
+let _pendingRerender = false;
 // 启动时异步从 localforage 补充 contacts（localStorage 满时备用）
 (async function syncContacts() {
     try {
@@ -6498,10 +6514,9 @@ let isListRendering = false;
             let arr = Array.isArray(lf) ? lf : (typeof lf === `string` ? JSON.parse(lf) : []);
             if(arr.length > 0 && arr.length >= contacts.length) {
                 contacts = arr;
-                // ★ 同步回写 localStorage（如果之前丢失的话）
                 try { originalSetItem.call(ls, `myContacts`, JSON.stringify(arr)); } catch(e){}
-                isListRendering = false;
-                renderContacts();
+                // ★ 不强制重置锁，而是标记需要重新渲染
+                _pendingRerender = true;
             }
         }
     } catch(e) { console.warn('syncContacts出错:', e); }
@@ -6797,7 +6812,14 @@ async function renderContacts() {
         }
     }
   } catch(e) { console.error('renderContacts整体出错:', e); }
-  finally { isListRendering = false; }
+  finally {
+    isListRendering = false;
+    // ★ 如果在渲染期间 syncContacts 更新了 contacts，需要重新渲染
+    if(_pendingRerender) {
+        _pendingRerender = false;
+        setTimeout(function(){ renderContacts(); }, 50);
+    }
+  }
     if(typeof _sortMsgListByTime===`function`) try { _sortMsgListByTime(); } catch(e){}
 }
 
