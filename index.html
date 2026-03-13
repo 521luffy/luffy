@@ -1418,6 +1418,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
             <span class=header-center>联系人</span>
             <div style="display:flex;align-items:center;gap:12px;position:relative;">
                 <span id=btnRoleHelp class=plus-btn style="font-size:20px;">❓</span>
+                <span onclick="doScanRecover()" style="font-size:11px;background:#6c5ce7;color:white;padding:4px 8px;border-radius:12px;cursor:pointer;font-weight:bold;">🔍扫描恢复</span>
                 <div style="position:relative;">
                     <span id=btnAddContact class=plus-btn title="新增好友" style="font-size:14px;">+👤</span>
                     <div id=contactAddDropdown style="display:none;position:absolute;top:34px;right:0;background:white;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.15);z-index:999;min-width:120px;overflow:hidden;">
@@ -1435,12 +1436,6 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
             <div id=tabBtnGroupChats onclick="switchContactTab('groupchats')" style="flex:1;padding:10px 0;text-align:center;font-size:14px;color:#999;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;">群聊</div>
         </div>
         <!-- 好友 panel -->
-        <!-- 扫描恢复按钮 -->
-        <div id="scanRecoverBanner" style="display:none;background:#fff8e1;border:1.5px solid #ffd54f;border-radius:12px;margin:12px;padding:14px 16px;flex-shrink:0;">
-          <div style="font-size:14px;font-weight:bold;color:#e65100;margin-bottom:6px;">⚠️ 好友列表为空</div>
-          <div style="font-size:12px;color:#666;margin-bottom:10px;">数据可能还在，点击下方按钮扫描恢复</div>
-          <button id="btnScanRecover" onclick="doScanRecover()" style="width:100%;padding:10px;background:linear-gradient(135deg,#6c5ce7,#a29bfe);color:white;border:none;border-radius:10px;font-size:14px;font-weight:bold;cursor:pointer;">🔍 扫描并恢复所有角色</button>
-        </div>
         <div id=contactContent class=list-content style="display:flex;flex-direction:column;">
             <div id=btnContactToRoom class=chat-item style="display:none;">
                 <div id=contactAva class=avatar-list>👤</div>
@@ -19442,114 +19437,65 @@ if(document.getElementById('offlineModePanel')) {
   });
 })();
 </script>
-
 <script>
-// ══ 扫描恢复好友列表 ══
 window.doScanRecover = async function() {
-    let btn = document.getElementById('btnScanRecover');
-    if(btn) { btn.disabled=true; btn.textContent='⏳ 扫描中...'; }
-    
+    let btn = document.querySelector('[onclick="doScanRecover()"]');
+    if(btn) { btn.textContent='⏳扫描中...'; }
+
     let seen = new Set();
     let rebuilt = [];
-    
-    // 第一步：扫描 localforage 所有键
+
+    // 扫描 localforage 所有键
     try {
         let allKeys = await localforage.keys();
-        console.log('localforage总键数:', allKeys.length);
-        
-        // 找所有 cN_ 开头的键（char名字）
-        let cnKeys = allKeys.filter(k => k.startsWith('cN_'));
-        console.log('找到cN_键:', cnKeys);
-        
-        for(let k of cnKeys) {
-            let cid = k.slice(3);
-            if(!cid || cid==='default' || seen.has(cid)) continue;
-            let name = null;
-            try { name = await localforage.getItem(k); } catch(e){}
-            if(!name) name = originalGetItem.call(ls, k);
-            if(!name) continue;
+        console.log('localforage键总数:', allKeys.length, allKeys);
+
+        for(let k of allKeys) {
+            let cid = null;
+            if(k.startsWith('cN_')) cid = k.slice(3);
+            else if(k.startsWith('chatHistory_')) cid = k.slice('chatHistory_'.length);
+            else if(k.startsWith('cAP_')) cid = k.slice(4);
+            if(!cid || cid === 'default' || seen.has(cid)) continue;
             seen.add(cid);
-            rebuilt.push({id:cid, name:String(name), prompt:``});
-        }
-        
-        // 也找 chatHistory_ 开头的键（有聊天记录的char）
-        let histKeys = allKeys.filter(k => k.startsWith('chatHistory_') && k !== 'chatHistory_default');
-        for(let k of histKeys) {
-            let cid = k.slice('chatHistory_'.length);
-            if(!cid || cid==='default' || seen.has(cid)) continue;
-            // 用id作为临时名字，后面再读真实名字
             let name = null;
-            try { name = await localforage.getItem('cN_'+cid); } catch(e){}
-            if(!name) name = originalGetItem.call(ls, 'cN_'+cid);
-            if(!name) name = '角色_'+cid;
-            seen.add(cid);
-            rebuilt.push({id:cid, name:String(name), prompt:``});
+            try { name = await localforage.getItem('cN_' + cid); } catch(e){}
+            if(!name) try { name = localStorage.getItem('cN_' + cid); } catch(e){}
+            if(!name) name = '角色_' + cid;
+            rebuilt.push({id: cid, name: String(name), prompt: ''});
         }
     } catch(e) { console.warn('localforage扫描出错:', e); }
-    
-    // 第二步：扫描 localStorage 所有键
+
+    // 扫描 localStorage 所有键
     try {
-        for(let i=0; i<localStorage.length; i++) {
+        for(let i = 0; i < localStorage.length; i++) {
             let k = localStorage.key(i);
             if(!k) continue;
-            if(k.startsWith('cN_')) {
-                let cid = k.slice(3);
-                if(!cid || cid==='default' || seen.has(cid)) continue;
-                let name = originalGetItem.call(ls, k);
-                if(!name) continue;
-                seen.add(cid);
-                rebuilt.push({id:cid, name:String(name), prompt:``});
-            }
-            // 也找chatHistory_
-            if(k.startsWith('chatHistory_')) {
-                let cid = k.slice('chatHistory_'.length);
-                if(!cid || cid==='default' || seen.has(cid)) continue;
-                let name = originalGetItem.call(ls, 'cN_'+cid) || '角色_'+cid;
-                seen.add(cid);
-                rebuilt.push({id:cid, name:String(name), prompt:``});
-            }
+            let cid = null;
+            if(k.startsWith('cN_')) cid = k.slice(3);
+            else if(k.startsWith('chatHistory_')) cid = k.slice('chatHistory_'.length);
+            else if(k.startsWith('cAP_')) cid = k.slice(4);
+            if(!cid || cid === 'default' || seen.has(cid)) continue;
+            seen.add(cid);
+            let name = localStorage.getItem('cN_' + cid) || '角色_' + cid;
+            rebuilt.push({id: cid, name: String(name), prompt: ''});
         }
     } catch(e) { console.warn('localStorage扫描出错:', e); }
-    
+
+    if(btn) { btn.textContent='🔍扫描恢复'; }
+
     console.log('扫描结果:', rebuilt);
-    
+
     if(rebuilt.length === 0) {
-        alert('😢 扫描完毕，未找到任何角色数据。\n\n可能的原因：\n1. 数据被浏览器清除\n2. 文件路径改变导致存储隔离');
-        if(btn) { btn.disabled=false; btn.textContent='🔍 扫描并恢复所有角色'; }
+        alert('😢 扫描完毕，未找到任何角色数据。\n\n如果你能在查手机里看到角色名字，请截图发给我继续排查。');
         return;
     }
-    
-    // 写回 myContacts
+
     contacts = rebuilt;
-    try { originalSetItem.call(ls, 'myContacts', JSON.stringify(rebuilt)); } catch(e){}
+    try { localStorage.setItem('myContacts', JSON.stringify(rebuilt)); } catch(e){}
     await localforage.setItem('myContacts', rebuilt).catch(()=>{});
-    
-    // 隐藏横幅，重新渲染
-    let banner = document.getElementById('scanRecoverBanner');
-    if(banner) banner.style.display='none';
-    
+
     isListRendering = false;
     renderContacts();
-    
-    alert('✅ 扫描完成！找回 ' + rebuilt.length + ' 个角色：\n' + rebuilt.map(c=>c.name).join('、'));
+    alert('✅ 找回 ' + rebuilt.length + ' 个角色：\n' + rebuilt.map(c => c.name).join('、'));
 };
-
-// 好友页面显示时，如果contacts为空就显示扫描按钮
-(function() {
-    let origSwitch = window.switchContactTab;
-    window.switchContactTab = function(tab) {
-        if(origSwitch) origSwitch(tab);
-        if(tab === 'friends') {
-            let banner = document.getElementById('scanRecoverBanner');
-            if(banner) {
-                banner.style.display = (contacts.length === 0) ? 'block' : 'none';
-            }
-        }
-    };
-    // 页面加载后也检查一次
-    setTimeout(function() {
-        let banner = document.getElementById('scanRecoverBanner');
-        if(banner && contacts.length === 0) banner.style.display = 'block';
-    }, 1500);
-})();
 </script>
