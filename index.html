@@ -681,10 +681,10 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 
     /* 头像+木牌行 */
     #csHeroRow{
-      display:flex;align-items:flex-end;
-      padding:0 14px 8px;gap:14px;flex-shrink:0;
+      display:flex;align-items:flex-start;
+      padding:8px 14px 8px;gap:14px;flex-shrink:0;
     }
-    #csAvatarBox{display:flex;flex-shrink:0;align-items:flex-end;}
+    #csAvatarBox{display:flex;flex-shrink:0;align-items:flex-start;padding-top:30px;}
     .cs-ava{
       width:62px;height:62px;border-radius:50%;
       background:rgba(255,200,220,.4);border:2.5px solid #ffb6c1;
@@ -956,7 +956,393 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 </div>
 
 
-    <!-- ══ 桌面设置 ══ -->
+<!-- ══════════════════════════════════════════════
+     大姨妈 - 经期追踪 (scrPeriod)
+     ══════════════════════════════════════════════ -->
+<div id="scrPeriod" style="display:none;flex-direction:column;position:absolute;top:0;width:100%;height:100%;z-index:40;background:#fffbe6;overflow:hidden;">
+<style>
+  /* ── 大姨妈页样式 ── */
+  #periodTopBar{
+    display:flex;align-items:center;padding:65px 14px 12px;
+    flex-shrink:0;background:linear-gradient(135deg,#ffd86e,#ffb347);
+    position:relative;
+  }
+  #periodTopBar .pt-back{font-size:22px;color:#7a4a00;cursor:pointer;width:34px;}
+  #periodTopBar .pt-title{flex:1;text-align:center;font-size:17px;font-weight:800;color:#7a4a00;letter-spacing:.5px;}
+  #periodTopBar .pt-empty{width:34px;}
+
+  /* 两个标签 */
+  #periodTabs{display:flex;background:#fff7d6;flex-shrink:0;border-bottom:2px solid #ffe08a;}
+  .pt-tab{flex:1;text-align:center;padding:12px 0;font-size:14px;font-weight:700;color:#bfa060;cursor:pointer;transition:.2s;}
+  .pt-tab.active{color:#c47a00;border-bottom:3px solid #e8a020;}
+
+  /* 页面内容容器 */
+  #periodPages{flex:1;overflow:hidden;position:relative;}
+  .period-page{position:absolute;top:0;left:0;width:100%;height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;display:none;flex-direction:column;}
+  .period-page.show{display:flex;}
+
+  /* ── 页面1：设置 ── */
+  #periodSettings{background:#fffbe6;padding:14px;gap:12px;}
+  .ps-card{
+    background:white;border-radius:18px;padding:16px 18px;
+    box-shadow:0 2px 10px rgba(255,160,60,.1);border:1.5px solid #ffe5b0;
+  }
+  .ps-row{display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
+  .ps-label{font-size:15px;font-weight:700;color:#333;}
+  .ps-value{font-size:15px;color:#e8a020;font-weight:700;display:flex;align-items:center;gap:4px;}
+  .ps-divider{height:1px;background:repeating-linear-gradient(90deg,#ffe0a0 0,#ffe0a0 6px,transparent 6px,transparent 10px);margin:12px 0;}
+  .ps-tips{
+    background:linear-gradient(135deg,#fff5e6,#ffecd5);
+    border-radius:12px;padding:12px 14px;
+    border:1.5px dashed #ffb870;position:relative;margin-top:2px;
+  }
+  .ps-tips-badge{
+    position:absolute;top:-11px;left:14px;
+    background:linear-gradient(135deg,#ffb347,#ff8c42);
+    color:white;font-size:11px;font-weight:800;
+    padding:3px 10px;border-radius:20px;letter-spacing:.5px;
+  }
+  .ps-tips-text{font-size:12px;color:#a06020;line-height:1.7;margin-top:4px;}
+
+  /* ── 选择器弹窗 ── */
+  #periodPickerModal{
+    display:none;position:absolute;bottom:0;left:0;width:100%;
+    background:rgba(0,0,0,.4);z-index:50;justify-content:flex-end;
+    flex-direction:column;
+  }
+  #periodPickerBox{
+    background:white;border-radius:24px 24px 0 0;padding:0 0 30px;
+    max-height:70vh;display:flex;flex-direction:column;
+  }
+  #periodPickerHdr{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:16px 20px 12px;border-bottom:1px solid #f0f0f0;
+  }
+  #periodPickerTitle{font-size:15px;font-weight:700;color:#333;}
+  #periodPickerDone{color:#e8a020;font-size:15px;font-weight:700;cursor:pointer;}
+  #periodPickerScroll{overflow-y:auto;padding:10px 0;}
+  .ppk-item{padding:13px 24px;font-size:15px;color:#333;cursor:pointer;text-align:center;transition:.15s;}
+  .ppk-item:active{background:#fff5e0;}
+  .ppk-item.selected{color:#e8a020;font-weight:700;background:#fff8e8;}
+
+  /* ── 页面2：日历 ── */
+  #periodCalendar{background:#fffbe6;}
+  .pc-hdr{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:12px 20px;background:linear-gradient(135deg,#ffd86e,#ffb347);flex-shrink:0;
+  }
+  .pc-arrow{font-size:22px;cursor:pointer;color:#7a4a00;width:32px;text-align:center;}
+  .pc-month{font-size:18px;font-weight:800;color:#7a4a00;}
+  .pc-weekrow{display:grid;grid-template-columns:repeat(7,1fr);background:#fff8dc;padding:6px 4px 2px;}
+  .pc-wday{text-align:center;font-size:12px;font-weight:700;color:#a07030;padding:4px 0;}
+  .pc-wday:last-child,.pc-wday:nth-child(6){color:#cc8800;}
+  .pc-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:0;flex:1;}
+  .pc-cell{
+    aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+    font-size:15px;color:#444;cursor:pointer;position:relative;
+    font-family:inherit;
+  }
+  .pc-cell.other{color:#ccc;}
+  .pc-cell.today .pc-num{
+    background:#ff8fab;color:white;width:28px;height:28px;
+    border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;
+  }
+  .pc-cell.period .pc-num{background:#ffb6c1;color:#c0002a;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;}
+  .pc-cell.fertile .pc-num{background:#b3e5fc;color:#0077aa;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;}
+  .pc-cell.ovulation .pc-num{
+    position:relative;width:28px;height:28px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .pc-cell.ovulation .pc-num::before{content:'🌸';position:absolute;font-size:22px;opacity:.6;}
+  .pc-cell.ovulation .pc-num span{position:relative;z-index:1;font-size:13px;font-weight:700;color:#886600;}
+  .pc-legend{display:flex;gap:16px;padding:10px 16px 16px;background:#fffbe6;flex-shrink:0;flex-wrap:wrap;}
+  .pc-legend-item{display:flex;align-items:center;gap:5px;font-size:12px;color:#666;}
+  .pc-legend-dot{width:10px;height:10px;border-radius:50%;}
+</style>
+
+<!-- 顶栏 -->
+<div id="periodTopBar">
+  <span class="pt-back" onclick="showScreen('scrCoupleSpace')">＜</span>
+  <span class="pt-title">🩸 大姨妈</span>
+  <span class="pt-empty"></span>
+</div>
+
+<!-- 标签栏 -->
+<div id="periodTabs">
+  <div class="pt-tab active" id="ptTab1" onclick="switchPeriodTab(1)">📋 经期设置</div>
+  <div class="pt-tab" id="ptTab2" onclick="switchPeriodTab(2)">📅 经期日历</div>
+</div>
+
+<!-- 页面容器 -->
+<div id="periodPages">
+
+  <!-- 页面1：设置 -->
+  <div class="period-page show" id="periodSettings">
+
+    <!-- 最近一次经期开始 -->
+    <div class="ps-card">
+      <div class="ps-row" onclick="openPeriodPicker('startDate')">
+        <span class="ps-label">最近一次经期开始</span>
+        <span class="ps-value" id="psStartDateVal">选择日期 ›</span>
+      </div>
+      <div class="ps-divider"></div>
+      <div class="ps-tips">
+        <span class="ps-tips-badge">tips</span>
+        <p class="ps-tips-text">准确填写上次经期开始日期，可以帮助推算下次经期和排卵日，建议每次月经来时及时更新哦～</p>
+      </div>
+    </div>
+
+    <!-- 月经周期 -->
+    <div class="ps-card">
+      <div class="ps-row" onclick="openPeriodPicker('cycle')">
+        <span class="ps-label">两次经期间隔周期</span>
+        <span class="ps-value" id="psCycleVal">28 ›</span>
+      </div>
+      <div class="ps-divider"></div>
+      <div class="ps-tips">
+        <span class="ps-tips-badge">tips</span>
+        <p class="ps-tips-text">月经周期是指两次月经第1天之间的间隔天数，通常在21～35天之间，平均约28天。每个人略有不同，找到自己的规律就好～</p>
+      </div>
+    </div>
+
+    <!-- 经期天数 -->
+    <div class="ps-card">
+      <div class="ps-row" onclick="openPeriodPicker('duration')">
+        <span class="ps-label">经期天数</span>
+        <span class="ps-value" id="psDurationVal">6 ›</span>
+      </div>
+      <div class="ps-divider"></div>
+      <div class="ps-tips">
+        <span class="ps-tips-badge">tips</span>
+        <p class="ps-tips-text">经期天数是指每次月经持续的时长，正常范围大约是2～7天。偶尔多一两天或少一两天都属正常，如长期异常建议咨询医生～</p>
+      </div>
+    </div>
+
+    <div style="height:20px;flex-shrink:0;"></div>
+  </div>
+
+  <!-- 页面2：日历 -->
+  <div class="period-page" id="periodCalendar">
+    <div class="pc-hdr">
+      <span class="pc-arrow" onclick="periodCalPrev()">←</span>
+      <span class="pc-month" id="pcMonthTitle">2026年3月</span>
+      <span class="pc-arrow" onclick="periodCalNext()">→</span>
+    </div>
+    <div class="pc-weekrow">
+      <div class="pc-wday">周一</div><div class="pc-wday">周二</div>
+      <div class="pc-wday">周三</div><div class="pc-wday">周四</div>
+      <div class="pc-wday">周五</div>
+      <div class="pc-wday">周六</div><div class="pc-wday">周日</div>
+    </div>
+    <div id="pcGrid" class="pc-grid"></div>
+    <div class="pc-legend">
+      <div class="pc-legend-item"><div class="pc-legend-dot" style="background:#ffb6c1;"></div>预测经期</div>
+      <div class="pc-legend-item"><div class="pc-legend-dot" style="background:#b3e5fc;"></div>易孕期</div>
+      <div class="pc-legend-item" style="gap:3px;"><span style="font-size:14px;">🌸</span>排卵日</div>
+    </div>
+  </div>
+</div>
+
+<!-- 选择器弹窗 -->
+<div id="periodPickerModal" onclick="if(event.target===this)closePeriodPicker()">
+  <div id="periodPickerBox">
+    <div id="periodPickerHdr">
+      <span id="periodPickerTitle">选择</span>
+      <span id="periodPickerDone" onclick="closePeriodPicker()">确定</span>
+    </div>
+    <div id="periodPickerScroll"></div>
+  </div>
+</div>
+</div>
+
+<script>
+(function initPeriod(){
+  // ── 数据存取 ──
+  var KEYS={startDate:'period_start',cycle:'period_cycle',duration:'period_duration'};
+  function save(k,v){localforage.setItem(KEYS[k],String(v)).catch(()=>{});try{localStorage.setItem(KEYS[k],String(v));}catch(e){}}
+  async function load(k,def){
+    var v=null;try{v=await localforage.getItem(KEYS[k]);}catch(e){}
+    if(!v)try{v=localStorage.getItem(KEYS[k]);}catch(e){}
+    return v!==null&&v!==''?v:def;
+  }
+
+  var state={startDate:'',cycle:28,duration:6};
+
+  async function loadAll(){
+    state.startDate=await load('startDate','');
+    state.cycle=parseInt(await load('cycle','28'));
+    state.duration=parseInt(await load('duration','6'));
+    refreshLabels();
+  }
+
+  function refreshLabels(){
+    var sdEl=document.getElementById('psStartDateVal');
+    var cycEl=document.getElementById('psCycleVal');
+    var durEl=document.getElementById('psDurationVal');
+    if(sdEl)sdEl.textContent=state.startDate||'选择日期 ›';
+    if(cycEl)cycEl.textContent=state.cycle+' ›';
+    if(durEl)durEl.textContent=state.duration+' ›';
+  }
+
+  // ── 标签切换 ──
+  window.switchPeriodTab=function(n){
+    document.getElementById('ptTab1').classList.toggle('active',n===1);
+    document.getElementById('ptTab2').classList.toggle('active',n===2);
+    document.getElementById('periodSettings').classList.toggle('show',n===1);
+    document.getElementById('periodCalendar').classList.toggle('show',n===2);
+    if(n===2)renderCalendar();
+  };
+
+  // ── 选择器 ──
+  var _curPicker=null;
+  window.openPeriodPicker=function(type){
+    _curPicker=type;
+    var modal=document.getElementById('periodPickerModal');
+    var scroll=document.getElementById('periodPickerScroll');
+    var title=document.getElementById('periodPickerTitle');
+    if(!modal)return;
+    scroll.innerHTML='';
+
+    if(type==='startDate'){
+      title.textContent='选择经期开始日期';
+      // 生成近12个月的日期列表（每天）
+      var today=new Date();
+      for(var i=0;i<=180;i++){
+        var d=new Date(today);d.setDate(today.getDate()-i);
+        var str=d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+        var iso=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+        var item=document.createElement('div');item.className='ppk-item'+(state.startDate===iso?' selected':'');
+        item.textContent=str;
+        (function(isoVal,el){el.onclick=function(){state.startDate=isoVal;save('startDate',isoVal);refreshLabels();document.querySelectorAll('#periodPickerScroll .ppk-item').forEach(function(x){x.classList.remove('selected');});el.classList.add('selected');};})(iso,item);
+        scroll.appendChild(item);
+      }
+    } else if(type==='cycle'){
+      title.textContent='选择月经周期（天）';
+      for(var n=21;n<=45;n++){
+        var item=document.createElement('div');item.className='ppk-item'+(state.cycle===n?' selected':'');
+        item.textContent=n+' 天';
+        (function(val,el){el.onclick=function(){state.cycle=val;save('cycle',val);refreshLabels();document.querySelectorAll('#periodPickerScroll .ppk-item').forEach(function(x){x.classList.remove('selected');});el.classList.add('selected');};})(n,item);
+        scroll.appendChild(item);
+      }
+    } else if(type==='duration'){
+      title.textContent='选择经期天数';
+      for(var n=1;n<=10;n++){
+        var item=document.createElement('div');item.className='ppk-item'+(state.duration===n?' selected':'');
+        item.textContent=n+' 天';
+        (function(val,el){el.onclick=function(){state.duration=val;save('duration',val);refreshLabels();document.querySelectorAll('#periodPickerScroll .ppk-item').forEach(function(x){x.classList.remove('selected');});el.classList.add('selected');};})(n,item);
+        scroll.appendChild(item);
+      }
+    }
+    modal.style.display='flex';
+    // 滚动到选中项
+    setTimeout(function(){var sel=scroll.querySelector('.selected');if(sel)sel.scrollIntoView({block:'center'});},50);
+  };
+  window.closePeriodPicker=function(){
+    var modal=document.getElementById('periodPickerModal');
+    if(modal)modal.style.display='none';
+  };
+
+  // ── 日历 ──
+  var calYear=new Date().getFullYear(),calMonth=new Date().getMonth();
+  window.periodCalPrev=function(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar();};
+  window.periodCalNext=function(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar();};
+
+  function calcPeriodDays(){
+    // 返回推算的经期日 Set（YYYY-MM-DD）
+    var days=new Set();
+    if(!state.startDate)return days;
+    var start=new Date(state.startDate);
+    if(isNaN(start))return days;
+    // 往前3个周期 + 往后6个周期
+    for(var c=-3;c<=6;c++){
+      var periodStart=new Date(start);
+      periodStart.setDate(start.getDate()+c*state.cycle);
+      for(var d=0;d<state.duration;d++){
+        var day=new Date(periodStart);day.setDate(periodStart.getDate()+d);
+        days.add(day.toISOString().slice(0,10));
+      }
+    }
+    return days;
+  }
+  function calcFertileDays(){
+    var fertile=new Set(),ovulation=new Set();
+    if(!state.startDate)return{fertile,ovulation};
+    var start=new Date(state.startDate);
+    if(isNaN(start))return{fertile,ovulation};
+    for(var c=-3;c<=6;c++){
+      // 排卵日：下次经期前14天
+      var nextPeriod=new Date(start);nextPeriod.setDate(start.getDate()+(c+1)*state.cycle);
+      var ov=new Date(nextPeriod);ov.setDate(nextPeriod.getDate()-14);
+      ovulation.add(ov.toISOString().slice(0,10));
+      // 易孕期：排卵日前5天 + 后4天
+      for(var d=-5;d<=4;d++){
+        var fd=new Date(ov);fd.setDate(ov.getDate()+d);
+        fertile.add(fd.toISOString().slice(0,10));
+      }
+    }
+    return{fertile,ovulation};
+  }
+
+  function renderCalendar(){
+    var titleEl=document.getElementById('pcMonthTitle');
+    var grid=document.getElementById('pcGrid');
+    if(!titleEl||!grid)return;
+    titleEl.textContent=calYear+'年'+(calMonth+1)+'月';
+
+    var periodDays=calcPeriodDays();
+    var {fertile,ovulation}=calcFertileDays();
+    var today=new Date().toISOString().slice(0,10);
+
+    // 第一天是星期几（改为周一起）
+    var firstDay=new Date(calYear,calMonth,1).getDay();
+    firstDay=(firstDay+6)%7; // 0=Mon
+    var daysInMonth=new Date(calYear,calMonth+1,0).getDate();
+    var prevDays=new Date(calYear,calMonth,0).getDate();
+
+    grid.innerHTML='';
+    // 上月补位
+    for(var i=firstDay-1;i>=0;i--){
+      var cell=document.createElement('div');cell.className='pc-cell other';
+      cell.innerHTML='<span class="pc-num">'+(prevDays-i)+'</span>';
+      grid.appendChild(cell);
+    }
+    // 本月
+    for(var d=1;d<=daysInMonth;d++){
+      var iso=calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+      var cell=document.createElement('div');cell.className='pc-cell';
+      var cls='';
+      if(iso===today)cls='today';
+      else if(ovulation.has(iso))cls='ovulation';
+      else if(periodDays.has(iso))cls='period';
+      else if(fertile.has(iso))cls='fertile';
+      if(cls)cell.classList.add(cls);
+      if(cls==='ovulation'){
+        cell.innerHTML='<div class="pc-num"><span>'+d+'</span></div>';
+      } else {
+        cell.innerHTML='<span class="pc-num">'+d+'</span>';
+      }
+      grid.appendChild(cell);
+    }
+    // 下月补位
+    var total=firstDay+daysInMonth;
+    var nextFill=(7-total%7)%7;
+    for(var d=1;d<=nextFill;d++){
+      var cell=document.createElement('div');cell.className='pc-cell other';
+      cell.innerHTML='<span class="pc-num">'+d+'</span>';
+      grid.appendChild(cell);
+    }
+  }
+
+  // ── 初始化 ──
+  loadAll();
+  // 打开时刷新
+  var _origSS=window.showScreen;
+  window.showScreen=function(id){
+    _origSS(id);
+    if(id==='scrPeriod'){loadAll().then(function(){if(document.getElementById('ptTab2')&&document.getElementById('ptTab2').classList.contains('active'))renderCalendar();});}
+  };
+})();
+</script>
     <style>
       #scrHomeSettings { width:100%; }
       #scrHomeSettings .hs-scroll {
@@ -4469,16 +4855,33 @@ let pressTimer = null;
 let selEl = null;
 let currentQuote ="";
 function showScreen(showId) {
-    [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrSpace, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet"), $("scrContact"), $("scrSetFont"), $("scrCharPhone"), $("scrSpyDiary"), $("scrSpyZhihu"), $("scrSpySecret"), $("scrSpyMeituan"), $("scrSpyFootprint"), $("scrSpyWallet"), $("scrSpyShop"), $("scrSpyIqiyi"), $("scrSpySettings"), $("scrMoment"), $("scrGroupRoom"), $("scrGroupSettings"), $("scrOurSongs"), $("scrHomeSettings"), $("scrCoupleSpace")].forEach(s => { if(s) s.style.display = "none"; });
-    // 应用页面壁纸（从内存缓存即时取）
+    [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrSpace, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet"), $("scrContact"), $("scrSetFont"), $("scrCharPhone"), $("scrSpyDiary"), $("scrSpyZhihu"), $("scrSpySecret"), $("scrSpyMeituan"), $("scrSpyFootprint"), $("scrSpyWallet"), $("scrSpyShop"), $("scrSpyIqiyi"), $("scrSpySettings"), $("scrMoment"), $("scrGroupRoom"), $("scrGroupSettings"), $("scrOurSongs"), $("scrHomeSettings"), $("scrCoupleSpace"), $("scrPeriod")].forEach(s => { if(s) s.style.display = "none"; });
+    // 应用页面壁纸
     var _pgBgMap={scrList:'list',scrContact:'contact',scrMe:'me'};
-    if(_pgBgMap[showId]&&window._pgBgCache){
-      var _pg=_pgBgMap[showId];var _d=window._pgBgCache[_pg];
+    var _pgBgKeys={list:'hd_pg_bg_list',contact:'hd_pg_bg_contact',me:'hd_pg_bg_me'};
+    if(_pgBgMap[showId]){
+      var _pg=_pgBgMap[showId];
       var _sc=document.getElementById(showId);
-      if(_sc&&_d&&_d.length>10){
-        _sc.style.backgroundImage='url('+_d+')';
+      // 1. 先从内存缓存同步取
+      if(_sc&&window._pgBgCache&&window._pgBgCache[_pg]&&window._pgBgCache[_pg].length>10){
+        _sc.style.backgroundImage='url('+window._pgBgCache[_pg]+')';
         _sc.style.backgroundSize='cover';
         _sc.style.backgroundPosition='center';
+      }
+      // 2. 异步兜底：从 localforage/localStorage 读（保证每次都能取到）
+      if(_sc){
+        (async function(){
+          var _d=null;
+          try{_d=await localforage.getItem(_pgBgKeys[_pg]);}catch(e){}
+          if(!_d){try{_d=localStorage.getItem(_pgBgKeys[_pg]);}catch(e){}}
+          if(_d&&_d.length>10){
+            if(!window._pgBgCache)window._pgBgCache={};
+            window._pgBgCache[_pg]=_d;
+            _sc.style.backgroundImage='url('+_d+')';
+            _sc.style.backgroundSize='cover';
+            _sc.style.backgroundPosition='center';
+          }
+        })();
       }
     }
     let target = $(showId);
@@ -4488,7 +4891,7 @@ function showScreen(showId) {
         if(_im){ _im.style.height="34px"; _im.style.overflowY="hidden"; }
     }
     if(target) {
-        if(showId === "scrRoom" || showId === "scrList" || showId === "scrSetApi" || showId === "scrSetChat" || showId === "scrWb" || showId === "scrWbEdit" || showId === "scrMe" || showId === "scrCharSticker" || showId === "scrSpace" || showId === "scrLogList" || showId === "scrLogEdit" || showId === "scrFav" || showId === "scrWallet" || showId === "scrContact" || showId === "scrSetFont" || showId === "scrSpyDiary" || showId === "scrSpyZhihu" || showId === "scrSpySecret" || showId === "scrSpyMeituan" || showId === "scrSpyFootprint" || showId === "scrSpyWallet" || showId === "scrSpyShop" || showId === "scrSpyIqiyi" || showId === "scrSpySettings" || showId === "scrMoment" || showId === "scrGroupRoom" || showId === "scrGroupSettings" || showId === "scrOurSongs" || showId === "scrHomeSettings") {
+        if(showId === "scrRoom" || showId === "scrList" || showId === "scrSetApi" || showId === "scrSetChat" || showId === "scrWb" || showId === "scrWbEdit" || showId === "scrMe" || showId === "scrCharSticker" || showId === "scrSpace" || showId === "scrLogList" || showId === "scrLogEdit" || showId === "scrFav" || showId === "scrWallet" || showId === "scrContact" || showId === "scrSetFont" || showId === "scrSpyDiary" || showId === "scrSpyZhihu" || showId === "scrSpySecret" || showId === "scrSpyMeituan" || showId === "scrSpyFootprint" || showId === "scrSpyWallet" || showId === "scrSpyShop" || showId === "scrSpyIqiyi" || showId === "scrSpySettings" || showId === "scrMoment" || showId === "scrGroupRoom" || showId === "scrGroupSettings" || showId === "scrOurSongs" || showId === "scrHomeSettings" || showId === "scrPeriod") {
             target.style.display = "flex";
         } else if (showId === "scrCharPhone") {
             target.style.display = "flex";
@@ -18922,9 +19325,12 @@ if(document.getElementById('offlineModePanel')) {
       setTimeout(function(){t.remove();},2000);
     };
   }
-  ['csFuncPeriod,大姨妈','csFuncLoveList,恋爱清单','csFuncPet,我的宠物','csFuncHoroscope,每日星运','csFuncChallenge,情侣挑战'].forEach(function(s){
+  ['csFuncLoveList,恋爱清单','csFuncPet,我的宠物','csFuncHoroscope,每日星运','csFuncChallenge,情侣挑战'].forEach(function(s){
     var p=s.split(',');bindFuncToast(p[0],p[1]);
   });
+  // 大姨妈单独绑定
+  var periodBtn=document.getElementById('csFuncPeriod');
+  if(periodBtn)periodBtn.onclick=function(){showScreen('scrPeriod');};
 
   // 打开情侣空间时执行初始化
   var origShowScreen=window.showScreen;
