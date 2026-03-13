@@ -354,9 +354,9 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
       <style>
         /* ══════ NEW HOME v5 ══════ */
         #scrHome.scr-home {
-          background: #fce8ea !important;
-          background-image: radial-gradient(#f5c6cb 1.2px, transparent 1.2px) !important;
-          background-size: 18px 18px !important;
+          background-color: #fce8ea;
+          background-image: radial-gradient(#f5c6cb 1.2px, transparent 1.2px);
+          background-size: 18px 18px;
           display: none; flex-direction: column;
           overflow: hidden;
           height: 100%;
@@ -4895,11 +4895,24 @@ function showScreen(showId) {
       (async function(){
         var d=null;
         try{d=await localforage.getItem(_pgBgKeys[_pg]);}catch(e){}
-        if(!d){try{d=localStorage.getItem(_pgBgKeys[_pg]);}catch(e){}}
+        if(!d){try{d=originalGetItem.call(ls,_pgBgKeys[_pg]);}catch(e){}}
         if(d&&d.length>10){
           _applyBg(d);
-          // setTimeout 再补一次，防止某些浏览器 layout 时机问题
           setTimeout(function(){_applyBg(d);},50);
+        }
+      })();
+    }
+    // ★ 桌面壁纸：每次显示scrHome时主动应用
+    if(showId==='scrHome'){
+      (async function(){
+        var d=null;
+        try{d=await localforage.getItem('hd_wallpaper');}catch(e){}
+        if(!d){try{d=originalGetItem.call(ls,'hd_wallpaper');}catch(e){}}
+        var _hm=document.getElementById('scrHome');
+        if(_hm&&d&&d.length>10){
+          _hm.style.backgroundImage='url('+d+')';
+          _hm.style.backgroundSize='cover';
+          _hm.style.backgroundPosition='center';
         }
       })();
     }
@@ -6505,23 +6518,32 @@ async function renderContacts() {
     }
     // 消息列表（listContent）按聊天时间排序，联系人页（contactContent）按添加顺序
     let contactsSorted = [...contacts]; // 保持添加顺序（最新添加在前）
+    // ★ 预取所有角色的最后聊天时间（从localforage兜底，修复localStorage满导致排序失效）
+    let _timeCache = {};
+    for(let c of contacts) {
+      try {
+        let t = Number(originalGetItem.call(ls, `lastChatTime_`+c.id) || 0);
+        if(!t) {
+            try { let lft = await localforage.getItem(`lastChatTime_`+c.id); if(lft) t = Number(lft) || 0; } catch(e){}
+        }
+        if(!t) {
+            // 从聊天记录最后一条取时间
+            try {
+                let h = null;
+                try { h = await localforage.getItem(`chatHistory_`+c.id); } catch(e){}
+                if(!h) try { h = originalGetItem.call(ls, `chatHistory_`+c.id); } catch(e){}
+                if(h) {
+                    let arr = typeof h === 'string' ? JSON.parse(h) : h;
+                    if(arr && arr.length) { let last = arr[arr.length-1]; t = last.ts || last.time || 0; }
+                }
+            } catch(e){}
+        }
+        _timeCache[c.id] = t;
+      } catch(e){ _timeCache[c.id] = 0; }
+    }
     // 消息列表用的排序版本
     let contactsByTime = [...contacts].sort((a, b) => {
-        let getLastTime = (id) => {
-            try {
-            let t = Number(originalGetItem.call(ls, `lastChatTime_`+id) || 0);
-            if(t) return t;
-            let h = originalGetItem.call(ls, `chatHistory_`+id);
-            if(!h) return 0;
-            try {
-                let arr = typeof h === `string` ? JSON.parse(h) : h;
-                if(!arr || !arr.length) return 0;
-                let last = arr[arr.length-1];
-                return last.ts || last.time || 0;
-            } catch(e){ return 0; }
-            } catch(e){ return 0; }
-        };
-        return getLastTime(b.id) - getLastTime(a.id);
+        return (_timeCache[b.id] || 0) - (_timeCache[a.id] || 0);
     });
 
     // listContent按聊天时间排序的顺序构建
@@ -6556,11 +6578,8 @@ async function renderContacts() {
         if (isBlk) isoName += `<span style="color:#ff4757;font-size:10px;margin-left:4px;padding:0 2px;">已拉黑</span>`;
         div.innerHTML = avaHtml + `<div class=chat-info><div class=chat-name>` + isoName + `</div><div class=chat-preview>` + prevTxt + `</div></div>`;
         // 设置最后聊天时间（用于消息列表排序）
-        let _lastTime = Number(originalGetItem.call(ls, `lastChatTime_`+c.id) || 0);
-        if(!_lastTime) {
-            try { let _h=typeof isoHist==='string'?JSON.parse(isoHist):isoHist; if(_h&&_h.length){let _lm=_h[_h.length-1]; _lastTime=_lm.ts||_lm.time||0;} } catch(e){}
-        }
-        div.dataset.lasttime = String(_lastTime);
+        // ★ 使用预取的时间缓存（已包含localforage兜底）
+        div.dataset.lasttime = String(_timeCache[c.id] || 0);
                 div.onclick = async () => {
             // ★ 先保存当前char的线下状态，再切换（防止切走时丢失状态）
             if(typeof window._saveCurrentOfflineState === 'function') window._saveCurrentOfflineState();
@@ -15723,7 +15742,10 @@ async function renderGroupInMsgList() {
         let preview=_getGroupPreview(g);
         let div=document.createElement(`div`);
         div.className=`chat-item group-msg-item`;
-        div.dataset.lasttime=Number(originalGetItem.call(ls,`lastChatTime_group_`+gid)||0) || (lastMsg?Number(lastMsg.time)||0:0);
+        let _gTime = Number(originalGetItem.call(ls,`lastChatTime_group_`+gid)||0);
+        if(!_gTime) { try { let _lft=await localforage.getItem(`lastChatTime_group_`+gid); if(_lft) _gTime=Number(_lft)||0; } catch(e){} }
+        if(!_gTime && lastMsg) _gTime = Number(lastMsg.time)||0;
+        div.dataset.lasttime = _gTime;
         let avaHtml=g.avatar?`<div class=avatar-list style="background:url(${g.avatar}) center/cover no-repeat;font-size:0;"></div>`:`<div class=avatar-list style="background:#e8e4ff;display:flex;align-items:center;justify-content:center;font-size:22px;">👥</div>`;
         div.innerHTML=`${avaHtml}<div class=chat-info><div class=chat-name>${g.name||`群聊`}</div><div class=chat-preview>${preview}</div></div>`;
         div.onclick=()=>openGroupRoom(gid);
