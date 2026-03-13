@@ -664,85 +664,158 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 <div id="scrCoupleSpace" class="scr-flex" style="display:none;flex-direction:column;overflow:hidden;position:absolute;top:0;width:100%;height:100%;z-index:35;background:#fff5f7;background-size:cover;background-position:center;">
   <style>
     /* ── 情侣空间样式 ── */
-    #csTopBar{display:flex;align-items:center;justify-content:space-between;padding:max(calc(env(safe-area-inset-top,0px)+18px),52px) 14px 12px;flex-shrink:0;background:rgba(255,245,247,.92);backdrop-filter:blur(10px);position:relative;z-index:2;}
-    #csBack{font-size:20px;color:#c77d98;cursor:pointer;width:32px;}
+    /* 顶栏：用 JS 动态设 padding-top，这里只做基础样式 */
+    #csTopBar{
+      display:flex;align-items:center;justify-content:space-between;
+      padding-left:14px;padding-right:14px;padding-bottom:12px;
+      padding-top:65px; /* 粗暴大值，Via/X/Chrome/Edge/Safari 全兼容 */
+      flex-shrink:0;
+      background:rgba(255,245,247,.95);
+      backdrop-filter:blur(10px);
+      position:relative;z-index:2;
+    }
+    #csBack{font-size:22px;color:#c77d98;cursor:pointer;width:34px;line-height:1;}
     #csTitle{font-size:16px;font-weight:700;color:#c44f7a;flex:1;text-align:center;}
-    #csBgBtn{font-size:18px;cursor:pointer;width:28px;text-align:right;}
-    #csCharBtn{font-size:18px;cursor:pointer;width:28px;text-align:right;}
-    /* 顶部情侣头像+木牌区 */
-    #csHeroRow{display:flex;align-items:center;padding:10px 14px 4px;gap:10px;flex-shrink:0;}
-    #csAvatarBox{display:flex;gap:-8px;flex-shrink:0;}
-    .cs-ava{width:58px;height:58px;border-radius:50%;background:rgba(255,200,220,.4);border:2.5px solid #ffb6c1;overflow:hidden;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;position:relative;}
-    .cs-ava:last-child{margin-left:-12px;border-color:#ffa0c0;}
-    .cs-ava img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;}
-    /* 悬挂木牌 */
-    #csBoard{
-      flex:1;min-width:0;position:relative;
+    #csCharBtn{font-size:20px;cursor:pointer;width:30px;text-align:right;line-height:1;}
+    #csBgBtn{font-size:20px;cursor:pointer;width:30px;text-align:right;line-height:1;}
+
+    /* 头像+木牌行 */
+    #csHeroRow{
+      display:flex;align-items:flex-end;
+      padding:0 14px 8px;gap:14px;flex-shrink:0;
+    }
+    #csAvatarBox{display:flex;flex-shrink:0;align-items:flex-end;}
+    .cs-ava{
+      width:62px;height:62px;border-radius:50%;
+      background:rgba(255,200,220,.4);border:2.5px solid #ffb6c1;
+      overflow:hidden;cursor:pointer;flex-shrink:0;
       display:flex;align-items:center;justify-content:center;
-      padding-top:18px;
+      font-size:24px;position:relative;
     }
-    #csBoardInner{
+    .cs-ava:last-child{margin-left:-14px;border-color:#ffa0c0;}
+    .cs-ava img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;}
+
+    /* ── 悬挂木牌 ── */
+    #csBoard{
+      flex:1;min-width:0;
+      display:flex;flex-direction:column;align-items:center;
+      padding-top:28px; /* 留绳子空间 */
       position:relative;
-      background:linear-gradient(160deg,#f5e6c8,#e8c98a,#d4a060,#e8c98a);
-      border:3px solid #8B5E2A;
-      border-radius:6px;
-      padding:10px 20px 12px;
+    }
+    /* 顶部挂钩圆点 */
+    #csBoardKnot{
+      width:12px;height:12px;border-radius:50%;
+      background:radial-gradient(circle at 35% 35%,#ccc,#888);
+      box-shadow:0 2px 4px rgba(0,0,0,.3);
+      position:absolute;top:0;left:50%;transform:translateX(-50%);
+      z-index:3;
+    }
+    /* SVG绳子 */
+    #csBoardSvg{
+      position:absolute;top:6px;left:0;width:100%;height:28px;
+      overflow:visible;pointer-events:none;z-index:2;
+    }
+    /* 木牌外框（模拟木头相框） */
+    #csBoardFrame{
+      width:100%;
+      position:relative;z-index:1;
+      /* 深棕色厚边框模拟木框 */
+      border:8px solid #8B5533;
+      border-radius:4px;
+      box-shadow:
+        inset 0 0 0 2px #c49a6c,
+        inset 0 0 0 3px #8B5533,
+        0 4px 14px rgba(0,0,0,.25),
+        3px 3px 0 rgba(0,0,0,.1);
+      background:
+        /* 木纹水平线 */
+        repeating-linear-gradient(
+          180deg,
+          transparent,transparent 6px,
+          rgba(139,85,51,.06) 6px,rgba(139,85,51,.06) 7px
+        ),
+        /* 棕色基础 */
+        linear-gradient(135deg,#c8884a,#a0612e,#b87840,#a0612e);
+      overflow:hidden;
+      box-sizing:border-box;
+    }
+    /* 木框内层：米白内页 */
+    #csBoardInner{
+      background:linear-gradient(160deg,#fdfaf4,#f8f2e6);
+      border:1px solid rgba(139,85,51,.15);
+      padding:12px 16px 14px;
       text-align:center;
-      box-shadow:2px 4px 12px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.4);
-      width:100%;box-sizing:border-box;
+      position:relative;
     }
-    #csBoardInner::before{
-      content:'';position:absolute;top:-20px;left:50%;transform:translateX(-50%);
-      width:2px;height:22px;background:linear-gradient(#aaa,#888);
+    #csBoardTop{
+      font-size:12px;color:#6b3a0f;margin-bottom:6px;
+      font-weight:600;letter-spacing:.5px;
     }
-    #csBoardInner::after{
-      content:'●';position:absolute;top:-26px;left:50%;transform:translateX(-50%);
-      font-size:10px;color:#888;line-height:1;
+    #csBoardDaysWrap{
+      display:flex;align-items:baseline;justify-content:center;gap:6px;
     }
-    /* 木纹纹理 */
-    #csBoardInner .wood-grain{
-      position:absolute;inset:0;border-radius:4px;
-      background:repeating-linear-gradient(90deg,transparent,transparent 20px,rgba(0,0,0,.03) 20px,rgba(0,0,0,.03) 21px);
-      pointer-events:none;
-    }
-    #csBoardTop{font-size:11px;color:#6b3a0f;margin-bottom:4px;font-weight:600;letter-spacing:.5px;position:relative;z-index:1;}
-    #csBoardDaysWrap{display:flex;align-items:baseline;justify-content:center;gap:4px;position:relative;z-index:1;}
     #csBoardDays{
-      font-size:32px;font-weight:900;color:#5a2d0c;line-height:1;
-      text-shadow:1px 1px 2px rgba(255,255,255,.4);
+      font-size:38px;font-weight:900;color:#4a2008;line-height:1;
       background:none;border:none;outline:none;
-      width:80px;text-align:center;font-family:inherit;
+      width:90px;text-align:center;font-family:inherit;
       cursor:text;
+      -webkit-appearance:none;-moz-appearance:textfield;
     }
+    #csBoardDays::-webkit-inner-spin-button,
+    #csBoardDays::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
     #csBoardDays:focus{
-      background:rgba(255,255,255,.35);border-radius:6px;
+      background:rgba(255,220,180,.3);border-radius:6px;
     }
-    #csBoardDayLbl{font-size:13px;color:#6b3a0f;font-weight:700;}
-    /* 主体区 flex row: 左竖栏 + 右内容 */
+    #csBoardDayLbl{font-size:14px;color:#6b3a0f;font-weight:700;}
+
+    /* ── 主体区 ── */
     #csBody{flex:1;display:flex;overflow:hidden;}
-    /* 左侧恋爱打卡竖栏 */
-    #csLeftBar{width:52px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;padding:10px 0;gap:8px;background:rgba(255,200,220,.18);border-right:1px solid rgba(255,180,200,.3);}
+    #csLeftBar{
+      width:52px;flex-shrink:0;display:flex;flex-direction:column;
+      align-items:center;padding:10px 0;gap:8px;
+      background:rgba(255,200,220,.18);border-right:1px solid rgba(255,180,200,.3);
+    }
     .cs-vbtn{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;-webkit-tap-highlight-color:transparent;padding:6px 4px;border-radius:10px;transition:background .15s;}
     .cs-vbtn:active{background:rgba(255,150,180,.2);}
     .cs-vbtn-icon{font-size:20px;}
     .cs-vbtn-lbl{font-size:9px;color:#c44f7a;font-weight:600;writing-mode:vertical-lr;text-orientation:upright;letter-spacing:2px;line-height:1.2;}
+
     /* 右侧主内容区 */
-    #csMain{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 10px 16px;}
+    #csMain{
+      flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;
+      padding:16px 10px 16px;
+      display:flex;flex-direction:column;
+    }
     /* 五个功能按钮网格 */
-    #csFuncGrid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:4px 0 10px;}
+    #csFuncGrid{
+      display:grid;grid-template-columns:repeat(5,1fr);gap:6px;
+      padding:0 0 4px;flex-shrink:0;
+    }
     .cs-func{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
     .cs-func-icon{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 2px 8px rgba(0,0,0,.08);}
     .cs-func-lbl{font-size:9px;color:#555;font-weight:500;text-align:center;line-height:1.2;}
+
     /* 打卡面板 */
-    #csDailyPanel{background:rgba(255,255,255,.85);border-radius:16px;padding:14px;margin-bottom:10px;box-shadow:0 2px 10px rgba(255,120,160,.12);}
+    #csDailyPanel{
+      background:rgba(255,255,255,.85);border-radius:16px;padding:14px;
+      margin-top:20px;margin-bottom:10px;
+      box-shadow:0 2px 10px rgba(255,120,160,.12);
+      flex-shrink:0;
+    }
     #csDailyTitle{font-size:13px;font-weight:700;color:#c44f7a;margin-bottom:10px;}
-    .cs-checkin-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,200,220,.3);}
+    .cs-checkin-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,200,220,.3);}
     .cs-checkin-row:last-child{border-bottom:none;}
     .cs-checkin-lbl{font-size:13px;color:#333;}
-    .cs-checkin-btn{background:linear-gradient(135deg,#ff8fab,#c44f7a);color:white;border:none;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:600;cursor:pointer;}
+    .cs-checkin-btn{background:linear-gradient(135deg,#ff8fab,#c44f7a);color:white;border:none;border-radius:20px;padding:6px 16px;font-size:12px;font-weight:600;cursor:pointer;}
     .cs-checkin-btn.done{background:#f0f0f0;color:#aaa;}
-    /* 恋语卡片 */
-    #csLoveCard{background:linear-gradient(135deg,rgba(255,200,220,.4),rgba(255,230,240,.6));border-radius:16px;padding:14px;box-shadow:0 2px 10px rgba(255,120,160,.1);}
+
+    /* 恋语卡片：始终在底部 */
+    #csLoveCard{
+      background:linear-gradient(135deg,rgba(255,200,220,.4),rgba(255,230,240,.6));
+      border-radius:16px;padding:14px;
+      box-shadow:0 2px 10px rgba(255,120,160,.1);
+      margin-top:auto;flex-shrink:0;
+    }
     #csLoveCardTitle{font-size:12px;color:#c44f7a;font-weight:600;margin-bottom:6px;}
     #csLoveQuote{font-size:14px;color:#555;line-height:1.6;font-style:italic;}
   </style>
@@ -781,7 +854,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
     </div>
   </div>
 
-  <!-- 头像 + 木牌 -->
+  <!-- 头像 + 悬挂木牌 -->
   <div id="csHeroRow">
     <div id="csAvatarBox">
       <div class="cs-ava" id="csAvaL" title="点击换头像">
@@ -796,12 +869,21 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
       </div>
     </div>
     <div id="csBoard">
-      <div id="csBoardInner">
-        <div class="wood-grain"></div>
-        <div id="csBoardTop">我们在一起</div>
-        <div id="csBoardDaysWrap">
-          <input id="csBoardDays" type="number" min="0" max="99999" inputmode="numeric" placeholder="—">
-          <span id="csBoardDayLbl">天</span>
+      <!-- 挂钩圆点 -->
+      <div id="csBoardKnot"></div>
+      <!-- 两条绳子（SVG） -->
+      <svg id="csBoardSvg" viewBox="0 0 200 30" preserveAspectRatio="none">
+        <line x1="100" y1="2" x2="12" y2="30" stroke="#a0835a" stroke-width="1.8" stroke-linecap="round"/>
+        <line x1="100" y1="2" x2="188" y2="30" stroke="#a0835a" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+      <!-- 木框 -->
+      <div id="csBoardFrame">
+        <div id="csBoardInner">
+          <div id="csBoardTop">我们在一起</div>
+          <div id="csBoardDaysWrap">
+            <input id="csBoardDays" type="number" min="0" max="99999" inputmode="numeric" placeholder="—">
+            <span id="csBoardDayLbl">天</span>
+          </div>
         </div>
       </div>
     </div>
@@ -18543,6 +18625,34 @@ if(document.getElementById('offlineModePanel')) {
   var csBack=document.getElementById('csBack');
   if(csBack)csBack.onclick=function(){showScreen('scrHome');};
 
+  // ── 动态适配顶栏高度（Via/X/Chrome/Edge/Safari 全兼容）──
+  function csFitTopBar(){
+    var bar=document.getElementById('csTopBar');if(!bar)return;
+    // 1. 尝试 CSS env()
+    var safeTop=0;
+    try{
+      var tmp=document.createElement('div');
+      tmp.style.cssText='position:fixed;top:env(safe-area-inset-top,0px);height:0;visibility:hidden;';
+      document.body.appendChild(tmp);
+      safeTop=parseInt(window.getComputedStyle(tmp).top)||0;
+      document.body.removeChild(tmp);
+    }catch(e){}
+    // 2. 兜底：screen.height - visualViewport.height 估算状态栏
+    if(safeTop<10&&window.visualViewport){
+      var screenH=window.screen.height;
+      var vpH=window.visualViewport.height||window.innerHeight;
+      // 横屏不算
+      if(screenH>vpH&&window.innerWidth<window.innerHeight){
+        safeTop=Math.min(Math.max(screenH-vpH,0),60);
+      }
+    }
+    // 3. 最小保证 20px（状态栏最矮也要这么多）
+    var pt=Math.max(safeTop+15, 52);
+    bar.style.paddingTop=pt+'px';
+  }
+  csFitTopBar();
+  window.addEventListener('resize',csFitTopBar,{passive:true});
+
   // 绑定dock按钮
   var dockBtn=document.getElementById('btnHomeCoupleSpace');
   if(dockBtn)dockBtn.onclick=function(){showScreen('scrCoupleSpace');csUpdateDays();csLoadBg();};
@@ -18820,7 +18930,7 @@ if(document.getElementById('offlineModePanel')) {
   var origShowScreen=window.showScreen;
   window.showScreen=function(id){
     origShowScreen(id);
-    if(id==='scrCoupleSpace'){csUpdateDays();csLoadBg();csLoadCheckin();}
+    if(id==='scrCoupleSpace'){csUpdateDays();csLoadBg();csLoadCheckin();csFitTopBar();}
   };
 
 })();
