@@ -4853,36 +4853,8 @@ let selEl = null;
 let currentQuote ="";
 function showScreen(showId) {
     [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrSpace, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet"), $("scrContact"), $("scrSetFont"), $("scrCharPhone"), $("scrSpyDiary"), $("scrSpyZhihu"), $("scrSpySecret"), $("scrSpyMeituan"), $("scrSpyFootprint"), $("scrSpyWallet"), $("scrSpyShop"), $("scrSpyIqiyi"), $("scrSpySettings"), $("scrMoment"), $("scrGroupRoom"), $("scrGroupSettings"), $("scrOurSongs"), $("scrHomeSettings"), $("scrCoupleSpace"), $("scrPeriod")].forEach(s => { if(s) s.style.display = "none"; });
-    // 应用页面壁纸
-    var _pgBgMap={scrList:'list',scrContact:'contact',scrMe:'me'};
-    var _pgBgKeys={list:'hd_pg_bg_list',contact:'hd_pg_bg_contact',me:'hd_pg_bg_me'};
-    if(_pgBgMap[showId]){
-      var _pg=_pgBgMap[showId];
-      var _sc=document.getElementById(showId);
-      // 1. 先从内存缓存同步取
-      if(_sc&&window._pgBgCache&&window._pgBgCache[_pg]&&window._pgBgCache[_pg].length>10){
-        _sc.style.backgroundImage='url('+window._pgBgCache[_pg]+')';
-        _sc.style.backgroundSize='cover';
-        _sc.style.backgroundPosition='center';
-      }
-      // 2. 异步兜底：从 localforage/localStorage 读（保证每次都能取到）
-      if(_sc){
-        (async function(){
-          var _d=null;
-          try{_d=await localforage.getItem(_pgBgKeys[_pg]);}catch(e){}
-          if(!_d){try{_d=localStorage.getItem(_pgBgKeys[_pg]);}catch(e){}}
-          if(_d&&_d.length>10){
-            if(!window._pgBgCache)window._pgBgCache={};
-            window._pgBgCache[_pg]=_d;
-            _sc.style.backgroundImage='url('+_d+')';
-            _sc.style.backgroundSize='cover';
-            _sc.style.backgroundPosition='center';
-          }
-        })();
-      }
-    }
+
     let target = $(showId);
-    // Reset chat input height when entering room
     if(showId === "scrRoom") {
         let _im = document.getElementById("iptMsg");
         if(_im){ _im.style.height="34px"; _im.style.overflowY="hidden"; }
@@ -4893,6 +4865,37 @@ function showScreen(showId) {
         } else if (showId === "scrCharPhone") {
             target.style.display = "flex";
         } else if (showId === "scrHome") { target.style.display = "flex"; } else { target.style.display = "block"; }
+    }
+
+    // 应用页面壁纸 — 在 display:flex 之后执行，确保浏览器能正确渲染
+    var _pgBgMap={scrList:'list',scrContact:'contact',scrMe:'me'};
+    var _pgBgKeys={list:'hd_pg_bg_list',contact:'hd_pg_bg_contact',me:'hd_pg_bg_me'};
+    if(_pgBgMap[showId]){
+      var _pg=_pgBgMap[showId];
+      var _sc=document.getElementById(showId);
+      function _applyBg(d){
+        if(!_sc||!d||d.length<10)return;
+        _sc.style.backgroundImage='url('+d+')';
+        _sc.style.backgroundSize='cover';
+        _sc.style.backgroundPosition='center';
+        if(!window._pgBgCache)window._pgBgCache={};
+        window._pgBgCache[_pg]=d;
+      }
+      // 1. 同步从内存缓存取
+      if(window._pgBgCache&&window._pgBgCache[_pg]){
+        _applyBg(window._pgBgCache[_pg]);
+      }
+      // 2. 异步从 localforage/localStorage 取（保证跨会话也能用）
+      (async function(){
+        var d=null;
+        try{d=await localforage.getItem(_pgBgKeys[_pg]);}catch(e){}
+        if(!d){try{d=localStorage.getItem(_pgBgKeys[_pg]);}catch(e){}}
+        if(d&&d.length>10){
+          _applyBg(d);
+          // setTimeout 再补一次，防止某些浏览器 layout 时机问题
+          setTimeout(function(){_applyBg(d);},50);
+        }
+      })();
     }
 }
 
@@ -5322,6 +5325,21 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
     localforage.setItem(k,v).catch(()=>{});
     try{localStorage.setItem(k,typeof v==='string'?v:JSON.stringify(v));}catch(e){}
   }
+  // 图片压缩工具（限制最大边1200px，JPEG quality 0.82）
+  function compressImg(dataUrl,maxPx,cb){
+    try{
+      var img=new Image();
+      img.onload=function(){
+        var w=img.width,h=img.height;
+        if(w>maxPx||h>maxPx){var r=Math.min(maxPx/w,maxPx/h);w=Math.round(w*r);h=Math.round(h*r);}
+        var cv=document.createElement('canvas');cv.width=w;cv.height=h;
+        cv.getContext('2d').drawImage(img,0,0,w,h);
+        cb(cv.toDataURL('image/jpeg',0.82));
+      };
+      img.onerror=function(){cb(dataUrl);};
+      img.src=dataUrl;
+    }catch(e){cb(dataUrl);}
+  }
 
   // ── 日历 ──
   function buildCal(){
@@ -5599,22 +5617,34 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
     if(hint)hint.style.display='';
   };
 
-  document.addEventListener('DOMContentLoaded',function(){
-    let wpInp=document.getElementById('hsWallpaperInp');
-    if(wpInp)wpInp.onchange=function(){
-      let file=this.files[0];if(!file)return;
-      let r=new FileReader();
-      r.onload=async ev=>{
-        let data=ev.target.result;
-        lfSet(HD_WP_KEY,data);
-        let home=document.getElementById('scrHome');
-        if(home){home.style.backgroundImage=`url(${data})`;home.style.backgroundSize='cover';home.style.backgroundPosition='center';}
-        let img=document.getElementById('hsWallpaperImg'),hint=document.getElementById('hsWallpaperHint');
-        if(img){img.src=data;img.style.display='block';}
-        if(hint)hint.style.display='none';
-      };r.readAsDataURL(file);
-    };
-  });
+  // ── 桌面壁纸输入绑定（直接绑定，不用DOMContentLoaded）──
+  (function bindWallpaperInp(){
+    function doBindWp(){
+      var wpInp=document.getElementById('hsWallpaperInp');
+      if(!wpInp||wpInp._wpBound)return;
+      wpInp._wpBound=true;
+      wpInp.onchange=function(){
+        var file=this.files[0];if(!file)return;
+        var r=new FileReader();
+        r.onload=function(ev){
+          var data=ev.target.result;
+          // 压缩后再存，防止超额
+          compressImg(data,1200,function(compressed){
+            lfSet(HD_WP_KEY,compressed);
+            var home=document.getElementById('scrHome');
+            if(home){home.style.backgroundImage='url('+compressed+')';home.style.backgroundSize='cover';home.style.backgroundPosition='center';}
+            var img=document.getElementById('hsWallpaperImg'),hint=document.getElementById('hsWallpaperHint');
+            if(img){img.src=compressed;img.style.display='block';}
+            if(hint)hint.style.display='none';
+          });
+        };r.readAsDataURL(file);
+      };
+    }
+    doBindWp();
+    // 双保险：DOMContentLoaded也试一次
+    if(document.readyState!=='loading'){doBindWp();}
+    else{document.addEventListener('DOMContentLoaded',doBindWp);}
+  })();
 
   // Dock图标数据
   const HA_DOCK=[
@@ -5768,26 +5798,33 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
     }
   })();
   function _setupPgBgInp(pg){
-    let n=pg.charAt(0).toUpperCase()+pg.slice(1);
-    let inp=el_('hs'+n+'BgInp');if(!inp||inp._pgBound)return;
+    var n=pg.charAt(0).toUpperCase()+pg.slice(1);
+    var inp=el_('hs'+n+'BgInp');if(!inp||inp._pgBound)return;
     inp._pgBound=true;
     inp.onchange=function(){
-      let file=this.files[0];if(!file)return;
-      let reader=new FileReader();
-      reader.onload=ev=>{
-        let d=ev.target.result;
-        // 存入 localforage（大仓库）
-        localforage.setItem(_PBK[pg],d).catch(()=>{});
-        try{localStorage.setItem(_PBK[pg],d);}catch(e){}
-        // 内存缓存，让 showScreen patch 可以即时取用
-        if(!window._pgBgCache)window._pgBgCache={};
-        window._pgBgCache[pg]=d;
-        // 直接更新 UI
-        let img=el_('hs'+n+'BgImg'),hint=el_('hs'+n+'BgHint');
-        if(img){img.src=d;img.style.display='block';}
-        if(hint)hint.style.display='none';
-        let scr=document.getElementById(_PSC[pg]);
-        if(scr){scr.style.backgroundImage='url('+d+')';scr.style.backgroundSize='cover';scr.style.backgroundPosition='center';}
+      var file=this.files[0];if(!file)return;
+      var reader=new FileReader();
+      reader.onload=function(ev){
+        var raw=ev.target.result;
+        compressImg(raw,1200,function(d){
+          // 同时存 localforage 和 localStorage
+          localforage.setItem(_PBK[pg],d).catch(()=>{});
+          try{localStorage.setItem(_PBK[pg],d);}catch(e){}
+          // 内存缓存
+          if(!window._pgBgCache)window._pgBgCache={};
+          window._pgBgCache[pg]=d;
+          // 更新预览缩略图
+          var img=el_('hs'+n+'BgImg'),hint=el_('hs'+n+'BgHint');
+          if(img){img.src=d;img.style.display='block';}
+          if(hint)hint.style.display='none';
+          // 直接应用到目标页面
+          var scr=document.getElementById(_PSC[pg]);
+          if(scr){
+            scr.style.backgroundImage='url('+d+')';
+            scr.style.backgroundSize='cover';
+            scr.style.backgroundPosition='center';
+          }
+        });
       };
       reader.readAsDataURL(file);
     };
