@@ -4316,6 +4316,196 @@ window.wkDelSongRecord=function(idx,cid){
 
 
 <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
+<script>
+try{
+(function initPeriod(){
+  // ── 数据存取 ──
+  var KEYS={startDate:'period_start',cycle:'period_cycle',duration:'period_duration'};
+  function save(k,v){localforage.setItem(KEYS[k],String(v)).catch(()=>{});try{localStorage.setItem(KEYS[k],String(v));}catch(e){}}
+  async function load(k,def){
+    var v=null;try{v=await localforage.getItem(KEYS[k]);}catch(e){}
+    if(!v)try{v=localStorage.getItem(KEYS[k]);}catch(e){}
+    return v!==null&&v!==''?v:def;
+  }
+
+  var state={startDate:'',cycle:28,duration:6};
+
+  async function loadAll(){
+    state.startDate=await load('startDate','');
+    state.cycle=parseInt(await load('cycle','28'));
+    state.duration=parseInt(await load('duration','6'));
+    refreshLabels();
+  }
+
+  function refreshLabels(){
+    var sdEl=document.getElementById('psStartDateVal');
+    var cycEl=document.getElementById('psCycleVal');
+    var durEl=document.getElementById('psDurationVal');
+    if(sdEl)sdEl.textContent=state.startDate||'选择日期 ›';
+    if(cycEl)cycEl.textContent=state.cycle+' ›';
+    if(durEl)durEl.textContent=state.duration+' ›';
+  }
+
+  // ── 标签切换 ──
+  window.switchPeriodTab=function(n){
+    document.getElementById('ptTab1').classList.toggle('active',n===1);
+    document.getElementById('ptTab2').classList.toggle('active',n===2);
+    document.getElementById('periodSettings').classList.toggle('show',n===1);
+    document.getElementById('periodCalendar').classList.toggle('show',n===2);
+    if(n===2)renderCalendar();
+  };
+
+  // ── 选择器 ──
+  var _curPicker=null;
+  window.openPeriodPicker=function(type){
+    _curPicker=type;
+    var modal=document.getElementById('periodPickerModal');
+    var scroll=document.getElementById('periodPickerScroll');
+    var title=document.getElementById('periodPickerTitle');
+    if(!modal)return;
+    scroll.innerHTML='';
+
+    if(type==='startDate'){
+      title.textContent='选择经期开始日期';
+      // 生成近12个月的日期列表（每天）
+      var today=new Date();
+      for(var i=0;i<=180;i++){
+        var d=new Date(today);d.setDate(today.getDate()-i);
+        var str=d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+        var iso=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+        var item=document.createElement('div');item.className='ppk-item'+(state.startDate===iso?' selected':'');
+        item.textContent=str;
+        (function(isoVal,el){el.onclick=function(){state.startDate=isoVal;save('startDate',isoVal);refreshLabels();document.querySelectorAll('#periodPickerScroll .ppk-item').forEach(function(x){x.classList.remove('selected');});el.classList.add('selected');};})(iso,item);
+        scroll.appendChild(item);
+      }
+    } else if(type==='cycle'){
+      title.textContent='选择月经周期（天）';
+      for(var n=21;n<=45;n++){
+        var item=document.createElement('div');item.className='ppk-item'+(state.cycle===n?' selected':'');
+        item.textContent=n+' 天';
+        (function(val,el){el.onclick=function(){state.cycle=val;save('cycle',val);refreshLabels();document.querySelectorAll('#periodPickerScroll .ppk-item').forEach(function(x){x.classList.remove('selected');});el.classList.add('selected');};})(n,item);
+        scroll.appendChild(item);
+      }
+    } else if(type==='duration'){
+      title.textContent='选择经期天数';
+      for(var n=1;n<=10;n++){
+        var item=document.createElement('div');item.className='ppk-item'+(state.duration===n?' selected':'');
+        item.textContent=n+' 天';
+        (function(val,el){el.onclick=function(){state.duration=val;save('duration',val);refreshLabels();document.querySelectorAll('#periodPickerScroll .ppk-item').forEach(function(x){x.classList.remove('selected');});el.classList.add('selected');};})(n,item);
+        scroll.appendChild(item);
+      }
+    }
+    modal.style.display='flex';
+    // 滚动到选中项
+    setTimeout(function(){var sel=scroll.querySelector('.selected');if(sel)sel.scrollIntoView({block:'center'});},50);
+  };
+  window.closePeriodPicker=function(){
+    var modal=document.getElementById('periodPickerModal');
+    if(modal)modal.style.display='none';
+  };
+
+  // ── 日历 ──
+  var calYear=new Date().getFullYear(),calMonth=new Date().getMonth();
+  window.periodCalPrev=function(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar();};
+  window.periodCalNext=function(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar();};
+
+  function calcPeriodDays(){
+    // 返回推算的经期日 Set（YYYY-MM-DD）
+    var days=new Set();
+    if(!state.startDate)return days;
+    var start=new Date(state.startDate);
+    if(isNaN(start))return days;
+    // 往前3个周期 + 往后6个周期
+    for(var c=-3;c<=6;c++){
+      var periodStart=new Date(start);
+      periodStart.setDate(start.getDate()+c*state.cycle);
+      for(var d=0;d<state.duration;d++){
+        var day=new Date(periodStart);day.setDate(periodStart.getDate()+d);
+        days.add(day.toISOString().slice(0,10));
+      }
+    }
+    return days;
+  }
+  function calcFertileDays(){
+    var fertile=new Set(),ovulation=new Set();
+    if(!state.startDate)return{fertile:fertile,ovulation:ovulation};
+    var start=new Date(state.startDate);
+    if(isNaN(start))return{fertile:fertile,ovulation:ovulation};
+    for(var c=-3;c<=6;c++){
+      // 排卵日：下次经期前14天
+      var nextPeriod=new Date(start);nextPeriod.setDate(start.getDate()+(c+1)*state.cycle);
+      var ov=new Date(nextPeriod);ov.setDate(nextPeriod.getDate()-14);
+      ovulation.add(ov.toISOString().slice(0,10));
+      // 易孕期：排卵日前5天 + 后4天
+      for(var d=-5;d<=4;d++){
+        var fd=new Date(ov);fd.setDate(ov.getDate()+d);
+        fertile.add(fd.toISOString().slice(0,10));
+      }
+    }
+    return{fertile:fertile,ovulation:ovulation};
+  }
+
+  function renderCalendar(){
+    try{
+    var titleEl=document.getElementById('pcMonthTitle');
+    var grid=document.getElementById('pcGrid');
+    if(!titleEl||!grid)return;
+    titleEl.textContent=calYear+'年'+(calMonth+1)+'月';
+
+    var periodDays=calcPeriodDays();
+    var _fd=calcFertileDays();
+    var fertile=_fd.fertile,ovulation=_fd.ovulation;
+    var today=new Date().toISOString().slice(0,10);
+
+    // 第一天是星期几（改为周一起）
+    var firstDay=new Date(calYear,calMonth,1).getDay();
+    firstDay=(firstDay+6)%7; // 0=Mon
+    var daysInMonth=new Date(calYear,calMonth+1,0).getDate();
+    var prevDays=new Date(calYear,calMonth,0).getDate();
+
+    grid.innerHTML='';
+    // 上月补位
+    for(var i=firstDay-1;i>=0;i--){
+      var cell=document.createElement('div');cell.className='pc-cell other';
+      cell.innerHTML='<span class="pc-num">'+(prevDays-i)+'</span>';
+      grid.appendChild(cell);
+    }
+    // 本月
+    for(var d=1;d<=daysInMonth;d++){
+      var iso=calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+      var cell=document.createElement('div');cell.className='pc-cell';
+      var cls='';
+      if(iso===today)cls='today';
+      else if(ovulation.has(iso))cls='ovulation';
+      else if(periodDays.has(iso))cls='period';
+      else if(fertile.has(iso))cls='fertile';
+      if(cls)cell.classList.add(cls);
+      if(cls==='ovulation'){
+        cell.innerHTML='<div class="pc-num"><span>'+d+'</span></div>';
+      } else {
+        cell.innerHTML='<span class="pc-num">'+d+'</span>';
+      }
+      grid.appendChild(cell);
+    }
+    // 下月补位
+    var total=firstDay+daysInMonth;
+    var nextFill=(7-total%7)%7;
+    for(var d=1;d<=nextFill;d++){
+      var cell=document.createElement('div');cell.className='pc-cell other';
+      cell.innerHTML='<span class="pc-num">'+d+'</span>';
+      grid.appendChild(cell);
+    }
+    }catch(e){} // end try-catch
+  }
+
+  // ── 初始化 ──
+  window._periodLoadAll=loadAll;
+  window._periodRenderCal=renderCalendar;
+  loadAll();
+  // 注意：showScreen的patch在主JS里做，这里不重复
+})();
+}catch(e){console.warn('大姨妈初始化错误:',e);}
+</script>
 
 <script>
 // localforage CDN 加载失败时的降级方案（避免整个页面崩溃）
@@ -6291,7 +6481,7 @@ let isListRendering = false;
         let lf = await localforage.getItem(`myContacts`);
         if(lf) {
             let arr = typeof lf === `string` ? JSON.parse(lf) : lf;
-            if(arr.length > contacts.length) { contacts = arr; renderContacts(); }
+            if(Array.isArray(arr) && arr.length > 0) { contacts = arr; renderContacts(); }
         }
     } catch(e) {}
 })();
@@ -19245,194 +19435,4 @@ if(document.getElementById('offlineModePanel')) {
     setTimeout(applyHomeWallpaper,200);
   });
 })();
-</script>
-<script>
-try{
-(function initPeriod(){
-  // ── 数据存取 ──
-  var KEYS={startDate:'period_start',cycle:'period_cycle',duration:'period_duration'};
-  function save(k,v){localforage.setItem(KEYS[k],String(v)).catch(()=>{});try{localStorage.setItem(KEYS[k],String(v));}catch(e){}}
-  async function load(k,def){
-    var v=null;try{v=await localforage.getItem(KEYS[k]);}catch(e){}
-    if(!v)try{v=localStorage.getItem(KEYS[k]);}catch(e){}
-    return v!==null&&v!==''?v:def;
-  }
-
-  var state={startDate:'',cycle:28,duration:6};
-
-  async function loadAll(){
-    state.startDate=await load('startDate','');
-    state.cycle=parseInt(await load('cycle','28'));
-    state.duration=parseInt(await load('duration','6'));
-    refreshLabels();
-  }
-
-  function refreshLabels(){
-    var sdEl=document.getElementById('psStartDateVal');
-    var cycEl=document.getElementById('psCycleVal');
-    var durEl=document.getElementById('psDurationVal');
-    if(sdEl)sdEl.textContent=state.startDate||'选择日期 ›';
-    if(cycEl)cycEl.textContent=state.cycle+' ›';
-    if(durEl)durEl.textContent=state.duration+' ›';
-  }
-
-  // ── 标签切换 ──
-  window.switchPeriodTab=function(n){
-    document.getElementById('ptTab1').classList.toggle('active',n===1);
-    document.getElementById('ptTab2').classList.toggle('active',n===2);
-    document.getElementById('periodSettings').classList.toggle('show',n===1);
-    document.getElementById('periodCalendar').classList.toggle('show',n===2);
-    if(n===2)renderCalendar();
-  };
-
-  // ── 选择器 ──
-  var _curPicker=null;
-  window.openPeriodPicker=function(type){
-    _curPicker=type;
-    var modal=document.getElementById('periodPickerModal');
-    var scroll=document.getElementById('periodPickerScroll');
-    var title=document.getElementById('periodPickerTitle');
-    if(!modal)return;
-    scroll.innerHTML='';
-
-    if(type==='startDate'){
-      title.textContent='选择经期开始日期';
-      // 生成近12个月的日期列表（每天）
-      var today=new Date();
-      for(var i=0;i<=180;i++){
-        var d=new Date(today);d.setDate(today.getDate()-i);
-        var str=d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
-        var iso=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-        var item=document.createElement('div');item.className='ppk-item'+(state.startDate===iso?' selected':'');
-        item.textContent=str;
-        (function(isoVal,el){el.onclick=function(){state.startDate=isoVal;save('startDate',isoVal);refreshLabels();document.querySelectorAll('#periodPickerScroll .ppk-item').forEach(function(x){x.classList.remove('selected');});el.classList.add('selected');};})(iso,item);
-        scroll.appendChild(item);
-      }
-    } else if(type==='cycle'){
-      title.textContent='选择月经周期（天）';
-      for(var n=21;n<=45;n++){
-        var item=document.createElement('div');item.className='ppk-item'+(state.cycle===n?' selected':'');
-        item.textContent=n+' 天';
-        (function(val,el){el.onclick=function(){state.cycle=val;save('cycle',val);refreshLabels();document.querySelectorAll('#periodPickerScroll .ppk-item').forEach(function(x){x.classList.remove('selected');});el.classList.add('selected');};})(n,item);
-        scroll.appendChild(item);
-      }
-    } else if(type==='duration'){
-      title.textContent='选择经期天数';
-      for(var n=1;n<=10;n++){
-        var item=document.createElement('div');item.className='ppk-item'+(state.duration===n?' selected':'');
-        item.textContent=n+' 天';
-        (function(val,el){el.onclick=function(){state.duration=val;save('duration',val);refreshLabels();document.querySelectorAll('#periodPickerScroll .ppk-item').forEach(function(x){x.classList.remove('selected');});el.classList.add('selected');};})(n,item);
-        scroll.appendChild(item);
-      }
-    }
-    modal.style.display='flex';
-    // 滚动到选中项
-    setTimeout(function(){var sel=scroll.querySelector('.selected');if(sel)sel.scrollIntoView({block:'center'});},50);
-  };
-  window.closePeriodPicker=function(){
-    var modal=document.getElementById('periodPickerModal');
-    if(modal)modal.style.display='none';
-  };
-
-  // ── 日历 ──
-  var calYear=new Date().getFullYear(),calMonth=new Date().getMonth();
-  window.periodCalPrev=function(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar();};
-  window.periodCalNext=function(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar();};
-
-  function calcPeriodDays(){
-    // 返回推算的经期日 Set（YYYY-MM-DD）
-    var days=new Set();
-    if(!state.startDate)return days;
-    var start=new Date(state.startDate);
-    if(isNaN(start))return days;
-    // 往前3个周期 + 往后6个周期
-    for(var c=-3;c<=6;c++){
-      var periodStart=new Date(start);
-      periodStart.setDate(start.getDate()+c*state.cycle);
-      for(var d=0;d<state.duration;d++){
-        var day=new Date(periodStart);day.setDate(periodStart.getDate()+d);
-        days.add(day.toISOString().slice(0,10));
-      }
-    }
-    return days;
-  }
-  function calcFertileDays(){
-    var fertile=new Set(),ovulation=new Set();
-    if(!state.startDate)return{fertile:fertile,ovulation:ovulation};
-    var start=new Date(state.startDate);
-    if(isNaN(start))return{fertile:fertile,ovulation:ovulation};
-    for(var c=-3;c<=6;c++){
-      // 排卵日：下次经期前14天
-      var nextPeriod=new Date(start);nextPeriod.setDate(start.getDate()+(c+1)*state.cycle);
-      var ov=new Date(nextPeriod);ov.setDate(nextPeriod.getDate()-14);
-      ovulation.add(ov.toISOString().slice(0,10));
-      // 易孕期：排卵日前5天 + 后4天
-      for(var d=-5;d<=4;d++){
-        var fd=new Date(ov);fd.setDate(ov.getDate()+d);
-        fertile.add(fd.toISOString().slice(0,10));
-      }
-    }
-    return{fertile:fertile,ovulation:ovulation};
-  }
-
-  function renderCalendar(){
-    try{
-    var titleEl=document.getElementById('pcMonthTitle');
-    var grid=document.getElementById('pcGrid');
-    if(!titleEl||!grid)return;
-    titleEl.textContent=calYear+'年'+(calMonth+1)+'月';
-
-    var periodDays=calcPeriodDays();
-    var _fd=calcFertileDays();
-    var fertile=_fd.fertile,ovulation=_fd.ovulation;
-    var today=new Date().toISOString().slice(0,10);
-
-    // 第一天是星期几（改为周一起）
-    var firstDay=new Date(calYear,calMonth,1).getDay();
-    firstDay=(firstDay+6)%7; // 0=Mon
-    var daysInMonth=new Date(calYear,calMonth+1,0).getDate();
-    var prevDays=new Date(calYear,calMonth,0).getDate();
-
-    grid.innerHTML='';
-    // 上月补位
-    for(var i=firstDay-1;i>=0;i--){
-      var cell=document.createElement('div');cell.className='pc-cell other';
-      cell.innerHTML='<span class="pc-num">'+(prevDays-i)+'</span>';
-      grid.appendChild(cell);
-    }
-    // 本月
-    for(var d=1;d<=daysInMonth;d++){
-      var iso=calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-      var cell=document.createElement('div');cell.className='pc-cell';
-      var cls='';
-      if(iso===today)cls='today';
-      else if(ovulation.has(iso))cls='ovulation';
-      else if(periodDays.has(iso))cls='period';
-      else if(fertile.has(iso))cls='fertile';
-      if(cls)cell.classList.add(cls);
-      if(cls==='ovulation'){
-        cell.innerHTML='<div class="pc-num"><span>'+d+'</span></div>';
-      } else {
-        cell.innerHTML='<span class="pc-num">'+d+'</span>';
-      }
-      grid.appendChild(cell);
-    }
-    // 下月补位
-    var total=firstDay+daysInMonth;
-    var nextFill=(7-total%7)%7;
-    for(var d=1;d<=nextFill;d++){
-      var cell=document.createElement('div');cell.className='pc-cell other';
-      cell.innerHTML='<span class="pc-num">'+d+'</span>';
-      grid.appendChild(cell);
-    }
-    }catch(e){} // end try-catch
-  }
-
-  // ── 初始化 ──
-  window._periodLoadAll=loadAll;
-  window._periodRenderCal=renderCalendar;
-  loadAll();
-  // 注意：showScreen的patch在主JS里做，这里不重复
-})();
-}catch(e){console.warn('大姨妈初始化错误:',e);}
 </script>
