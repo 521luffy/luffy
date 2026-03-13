@@ -1334,13 +1334,10 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
   }
 
   // ── 初始化 ──
+  window._periodLoadAll=loadAll;
+  window._periodRenderCal=renderCalendar;
   loadAll();
-  // 打开时刷新
-  var _origSS=window.showScreen;
-  window.showScreen=function(id){
-    _origSS(id);
-    if(id==='scrPeriod'){loadAll().then(function(){if(document.getElementById('ptTab2')&&document.getElementById('ptTab2').classList.contains('active'))renderCalendar();});}
-  };
+  // 注意：showScreen的patch在主JS里做，这里不重复
 })();
 </script>
     <style>
@@ -19337,6 +19334,13 @@ if(document.getElementById('offlineModePanel')) {
   window.showScreen=function(id){
     origShowScreen(id);
     if(id==='scrCoupleSpace'){csUpdateDays();csLoadBg();csLoadCheckin();csFitTopBar();}
+    if(id==='scrPeriod'){
+      if(typeof window._periodLoadAll==='function')window._periodLoadAll().then(function(){
+        if(document.getElementById('ptTab2')&&document.getElementById('ptTab2').classList.contains('active')){
+          if(typeof window._periodRenderCal==='function')window._periodRenderCal();
+        }
+      });
+    }
   };
 
 })();
