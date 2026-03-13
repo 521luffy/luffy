@@ -6475,13 +6475,75 @@ $(`btnHomeWb`).onclick = () =>{ showScreen(`scrWb`); renderWb(); };
 $(`btnCloseModal`).onclick = () =>modal.style.display=`none`;
 let contacts = ls.getItem(`myContacts`) ? JSON.parse(ls.getItem(`myContacts`)) : [];
 let isListRendering = false;
-// 启动时异步从 localforage 补充 contacts（localStorage 满时备用）
+// 启动时从localforage读取contacts，若为空则从分组成员重建
 (async function syncContacts() {
     try {
+        // 1. 先从localforage读myContacts
         let lf = await localforage.getItem(`myContacts`);
         if(lf) {
             let arr = typeof lf === `string` ? JSON.parse(lf) : lf;
-            if(Array.isArray(arr) && arr.length > 0) { contacts = arr; renderContacts(); }
+            if(Array.isArray(arr) && arr.length > 0) {
+                contacts = arr;
+                renderContacts();
+                return;
+            }
+        }
+        // 2. myContacts为空，扫描localforage所有键找出所有char并重建
+        let seen = new Set();
+        let rebuilt = [];
+        // 先从分组里找
+        let groups = [];
+        try { groups = JSON.parse(ls.getItem('contactGroups')||'[]'); } catch(e){}
+        try {
+            let lfg = await localforage.getItem('contactGroups');
+            if(lfg) groups = typeof lfg==='string'?JSON.parse(lfg):lfg;
+        } catch(e){}
+        for(let grp of groups) {
+            for(let cid of (grp.memberIds||[])) {
+                if(!seen.has(String(cid))) {
+                    seen.add(String(cid));
+                    let name = originalGetItem.call(ls, `cN_`+cid) || String(cid);
+                    rebuilt.push({id:String(cid), name, prompt:``});
+                }
+            }
+        }
+        // 再从localforage扫描所有 cN_ 开头的键（覆盖所有char，不管有没有加分组）
+        try {
+            let allKeys = await localforage.keys();
+            for(let k of allKeys) {
+                // cN_xxx 是char名字键
+                if(k.startsWith('cN_')) {
+                    let cid = k.slice(3);
+                    if(!cid || cid==='default' || seen.has(cid)) continue;
+                    // 验证：有chatHistory或者有名字才算真实char
+                    let name = null;
+                    try { name = await localforage.getItem(k); } catch(e){}
+                    if(!name) name = originalGetItem.call(ls, k);
+                    if(!name) continue;
+                    seen.add(cid);
+                    rebuilt.push({id:cid, name:String(name), prompt:``});
+                }
+            }
+        } catch(e){}
+        // 也扫localStorage里的cN_键
+        try {
+            for(let i=0; i<localStorage.length; i++) {
+                let k = localStorage.key(i);
+                if(k && k.startsWith('cN_')) {
+                    let cid = k.slice(3);
+                    if(!cid || cid==='default' || seen.has(cid)) continue;
+                    let name = originalGetItem.call(ls, k);
+                    if(!name) continue;
+                    seen.add(cid);
+                    rebuilt.push({id:cid, name:String(name), prompt:``});
+                }
+            }
+        } catch(e){}
+        if(rebuilt.length > 0) {
+            contacts = rebuilt;
+            try { originalSetItem.call(ls, `myContacts`, JSON.stringify(rebuilt)); } catch(e){}
+            await localforage.setItem(`myContacts`, rebuilt).catch(()=>{});
+            renderContacts();
         }
     } catch(e) {}
 })();
