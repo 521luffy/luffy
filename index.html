@@ -6474,21 +6474,29 @@ $(`btnRoomSet`).onclick = () => {
 $(`btnSetChatBack`).onclick = () =>showScreen(`scrRoom`);
 $(`btnHomeWb`).onclick = () =>{ showScreen(`scrWb`); renderWb(); };
 $(`btnCloseModal`).onclick = () =>modal.style.display=`none`;
-let contacts = ls.getItem(`myContacts`) ? JSON.parse(ls.getItem(`myContacts`)) : [];
+let contacts = [];
+try { let _mc = originalGetItem.call(ls, `myContacts`); if(_mc) contacts = JSON.parse(_mc); } catch(e){}
 let isListRendering = false;
 // 启动时异步从 localforage 补充 contacts（localStorage 满时备用）
 (async function syncContacts() {
     try {
         let lf = await localforage.getItem(`myContacts`);
         if(lf) {
-            let arr = typeof lf === `string` ? JSON.parse(lf) : lf;
-            if(arr.length > contacts.length) { contacts = arr; renderContacts(); }
+            let arr = Array.isArray(lf) ? lf : (typeof lf === `string` ? JSON.parse(lf) : []);
+            if(arr.length > 0 && arr.length >= contacts.length) {
+                contacts = arr;
+                // ★ 同步回写 localStorage（如果之前丢失的话）
+                try { originalSetItem.call(ls, `myContacts`, JSON.stringify(arr)); } catch(e){}
+                isListRendering = false;
+                renderContacts();
+            }
         }
-    } catch(e) {}
+    } catch(e) { console.warn('syncContacts出错:', e); }
 })();
 async function renderContacts() {
     if (isListRendering) return;
     isListRendering = true;
+  try {
     let listItems = document.querySelectorAll(`#listContent .chat-item`);
     for(let i=1; i<listItems.length; i++) listItems[i].remove();
     let contactItems = document.querySelectorAll(`#contactContent .chat-item`);
@@ -6500,6 +6508,7 @@ async function renderContacts() {
     // 消息列表用的排序版本
     let contactsByTime = [...contacts].sort((a, b) => {
         let getLastTime = (id) => {
+            try {
             let t = Number(originalGetItem.call(ls, `lastChatTime_`+id) || 0);
             if(t) return t;
             let h = originalGetItem.call(ls, `chatHistory_`+id);
@@ -6510,27 +6519,36 @@ async function renderContacts() {
                 let last = arr[arr.length-1];
                 return last.ts || last.time || 0;
             } catch(e){ return 0; }
+            } catch(e){ return 0; }
         };
         return getLastTime(b.id) - getLastTime(a.id);
     });
 
     // listContent按聊天时间排序的顺序构建
     for (let c of contactsByTime) {
+      try {
         let div = document.createElement(`div`);
         div.className = `chat-item`;
-        let savedHist = await localforage.getItem(`chatHistory_` + c.id) || originalGetItem.call(ls, `chatHistory_` + c.id);
-        let isoHist = savedHist ? (typeof savedHist === 'string' ? JSON.parse(savedHist) : savedHist) : [];
+        let savedHist = null;
+        try { savedHist = await localforage.getItem(`chatHistory_` + c.id); } catch(e){}
+        if(!savedHist) try { savedHist = originalGetItem.call(ls, `chatHistory_` + c.id); } catch(e){}
+        let isoHist = [];
+        try { isoHist = savedHist ? (typeof savedHist === 'string' ? JSON.parse(savedHist) : savedHist) : []; } catch(e){ isoHist = []; }
         if(currentChatId === c.id) isoHist = history;
-        let prevTxt = getPreviewText(isoHist);
+        let prevTxt = '';
+        try { prevTxt = getPreviewText(isoHist); } catch(e){}
         // 先用 localStorage 快速渲染，异步从 localforage 补充
-        let isoAiA = originalGetItem.call(ls, `aiI_` + c.id);
+        let isoAiA = '';
+        try { isoAiA = originalGetItem.call(ls, `aiI_` + c.id); } catch(e){}
         // 异步加载高清头像
         (async () => {
+            try {
             let lfAva = await localforage.getItem(`aiI_` + c.id);
             if(lfAva && div) {
                 let avaEl = div.querySelector(`.avatar-list`);
                 if(avaEl) { avaEl.style.backgroundImage = `url(${lfAva})`; avaEl.innerText = ``; }
             }
+            } catch(e){}
         })();
         let avaHtml = isoAiA ? `<div class=avatar-list style=background-image:url(`+isoAiA+`);font-size:0;></div>` : `<div class=avatar-list>👤</div>`;
         let isoName = originalGetItem.call(ls, `cN_` + c.id) || c.name;
@@ -6646,21 +6664,29 @@ async function renderContacts() {
             }, 150);
         }, {passive:true});
         $(`listContent`).appendChild(div);
+      } catch(e) { console.warn('渲染消息列表项出错:', c && c.id, e); }
     }
     // 联系人页（contactContent）按添加顺序单独渲染（newest first）
     if($(`contactContent`)) {
         for (let c of contactsSorted) {
-            let savedHist2 = await localforage.getItem(`chatHistory_` + c.id) || originalGetItem.call(ls, `chatHistory_` + c.id);
-            let isoHist2 = savedHist2 ? (typeof savedHist2 === 'string' ? JSON.parse(savedHist2) : savedHist2) : [];
-            let isoAiA2 = originalGetItem.call(ls, `aiI_` + c.id);
+          try {
+            let savedHist2 = null;
+            try { savedHist2 = await localforage.getItem(`chatHistory_` + c.id); } catch(e){}
+            if(!savedHist2) try { savedHist2 = originalGetItem.call(ls, `chatHistory_` + c.id); } catch(e){}
+            let isoHist2 = [];
+            try { isoHist2 = savedHist2 ? (typeof savedHist2 === 'string' ? JSON.parse(savedHist2) : savedHist2) : []; } catch(e){}
+            let isoAiA2 = '';
+            try { isoAiA2 = originalGetItem.call(ls, `aiI_` + c.id); } catch(e){}
             let avaHtml2 = isoAiA2 ? `<div class=avatar-list style=background-image:url(${isoAiA2});font-size:0;></div>` : `<div class=avatar-list>👤</div>`;
             // 异步从 localforage 更新联系人页头像（保证实时同步）
             (async () => {
+              try {
                 let lfAva2 = await localforage.getItem(`aiI_` + c.id);
                 if(lfAva2 && divC) {
                     let avaEl2 = divC.querySelector(`.avatar-list`);
                     if(avaEl2) { avaEl2.style.backgroundImage = `url(${lfAva2})`; avaEl2.innerText = ``; }
                 }
+              } catch(e){}
             })();
             let isoName2 = originalGetItem.call(ls, `cN_` + c.id) || c.name;
             let isBlk2 = originalGetItem.call(ls, `isBlocked_` + c.id) === 'true';
@@ -6748,10 +6774,12 @@ async function renderContacts() {
                 }, 100);
             }, {passive:true});
             $(`contactContent`).appendChild(divC);
+          } catch(e) { console.warn('渲染联系人项出错:', c && c.id, e); }
         }
     }
-    isListRendering = false;
-    if(typeof _sortMsgListByTime===`function`) _sortMsgListByTime();
+  } catch(e) { console.error('renderContacts整体出错:', e); }
+  finally { isListRendering = false; }
+    if(typeof _sortMsgListByTime===`function`) try { _sortMsgListByTime(); } catch(e){}
 }
 
 // === 全局加载角色聊天室函数（被抓包等场景使用）===
@@ -19459,7 +19487,7 @@ window.doScanRecover = async function() {
             seen.add(cid);
             let name = null;
             try { name = await localforage.getItem('cN_' + cid); } catch(e){}
-            if(!name) try { name = localStorage.getItem('cN_' + cid); } catch(e){}
+            if(!name) try { name = originalGetItem.call(localStorage, 'cN_' + cid); } catch(e){}
             if(!name) name = '角色_' + cid;
             rebuilt.push({id: cid, name: String(name), prompt: ''});
         }
@@ -19468,7 +19496,8 @@ window.doScanRecover = async function() {
     // 扫描 localStorage 所有键
     try {
         for(let i = 0; i < localStorage.length; i++) {
-            let k = localStorage.key(i);
+            let k = null;
+            try { k = localStorage.key(i); } catch(e){ continue; }
             if(!k) continue;
             let cid = null;
             if(k.startsWith('cN_')) cid = k.slice(3);
@@ -19476,7 +19505,9 @@ window.doScanRecover = async function() {
             else if(k.startsWith('cAP_')) cid = k.slice(4);
             if(!cid || cid === 'default' || seen.has(cid)) continue;
             seen.add(cid);
-            let name = localStorage.getItem('cN_' + cid) || '角色_' + cid;
+            let name = null;
+            try { name = originalGetItem.call(localStorage, 'cN_' + cid); } catch(e){}
+            if(!name) name = '角色_' + cid;
             rebuilt.push({id: cid, name: String(name), prompt: ''});
         }
     } catch(e) { console.warn('localStorage扫描出错:', e); }
@@ -19490,12 +19521,15 @@ window.doScanRecover = async function() {
         return;
     }
 
+    // ★ 关键修复：用 originalSetItem 直接写入，绕过代理
     contacts = rebuilt;
-    try { localStorage.setItem('myContacts', JSON.stringify(rebuilt)); } catch(e){}
-    await localforage.setItem('myContacts', rebuilt).catch(()=>{});
+    let jsonStr = JSON.stringify(rebuilt);
+    try { originalSetItem.call(localStorage, 'myContacts', jsonStr); } catch(e){ console.warn('localStorage写入myContacts失败(容量满)，localforage兜底'); }
+    try { await localforage.setItem('myContacts', rebuilt); } catch(e){ console.warn('localforage写入myContacts失败:', e); }
 
+    // ★ 关键修复：强制重置渲染锁，await等待渲染完成
     isListRendering = false;
-    renderContacts();
+    try { await renderContacts(); } catch(e){ console.error('扫描后renderContacts出错:', e); }
     alert('✅ 找回 ' + rebuilt.length + ' 个角色：\n' + rebuilt.map(c => c.name).join('、'));
 };
 </script>
