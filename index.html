@@ -4317,6 +4317,7 @@ window.wkDelSongRecord=function(idx,cid){
 
 <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
 <script>
+try{
 (function initPeriod(){
   // ── 数据存取 ──
   var KEYS={startDate:'period_start',cycle:'period_cycle',duration:'period_duration'};
@@ -4427,9 +4428,9 @@ window.wkDelSongRecord=function(idx,cid){
   }
   function calcFertileDays(){
     var fertile=new Set(),ovulation=new Set();
-    if(!state.startDate)return{fertile,ovulation};
+    if(!state.startDate)return{fertile:fertile,ovulation:ovulation};
     var start=new Date(state.startDate);
-    if(isNaN(start))return{fertile,ovulation};
+    if(isNaN(start))return{fertile:fertile,ovulation:ovulation};
     for(var c=-3;c<=6;c++){
       // 排卵日：下次经期前14天
       var nextPeriod=new Date(start);nextPeriod.setDate(start.getDate()+(c+1)*state.cycle);
@@ -4441,17 +4442,19 @@ window.wkDelSongRecord=function(idx,cid){
         fertile.add(fd.toISOString().slice(0,10));
       }
     }
-    return{fertile,ovulation};
+    return{fertile:fertile,ovulation:ovulation};
   }
 
   function renderCalendar(){
+    try{
     var titleEl=document.getElementById('pcMonthTitle');
     var grid=document.getElementById('pcGrid');
     if(!titleEl||!grid)return;
     titleEl.textContent=calYear+'年'+(calMonth+1)+'月';
 
     var periodDays=calcPeriodDays();
-    var {fertile,ovulation}=calcFertileDays();
+    var _fd=calcFertileDays();
+    var fertile=_fd.fertile,ovulation=_fd.ovulation;
     var today=new Date().toISOString().slice(0,10);
 
     // 第一天是星期几（改为周一起）
@@ -4492,6 +4495,7 @@ window.wkDelSongRecord=function(idx,cid){
       cell.innerHTML='<span class="pc-num">'+d+'</span>';
       grid.appendChild(cell);
     }
+    }catch(e){} // end try-catch
   }
 
   // ── 初始化 ──
@@ -4500,6 +4504,7 @@ window.wkDelSongRecord=function(idx,cid){
   loadAll();
   // 注意：showScreen的patch在主JS里做，这里不重复
 })();
+}catch(e){console.warn('大姨妈初始化错误:',e);}
 </script>
 
 <script>
