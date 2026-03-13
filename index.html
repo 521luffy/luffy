@@ -1435,6 +1435,12 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
             <div id=tabBtnGroupChats onclick="switchContactTab('groupchats')" style="flex:1;padding:10px 0;text-align:center;font-size:14px;color:#999;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;">群聊</div>
         </div>
         <!-- 好友 panel -->
+        <!-- 扫描恢复按钮 -->
+        <div id="scanRecoverBanner" style="display:none;background:#fff8e1;border:1.5px solid #ffd54f;border-radius:12px;margin:12px;padding:14px 16px;flex-shrink:0;">
+          <div style="font-size:14px;font-weight:bold;color:#e65100;margin-bottom:6px;">⚠️ 好友列表为空</div>
+          <div style="font-size:12px;color:#666;margin-bottom:10px;">数据可能还在，点击下方按钮扫描恢复</div>
+          <button id="btnScanRecover" onclick="doScanRecover()" style="width:100%;padding:10px;background:linear-gradient(135deg,#6c5ce7,#a29bfe);color:white;border:none;border-radius:10px;font-size:14px;font-weight:bold;cursor:pointer;">🔍 扫描并恢复所有角色</button>
+        </div>
         <div id=contactContent class=list-content style="display:flex;flex-direction:column;">
             <div id=btnContactToRoom class=chat-item style="display:none;">
                 <div id=contactAva class=avatar-list>👤</div>
@@ -6475,75 +6481,13 @@ $(`btnHomeWb`).onclick = () =>{ showScreen(`scrWb`); renderWb(); };
 $(`btnCloseModal`).onclick = () =>modal.style.display=`none`;
 let contacts = ls.getItem(`myContacts`) ? JSON.parse(ls.getItem(`myContacts`)) : [];
 let isListRendering = false;
-// 启动时从localforage读取contacts，若为空则从分组成员重建
+// 启动时异步从 localforage 补充 contacts（localStorage 满时备用）
 (async function syncContacts() {
     try {
-        // 1. 先从localforage读myContacts
         let lf = await localforage.getItem(`myContacts`);
         if(lf) {
             let arr = typeof lf === `string` ? JSON.parse(lf) : lf;
-            if(Array.isArray(arr) && arr.length > 0) {
-                contacts = arr;
-                renderContacts();
-                return;
-            }
-        }
-        // 2. myContacts为空，扫描localforage所有键找出所有char并重建
-        let seen = new Set();
-        let rebuilt = [];
-        // 先从分组里找
-        let groups = [];
-        try { groups = JSON.parse(ls.getItem('contactGroups')||'[]'); } catch(e){}
-        try {
-            let lfg = await localforage.getItem('contactGroups');
-            if(lfg) groups = typeof lfg==='string'?JSON.parse(lfg):lfg;
-        } catch(e){}
-        for(let grp of groups) {
-            for(let cid of (grp.memberIds||[])) {
-                if(!seen.has(String(cid))) {
-                    seen.add(String(cid));
-                    let name = originalGetItem.call(ls, `cN_`+cid) || String(cid);
-                    rebuilt.push({id:String(cid), name, prompt:``});
-                }
-            }
-        }
-        // 再从localforage扫描所有 cN_ 开头的键（覆盖所有char，不管有没有加分组）
-        try {
-            let allKeys = await localforage.keys();
-            for(let k of allKeys) {
-                // cN_xxx 是char名字键
-                if(k.startsWith('cN_')) {
-                    let cid = k.slice(3);
-                    if(!cid || cid==='default' || seen.has(cid)) continue;
-                    // 验证：有chatHistory或者有名字才算真实char
-                    let name = null;
-                    try { name = await localforage.getItem(k); } catch(e){}
-                    if(!name) name = originalGetItem.call(ls, k);
-                    if(!name) continue;
-                    seen.add(cid);
-                    rebuilt.push({id:cid, name:String(name), prompt:``});
-                }
-            }
-        } catch(e){}
-        // 也扫localStorage里的cN_键
-        try {
-            for(let i=0; i<localStorage.length; i++) {
-                let k = localStorage.key(i);
-                if(k && k.startsWith('cN_')) {
-                    let cid = k.slice(3);
-                    if(!cid || cid==='default' || seen.has(cid)) continue;
-                    let name = originalGetItem.call(ls, k);
-                    if(!name) continue;
-                    seen.add(cid);
-                    rebuilt.push({id:cid, name:String(name), prompt:``});
-                }
-            }
-        } catch(e){}
-        if(rebuilt.length > 0) {
-            contacts = rebuilt;
-            try { originalSetItem.call(ls, `myContacts`, JSON.stringify(rebuilt)); } catch(e){}
-            await localforage.setItem(`myContacts`, rebuilt).catch(()=>{});
-            renderContacts();
+            if(arr.length > contacts.length) { contacts = arr; renderContacts(); }
         }
     } catch(e) {}
 })();
@@ -19496,5 +19440,116 @@ if(document.getElementById('offlineModePanel')) {
     // initial wallpaper apply
     setTimeout(applyHomeWallpaper,200);
   });
+})();
+</script>
+
+<script>
+// ══ 扫描恢复好友列表 ══
+window.doScanRecover = async function() {
+    let btn = document.getElementById('btnScanRecover');
+    if(btn) { btn.disabled=true; btn.textContent='⏳ 扫描中...'; }
+    
+    let seen = new Set();
+    let rebuilt = [];
+    
+    // 第一步：扫描 localforage 所有键
+    try {
+        let allKeys = await localforage.keys();
+        console.log('localforage总键数:', allKeys.length);
+        
+        // 找所有 cN_ 开头的键（char名字）
+        let cnKeys = allKeys.filter(k => k.startsWith('cN_'));
+        console.log('找到cN_键:', cnKeys);
+        
+        for(let k of cnKeys) {
+            let cid = k.slice(3);
+            if(!cid || cid==='default' || seen.has(cid)) continue;
+            let name = null;
+            try { name = await localforage.getItem(k); } catch(e){}
+            if(!name) name = originalGetItem.call(ls, k);
+            if(!name) continue;
+            seen.add(cid);
+            rebuilt.push({id:cid, name:String(name), prompt:``});
+        }
+        
+        // 也找 chatHistory_ 开头的键（有聊天记录的char）
+        let histKeys = allKeys.filter(k => k.startsWith('chatHistory_') && k !== 'chatHistory_default');
+        for(let k of histKeys) {
+            let cid = k.slice('chatHistory_'.length);
+            if(!cid || cid==='default' || seen.has(cid)) continue;
+            // 用id作为临时名字，后面再读真实名字
+            let name = null;
+            try { name = await localforage.getItem('cN_'+cid); } catch(e){}
+            if(!name) name = originalGetItem.call(ls, 'cN_'+cid);
+            if(!name) name = '角色_'+cid;
+            seen.add(cid);
+            rebuilt.push({id:cid, name:String(name), prompt:``});
+        }
+    } catch(e) { console.warn('localforage扫描出错:', e); }
+    
+    // 第二步：扫描 localStorage 所有键
+    try {
+        for(let i=0; i<localStorage.length; i++) {
+            let k = localStorage.key(i);
+            if(!k) continue;
+            if(k.startsWith('cN_')) {
+                let cid = k.slice(3);
+                if(!cid || cid==='default' || seen.has(cid)) continue;
+                let name = originalGetItem.call(ls, k);
+                if(!name) continue;
+                seen.add(cid);
+                rebuilt.push({id:cid, name:String(name), prompt:``});
+            }
+            // 也找chatHistory_
+            if(k.startsWith('chatHistory_')) {
+                let cid = k.slice('chatHistory_'.length);
+                if(!cid || cid==='default' || seen.has(cid)) continue;
+                let name = originalGetItem.call(ls, 'cN_'+cid) || '角色_'+cid;
+                seen.add(cid);
+                rebuilt.push({id:cid, name:String(name), prompt:``});
+            }
+        }
+    } catch(e) { console.warn('localStorage扫描出错:', e); }
+    
+    console.log('扫描结果:', rebuilt);
+    
+    if(rebuilt.length === 0) {
+        alert('😢 扫描完毕，未找到任何角色数据。\n\n可能的原因：\n1. 数据被浏览器清除\n2. 文件路径改变导致存储隔离');
+        if(btn) { btn.disabled=false; btn.textContent='🔍 扫描并恢复所有角色'; }
+        return;
+    }
+    
+    // 写回 myContacts
+    contacts = rebuilt;
+    try { originalSetItem.call(ls, 'myContacts', JSON.stringify(rebuilt)); } catch(e){}
+    await localforage.setItem('myContacts', rebuilt).catch(()=>{});
+    
+    // 隐藏横幅，重新渲染
+    let banner = document.getElementById('scanRecoverBanner');
+    if(banner) banner.style.display='none';
+    
+    isListRendering = false;
+    renderContacts();
+    
+    alert('✅ 扫描完成！找回 ' + rebuilt.length + ' 个角色：\n' + rebuilt.map(c=>c.name).join('、'));
+};
+
+// 好友页面显示时，如果contacts为空就显示扫描按钮
+(function() {
+    let origSwitch = window.switchContactTab;
+    window.switchContactTab = function(tab) {
+        if(origSwitch) origSwitch(tab);
+        if(tab === 'friends') {
+            let banner = document.getElementById('scanRecoverBanner');
+            if(banner) {
+                banner.style.display = (contacts.length === 0) ? 'block' : 'none';
+            }
+        }
+    };
+    // 页面加载后也检查一次
+    setTimeout(function() {
+        let banner = document.getElementById('scanRecoverBanner');
+        if(banner && contacts.length === 0) banner.style.display = 'block';
+    }, 1500);
 })();
 </script>
