@@ -664,22 +664,60 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 <div id="scrCoupleSpace" class="scr-flex" style="display:none;flex-direction:column;overflow:hidden;position:absolute;top:0;width:100%;height:100%;z-index:35;background:#fff5f7;background-size:cover;background-position:center;">
   <style>
     /* ── 情侣空间样式 ── */
-    #csTopBar{display:flex;align-items:center;justify-content:space-between;padding:max(calc(env(safe-area-inset-top,0px)+8px),28px) 14px 10px;flex-shrink:0;background:rgba(255,245,247,.85);backdrop-filter:blur(10px);position:relative;z-index:2;}
+    #csTopBar{display:flex;align-items:center;justify-content:space-between;padding:max(calc(env(safe-area-inset-top,0px)+18px),52px) 14px 12px;flex-shrink:0;background:rgba(255,245,247,.92);backdrop-filter:blur(10px);position:relative;z-index:2;}
     #csBack{font-size:20px;color:#c77d98;cursor:pointer;width:32px;}
     #csTitle{font-size:16px;font-weight:700;color:#c44f7a;flex:1;text-align:center;}
-    #csBgBtn{font-size:18px;cursor:pointer;width:32px;text-align:right;}
+    #csBgBtn{font-size:18px;cursor:pointer;width:28px;text-align:right;}
+    #csCharBtn{font-size:18px;cursor:pointer;width:28px;text-align:right;}
     /* 顶部情侣头像+木牌区 */
     #csHeroRow{display:flex;align-items:center;padding:10px 14px 4px;gap:10px;flex-shrink:0;}
     #csAvatarBox{display:flex;gap:-8px;flex-shrink:0;}
     .cs-ava{width:58px;height:58px;border-radius:50%;background:rgba(255,200,220,.4);border:2.5px solid #ffb6c1;overflow:hidden;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;position:relative;}
     .cs-ava:last-child{margin-left:-12px;border-color:#ffa0c0;}
     .cs-ava img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;}
-    /* 小木牌 */
-    #csBoard{flex:1;min-width:0;background:linear-gradient(135deg,#d4a574,#b8895a);border-radius:12px;padding:10px 14px;box-shadow:2px 4px 10px rgba(0,0,0,.15),inset 0 1px 0 rgba(255,255,255,.2);position:relative;overflow:hidden;}
-    #csBoard::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent,transparent 18px,rgba(0,0,0,.04) 18px,rgba(0,0,0,.04) 19px);pointer-events:none;}
-    #csBoardTop{font-size:11px;color:rgba(255,255,255,.75);margin-bottom:2px;}
-    #csBoardDays{font-size:28px;font-weight:900;color:#fff;line-height:1.1;text-shadow:1px 2px 4px rgba(0,0,0,.3);}
-    #csBoardDayLbl{font-size:11px;color:rgba(255,255,255,.8);}
+    /* 悬挂木牌 */
+    #csBoard{
+      flex:1;min-width:0;position:relative;
+      display:flex;align-items:center;justify-content:center;
+      padding-top:18px;
+    }
+    #csBoardInner{
+      position:relative;
+      background:linear-gradient(160deg,#f5e6c8,#e8c98a,#d4a060,#e8c98a);
+      border:3px solid #8B5E2A;
+      border-radius:6px;
+      padding:10px 20px 12px;
+      text-align:center;
+      box-shadow:2px 4px 12px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.4);
+      width:100%;box-sizing:border-box;
+    }
+    #csBoardInner::before{
+      content:'';position:absolute;top:-20px;left:50%;transform:translateX(-50%);
+      width:2px;height:22px;background:linear-gradient(#aaa,#888);
+    }
+    #csBoardInner::after{
+      content:'●';position:absolute;top:-26px;left:50%;transform:translateX(-50%);
+      font-size:10px;color:#888;line-height:1;
+    }
+    /* 木纹纹理 */
+    #csBoardInner .wood-grain{
+      position:absolute;inset:0;border-radius:4px;
+      background:repeating-linear-gradient(90deg,transparent,transparent 20px,rgba(0,0,0,.03) 20px,rgba(0,0,0,.03) 21px);
+      pointer-events:none;
+    }
+    #csBoardTop{font-size:11px;color:#6b3a0f;margin-bottom:4px;font-weight:600;letter-spacing:.5px;position:relative;z-index:1;}
+    #csBoardDaysWrap{display:flex;align-items:baseline;justify-content:center;gap:4px;position:relative;z-index:1;}
+    #csBoardDays{
+      font-size:32px;font-weight:900;color:#5a2d0c;line-height:1;
+      text-shadow:1px 1px 2px rgba(255,255,255,.4);
+      background:none;border:none;outline:none;
+      width:80px;text-align:center;font-family:inherit;
+      cursor:text;
+    }
+    #csBoardDays:focus{
+      background:rgba(255,255,255,.35);border-radius:6px;
+    }
+    #csBoardDayLbl{font-size:13px;color:#6b3a0f;font-weight:700;}
     /* 主体区 flex row: 左竖栏 + 右内容 */
     #csBody{flex:1;display:flex;overflow:hidden;}
     /* 左侧恋爱打卡竖栏 */
@@ -713,8 +751,34 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
   <div id="csTopBar">
     <span id="csBack">＜</span>
     <span id="csTitle">💕 情侣空间</span>
+    <span id="csCharBtn" title="切换角色">👥</span>
     <span id="csBgBtn" title="换壁纸">🖼</span>
     <input type="file" id="csBgInput" accept="image/*" style="display:none">
+  </div>
+
+  <!-- char切换下拉面板 -->
+  <div id="csCharPanel" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;z-index:100;background:rgba(0,0,0,.4);backdrop-filter:blur(4px);">
+    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:88%;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.2);max-height:70vh;display:flex;flex-direction:column;">
+      <div style="background:linear-gradient(135deg,#ff8fab,#c44f7a);color:white;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+        <span style="font-weight:700;font-size:16px;">💑 选择情侣空间伴侣</span>
+        <span onclick="document.getElementById('csCharPanel').style.display='none'" style="cursor:pointer;font-size:22px;line-height:1;">×</span>
+      </div>
+      <div id="csCharList" style="overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
+  </div>
+
+  <!-- 自定义邀请确认弹窗 -->
+  <div id="csInviteModal" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;z-index:200;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);justify-content:center;align-items:center;">
+    <div style="width:80%;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.2);">
+      <div style="background:linear-gradient(135deg,#ffb6c1,#ff8fab);padding:20px;text-align:center;">
+        <div style="font-size:36px;margin-bottom:8px;">💌</div>
+        <div style="font-size:15px;font-weight:700;color:white;" id="csInviteText">确定要邀请他开通情侣空间吗？</div>
+      </div>
+      <div style="display:flex;border-top:1px solid #f0f0f0;">
+        <button onclick="document.getElementById('csInviteModal').style.display='none'" style="flex:1;padding:14px;border:none;background:white;font-size:15px;color:#999;cursor:pointer;border-right:1px solid #f0f0f0;">取消</button>
+        <button id="csInviteConfirmBtn" style="flex:1;padding:14px;border:none;background:white;font-size:15px;font-weight:700;color:#c44f7a;cursor:pointer;">确定</button>
+      </div>
+    </div>
   </div>
 
   <!-- 头像 + 木牌 -->
@@ -732,9 +796,14 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
       </div>
     </div>
     <div id="csBoard">
-      <div id="csBoardTop">我们在一起</div>
-      <div id="csBoardDays">—</div>
-      <div id="csBoardDayLbl">天 ❤️</div>
+      <div id="csBoardInner">
+        <div class="wood-grain"></div>
+        <div id="csBoardTop">我们在一起</div>
+        <div id="csBoardDaysWrap">
+          <input id="csBoardDays" type="number" min="0" max="99999" inputmode="numeric" placeholder="—">
+          <span id="csBoardDayLbl">天</span>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -18481,15 +18550,182 @@ if(document.getElementById('offlineModePanel')) {
   // 计算在一起天数（复用纪念日卡片的数据 ANN.date）
   function csUpdateDays(){
     var daysEl=document.getElementById('csBoardDays');if(!daysEl)return;
-    // 从 localforage 读纪念日天数
-    var lfKey='hd_ann_date';
+    // 先读用户手动设置的自定义天数
+    var customKey='cs_custom_days';
     Promise.resolve().then(async function(){
+      var custom=null;
+      try{custom=await localforage.getItem(customKey);}catch(e){}
+      if(custom===null){try{custom=localStorage.getItem(customKey);}catch(e){}}
+      if(custom!==null&&custom!==''&&!isNaN(parseInt(custom))){
+        daysEl.value=parseInt(custom);return;
+      }
+      // 没有自定义则从纪念日自动计算
+      var lfKey='hd_ann_date';
       var v=null;
       try{v=await localforage.getItem(lfKey);}catch(e){}
       if(v===null){try{v=localStorage.getItem(lfKey);}catch(e){}}
-      if(v!==null&&!isNaN(parseInt(v))){daysEl.textContent=parseInt(v);}
-      else{daysEl.textContent='?';}
+      if(v!==null&&!isNaN(parseInt(v))){daysEl.value=parseInt(v);}
+      else{daysEl.value='';}
     });
+  }
+
+  // 绑定天数输入框：失焦保存
+  (function bindDaysInput(){
+    var inp=document.getElementById('csBoardDays');if(!inp)return;
+    inp.onchange=inp.onblur=function(){
+      var v=this.value;
+      localforage.setItem('cs_custom_days',v).catch(function(){});
+      try{localStorage.setItem('cs_custom_days',v);}catch(e){}
+    };
+    // 点击时全选方便修改
+    inp.onfocus=function(){this.select();};
+  })();
+
+  // 情侣空间 char 切换面板
+  (function initCsCharPanel(){
+    var btn=document.getElementById('csCharBtn');
+    var panel=document.getElementById('csCharPanel');
+    var list=document.getElementById('csCharList');
+    var inviteModal=document.getElementById('csInviteModal');
+    var inviteConfirmBtn=document.getElementById('csInviteConfirmBtn');
+    if(!btn||!panel||!list)return;
+
+    var _pendingCharId=null;
+
+    btn.onclick=function(){
+      renderCsCharList();
+      panel.style.display='flex';
+      panel.style.flexDirection='column';
+      panel.style.justifyContent='center';
+      panel.style.alignItems='center';
+    };
+
+    async function renderCsCharList(){
+      list.innerHTML='';
+      var chars=[];
+      try{var lf=await localforage.getItem('myContacts');if(lf)chars=Array.isArray(lf)?lf:JSON.parse(lf);}catch(e){}
+      if(!chars.length){try{var r=localStorage.getItem('myContacts');if(r)chars=JSON.parse(r);}catch(e){}}
+      if(!chars.length&&typeof contacts!=='undefined')chars=contacts;
+
+      if(!chars.length){
+        list.innerHTML='<div style="text-align:center;color:#ccc;padding:20px;font-size:13px;">暂无角色</div>';
+        return;
+      }
+
+      // 读取已开通的char
+      var openedKey='cs_opened_chars';
+      var opened={};
+      try{var od=await localforage.getItem(openedKey);if(od)opened=typeof od==='object'?od:JSON.parse(od);}catch(e){}
+      if(!Object.keys(opened).length){try{var os=localStorage.getItem(openedKey);if(os)opened=JSON.parse(os);}catch(e){}}
+
+      for(var i=0;i<chars.length;i++){
+        var ct=chars[i];
+        var name=localStorage.getItem('cN_'+ct.id)||ct.name||'角色';
+        var isOpened=opened[ct.id];
+
+        var item=document.createElement('div');
+        item.style.cssText='display:flex;align-items:center;gap:12px;padding:12px 14px;background:#fff8fa;border-radius:14px;border:1px solid #ffe0eb;';
+
+        // 头像
+        var ava=document.createElement('div');
+        ava.style.cssText='width:44px;height:44px;border-radius:50%;background:#ffd6e0;border:2px solid #ffb6c1;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;overflow:hidden;';
+        // 尝试加载头像图
+        var avaImg=document.createElement('img');
+        avaImg.style.cssText='width:100%;height:100%;object-fit:cover;display:none;';
+        (function(img,id){
+          Promise.resolve().then(async function(){
+            var d=null;
+            try{d=await localforage.getItem('ava_'+id);}catch(e){}
+            if(!d){try{d=localStorage.getItem('ava_'+id);}catch(e){}}
+            if(d&&d.length>10){img.src=d;img.style.display='block';}
+          });
+        })(avaImg,ct.id);
+        ava.innerHTML='👤';
+        ava.appendChild(avaImg);
+
+        // 名字
+        var nameEl=document.createElement('div');
+        nameEl.style.cssText='flex:1;font-size:14px;font-weight:600;color:#333;';
+        nameEl.textContent=name;
+
+        // 状态按钮
+        var statusEl=document.createElement('div');
+        if(isOpened){
+          statusEl.innerHTML='<span style="color:#ff8fab;font-weight:700;font-size:13px;">已开通</span><span onclick="csCsBreakUp(\''+ct.id+'\',\''+name+'\')" style="color:#ccc;font-size:12px;cursor:pointer;margin-left:6px;">解除关系</span>';
+        } else {
+          var invBtn=document.createElement('button');
+          invBtn.textContent='未邀请';
+          invBtn.style.cssText='background:linear-gradient(135deg,#ff8fab,#c44f7a);color:white;border:none;border-radius:16px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;';
+          (function(charId,charName,btn){
+            btn.onclick=function(){
+              _pendingCharId=charId;
+              document.getElementById('csInviteText').textContent='确定要邀请「'+charName+'」开通情侣空间吗？';
+              inviteModal.style.display='flex';
+            };
+          })(ct.id,name,invBtn);
+          statusEl.appendChild(invBtn);
+        }
+
+        item.appendChild(ava);item.appendChild(nameEl);item.appendChild(statusEl);
+        list.appendChild(item);
+      }
+    }
+
+    // 确认邀请
+    if(inviteConfirmBtn){
+      inviteConfirmBtn.onclick=async function(){
+        inviteModal.style.display='none';
+        panel.style.display='none';
+        if(!_pendingCharId)return;
+
+        // 标记已开通
+        var openedKey='cs_opened_chars';
+        var opened={};
+        try{var od=await localforage.getItem(openedKey);if(od)opened=typeof od==='object'?od:JSON.parse(od);}catch(e){}
+        opened[_pendingCharId]=true;
+        localforage.setItem(openedKey,opened).catch(function(){});
+        try{localStorage.setItem(openedKey,JSON.stringify(opened));}catch(e){}
+
+        // 发送邀请卡片到该char聊天页面
+        var cardMsg={role:'system',type:'cs_invite',text:'💌 情侣空间邀请卡\n\n你收到了一份情侣空间邀请，点击接受后即可开通专属情侣空间！',ts:Date.now()};
+        var histKey='chatHistory_'+_pendingCharId;
+        var hist=[];
+        try{var lh=await localforage.getItem(histKey);if(lh)hist=Array.isArray(lh)?lh:JSON.parse(lh);}catch(e){}
+        if(!hist.length){try{var ls2=localStorage.getItem(histKey);if(ls2)hist=JSON.parse(ls2);}catch(e){}}
+        hist.push(cardMsg);
+        localforage.setItem(histKey,hist).catch(function(){});
+        try{localStorage.setItem(histKey,JSON.stringify(hist));}catch(e){}
+
+        // 在聊天中显示恭喜消息（如果当前聊天就是这个char）
+        showCsSuccessToast('恭喜你们已开通情侣空间！🎉');
+        _pendingCharId=null;
+      };
+    }
+
+    // 关闭面板点背景
+    panel.onclick=function(e){if(e.target===panel)panel.style.display='none';};
+  })();
+
+  // 解除关系
+  window.csCsBreakUp=async function(charId,charName){
+    if(!confirm('确定要与「'+charName+'」解除情侣关系吗？'))return;
+    var openedKey='cs_opened_chars';
+    var opened={};
+    try{var od=await localforage.getItem(openedKey);if(od)opened=typeof od==='object'?od:JSON.parse(od);}catch(e){}
+    delete opened[charId];
+    localforage.setItem(openedKey,opened).catch(function(){});
+    try{localStorage.setItem(openedKey,JSON.stringify(opened));}catch(e){}
+    document.getElementById('csCharPanel').style.display='none';
+    showCsSuccessToast('已解除情侣关系');
+  };
+
+  // 成功提示
+  function showCsSuccessToast(msg){
+    var t=document.createElement('div');
+    t.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(135deg,#ff8fab,#c44f7a);color:white;padding:16px 28px;border-radius:20px;font-size:15px;font-weight:700;z-index:9999;text-align:center;box-shadow:0 6px 20px rgba(196,79,122,.4);pointer-events:none;';
+    t.textContent=msg;
+    document.body.appendChild(t);
+    setTimeout(function(){t.remove();},2500);
   }
 
   // 壁纸
