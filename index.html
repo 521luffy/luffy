@@ -20426,8 +20426,8 @@ ${userHint}
 - 每段不超过60字，生动具体，有画面感
 - 每段是一条独立的记忆片段，不是概括
 - 如果这段时期里应该有${myName}的身影，自然带出（不要刻意）
-- 用JSON数组输出，格式严格如下，不加任何多余字符：
-[{"text":"记忆内容","hasUser":true或false},{"text":"...","hasUser":...},{"text":"...","hasUser":...}]
+- 只输出纯JSON数组，不加任何说明文字、不加代码块标记，必须使用英文直引号：
+[{"text":"记忆内容","hasUser":true},{"text":"...","hasUser":false},{"text":"...","hasUser":false}]
 ${existing?'已有记忆（不要重复）：'+existing:''}`;
 
     // 显示加载状态
@@ -20443,25 +20443,36 @@ ${existing?'已有记忆（不要重复）：'+existing:''}`;
     if(genBtn){ genBtn.disabled=true; genBtn.style.opacity='0.6'; }
 
     try{
-      var resp = await fetch(pxy,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:1200,messages:[{role:'user',content:sys}]})});
+      var resp = await fetch(pxy,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:2000,messages:[{role:'user',content:sys}]})});
       var data = await resp.json();
       var raw = (data.choices?.[0]?.message?.content||'').trim();
-      // 清除各种格式的代码块标记（包含前置空格的情况）
+      // 清除代码块标记
       var clean = raw.replace(/\s*```json\s*/gi,'').replace(/\s*```\s*/g,'').trim();
-      // 提取第一个JSON数组
+      // ★ 关键修复：把中文弯引号统一替换成标准双引号
+      clean = clean.replace(/[\u201c\u201d\u300c\u300d\u2018\u2019]/g, '"');
+      // 提取JSON数组
       var arrMatch = clean.match(/\[[\s\S]*\]/);
-      // 如果截断了没有闭合，尝试补全
+      // 截断修复：找最后一个完整的 }，手动补 ]
       if(!arrMatch){
         var bracketStart = clean.indexOf('[');
         if(bracketStart !== -1){
           var partial = clean.slice(bracketStart);
-          // 找到最后一个完整的 } 然后闭合数组
           var lastBrace = partial.lastIndexOf('}');
-          if(lastBrace !== -1) partial = partial.slice(0, lastBrace+1) + ']';
-          try{ var testParse = JSON.parse(partial); arrMatch = [partial]; }catch(e2){}
+          if(lastBrace !== -1){
+            partial = partial.slice(0, lastBrace+1) + ']';
+            try{ JSON.parse(partial); arrMatch = [partial]; }catch(e2){
+              // 还是失败说明内部也有问题，逐个取完整对象
+              var items = []; var depth=0; var start=-1;
+              for(var ci=0;ci<partial.length;ci++){
+                if(partial[ci]==='{'){if(depth===0)start=ci;depth++;}
+                else if(partial[ci]==='}'){depth--;if(depth===0&&start!==-1){try{items.push(JSON.parse(partial.slice(start,ci+1)));}catch(e3){}start=-1;}}
+              }
+              if(items.length) arrMatch = [JSON.stringify(items)];
+            }
+          }
         }
       }
-      if(!arrMatch) throw new Error('no array found\n原始：'+raw.slice(0,120));
+      if(!arrMatch) throw new Error('no array found\n原始：'+raw.slice(0,150));
       var arr = JSON.parse(arrMatch[0]);
       if(!Array.isArray(arr)) throw new Error('not array');
       if(!_pmData[ch]) _pmData[ch]=[];
