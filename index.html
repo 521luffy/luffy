@@ -8237,8 +8237,6 @@ window._csHandleInviteReply = async function(action) {
         if(typeof history !== 'undefined'){
             for(var i=history.length-1;i>=0;i--){
                 if(history[i].type==='cs_invite'&&history[i].charId===cid){ history[i].status='accepted'; }
-                // 清除一次性感知消息，避免重复触发
-                if(history[i]._sys&&history[i].role==='user'&&history[i].content&&history[i].content.includes('[同意情侣空间]')){ history.splice(i,1); }
             }
             if(typeof ls !== 'undefined') ls.setItem('chatHistory', JSON.stringify(history));
         }
@@ -8246,7 +8244,6 @@ window._csHandleInviteReply = async function(action) {
         if(typeof history !== 'undefined'){
             for(var i=history.length-1;i>=0;i--){
                 if(history[i].type==='cs_invite'&&history[i].charId===cid){ history[i].status='rejected'; }
-                if(history[i]._sys&&history[i].role==='user'&&history[i].content&&history[i].content.includes('[同意情侣空间]')){ history.splice(i,1); }
             }
             if(typeof ls !== 'undefined') ls.setItem('chatHistory', JSON.stringify(history));
         }
@@ -8966,6 +8963,16 @@ $(`btnLemon`).onclick = async () =>{
                 sys += `当前现实时间：` + updTime().toLocaleString() + `，请保持感知。\n`;
             }
     // ★ 经期状态自动注入（只描述状态，不提具体日期，避免和自定义剧情时间冲突）
+    try {
+        // ★ 情侣空间邀请一次性提示注入（读后立即清除，不影响后续消息）
+        try{
+            var _csNotifyKey='cs_invite_notify_'+currentChatId;
+            if(localStorage.getItem(_csNotifyKey)==='1'){
+                localStorage.removeItem(_csNotifyKey); // 立即清除，只注入一次
+                sys+=`【情侣空间邀请】用户刚向你发了一张情侣空间邀请卡。请根据你的性格和感情状态自然决定是否接受，在回复末尾另起一行加 [同意情侣空间] 或 [拒绝情侣空间]。\n`;
+            }
+        }catch(e){}
+    } catch(e2) {}
     try {
         // ★ 恋爱清单上下文注入
         var _llKey='loveList_'+currentChatId;
@@ -19836,16 +19843,10 @@ if(document.getElementById('offlineModePanel')) {
         try{var lh=await localforage.getItem(histKey);if(lh)hist=Array.isArray(lh)?lh:JSON.parse(lh);}catch(e){}
         if(!hist.length){try{var ls2=localStorage.getItem(histKey);if(ls2)hist=JSON.parse(ls2);}catch(e){}}
         hist.push(cardMsg);
-        // 紧跟一条隐藏的感知消息，让AI在下次聊天时自然看到邀请并决定接受/拒绝
-        // _sys:true 使其不渲染为气泡，但会被纳入发给API的messages上下文
-        hist.push({
-          role:'user',
-          content:'[系统提示：我刚刚向你发送了一张情侣空间邀请卡。请你根据你的性格和当前我们之间的感情状态，决定是否接受这份邀请。如果你接受，在回复末尾另起一行加：[同意情侣空间]；如果你拒绝，在回复末尾另起一行加：[拒绝情侣空间]。请在正文中自然地表达你的态度，不要刻意提及"系统指令"。]',
-          ts:Date.now(),
-          _sys:true
-        });
         localforage.setItem(histKey,hist).catch(function(){});
         try{localStorage.setItem(histKey,JSON.stringify(hist));}catch(e){}
+        // 设置一次性标记，下次该char发消息时注入邀请提示（只注入一次，不污染history）
+        try{localStorage.setItem('cs_invite_notify_'+cid,'1');}catch(e){}
 
         // 如果当前就在该char的聊天页面，立即渲染邀请卡片
         if(typeof currentChatId!=='undefined'&&currentChatId===cid&&typeof msgs!=='undefined'&&msgs){
