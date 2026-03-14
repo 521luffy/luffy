@@ -1030,14 +1030,20 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 
 /* 生成按钮 */
 #pmGenerateBtn{
-  position:fixed;bottom:24px;right:20px;
   background:linear-gradient(135deg,#c8864a,#a0612e);
   color:white;border:none;border-radius:50px;
   padding:12px 22px;font-size:14px;font-weight:700;
-  cursor:pointer;z-index:10;
+  cursor:pointer;
   box-shadow:0 4px 16px rgba(139,94,60,.35);
   display:flex;align-items:center;gap:6px;
   -webkit-tap-highlight-color:transparent;
+  width:auto;
+}
+#pmFooter{
+  flex-shrink:0;
+  display:flex;justify-content:flex-end;
+  padding:10px 16px 16px;
+  background:linear-gradient(0deg,#dfc89a,transparent);
 }
 
 /* 记忆卡片 */
@@ -1142,8 +1148,10 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
   <div class="pm-empty" id="pmEmpty">还没有任何记忆<br>点击下方按钮让他讲述这段时光</div>
 </div>
 
-<!-- 生成按钮 -->
-<button id="pmGenerateBtn">✨ 生成这段记忆</button>
+<!-- 底部生成按钮 -->
+<div id="pmFooter">
+  <button id="pmGenerateBtn">✨ 生成这段记忆</button>
+</div>
 
 <!-- 新增章节弹窗 -->
 <div id="pmNewChapterModal">
@@ -20153,9 +20161,6 @@ window.doScanRecover = async function() {
 
 <script>
 // ═══════════════════════════════════════════════
-
-<script>
-// ═══════════════════════════════════════════════
 // TA的过去 (scrPastMemory) 逻辑
 // ═══════════════════════════════════════════════
 (function initPastMemory(){
@@ -20165,6 +20170,18 @@ window.doScanRecover = async function() {
   var _pmData = {}; // { chapterName: [ {id, text, hasUser, ts} ] }
   var _pmCustomChapters = []; // 自定义章节名
   var _pmCurrentChapter = null;
+
+  /* ── 根据人设智能过滤固定章节 ── */
+  function getAvailableFixedChapters(){
+    var charAP = (_pmCharId ? localStorage.getItem('cAP_'+_pmCharId)||'' : '');
+    var charRel = (_pmCharId ? localStorage.getItem('cR_'+_pmCharId)||'' : '');
+    var combined = charAP + charRel;
+    var result = ['童年','学生时代','恋爱经历'];
+    if(combined.match(/上班|职场|工作|公司|社会人|打工|职员|白领|律师|医生|工程师|程序员|老师|教授|CEO|总裁|总监|已毕业|大学毕业|参加工作/)){
+      result.push('工作后');
+    }
+    return result;
+  }
 
   /* ── 获取当前charId ── */
   function getPmCharId(){
@@ -20200,7 +20217,7 @@ window.doScanRecover = async function() {
 
   /* ── 所有章节列表 ── */
   function allChapters(){
-    return FIXED_CHAPTERS.concat(_pmCustomChapters);
+    return getAvailableFixedChapters().concat(_pmCustomChapters);
   }
 
   /* ── 渲染标签栏 ── */
@@ -20223,13 +20240,22 @@ window.doScanRecover = async function() {
         del.textContent = '×';
         del.onclick = function(e){
           e.stopPropagation();
-          if(!confirm('删除章节「'+ch+'」及其所有记忆？')) return;
-          _pmCustomChapters = _pmCustomChapters.filter(function(x){return x!==ch;});
-          delete _pmData[ch];
-          if(_pmCurrentChapter===ch) _pmCurrentChapter=allChapters()[0]||FIXED_CHAPTERS[0];
-          pmSave();
-          pmRenderTabs();
-          pmRenderBoard();
+          var _ov=document.createElement('div');
+          _ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:9998;';
+          var _bx=document.createElement('div');
+          _bx.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:16px;padding:20px 18px;width:78%;z-index:9999;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.2);';
+          _bx.innerHTML='<div style="font-size:14px;color:#333;margin-bottom:16px;">删除章节「'+ch+'」及其所有记忆？</div><div style="display:flex;gap:10px;"><button style="flex:1;padding:10px;border:1px solid #ddd;border-radius:10px;background:#f8f8f8;color:#888;cursor:pointer;">取消</button><button style="flex:1;padding:10px;border:none;border-radius:10px;background:#ff7675;color:white;font-weight:700;cursor:pointer;">删除</button></div>';
+          document.body.appendChild(_ov); document.body.appendChild(_bx);
+          function _cl(){ _ov.remove(); _bx.remove(); }
+          _bx.children[1].children[0].onclick=_cl;
+          _bx.children[1].children[1].onclick=function(){
+            _cl();
+            _pmCustomChapters = _pmCustomChapters.filter(function(x){return x!==ch;});
+            delete _pmData[ch];
+            if(_pmCurrentChapter===ch) _pmCurrentChapter=allChapters()[0]||'童年';
+            pmSave(); pmRenderTabs(); pmRenderBoard();
+          };
+          _ov.onclick=_cl;
         };
         tab.appendChild(del);
       }
