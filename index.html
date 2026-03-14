@@ -8927,7 +8927,10 @@ $(`btnLemon`).onclick = async () =>{
         mkBub(t, `r`); iptMsg.value = ``; if(typeof _autoResizeIptMsg === 'function') _autoResizeIptMsg(); $(`quoteBox`).style.display = `none`; currentQuote = ``;
         history.push({role: `user`, content: t}); ls.setItem(`chatHistory`, JSON.stringify(history)); updateListPreview();
     }
-        if(history.length === 0) return;
+        if(history.length === 0) {
+        // 如果有情侣空间邀请待处理，即使history为空也继续
+        try{ if(!localStorage.getItem('cs_invite_notify_'+currentChatId)) return; }catch(e){ return; }
+    }
     let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value, tp = parseFloat($(`apiTemp`).value)||0.8;
     if(!pxy || !key || !mod) { mkBub(`请先配置网络。`, `l`); return; }
     if(!pxy.includes(`chat/completions`)) pxy = pxy.replace(/\/$/, ``) + `/chat/completions`;
@@ -19850,14 +19853,22 @@ if(document.getElementById('offlineModePanel')) {
         hist.push(cardMsg);
         localforage.setItem(histKey,hist).catch(function(){});
         try{localStorage.setItem(histKey,JSON.stringify(hist));}catch(e){}
-        // 设置一次性标记，下次该char发消息时注入邀请提示（只注入一次，不污染history）
+        // 设置一次性标记供sys注入使用
         try{localStorage.setItem('cs_invite_notify_'+cid,'1');}catch(e){}
 
-        // 如果当前就在该char的聊天页面，立即渲染邀请卡片
+        // 如果当前就在该char的聊天页面，立即渲染邀请卡片并自动触发char回复
         if(typeof currentChatId!=='undefined'&&currentChatId===cid&&typeof msgs!=='undefined'&&msgs){
           var cardEl=renderCsInviteCard(cardMsg);
           if(cardEl) msgs.appendChild(cardEl);
           msgs.scrollTop=msgs.scrollHeight;
+          // 关闭面板后自动让char对邀请做出反应（模拟点击发送，不带输入内容）
+          panel.style.display='none';
+          setTimeout(function(){
+            var lemonBtn=document.getElementById('btnLemon');
+            if(lemonBtn) lemonBtn.click();
+          }, 600);
+          showCsSuccessToast('💌 邀请卡已发送！');
+          return; // 已处理，跳过下面的toast
         }
 
         showCsSuccessToast('💌 邀请卡已发送！去聊天页面和他确认吧~');
