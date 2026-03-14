@@ -20443,14 +20443,25 @@ ${existing?'已有记忆（不要重复）：'+existing:''}`;
     if(genBtn){ genBtn.disabled=true; genBtn.style.opacity='0.6'; }
 
     try{
-      var resp = await fetch(pxy,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:600,messages:[{role:'user',content:sys}]})});
+      var resp = await fetch(pxy,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:1200,messages:[{role:'user',content:sys}]})});
       var data = await resp.json();
       var raw = (data.choices?.[0]?.message?.content||'').trim();
-      // 解析JSON
-      var clean = raw.replace(/```json|```/g,'').trim();
-      // 提取第一个JSON数组（即使AI在前后加了说明文字）
+      // 清除各种格式的代码块标记（包含前置空格的情况）
+      var clean = raw.replace(/\s*```json\s*/gi,'').replace(/\s*```\s*/g,'').trim();
+      // 提取第一个JSON数组
       var arrMatch = clean.match(/\[[\s\S]*\]/);
-      if(!arrMatch) throw new Error('no array found');
+      // 如果截断了没有闭合，尝试补全
+      if(!arrMatch){
+        var bracketStart = clean.indexOf('[');
+        if(bracketStart !== -1){
+          var partial = clean.slice(bracketStart);
+          // 找到最后一个完整的 } 然后闭合数组
+          var lastBrace = partial.lastIndexOf('}');
+          if(lastBrace !== -1) partial = partial.slice(0, lastBrace+1) + ']';
+          try{ var testParse = JSON.parse(partial); arrMatch = [partial]; }catch(e2){}
+        }
+      }
+      if(!arrMatch) throw new Error('no array found\n原始：'+raw.slice(0,120));
       var arr = JSON.parse(arrMatch[0]);
       if(!Array.isArray(arr)) throw new Error('not array');
       if(!_pmData[ch]) _pmData[ch]=[];
