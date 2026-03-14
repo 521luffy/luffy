@@ -20387,7 +20387,19 @@ window.doScanRecover = async function() {
     var ch = _pmCurrentChapter;
     if(!_pmCharId){ alert('请先在情侣空间选择伴侣！'); return; }
     var pxy=''; var key=''; var mod=''; var tp=0.8;
-    try{ pxy=localStorage.getItem('pxy')||''; key=localStorage.getItem('key')||''; mod=localStorage.getItem('mod')||''; tp=parseFloat(localStorage.getItem('temp')||'0.8')||0.8; }catch(e){}
+    // 读API配置：先走代理ls（兼容localforage双写），再fallback原生localStorage
+    try{
+      pxy = (typeof originalGetItem==='function'?originalGetItem.call(localStorage,'pxy'):localStorage.getItem('pxy'))||'';
+      key = (typeof originalGetItem==='function'?originalGetItem.call(localStorage,'key'):localStorage.getItem('key'))||'';
+      mod = (typeof originalGetItem==='function'?originalGetItem.call(localStorage,'mod'):localStorage.getItem('mod'))||'';
+      tp  = parseFloat((typeof originalGetItem==='function'?originalGetItem.call(localStorage,'temp'):localStorage.getItem('temp'))||'0.8')||0.8;
+    }catch(e){}
+    // 如果还是空，从localforage异步读一次
+    if(!pxy||!key){
+      try{ pxy = await localforage.getItem('pxy')||pxy; }catch(e){}
+      try{ key = await localforage.getItem('key')||key; }catch(e){}
+      try{ mod = await localforage.getItem('mod')||mod; }catch(e){}
+    }
     if(!pxy||!key){ alert('请先配置API！'); return; }
     if(!pxy.includes('chat/completions')) pxy = pxy.replace(/\/$/,'') + '/chat/completions';
 
@@ -20436,7 +20448,10 @@ ${existing?'已有记忆（不要重复）：'+existing:''}`;
       var raw = (data.choices?.[0]?.message?.content||'').trim();
       // 解析JSON
       var clean = raw.replace(/```json|```/g,'').trim();
-      var arr = JSON.parse(clean);
+      // 提取第一个JSON数组（即使AI在前后加了说明文字）
+      var arrMatch = clean.match(/\[[\s\S]*\]/);
+      if(!arrMatch) throw new Error('no array found');
+      var arr = JSON.parse(arrMatch[0]);
       if(!Array.isArray(arr)) throw new Error('not array');
       if(!_pmData[ch]) _pmData[ch]=[];
       arr.forEach(function(item){
@@ -20452,7 +20467,8 @@ ${existing?'已有记忆（不要重复）：'+existing:''}`;
       syncMemoriesToChat(ch);
     }catch(e){
       console.warn('生成记忆失败',e);
-      alert('生成失败，请检查API配置后重试');
+      var errMsg = '生成失败：'+(e&&e.message?e.message:'未知错误')+'\n\n原始返回：'+(typeof raw!=='undefined'?String(raw).slice(0,100):'（无）');
+      alert(errMsg);
     }finally{
       var le = document.getElementById('pmLoadingEl');
       if(le) le.remove();
