@@ -20364,6 +20364,34 @@ window.doScanRecover = async function() {
     inner.appendChild(front);
     inner.appendChild(back);
     wrap.appendChild(inner);
+
+    // 长按删除
+    (function(w, c){
+      var _pt;
+      function showDeleteMenu(){
+        var overlay = document.createElement('div');
+        overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:9998;';
+        var menu = document.createElement('div');
+        menu.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,.18);z-index:9999;overflow:hidden;min-width:160px;';
+        menu.innerHTML='<div style="padding:15px 24px;font-size:15px;color:#ff7675;font-weight:600;cursor:pointer;text-align:center;border-bottom:1px solid #f0f0f0;">🗑 删除这张便利贴</div><div style="padding:12px 24px;font-size:14px;color:#888;cursor:pointer;text-align:center;">取消</div>';
+        document.body.appendChild(overlay);
+        document.body.appendChild(menu);
+        function close(){ menu.remove(); overlay.remove(); }
+        menu.children[0].onclick = async function(){
+          close();
+          _llCards = _llCards.filter(function(x){ return x.id!==c.id; });
+          await llSave();
+          llRender();
+        };
+        menu.children[1].onclick = close;
+        overlay.onclick = close;
+      }
+      w.addEventListener('contextmenu',function(e){e.preventDefault();showDeleteMenu();});
+      w.addEventListener('touchstart',function(){ _pt=setTimeout(showDeleteMenu,500); },{passive:true});
+      w.addEventListener('touchend',function(){ clearTimeout(_pt); });
+      w.addEventListener('touchmove',function(){ clearTimeout(_pt); });
+    })(wrap, card);
+
     return wrap;
   }
 
@@ -20434,7 +20462,9 @@ window.doScanRecover = async function() {
       ? myName+'刚刚在恋爱清单的冰箱上点击了【满足他】来回应你的心愿便利贴「'+card.text+'」。你非常开心，在便利贴背面留言并通过消息通知对方。'
       : myName+'拒绝了你的心愿便利贴「'+card.text+'」。你有点小失落，用符合你性格的方式回应。';
 
-    var sys = '你是'+charName+'。'+(charAP?'设定：'+charAP:'')+'\\n'+actionText+'\\n请直接以你的性格回复一条简短消息（不超过80字），不加任何前缀或角色标注。这条消息将直接显示在便利贴背面。';
+    var sys = `你是${charName}。${charAP?'设定：'+charAP:''}
+${actionText}
+请直接以你的性格回复一条简短消息（不超过80字），不加任何前缀或角色标注。这条消息将直接显示在便利贴背面。`;
 
     try{
       var resp = await fetch(pxy,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:200,messages:[{role:'user',content:sys}]})});
@@ -20446,11 +20476,17 @@ window.doScanRecover = async function() {
       await llSave();
       var scr = document.getElementById('scrLoveList');
       if(scr && scr.style.display!=='none') llRender();
-      // 同时写入聊天记录让 char 知情
+      // 写入聊天记录让char知情（role:user + _sys:true，不渲染但进入上下文）
+      var memContent2 = `【恋爱清单记忆】${myName}${action==='yes'?'满足了':'拒绝了'}我贴的心愿「${card.text}」，我回复：${reply}`;
+      var memMsg2 = {role:'user', content:memContent2, ts:Date.now(), _sys:true, _llEvent:true};
+      if(typeof currentChatId!=='undefined' && currentChatId===_llCharId && typeof history!=='undefined'){
+        history.push(memMsg2);
+        if(typeof ls!=='undefined') ls.setItem('chatHistory', JSON.stringify(history));
+      }
       var histKey = 'chatHistory_'+_llCharId;
       var hist = [];
       try{ var lh = await localforage.getItem(histKey); if(lh) hist=Array.isArray(lh)?lh:JSON.parse(lh); }catch(e){}
-      hist.push({role:'system',type:'ll_reply',text:'【恋爱清单留言】'+reply,ts:Date.now()});
+      hist.push(memMsg2);
       localforage.setItem(histKey,hist).catch(function(){});
       try{ localStorage.setItem(histKey,JSON.stringify(hist)); }catch(e){}
     }catch(e){ console.warn('恋爱清单AI通知失败',e); }
@@ -20533,7 +20569,14 @@ window.doScanRecover = async function() {
     var charAP = localStorage.getItem('cAP_'+_llCharId)||'';
     var myName = localStorage.getItem('cMyN_'+_llCharId)||localStorage.getItem('cMyN')||'我';
 
-    var sys = '你是'+charName+'。'+(charAP?'性格设定：'+charAP:'')+'\\n'+myName+'刚刚在你们的恋爱清单冰箱上贴了一张心愿便利贴：「'+card.text+'」。\\n请你根据自己的性格决定：同意认领还是驳回这个心愿。\\n回复格式（严格遵守）：\\n第一行只能是 [认领心愿:'+card.id+'] 或 [驳回心愿:'+card.id+']\\n第二行起写你给'+myName+'的专属留言（不超过50字，手写风格，温柔或傲娇）。\\n不加任何角色前缀！';
+    // 用模板字面量，确保换行正确传给API
+    var sys = `你是${charName}。${charAP?'性格设定：'+charAP:''}
+${myName}刚刚在你们的恋爱清单冰箱上贴了一张心愿便利贴：「${card.text}」。
+请你根据自己的性格决定：同意认领还是驳回这个心愿。
+回复格式（严格遵守）：
+第一行只能是 [认领心愿:${card.id}] 或 [驳回心愿:${card.id}]
+第二行起写你给${myName}的专属留言（不超过50字，手写风格，温柔或傲娇）。
+不加任何角色前缀！`;
 
     try{
       var resp = await fetch(pxy,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:200,messages:[{role:'user',content:sys}]})});
@@ -20556,11 +20599,23 @@ window.doScanRecover = async function() {
           await llSave();
           var scr2 = document.getElementById('scrLoveList');
           if(scr2 && scr2.style.display!=='none') llRender();
-          // 把留言写入聊天记录（让 char 知情）
+
+          // 写入记忆：role:assistant 确保不被API过滤，并同步内存history
+          var memContent = action2==='claimed'
+            ? `【恋爱清单记忆】我认领了${myName}的心愿「${card.text}」并留言：${_llCards[idx2].backMsg}`
+            : `【恋爱清单记忆】我驳回了${myName}的心愿「${card.text}」并留言：${_llCards[idx2].backMsg}`;
+          var memMsg = {role:'assistant', content:memContent, ts:Date.now(), _llEvent:true};
+
+          // 同步当前内存history（如果正好在和这个char聊天）
+          if(typeof currentChatId!=='undefined' && currentChatId===_llCharId && typeof history!=='undefined'){
+            history.push(memMsg);
+            if(typeof ls!=='undefined') ls.setItem('chatHistory', JSON.stringify(history));
+          }
+          // 持久化到localforage（供下次打开聊天时加载）
           var histKey2 = 'chatHistory_'+_llCharId;
           var hist2=[];
           try{ var lh2=await localforage.getItem(histKey2);if(lh2)hist2=Array.isArray(lh2)?lh2:JSON.parse(lh2);}catch(e){}
-          hist2.push({role:'assistant',content:(action2==='claimed'?'【认领了心愿「'+card.text+'」】 '+_llCards[idx2].backMsg:'【驳回了心愿「'+card.text+'」】 '+_llCards[idx2].backMsg),ts:Date.now(),_llEvent:true});
+          hist2.push(memMsg);
           localforage.setItem(histKey2,hist2).catch(function(){});
           try{localStorage.setItem(histKey2,JSON.stringify(hist2));}catch(e){}
         }
