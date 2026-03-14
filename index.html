@@ -9189,6 +9189,12 @@ if(charStickers.length > 0) {
     if(window._callSysAddon && !window._offlineMode) sys += window._callSysAddon;
                 let arr = sys ? [{role: `system`, content: sys}] : [];
     let ctxHist = history.slice(-(parseInt($(`cfgCtx`).value)||10));
+    // ★ 过滤掉非标准消息（邀请卡片、解除卡片等），这些不能发给API
+    ctxHist = ctxHist.filter(m => {
+        if(m.type === 'cs_invite' || m.type === 'cs_breakup') return false;
+        if(m.role === 'system' && !m.content) return false;
+        return true;
+    });
         let mappedHist = ctxHist.map(m => {
         if (m.content.includes(`[红包消息：`) && m.content.includes(`|data:image`)) {
             let match = m.content.match(/^\[红包消息：([\d\.]+)\|(.*?)\|(.*?)\|(data:image.*?)\]$/);
@@ -19784,9 +19790,8 @@ if(document.getElementById('offlineModePanel')) {
             };
           })(ct.id, name);
           statusEl.innerHTML='<span style="color:#ff8fab;font-weight:700;font-size:13px;">已开通 ✓</span><span onclick="event.stopPropagation();csCsBreakUp(\''+ct.id+'\',\''+name+'\')" style="color:#ccc;font-size:12px;cursor:pointer;margin-left:6px;">解除关系</span>';
-        } else if(isPending){
-          statusEl.innerHTML='<span style="color:#aaa;font-size:12px;font-weight:600;">💌 邀请中…</span>';
         } else {
+          // ★ 不再显示"邀请中"，始终可重新邀请
           var invBtn=document.createElement('button');
           invBtn.textContent='邀请开通';
           invBtn.style.cssText='background:linear-gradient(135deg,#ff8fab,#c44f7a);color:white;border:none;border-radius:16px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;';
