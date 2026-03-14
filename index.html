@@ -20503,8 +20503,9 @@ window.doScanRecover = async function() {
 读完要让人想问「后来呢」，不要停留在表面叙述。`;
 
     } else if(ch === '恋爱经历'){
-      // 青梅竹马且没有其他恋爱经历：直接显示专属内容，不调API
-      var isOnlyUserLove = isCM && !(charAP+charRel).match(/前任|分手|恋人|失恋|初恋.*不是|花花公子|滥情|多段感情/);
+      // 只要设定里没有明确提到前任/恋爱经历，就默认只喜欢user
+      var hasPastLove = (charAP+charRel).match(/前任|分手|前女友|前男友|失恋|恋爱过|谈过恋爱|初恋.*不是|花花公子|滥情|多段感情|前任很多|风流|劈腿|出轨|情史/);
+      var isOnlyUserLove = !hasPastLove;
       if(isOnlyUserLove){
         // 不走API，直接插入一张特殊记忆卡
         if(!_pmData[ch]) _pmData[ch]=[];
