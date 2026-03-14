@@ -971,24 +971,25 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 <div id="scrPeriod" style="display:none;flex-direction:column;position:absolute;top:0;width:100%;height:100%;z-index:40;background:#fffbe6;overflow:hidden;">
 <style>
   /* ── 大姨妈页样式 ── */
+  #scrPeriod{overflow:hidden !important;overscroll-behavior:none;}
   #periodTopBar{
     display:flex;align-items:center;padding:14px 14px 12px;
     padding-top:max(calc(env(safe-area-inset-top, 0px) + 14px), 36px);
     flex-shrink:0;background:linear-gradient(135deg,#ffd86e,#ffb347);
-    position:relative;
+    position:relative;z-index:2;
   }
   #periodTopBar .pt-back{font-size:22px;color:#7a4a00;cursor:pointer;width:34px;}
   #periodTopBar .pt-title{flex:1;text-align:center;font-size:17px;font-weight:800;color:#7a4a00;letter-spacing:.5px;}
   #periodTopBar .pt-empty{width:34px;}
 
   /* 两个标签 */
-  #periodTabs{display:flex;background:#fff7d6;flex-shrink:0;border-bottom:2px solid #ffe08a;}
+  #periodTabs{display:flex;background:#fff7d6;flex-shrink:0;border-bottom:2px solid #ffe08a;z-index:2;}
   .pt-tab{flex:1;text-align:center;padding:12px 0;font-size:14px;font-weight:700;color:#bfa060;cursor:pointer;transition:.2s;}
   .pt-tab.active{color:#c47a00;border-bottom:3px solid #e8a020;}
 
   /* 页面内容容器 */
-  #periodPages{flex:1;overflow:hidden;position:relative;}
-  .period-page{position:absolute;top:0;left:0;width:100%;height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;display:none;flex-direction:column;box-sizing:border-box;}
+  #periodPages{flex:1;overflow:hidden;position:relative;min-height:0;}
+  .period-page{position:absolute;top:0;left:0;width:100%;height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;display:none;flex-direction:column;box-sizing:border-box;overscroll-behavior:contain;}
   .period-page.show{display:flex;}
 
   /* ── 页面1：设置 ── */
@@ -5116,18 +5117,15 @@ function getPreviewText(histArray) {
     return txt.length > 15 ? txt.substring(0, 15) + `...` : (txt || `你们已成为好友，请开始聊天吧！`);
 }
 async function updateListPreview() {
-       // 修复：只根据真实聊天记录提取最后时间，不盲目刷新
-    let _realLastTime = 0;
+    // ★ 修复排序：只要有聊天记录，就用Date.now()作为最后聊天时间
+    // 之前只用 _lastMsg.time || _lastMsg.ts，但绝大多数消息不带这两个字段，导致永远是0
     if (typeof history !== 'undefined' && history && history.length > 0) {
-        let _lastMsg = history[history.length - 1];
-        _realLastTime = _lastMsg.time || _lastMsg.ts || 0;
+        let _nowTs = String(Date.now());
+        try {
+            originalSetItem.call(ls, `lastChatTime_` + currentChatId, _nowTs);
+            localforage.setItem(`lastChatTime_` + currentChatId, _nowTs).catch(()=>{});
+        } catch(e){}
     }
-            if (_realLastTime) {
-            try {
-                originalSetItem.call(ls, `lastChatTime_` + currentChatId, String(_realLastTime));
-                localforage.setItem(`lastChatTime_` + currentChatId, String(_realLastTime));
-            } catch(e){}
-        }
 
 
 
@@ -8481,6 +8479,10 @@ async function syncChatHistoryToStorage() {
         if(currentChatId === `default`) {
             await localforage.setItem(`chatHistory`, JSON.stringify(history));
         }
+        // ★ 修复排序：每次聊天记录变更时都更新lastChatTime
+        let _ts = String(Date.now());
+        try { originalSetItem.call(ls, `lastChatTime_` + currentChatId, _ts); } catch(e){}
+        localforage.setItem(`lastChatTime_` + currentChatId, _ts).catch(()=>{});
     } catch(e) {
         console.log(e);
     }
@@ -8594,6 +8596,32 @@ $(`btnLemon`).onclick = async () =>{
             } else if($(`cfgTime`).checked) {
                 sys += `当前现实时间：` + updTime().toLocaleString() + `，请保持感知。\n`;
             }
+    // ★ 经期状态自动注入（只描述状态，不提具体日期，避免和自定义剧情时间冲突）
+    try {
+        let _pStart = originalGetItem.call(ls, 'period_start') || '';
+        let _pCycle = parseInt(originalGetItem.call(ls, 'period_cycle') || '28');
+        let _pDur = parseInt(originalGetItem.call(ls, 'period_duration') || '6');
+        if(_pStart && !isNaN(_pCycle) && !isNaN(_pDur)) {
+            let _pDate = new Date(_pStart);
+            let _today = new Date(); _today.setHours(0,0,0,0);
+            if(!isNaN(_pDate.getTime())) {
+                let _diffDays = Math.floor((_today - _pDate) / 86400000);
+                let _dayInCycle = ((_diffDays % _pCycle) + _pCycle) % _pCycle; // 当前周期第几天（0起）
+                let _periodHint = '';
+                if(_dayInCycle < _pDur) {
+                    _periodHint = `【重要生理状态】用户目前正处于经期第${_dayInCycle+1}天（共${_pDur}天），身体可能不太舒服，容易疲惫、腹痛、情绪波动。作为她亲近的人，你应该主动关心她的身体状况，语气更温柔体贴，可以主动提醒她注意保暖、多喝热水、不要吃冷的、注意休息。不要等她提起，要自然地在对话中体现你的关心和细心。`;
+                } else if(_dayInCycle >= _pCycle - 3) {
+                    _periodHint = `【生理状态提醒】用户的经期大约还有${_pCycle - _dayInCycle}天就要来了，她可能会出现经前综合征（情绪敏感、容易烦躁、轻微不适）。你应该比平时更有耐心、更包容，如果她情绪不好不要计较，温柔哄她。`;
+                } else {
+                    let _ovDay = _pCycle - 14;
+                    if(_dayInCycle >= _ovDay - 2 && _dayInCycle <= _ovDay + 2) {
+                        _periodHint = `【生理状态】用户目前处于排卵期前后，身体状态正常，心情通常比较好。`;
+                    }
+                }
+                if(_periodHint) sys += _periodHint + `\n`;
+            }
+        }
+    } catch(e) { /* 经期数据异常不影响正常聊天 */ }
                                 let curStatus = originalGetItem.call(ls, `cStatusTxt_` + currentChatId) || `在线`;
         let curSign = originalGetItem.call(ls, `cSign_` + currentChatId) || `（暂无个性签名）`;
         sys += `你当前的面板状态是：${curStatus}，个性签名是：${curSign}。\n【状态主动更新规则】你有绝对自主权修改面板状态和签名，发生情绪环境变化时必须立即在回复最开头加指令：[更新状态：状态文字|状态颜色|个性签名]（状态文字请填简短中文如在线/忙碌/睡觉等；状态颜色限选: status-online代表活跃，status-busy代表忙碌，status-offline代表冷漠）。如果不改则不写。\n【主动资金互动规则 - 极度重要】如果你想给玩家钱表达心意，请在回复中加入以下其一指令：\n1. 发红包（限200元内）：[发送红包：金额|留言语]\n2. 发起转账（无上限，完全符合你人设的财力）：[发起转账：金额|转账说明]\n（例如 [发起转账：5200.00|给你买衣服]）。如果玩家一直没领/没收，你可以在后续聊天里催促。\n【主动发送照片规则】如果你想给玩家发照片分享当前状态（如自拍、风景、物品等），请在回复中单独起一行加入指令：[发送照片：这里写图片画面的详细描述]（例如 [发送照片：我穿着白衬衫对着镜头微笑，背景是阳光明媚的咖啡厅]）。\n`;
