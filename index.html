@@ -20279,6 +20279,7 @@ window.doScanRecover = async function() {
   function pmRenderBoard(){
     var board = document.getElementById('pmBoard');
     var empty = document.getElementById('pmEmpty');
+    var genBtn = document.getElementById('pmGenerateBtn');
     if(!board) return;
     // 清除旧卡片
     Array.from(board.children).forEach(function(c){
@@ -20288,9 +20289,11 @@ window.doScanRecover = async function() {
     var cards = (_pmData[ch]||[]);
     if(cards.length===0){
       if(empty) empty.style.display='block';
+      if(genBtn) genBtn.innerHTML='✨ 生成这段记忆';
       return;
     }
     if(empty) empty.style.display='none';
+    if(genBtn) genBtn.innerHTML='✨ 继续生成（已有'+cards.length+'条）';
     cards.forEach(function(card){
       board.appendChild(buildPmCard(card, ch));
     });
@@ -20570,13 +20573,19 @@ ${wbText?'【世界设定】'+wbText.slice(0,300):''}
 
 ${chapterInstruction}
 
-输出格式（严格遵守，每条记忆独占一段，用|||分隔内容和标记）：
-记忆文字（200-400字，沉浸式第一人称，像私密日记）|||有你
-记忆文字（200-400字）|||无你
-记忆文字（200-400字）|||无你
+【输出格式——必须严格遵守，否则系统无法解析】
+每段记忆写完后，紧接着在同一行末尾加上分隔符，格式如下：
+（记忆正文，200-400字）|||有你
+（记忆正文，200-400字）|||无你
+（记忆正文，200-400字）|||无你
 
-只输出这几段，不加任何说明、编号、标题、代码块。「有你」表示${myName}在这段记忆里，「无你」表示没有。
-每段要有：具体的时间地点、感官细节（声音/气味/触感）、当时没说出口的心里话。
+「|||有你」= ${myName}出现在这段记忆里；「|||无你」= ${myName}没有出现。
+分隔符必须紧贴正文末尾，中间不能有空格或换行。
+不加任何编号、标题、说明文字。
+
+示例（仅格式参考，内容换成真实记忆）：
+七岁那年，窗外下着雨，我坐在书房里听到了那个声音。（……具体内容……）|||无你
+
 ${existing?'【已有记忆，不要重复】'+existing:''}`;
 
     // 显示加载状态
@@ -20598,12 +20607,23 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
 
       // 解析：每条记忆以 |||有你 或 |||无你 结尾，按此切割（支持多行长文本）
       var arr = [];
-      var segments = raw.replace(/```[\s\S]*?```/g,'').split(/\|\|\|(有你|无你)/);
-      for(var si=0; si+1<segments.length; si+=2){
-        var txt = segments[si].replace(/^[\s\n]+|[\s\n]+$/g,'');
-        txt = txt.replace(/^[\d一二三四五六七八九十]+[\.、\s]+/,'').trim();
-        var hasU = segments[si+1].trim()==='有你';
-        if(txt.length>10) arr.push({text:txt, hasUser:hasU});
+      var cleanRaw = raw.replace(/```[\s\S]*?```/g,'');
+      var segments = cleanRaw.split(/\|\|\|(有你|无你)/);
+      if(segments.length >= 3){
+        // 正常解析：找到了|||分隔符
+        for(var si=0; si+1<segments.length; si+=2){
+          var txt = segments[si].replace(/^[\s\n]+|[\s\n]+$/g,'');
+          txt = txt.replace(/^[\d一二三四五六七八九十]+[\.、\s]+/,'').trim();
+          var hasU = segments[si+1].trim()==='有你';
+          if(txt.length>10) arr.push({text:txt, hasUser:hasU});
+        }
+      }
+      // 兜底：模型没加|||，按空行切割段落，每段当作一条记忆
+      if(!arr.length){
+        var paras = cleanRaw.split(/\n{2,}/).map(function(p){return p.replace(/^[\s\n]+|[\s\n]+$/g,'');}).filter(function(p){return p.length>20;});
+        paras.forEach(function(p){
+          arr.push({text:p, hasUser:false});
+        });
       }
       if(!arr.length) throw new Error('解析失败，原始返回：'+raw.slice(0,200));
       if(!_pmData[ch]) _pmData[ch]=[];
@@ -20620,8 +20640,12 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
       syncMemoriesToChat(ch);
     }catch(e){
       console.warn('生成记忆失败',e);
-      var errMsg = '生成失败：'+(e&&e.message?e.message:'未知错误')+'\n\n原始返回：'+(typeof raw!=='undefined'?String(raw).slice(0,100):'（无）');
-      alert(errMsg);
+      // 显示内联错误提示而非alert
+      var errDiv=document.createElement('div');
+      errDiv.style.cssText='text-align:center;padding:20px;color:#c0392b;font-size:12px;';
+      errDiv.textContent='生成失败，请重试';
+      if(board) board.appendChild(errDiv);
+      setTimeout(function(){if(errDiv.parentNode)errDiv.remove();},3000);
     }finally{
       var le = document.getElementById('pmLoadingEl');
       if(le) le.remove();
