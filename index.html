@@ -5289,10 +5289,10 @@ if(ls.getItem(`cMemP`)) $(`cfgMemPmt`).value = ls.getItem(`cMemP`);
 
 function getPreviewText(histArray) {
     if(!histArray || histArray.length === 0) return `你们已成为好友，请开始聊天吧！`;
-    // 跳过系统感知消息，取最后一条真实消息
+    // 跳过系统感知消息和记忆同步消息，取最后一条真实消息
     let last = null;
     for(let i = histArray.length - 1; i >= 0; i--) {
-        if(!histArray[i]._sys) { last = histArray[i]; break; }
+        if(!histArray[i]._sys && !histArray[i]._pmEvent && !histArray[i]._llEvent) { last = histArray[i]; break; }
     }
     if(!last) return `你们已成为好友，请开始聊天吧！`;
     let txt = last.content;
@@ -20496,6 +20496,34 @@ window.doScanRecover = async function() {
 记忆要带细节，读完会想问「后来呢」。`;
 
     } else if(ch === '恋爱经历'){
+      // 青梅竹马且没有其他恋爱经历：直接显示专属内容，不调API
+      var isOnlyUserLove = isCM && !(charAP+charRel).match(/前任|分手|恋人|失恋|初恋.*不是|花花公子|滥情|多段感情/);
+      if(isOnlyUserLove){
+        // 不走API，直接插入一张特殊记忆卡
+        if(!_pmData[ch]) _pmData[ch]=[];
+        // 避免重复插入
+        if(!_pmData[ch].find(function(c){return c._onlyYou;})){
+          _pmData[ch].push({
+            id: Date.now(),
+            text: '他的恋爱经历只有一页，写满了你的名字。',
+            hasUser: true,
+            _onlyYou: true,
+            ts: Date.now()
+          });
+        }
+        await pmSave();
+        pmRenderBoard();
+        // 显示自定义弹窗
+        var sw=document.createElement('div');
+        sw.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:9998;';
+        var sb=document.createElement('div');
+        sb.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(145deg,#fff5f7,#fff);border-radius:20px;padding:24px 20px;width:80%;z-index:9999;text-align:center;box-shadow:0 8px 30px rgba(196,79,122,.25);';
+        sb.innerHTML='<div style="font-size:36px;margin-bottom:10px;">❤️</div><div style="font-size:16px;font-weight:700;color:#c44f7a;margin-bottom:8px;">他的恋爱经历只有你</div><div style="font-size:13px;color:#888;line-height:1.7;margin-bottom:16px;">从认识你的第一天起，他就没有想过别人。</div><button style="background:linear-gradient(135deg,#ff8fab,#c44f7a);color:white;border:none;border-radius:20px;padding:10px 28px;font-size:14px;font-weight:700;cursor:pointer;">知道了 ❤️</button>';
+        document.body.appendChild(sw); document.body.appendChild(sb);
+        sb.querySelector('button').onclick=function(){ sw.remove(); sb.remove(); };
+        sw.onclick=function(){ sw.remove(); sb.remove(); };
+        return; // 不继续走生成流程
+      }
       var loveCount = (charAP+charRel).match(/花花公子|滥情|多段感情|前任很多|风流/) ? 3 : 2;
       var adultHint = adultMode
         ? `可以包含亲密细节（xp偏好、第一次的具体场景、身体记忆），用克制但清晰的笔触，不要回避。`
@@ -20601,7 +20629,7 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     if(!cards.length) return;
     var charName = localStorage.getItem('cN_'+_pmCharId)||'他';
     var summary = `【${charName}的过去·${chapter}】` + cards.map(function(c){return c.text;}).join('｜');
-    var memMsg = {role:'assistant', content:summary, ts:Date.now(), _pmEvent:true};
+    var memMsg = {role:'assistant', content:summary, ts:Date.now(), _pmEvent:true, _sys:true};
     // 更新内存history
     if(typeof currentChatId!=='undefined'&&currentChatId===_pmCharId&&typeof history!=='undefined'){
       // 移除旧的同章节记忆，避免堆积
