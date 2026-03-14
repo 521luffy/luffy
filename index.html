@@ -536,18 +536,19 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         #hdDockSpacer{flex:1;min-height:6px;}
         #hdDock{
           flex-shrink:0;z-index:2;
-          background:rgba(255,255,255,.92);
-          -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
-          border-radius:20px 20px 0 0;
+          background:rgba(255,255,255,.52);
+          -webkit-backdrop-filter:blur(22px);backdrop-filter:blur(22px);
+          border-radius:26px;
           display:flex;justify-content:space-around;align-items:center;
-          padding:12px 20px 16px;
-          margin:0 -10px -10px;
-          box-shadow:0 -2px 12px rgba(0,0,0,.07);
+          padding:10px 18px 12px;
+          margin:0 8px 14px;
+          box-shadow:0 2px 18px rgba(0,0,0,.10), inset 0 1px 0 rgba(255,255,255,.7);
+          border:1px solid rgba(255,255,255,.6);
         }
         .hd-dock-item{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
-        .hd-dock-icon{width:50px;height:50px;background:white;border-radius:15px;
+        .hd-dock-icon{width:50px;height:50px;background:rgba(255,255,255,.85);border-radius:15px;
           display:flex;align-items:center;justify-content:center;
-          font-size:24px;box-shadow:0 2px 8px rgba(0,0,0,.1);}
+          font-size:24px;box-shadow:0 2px 8px rgba(0,0,0,.08);}
         .hd-dock-lbl{font-size:11px;color:#555;font-weight:500;}
       </style>
 
@@ -965,7 +966,236 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 </div>
 
 
-<!-- ══════════════════════════════════════════════
+<!-- ═══════════════════════════════════════════════
+     恋爱清单 - 冰箱便利贴 (scrLoveList)
+     ═══════════════════════════════════════════════ -->
+<div id="scrLoveList" style="display:none;flex-direction:column;position:absolute;top:0;width:100%;height:100%;z-index:42;overflow:hidden;">
+<style>
+/* ── 恋爱清单页 ── */
+#llTopBar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 14px 12px;
+  padding-top:max(calc(env(safe-area-inset-top,0px)+14px),52px);
+  background:linear-gradient(135deg,#e8f4fd,#cce8f8);
+  flex-shrink:0;position:relative;z-index:3;
+  box-shadow:0 2px 8px rgba(100,180,240,.15);
+}
+#llBack{font-size:22px;color:#4a9fd4;cursor:pointer;width:34px;}
+#llTitle{font-size:16px;font-weight:700;color:#2980b9;flex:1;text-align:center;}
+#llAddBtn{font-size:22px;cursor:pointer;width:34px;text-align:right;color:#2980b9;}
+
+/* 冰箱容器 */
+#llFridge{
+  flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  display:flex;flex-direction:column;align-items:center;
+  padding:0 0 20px;
+  background:linear-gradient(180deg,#dff0fa 0%,#c8e6f5 100%);
+  position:relative;
+}
+/* 冰箱整体 */
+#llFridgeBody{
+  width:94%;max-width:400px;
+  margin:12px auto 0;
+  border-radius:22px;
+  overflow:hidden;
+  box-shadow:0 8px 32px rgba(80,160,220,.18),0 2px 8px rgba(80,160,220,.10);
+  border:3px solid #aed6f1;
+  background:#e8f4fd;
+  flex-shrink:0;
+}
+/* 冰箱顶部装饰条 */
+#llFridgeTop{
+  background:linear-gradient(135deg,#5dade2,#2e86c1);
+  height:18px;border-radius:0;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;
+}
+#llFridgeTop::after{content:'';position:absolute;left:50%;transform:translateX(-50%);
+  width:40px;height:6px;background:rgba(255,255,255,.35);border-radius:3px;}
+
+/* 冰箱双开门区域 */
+#llDoors{
+  display:flex;
+  min-height:460px;
+  position:relative;
+}
+/* 中间缝 */
+#llDoors::after{
+  content:'';position:absolute;left:50%;top:0;bottom:0;
+  width:4px;background:linear-gradient(180deg,#5dade2,#2e86c1,#5dade2);
+  transform:translateX(-50%);z-index:5;border-radius:2px;
+}
+.ll-door{
+  flex:1;
+  padding:10px 8px 12px;
+  background:linear-gradient(160deg,#eaf5fb 0%,#d6eef8 100%);
+  min-height:460px;
+  position:relative;
+  display:flex;flex-direction:column;gap:10px;
+  align-items:center;
+}
+.ll-door-label{
+  font-size:10px;color:#7fb3d3;font-weight:700;letter-spacing:1px;
+  text-align:center;margin-bottom:2px;flex-shrink:0;
+}
+/* 冰箱底部小冻格 */
+#llFridgeBot{
+  background:linear-gradient(135deg,#2e86c1,#1a6fa0);
+  height:28px;display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.ll-bot-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.3);}
+
+/* 便利贴 */
+.ll-card{
+  width:100%;
+  border-radius:10px;
+  padding:10px 10px 8px;
+  position:relative;
+  box-shadow:2px 3px 10px rgba(0,0,0,.12);
+  cursor:pointer;
+  transition:transform .15s;
+  flex-shrink:0;
+  min-height:80px;
+  perspective:600px;
+  transform-style:preserve-3d;
+}
+.ll-card:active{transform:scale(.97);}
+.ll-card.user-card{ background:linear-gradient(145deg,#ffecee,#ffd6dc); border-left:3px solid #ff8fab; }
+.ll-card.char-card{ background:linear-gradient(145deg,#ddeeff,#c5e2ff); border-left:3px solid #5dade2; }
+/* 便利贴内部 3D翻转容器 */
+.ll-card-inner{
+  position:relative;width:100%;height:100%;min-height:64px;
+  transform-style:preserve-3d;
+  transition:transform .7s cubic-bezier(.4,0,.2,1);
+}
+.ll-card.flipped .ll-card-inner{ transform:rotateY(180deg); }
+.ll-card-front,.ll-card-back{
+  position:absolute;top:0;left:0;width:100%;
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+}
+.ll-card-front{ transform:rotateY(0deg); }
+.ll-card-back{
+  transform:rotateY(180deg);
+  padding:6px 2px 2px;
+  display:flex;flex-direction:column;gap:4px;
+}
+/* 印章 */
+.ll-stamp{
+  position:absolute;top:6px;right:6px;
+  font-size:11px;font-weight:900;
+  padding:3px 6px;border-radius:5px;
+  border:2px solid;
+  transform:rotate(-12deg);
+  opacity:.88;pointer-events:none;
+  letter-spacing:.5px;
+  font-family:serif;
+  z-index:2;
+}
+.ll-stamp.claimed{ color:#c0392b;border-color:#c0392b; background:rgba(192,57,43,.08); }
+.ll-stamp.rejected{ color:#7f8c8d;border-color:#7f8c8d; background:rgba(127,140,141,.08); }
+/* 迷你头像角落 */
+.ll-mini-ava{
+  position:absolute;bottom:6px;right:6px;
+  width:22px;height:22px;border-radius:50%;
+  border:1.5px solid rgba(255,255,255,.8);
+  overflow:hidden;background:#eee;
+  display:flex;align-items:center;justify-content:center;font-size:11px;
+  box-shadow:0 1px 4px rgba(0,0,0,.12);
+  pointer-events:none;
+}
+.ll-mini-ava img{width:100%;height:100%;object-fit:cover;}
+.ll-card-text{font-size:13px;color:#333;line-height:1.5;word-break:break-all;padding-right:28px;}
+.ll-card-ts{font-size:10px;color:#aaa;margin-top:4px;}
+/* 背面留言 */
+.ll-back-stamp-row{display:flex;align-items:center;gap:6px;margin-bottom:4px;}
+.ll-back-msg{font-size:13px;color:#444;line-height:1.6;font-family:'KaiTi','楷体','STKaiti',Georgia,serif;}
+/* 操作按钮行（char发起的卡片） */
+.ll-action-row{display:flex;gap:6px;margin-top:4px;}
+.ll-act-btn{
+  flex:1;padding:5px 0;border:none;border-radius:18px;
+  font-size:12px;font-weight:700;cursor:pointer;
+  transition:transform .1s;
+}
+.ll-act-btn:active{transform:scale(.95);}
+.ll-act-yes{ background:linear-gradient(135deg,#ff8fab,#c44f7a);color:white; }
+.ll-act-no{ background:#f0f0f0;color:#999; }
+
+/* 爱心散落特效 */
+@keyframes llHeartFly{
+  0%{transform:translateY(0) scale(1);opacity:1;}
+  100%{transform:translateY(-80px) scale(.5) rotate(30deg);opacity:0;}
+}
+.ll-heart-particle{
+  position:absolute;font-size:18px;pointer-events:none;z-index:999;
+  animation:llHeartFly .8s ease-out forwards;
+}
+/* 新建卡片弹窗 */
+#llNewModal{
+  display:none;position:absolute;top:0;left:0;width:100%;height:100%;
+  z-index:200;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);
+  justify-content:center;align-items:center;
+}
+#llNewBox{
+  width:82%;background:linear-gradient(145deg,#fff5f7,#fff);
+  border-radius:20px;padding:20px 18px 16px;
+  box-shadow:0 10px 30px rgba(196,79,122,.2);
+}
+#llNewTitle{font-size:15px;font-weight:700;color:#c44f7a;margin-bottom:12px;text-align:center;}
+#llNewInput{
+  width:100%;box-sizing:border-box;
+  padding:10px 12px;border:1.5px solid #ffb6c1;border-radius:12px;
+  font-size:14px;color:#333;outline:none;resize:none;
+  font-family:inherit;background:#fffbfc;
+  min-height:80px;
+}
+#llNewInput:focus{border-color:#ff8fab;}
+.ll-new-btns{display:flex;gap:10px;margin-top:12px;}
+.ll-new-cancel{flex:1;padding:11px;border:1.5px solid #ddd;background:#f8f8f8;color:#999;border-radius:12px;font-size:14px;cursor:pointer;font-weight:600;}
+.ll-new-submit{flex:1;padding:11px;border:none;background:linear-gradient(135deg,#ff8fab,#c44f7a);color:white;border-radius:12px;font-size:14px;cursor:pointer;font-weight:700;}
+</style>
+
+<!-- 顶栏 -->
+<div id="llTopBar">
+  <span id="llBack">＜</span>
+  <span id="llTitle">🧊 恋爱清单</span>
+  <span id="llAddBtn">＋</span>
+</div>
+
+<!-- 冰箱 -->
+<div id="llFridge">
+  <div id="llFridgeBody">
+    <div id="llFridgeTop"></div>
+    <div id="llDoors">
+      <div class="ll-door" id="llDoorLeft">
+        <div class="ll-door-label">我的心愿 🌸</div>
+        <!-- user cards injected here -->
+      </div>
+      <div class="ll-door" id="llDoorRight">
+        <div class="ll-door-label">他的心愿 💙</div>
+        <!-- char cards injected here -->
+      </div>
+    </div>
+    <div id="llFridgeBot">
+      <div class="ll-bot-dot"></div><div class="ll-bot-dot"></div><div class="ll-bot-dot"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 新建心愿弹窗 -->
+<div id="llNewModal">
+  <div id="llNewBox">
+    <div id="llNewTitle">🌸 许下一个小心愿</div>
+    <textarea id="llNewInput" placeholder="写下你想做的事或想要的东西…" maxlength="80"></textarea>
+    <div class="ll-new-btns">
+      <button class="ll-new-cancel" id="llNewCancel">取消</button>
+      <button class="ll-new-submit" id="llNewSubmit">贴上去 🌟</button>
+    </div>
+  </div>
+</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════
      大姨妈 - 经期追踪 (scrPeriod)
      ══════════════════════════════════════════════ -->
 <div id="scrPeriod" style="display:none;flex-direction:column;position:absolute;top:0;width:100%;height:100%;z-index:40;background:#fffbe6;overflow:hidden;">
@@ -4870,7 +5100,7 @@ let pressTimer = null;
 let selEl = null;
 let currentQuote ="";
 function showScreen(showId) {
-    [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrSpace, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet"), $("scrContact"), $("scrSetFont"), $("scrCharPhone"), $("scrSpyDiary"), $("scrSpyZhihu"), $("scrSpySecret"), $("scrSpyMeituan"), $("scrSpyFootprint"), $("scrSpyWallet"), $("scrSpyShop"), $("scrSpyIqiyi"), $("scrSpySettings"), $("scrMoment"), $("scrGroupRoom"), $("scrGroupSettings"), $("scrOurSongs"), $("scrHomeSettings"), $("scrCoupleSpace"), $("scrPeriod")].forEach(s => { if(s) s.style.display = "none"; });
+    [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrSpace, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet"), $("scrContact"), $("scrSetFont"), $("scrCharPhone"), $("scrSpyDiary"), $("scrSpyZhihu"), $("scrSpySecret"), $("scrSpyMeituan"), $("scrSpyFootprint"), $("scrSpyWallet"), $("scrSpyShop"), $("scrSpyIqiyi"), $("scrSpySettings"), $("scrMoment"), $("scrGroupRoom"), $("scrGroupSettings"), $("scrOurSongs"), $("scrHomeSettings"), $("scrCoupleSpace"), $("scrPeriod"), $("scrLoveList")].forEach(s => { if(s) s.style.display = "none"; });
 
     let target = $(showId);
     if(showId === "scrRoom") {
@@ -4878,7 +5108,7 @@ function showScreen(showId) {
         if(_im){ _im.style.height="34px"; _im.style.overflowY="hidden"; }
     }
     if(target) {
-        if(showId === "scrRoom" || showId === "scrList" || showId === "scrSetApi" || showId === "scrSetChat" || showId === "scrWb" || showId === "scrWbEdit" || showId === "scrMe" || showId === "scrCharSticker" || showId === "scrSpace" || showId === "scrLogList" || showId === "scrLogEdit" || showId === "scrFav" || showId === "scrWallet" || showId === "scrContact" || showId === "scrSetFont" || showId === "scrSpyDiary" || showId === "scrSpyZhihu" || showId === "scrSpySecret" || showId === "scrSpyMeituan" || showId === "scrSpyFootprint" || showId === "scrSpyWallet" || showId === "scrSpyShop" || showId === "scrSpyIqiyi" || showId === "scrSpySettings" || showId === "scrMoment" || showId === "scrGroupRoom" || showId === "scrGroupSettings" || showId === "scrOurSongs" || showId === "scrHomeSettings" || showId === "scrPeriod") {
+        if(showId === "scrRoom" || showId === "scrList" || showId === "scrSetApi" || showId === "scrSetChat" || showId === "scrWb" || showId === "scrWbEdit" || showId === "scrMe" || showId === "scrCharSticker" || showId === "scrSpace" || showId === "scrLogList" || showId === "scrLogEdit" || showId === "scrFav" || showId === "scrWallet" || showId === "scrContact" || showId === "scrSetFont" || showId === "scrSpyDiary" || showId === "scrSpyZhihu" || showId === "scrSpySecret" || showId === "scrSpyMeituan" || showId === "scrSpyFootprint" || showId === "scrSpyWallet" || showId === "scrSpyShop" || showId === "scrSpyIqiyi" || showId === "scrSpySettings" || showId === "scrMoment" || showId === "scrGroupRoom" || showId === "scrGroupSettings" || showId === "scrOurSongs" || showId === "scrHomeSettings" || showId === "scrPeriod" || showId === "scrLoveList") {
             target.style.display = "flex";
         } else if (showId === "scrCharPhone") {
             target.style.display = "flex";
@@ -8600,6 +8830,34 @@ $(`btnLemon`).onclick = async () =>{
             }
     // ★ 经期状态自动注入（只描述状态，不提具体日期，避免和自定义剧情时间冲突）
     try {
+        // ★ 恋爱清单上下文注入
+        var _llKey='loveList_'+currentChatId;
+        var _llData=null;
+        try{var _llRaw=await localforage.getItem(_llKey);if(_llRaw)_llData=typeof _llRaw==='object'?_llRaw:JSON.parse(_llRaw);}catch(e){}
+        if(!_llData){try{var _llRaw2=localStorage.getItem(_llKey);if(_llRaw2)_llData=JSON.parse(_llRaw2);}catch(e){}}
+        if(Array.isArray(_llData)&&_llData.length>0){
+            var _llPending=_llData.filter(function(c){return c.status==='pending'&&c.type==='user';});
+            var _llMine=_llData.filter(function(c){return c.type==='char'&&c.status==='pending';});
+            var _llDone=_llData.filter(function(c){return c.status==='claimed'||c.status==='rejected';}).slice(-3);
+            var _llCtx='【恋爱清单（冰箱便利贴）系统 - 极重要】\n';
+            _llCtx+='这是你们之间的专属心愿冰箱。用户可以在上面贴心愿便利贴，你也可以随时贴便利贴发起你的心愿。\n';
+            if(_llPending.length>0){
+                _llCtx+='▸ 用户目前贴了以下尚未回应的心愿：\n';
+                _llPending.forEach(function(c){_llCtx+='  「'+c.text+'」（ID:'+c.id+'）\n';});
+                _llCtx+='⚑ 你需要在回复中对这些心愿表态！在回复末尾另起一行加：[认领心愿:ID] 或 [驳回心愿:ID]。\n  认领时附一句专属留言作为便利贴背面的回复（你可以在正文里直接说）。\n  驳回时也要说明原因（在正文说即可）。\n';
+            }
+            if(_llMine.length>0){
+                _llCtx+='▸ 你自己贴的心愿（等待用户回应）：\n';
+                _llMine.forEach(function(c){_llCtx+='  「'+c.text+'」\n';});
+            }
+            if(_llDone.length>0){
+                _llCtx+='▸ 最近处理过的心愿：\n';
+                _llDone.forEach(function(c){_llCtx+='  「'+c.text+'」→ '+(c.status==='claimed'?'已认领':'已驳回')+'\n';});
+            }
+            sys+=_llCtx;
+        }
+    } catch(e2) { /* 恋爱清单注入异常 */ }
+    try {
         let _pStart = originalGetItem.call(ls, 'period_start') || '';
         let _pCycle = parseInt(originalGetItem.call(ls, 'period_cycle') || '28');
         let _pDur = parseInt(originalGetItem.call(ls, 'period_duration') || '6');
@@ -9038,6 +9296,18 @@ let hasAccept = txt.includes(`[收取转账]`);
                     }
                     if(_lineTrim.startsWith('[试图发送表情：') || _lineTrim.startsWith('[系统提示：') ||
                        _lineTrim.startsWith('[更新状态：')) return;
+                    // 处理恋爱清单指令
+                    if(_lineTrim.startsWith('[认领心愿:') || _lineTrim.startsWith('[驳回心愿:')) {
+                        let _llMatch = _lineTrim.match(/^\[(认领心愿|驳回心愿):(\d+)\]$/);
+                        if(_llMatch) {
+                            let _llAction = _llMatch[1]==='认领心愿'?'claimed':'rejected';
+                            let _llId = parseInt(_llMatch[2]);
+                            // 找到该心愿的AI留言（取当前处理行之前的最近文字作为留言）
+                            let _llMsg = newLines.filter(l=>l.trim()&&!l.startsWith('[')).slice(-1)[0]||'';
+                            setTimeout(()=>{ if(typeof window._llStampCard==='function') window._llStampCard(_llId,_llAction,_llMsg); },300);
+                        }
+                        return;
+                    }
                     // 过滤【】状态行（定位与天气/服装/表情等），不渲染为气泡
                     if(/^【(定位与天气|当日服装|服装|表情与动作|心声|隐秘心声|系统|状态)】/.test(_lineTrim)) return;
                     let voiceMatch = line.match(/\[?【?语音消息[^0-9]*(\d+)[^\]】]*\]?】?/);
@@ -9155,7 +9425,8 @@ function renderQuoteBlock(b, txt, _side) {
            _t.startsWith('[发送实时位置：') || _t.startsWith('[发起语音通话]') ||
            _t.startsWith('[发起视频通话]') || _t.startsWith('[更新状态：') ||
            _t.startsWith('[发送定位：') || _t.startsWith('[发起转账：') ||
-           _t.startsWith('[发送红包：') || _t.startsWith('[同意代付]')) {
+           _t.startsWith('[发送红包：') || _t.startsWith('[同意代付]') ||
+           _t.startsWith('[认领心愿:') || _t.startsWith('[驳回心愿:')) {
             b.dataset.suppress = '1'; return;
         }
     }
@@ -19510,9 +19781,15 @@ if(document.getElementById('offlineModePanel')) {
       setTimeout(function(){t.remove();},2000);
     };
   }
-  ['csFuncLoveList,恋爱清单','csFuncPet,我的宠物','csFuncHoroscope,每日星运','csFuncChallenge,情侣挑战'].forEach(function(s){
+  ['csFuncPet,我的宠物','csFuncHoroscope,每日星运','csFuncChallenge,情侣挑战'].forEach(function(s){
     var p=s.split(',');bindFuncToast(p[0],p[1]);
   });
+  // 恋爱清单入口
+  var loveListBtn=document.getElementById('csFuncLoveList');
+  if(loveListBtn)loveListBtn.onclick=function(){
+    if(typeof window._openLoveList==='function') window._openLoveList();
+    else showScreen('scrLoveList');
+  };
   // 大姨妈单独绑定
   var periodBtn=document.getElementById('csFuncPeriod');
   if(periodBtn)periodBtn.onclick=function(){showScreen('scrPeriod');};
@@ -19649,4 +19926,368 @@ window.doScanRecover = async function() {
     try { await renderContacts(); } catch(e){ console.error('扫描后renderContacts出错:', e); }
     alert('✅ 找回 ' + rebuilt.length + ' 个角色：\n' + rebuilt.map(c => c.name).join('、'));
 };
+</script>
+
+<script>
+// ═══════════════════════════════════════════════
+// 恋爱清单 (scrLoveList) 逻辑
+// ═══════════════════════════════════════════════
+(function initLoveList(){
+  var LS_KEY_PREFIX = 'loveList_';
+  var _llCharId = null; // 当前绑定的情侣空间角色ID
+  var _llCards = []; // { id, type:'user'|'char', text, status:'pending'|'claimed'|'rejected', ts, backMsg, charMsg }
+
+  /* ── 获取当前角色 ── */
+  function getLLCharId(){
+    // 取情侣空间已开通的第一个角色，或 currentChatId
+    var opened = {};
+    try{ var od = localStorage.getItem('cs_opened_chars'); if(od) opened=JSON.parse(od); }catch(e){}
+    var keys = Object.keys(opened).filter(function(k){return opened[k];});
+    if(keys.length) return keys[0];
+    if(typeof currentChatId !== 'undefined' && currentChatId && currentChatId !== 'default') return currentChatId;
+    return null;
+  }
+
+  /* ── 加载数据 ── */
+  async function llLoad(){
+    _llCharId = getLLCharId();
+    if(!_llCharId){ _llCards=[]; return; }
+    var key = LS_KEY_PREFIX + _llCharId;
+    var d = null;
+    try{ d = await localforage.getItem(key); }catch(e){}
+    if(!d){ try{ var r=localStorage.getItem(key); if(r) d=JSON.parse(r); }catch(e){} }
+    else if(typeof d === 'string'){ try{ d=JSON.parse(d); }catch(e){d=[];} }
+    _llCards = Array.isArray(d) ? d : [];
+  }
+
+  /* ── 保存数据 ── */
+  async function llSave(){
+    if(!_llCharId) return;
+    var key = LS_KEY_PREFIX + _llCharId;
+    localforage.setItem(key, _llCards).catch(function(){});
+    try{ localStorage.setItem(key, JSON.stringify(_llCards)); }catch(e){}
+  }
+
+  /* ── 读取头像 ── */
+  function loadAva(el, key){
+    Promise.resolve().then(async function(){
+      var d=null; try{ d=await localforage.getItem(key); }catch(e){}
+      if(!d){ try{ d=localStorage.getItem(key); }catch(e){} }
+      if(d&&d.length>10){ var img=el.querySelector('img'); if(img){img.src=d;img.style.display='block';} }
+    });
+  }
+
+  /* ── 渲染所有卡片 ── */
+  function llRender(){
+    var leftDoor = document.getElementById('llDoorLeft');
+    var rightDoor = document.getElementById('llDoorRight');
+    if(!leftDoor||!rightDoor) return;
+
+    // 清除旧卡片（保留label）
+    Array.from(leftDoor.children).forEach(function(c){ if(!c.classList.contains('ll-door-label')) c.remove(); });
+    Array.from(rightDoor.children).forEach(function(c){ if(!c.classList.contains('ll-door-label')) c.remove(); });
+
+    _llCards.forEach(function(card){
+      var cardEl = buildCard(card);
+      if(card.type === 'user') leftDoor.appendChild(cardEl);
+      else rightDoor.appendChild(cardEl);
+    });
+  }
+
+  /* ── 构建单张便利贴 ── */
+  function buildCard(card){
+    var wrap = document.createElement('div');
+    wrap.className = 'll-card ' + (card.type==='user'?'user-card':'char-card');
+    wrap.dataset.id = card.id;
+    if(card.status !== 'pending') wrap.classList.add('flipped');
+
+    var inner = document.createElement('div');
+    inner.className = 'll-card-inner';
+
+    // 正面
+    var front = document.createElement('div');
+    front.className = 'll-card-front';
+
+    var txt = document.createElement('div');
+    txt.className = 'll-card-text';
+    txt.textContent = card.text;
+    front.appendChild(txt);
+
+    var ts = document.createElement('div');
+    ts.className = 'll-card-ts';
+    ts.textContent = new Date(card.ts).toLocaleDateString('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    front.appendChild(ts);
+
+    // 印章（正面——仍可见轮廓提示翻转后才是完整印章）
+    if(card.status !== 'pending'){
+      var stF = document.createElement('div');
+      stF.className = 'll-stamp ' + card.status;
+      stF.textContent = card.status==='claimed'?'已认领':'驳回';
+      front.appendChild(stF);
+    }
+
+    // 发起人迷你头像
+    var miniAva = document.createElement('div');
+    miniAva.className = 'll-mini-ava';
+    miniAva.innerHTML = '<img style="display:none" alt="">';
+    if(card.type==='user') loadAva(miniAva, 'cs_ava_l');
+    else loadAva(miniAva, 'cs_ava_r');
+    front.appendChild(miniAva);
+
+    // 背面
+    var back = document.createElement('div');
+    back.className = 'll-card-back';
+
+    var backStampRow = document.createElement('div');
+    backStampRow.className = 'll-back-stamp-row';
+    var stampBig = document.createElement('div');
+    stampBig.className = 'll-stamp ' + (card.status==='claimed'?'claimed':'rejected');
+    stampBig.style.cssText='position:relative;top:auto;right:auto;transform:rotate(-10deg);font-size:14px;';
+    stampBig.textContent = card.status==='claimed'?'已认领':'驳回';
+    backStampRow.appendChild(stampBig);
+    back.appendChild(backStampRow);
+
+    if(card.backMsg){
+      var msgEl = document.createElement('div');
+      msgEl.className = 'll-back-msg';
+      msgEl.textContent = card.backMsg;
+      back.appendChild(msgEl);
+    }
+
+    // char 发起的卡片 + pending 状态：显示操作按钮（在正面用绝对定位浮层）
+    if(card.type==='char' && card.status==='pending'){
+      var actRow = document.createElement('div');
+      actRow.className = 'll-action-row';
+      actRow.style.marginTop='8px';
+      var yesBtn = document.createElement('button');
+      yesBtn.className = 'll-act-btn ll-act-yes';
+      yesBtn.textContent = '💗 满足他';
+      var noBtn = document.createElement('button');
+      noBtn.className = 'll-act-btn ll-act-no';
+      noBtn.textContent = '拒绝';
+      (function(c,w,y,n){
+        y.onclick=function(e){ e.stopPropagation(); userRespondChar(c,'yes',w); };
+        n.onclick=function(e){ e.stopPropagation(); userRespondChar(c,'no',w); };
+      })(card, wrap, yesBtn, noBtn);
+      actRow.appendChild(yesBtn); actRow.appendChild(noBtn);
+      front.appendChild(actRow);
+    }
+
+    inner.appendChild(front);
+    inner.appendChild(back);
+    wrap.appendChild(inner);
+    return wrap;
+  }
+
+  /* ── 爱心散落特效 ── */
+  function spawnHearts(cardEl){
+    var rect = cardEl.getBoundingClientRect();
+    var cx = rect.left + rect.width/2;
+    var cy = rect.top + rect.height/2;
+    var emojis = ['💗','💖','✨','🌸','💕'];
+    for(var i=0;i<8;i++){
+      (function(idx){
+        setTimeout(function(){
+          var p = document.createElement('div');
+          p.className = 'll-heart-particle';
+          p.textContent = emojis[idx%emojis.length];
+          p.style.left = (cx + (Math.random()-0.5)*60) + 'px';
+          p.style.top = cy + 'px';
+          p.style.position = 'fixed';
+          document.body.appendChild(p);
+          setTimeout(function(){ p.remove(); }, 900);
+        }, idx*80);
+      })(i);
+    }
+  }
+
+  /* ── 盖印章并触发翻转 ── */
+  window._llStampCard = async function(cardId, status, charMsg){
+    var idx = _llCards.findIndex(function(c){return c.id===cardId;});
+    if(idx===-1) return;
+    _llCards[idx].status = status;
+    _llCards[idx].backMsg = charMsg || (status==='claimed'?'已认领 ❤️':'驳回了这个心愿');
+    await llSave();
+    // 如果恋爱清单页面当前打开则刷新卡片
+    var scr = document.getElementById('scrLoveList');
+    if(scr && scr.style.display!=='none') llRender();
+    // 否则：下次打开时会重新渲染
+  };
+
+  /* ── user 响应 char 的心愿 ── */
+  async function userRespondChar(card, action, cardEl){
+    card.status = action==='yes'?'claimed':'rejected';
+    card.backMsg = action==='yes'?'已满足 💗':'拒绝了这次' ;
+    await llSave();
+
+    // 爱心特效
+    if(action==='yes') spawnHearts(cardEl);
+
+    // 翻转
+    cardEl.classList.add('flipped');
+
+    // 触发 char 在聊天里回复（通知AI）
+    notifyCharAboutResponse(card, action);
+  }
+
+  /* ── 通知AI：便利贴上发生了事情 ── */
+  async function notifyCharAboutResponse(card, action){
+    if(!_llCharId) return;
+    var pxy = '';  var key = ''; var mod = ''; var tp = 0.8;
+    try{ pxy=localStorage.getItem('pxy')||''; key=localStorage.getItem('key')||''; mod=localStorage.getItem('mod')||''; tp=parseFloat(localStorage.getItem('temp')||'0.8')||0.8; }catch(e){}
+    if(!pxy||!key) return;
+    if(!pxy.includes('chat/completions')) pxy = pxy.replace(/\/$/,'') + '/chat/completions';
+
+    var charName = localStorage.getItem('cN_'+_llCharId)||'他';
+    var charAP = localStorage.getItem('cAP_'+_llCharId)||'';
+    var myName = localStorage.getItem('cMyN_'+_llCharId)||localStorage.getItem('cMyN')||'我';
+
+    var actionText = action==='yes'
+      ? myName+'刚刚在恋爱清单的冰箱上点击了【满足他】来回应你的心愿便利贴「'+card.text+'」。你非常开心，在便利贴背面留言并通过消息通知对方。'
+      : myName+'拒绝了你的心愿便利贴「'+card.text+'」。你有点小失落，用符合你性格的方式回应。';
+
+    var sys = '你是'+charName+'。'+(charAP?'设定：'+charAP:'')+'\\n'+actionText+'\\n请直接以你的性格回复一条简短消息（不超过80字），不加任何前缀或角色标注。这条消息将直接显示在便利贴背面。';
+
+    try{
+      var resp = await fetch(pxy,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:200,messages:[{role:'user',content:sys}]})});
+      var data = await resp.json();
+      var reply = (data.choices?.[0]?.message?.content||'').trim();
+      if(!reply) return;
+      // 更新便利贴背面留言
+      card.backMsg = reply;
+      await llSave();
+      var scr = document.getElementById('scrLoveList');
+      if(scr && scr.style.display!=='none') llRender();
+      // 同时写入聊天记录让 char 知情
+      var histKey = 'chatHistory_'+_llCharId;
+      var hist = [];
+      try{ var lh = await localforage.getItem(histKey); if(lh) hist=Array.isArray(lh)?lh:JSON.parse(lh); }catch(e){}
+      hist.push({role:'system',type:'ll_reply',text:'【恋爱清单留言】'+reply,ts:Date.now()});
+      localforage.setItem(histKey,hist).catch(function(){});
+      try{ localStorage.setItem(histKey,JSON.stringify(hist)); }catch(e){}
+    }catch(e){ console.warn('恋爱清单AI通知失败',e); }
+  }
+
+  /* ── AI 主动认领 / 驳回（由系统调用，chat回复中解析到[认领心愿:ID]时触发）── */
+  // 已在 _llStampCard 中处理，这里补充：把char留言也写到便利贴
+  // 并同时让 char 在聊天气泡里说那句话（AI 正常回复里已有文字，无需重复）
+
+  /* ── char 随机主动发起心愿（可从外部调用）── */
+  window._llCharPostWish = async function(wishText){
+    await llLoad();
+    if(!_llCharId||!wishText) return;
+    var newCard = {
+      id: Date.now(),
+      type: 'char',
+      text: wishText,
+      status: 'pending',
+      ts: Date.now(),
+      backMsg: ''
+    };
+    _llCards.push(newCard);
+    await llSave();
+    var scr = document.getElementById('scrLoveList');
+    if(scr && scr.style.display!=='none') llRender();
+  };
+
+  /* ── 打开页面 ── */
+  window._openLoveList = async function(){
+    await llLoad();
+    showScreen('scrLoveList');
+    llRender();
+  };
+
+  /* ── 绑定返回按钮 ── */
+  var llBack = document.getElementById('llBack');
+  if(llBack) llBack.onclick = function(){ showScreen('scrCoupleSpace'); };
+
+  /* ── 绑定新建按钮 ── */
+  var llAddBtn = document.getElementById('llAddBtn');
+  var llNewModal = document.getElementById('llNewModal');
+  var llNewCancel = document.getElementById('llNewCancel');
+  var llNewSubmit = document.getElementById('llNewSubmit');
+  var llNewInput = document.getElementById('llNewInput');
+
+  if(llAddBtn) llAddBtn.onclick = function(){
+    if(llNewInput) llNewInput.value = '';
+    if(llNewModal) llNewModal.style.display = 'flex';
+  };
+  if(llNewCancel) llNewCancel.onclick = function(){ llNewModal.style.display='none'; };
+  if(llNewModal) llNewModal.onclick = function(e){ if(e.target===llNewModal) llNewModal.style.display='none'; };
+
+  if(llNewSubmit) llNewSubmit.onclick = async function(){
+    var txt = (llNewInput?llNewInput.value.trim():'');
+    if(!txt) return;
+    llNewModal.style.display='none';
+
+    await llLoad();
+    if(!_llCharId){ alert('请先在情侣空间选择伴侣！'); return; }
+
+    var newCard = { id: Date.now(), type:'user', text:txt, status:'pending', ts:Date.now(), backMsg:'' };
+    _llCards.push(newCard);
+    await llSave();
+    llRender();
+
+    // 通知AI：user 贴了心愿，AI 应在聊天里自然处理（下次聊天时系统提示会注入）
+    // 也可立即请求AI回应
+    autoCharRespondToUserWish(newCard);
+  };
+
+  /* ── AI 自动响应 user 的新心愿 ── */
+  async function autoCharRespondToUserWish(card){
+    if(!_llCharId) return;
+    var pxy=''; var key=''; var mod=''; var tp=0.8;
+    try{ pxy=localStorage.getItem('pxy')||''; key=localStorage.getItem('key')||''; mod=localStorage.getItem('mod')||''; tp=parseFloat(localStorage.getItem('temp')||'0.8')||0.8; }catch(e){}
+    if(!pxy||!key) return;
+    if(!pxy.includes('chat/completions')) pxy = pxy.replace(/\/$/,'') + '/chat/completions';
+
+    var charName = localStorage.getItem('cN_'+_llCharId)||'他';
+    var charAP = localStorage.getItem('cAP_'+_llCharId)||'';
+    var myName = localStorage.getItem('cMyN_'+_llCharId)||localStorage.getItem('cMyN')||'我';
+
+    var sys = '你是'+charName+'。'+(charAP?'性格设定：'+charAP:'')+'\\n'+myName+'刚刚在你们的恋爱清单冰箱上贴了一张心愿便利贴：「'+card.text+'」。\\n请你根据自己的性格决定：同意认领还是驳回这个心愿。\\n回复格式（严格遵守）：\\n第一行只能是 [认领心愿:'+card.id+'] 或 [驳回心愿:'+card.id+']\\n第二行起写你给'+myName+'的专属留言（不超过50字，手写风格，温柔或傲娇）。\\n不加任何角色前缀！';
+
+    try{
+      var resp = await fetch(pxy,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:200,messages:[{role:'user',content:sys}]})});
+      var data = await resp.json();
+      var reply = (data.choices?.[0]?.message?.content||'').trim();
+      if(!reply) return;
+
+      var lines = reply.split('\n');
+      var cmdLine = lines[0].trim();
+      var msgLines = lines.slice(1).filter(function(l){return l.trim();}).join(' ');
+
+      var matchClaim = cmdLine.match(/^\[(认领心愿|驳回心愿):(\d+)\]$/);
+      if(matchClaim){
+        var action2 = matchClaim[1]==='认领心愿'?'claimed':'rejected';
+        var cid2 = parseInt(matchClaim[2]);
+        var idx2 = _llCards.findIndex(function(c){return c.id===cid2;});
+        if(idx2!==-1){
+          _llCards[idx2].status = action2;
+          _llCards[idx2].backMsg = msgLines || (action2==='claimed'?'已认领 ❤️':'驳回了');
+          await llSave();
+          var scr2 = document.getElementById('scrLoveList');
+          if(scr2 && scr2.style.display!=='none') llRender();
+          // 把留言写入聊天记录（让 char 知情）
+          var histKey2 = 'chatHistory_'+_llCharId;
+          var hist2=[];
+          try{ var lh2=await localforage.getItem(histKey2);if(lh2)hist2=Array.isArray(lh2)?lh2:JSON.parse(lh2);}catch(e){}
+          hist2.push({role:'assistant',content:(action2==='claimed'?'【认领了心愿「'+card.text+'」】 '+_llCards[idx2].backMsg:'【驳回了心愿「'+card.text+'」】 '+_llCards[idx2].backMsg),ts:Date.now(),_llEvent:true});
+          localforage.setItem(histKey2,hist2).catch(function(){});
+          try{localStorage.setItem(histKey2,JSON.stringify(hist2));}catch(e){}
+        }
+      }
+    }catch(e){ console.warn('恋爱清单AI自动响应失败',e); }
+  }
+
+  // showScreen patch：打开 scrLoveList 时自动加载
+  var _origShow = window.showScreen;
+  window.showScreen = function(id){
+    _origShow(id);
+    if(id==='scrLoveList'){
+      llLoad().then(function(){ llRender(); });
+    }
+  };
+
+})();
 </script>
