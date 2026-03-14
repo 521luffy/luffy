@@ -8181,8 +8181,10 @@ $(`btnPull`).onclick = async () =>{
 function renderCsInviteCard(msg) {
     var wrap = document.createElement('div');
     wrap.style.cssText = 'display:flex;justify-content:center;padding:10px 16px;';
+    wrap.dataset.histType = 'cs_invite';
     var card = document.createElement('div');
     card.style.cssText = 'background:linear-gradient(135deg,#fff0f5,#ffe4ef);border:1.5px solid #ffb6c1;border-radius:18px;padding:16px 20px;max-width:80%;text-align:center;box-shadow:0 4px 16px rgba(255,120,160,.15);';
+
     var alreadyOpened = false;
     try {
         var od = localStorage.getItem('cs_opened_chars');
@@ -8190,69 +8192,113 @@ function renderCsInviteCard(msg) {
     } catch(e) {}
 
     if(alreadyOpened || msg.status === 'accepted') {
+        // 已开通状态
         card.innerHTML = '<div style="font-size:28px;margin-bottom:6px;">💕</div><div style="font-size:14px;font-weight:700;color:#c44f7a;">恭喜你们已开通情侣空间！</div>';
+    } else if(msg.status === 'rejected') {
+        // 对方拒绝
+        card.innerHTML = '<div style="font-size:28px;margin-bottom:6px;">💔</div><div style="font-size:14px;font-weight:700;color:#aaa;">对方拒绝了情侣空间邀请</div>';
     } else {
-        var btnId = 'csInvBtn_' + (msg.inviteId || msg.ts || Date.now());
+        // 等待 char 决定，user 这边纯展示，无任何可点按钮
         card.innerHTML =
             '<div style="font-size:28px;margin-bottom:6px;">💌</div>' +
             '<div style="font-size:14px;font-weight:700;color:#c44f7a;margin-bottom:4px;">情侣空间邀请卡</div>' +
-            '<div style="font-size:12px;color:#888;margin-bottom:12px;">你收到了一份情侣空间邀请，接受后即可开通专属情侣空间！</div>' +
-            '<button id="' + btnId + '" style="background:linear-gradient(135deg,#ff8fab,#c44f7a);color:white;border:none;border-radius:20px;padding:8px 24px;font-size:13px;font-weight:700;cursor:pointer;">💗 接受邀请</button>';
-        setTimeout(function(){
-            var btn = document.getElementById(btnId);
-            if(!btn) return;
-            btn.onclick = async function(){
-                // 检查是否已开通
-                var _od2 = {}; try{ var _r=localStorage.getItem('cs_opened_chars'); if(_r)_od2=JSON.parse(_r); }catch(e){}
-                if(_od2[msg.charId]){ return; }
-                // 标记已开通
-                var openedKey = 'cs_opened_chars';
-                var opened = {}; try{var od3=await localforage.getItem(openedKey);if(od3)opened=typeof od3==='object'?od3:JSON.parse(od3);}catch(e){}
-                opened[msg.charId] = true;
-                localforage.setItem(openedKey, opened).catch(function(){});
-                try{localStorage.setItem(openedKey, JSON.stringify(opened));}catch(e){}
-                // 从 pending 移除
-                var pendingKey='cs_pending_chars'; var pending={};
-                try{var pd2=await localforage.getItem(pendingKey);if(pd2)pending=typeof pd2==='object'?pd2:JSON.parse(pd2);}catch(e){}
-                delete pending[msg.charId];
-                localforage.setItem(pendingKey,pending).catch(function(){});
-                try{localStorage.setItem(pendingKey,JSON.stringify(pending));}catch(e){}
-                // 更新消息状态
-                if(typeof history !== 'undefined'){
-                    for(var i=0;i<history.length;i++){
-                        if(history[i].type==='cs_invite'&&history[i].charId===msg.charId){ history[i].status='accepted'; }
-                    }
-                    if(typeof ls !== 'undefined') ls.setItem('chatHistory', JSON.stringify(history));
-                }
-                // 替换按钮为已开通
-                card.innerHTML = '<div style="font-size:28px;margin-bottom:6px;">💕</div><div style="font-size:14px;font-weight:700;color:#c44f7a;">恭喜你们已开通情侣空间！🎉</div>';
-                // 在聊天中插入一条 char 的祝贺消息
-                if(typeof mkBub === 'function'){
-                    setTimeout(function(){
-                        mkBub('恭喜你们已开通情侣空间！💕 我们的专属小天地开张了～', 'l');
-                        if(typeof history !== 'undefined'){
-                            history.push({role:'assistant', content:'恭喜你们已开通情侣空间！💕 我们的专属小天地开张了～', ts:Date.now()});
-                            if(typeof ls !== 'undefined') ls.setItem('chatHistory', JSON.stringify(history));
-                        }
-                        if(typeof msgs !== 'undefined' && msgs) msgs.scrollTop = msgs.scrollHeight;
-                    }, 400);
-                }
-            };
-        }, 0);
+            '<div style="font-size:12px;color:#aaa;">已向对方发出邀请，等待对方确认…</div>';
     }
+
     wrap.appendChild(card);
+    // 绑定长按删除
+    (function(w, msgRef){
+        var _pt;
+        w.addEventListener('contextmenu', function(e){ e.preventDefault(); csCardCtxMenu(w, msgRef); });
+        w.addEventListener('touchstart', function(e){ _pt=setTimeout(function(){ csCardCtxMenu(w, msgRef); },500); },{passive:true});
+        w.addEventListener('touchend', function(){ clearTimeout(_pt); });
+        w.addEventListener('touchmove', function(){ clearTimeout(_pt); });
+    })(wrap, msg);
     return wrap;
 }
+
+// ── 由 AI 回复触发：开通 / 拒绝情侣空间邀请 ──
+window._csHandleInviteReply = async function(action) {
+    // action: 'accept' | 'reject'
+    var cid = (typeof currentChatId !== 'undefined') ? currentChatId : null;
+    if(!cid) return;
+
+    if(action === 'accept') {
+        // 标记已开通
+        var openedKey = 'cs_opened_chars';
+        var opened = {};
+        try{ var od2=await localforage.getItem(openedKey);if(od2)opened=typeof od2==='object'?od2:JSON.parse(od2);}catch(e){}
+        opened[cid] = true;
+        localforage.setItem(openedKey, opened).catch(function(){});
+        try{localStorage.setItem(openedKey, JSON.stringify(opened));}catch(e){}
+        // 从 pending 移除
+        var pendingKey='cs_pending_chars'; var pending={};
+        try{var pd2=await localforage.getItem(pendingKey);if(pd2)pending=typeof pd2==='object'?pd2:JSON.parse(pd2);}catch(e){}
+        delete pending[cid];
+        localforage.setItem(pendingKey,pending).catch(function(){});
+        try{localStorage.setItem(pendingKey,JSON.stringify(pending));}catch(e){}
+        // 更新 history 中邀请卡状态
+        if(typeof history !== 'undefined'){
+            for(var i=0;i<history.length;i++){
+                if(history[i].type==='cs_invite'&&history[i].charId===cid){ history[i].status='accepted'; }
+            }
+            if(typeof ls !== 'undefined') ls.setItem('chatHistory', JSON.stringify(history));
+        }
+    } else {
+        // 拒绝：更新 history 状态
+        if(typeof history !== 'undefined'){
+            for(var i=0;i<history.length;i++){
+                if(history[i].type==='cs_invite'&&history[i].charId===cid){ history[i].status='rejected'; }
+            }
+            if(typeof ls !== 'undefined') ls.setItem('chatHistory', JSON.stringify(history));
+        }
+    }
+    // 重新渲染聊天（卡片自动刷新）
+    if(typeof redrawChat === 'function') redrawChat();
+};
 
 // ── 情侣空间解除关系卡片渲染 ──
 function renderCsBreakupCard(msg) {
     var wrap = document.createElement('div');
     wrap.style.cssText = 'display:flex;justify-content:center;padding:10px 16px;';
+    wrap.dataset.histType = 'cs_breakup';
     var card = document.createElement('div');
     card.style.cssText = 'background:linear-gradient(135deg,#f5f5f5,#eee);border:1.5px solid #ccc;border-radius:18px;padding:16px 20px;max-width:80%;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.06);';
-    card.innerHTML = '<div style="font-size:28px;margin-bottom:6px;">💔</div><div style="font-size:14px;font-weight:700;color:#888;">你们已解除情侣空间关系</div><div style="font-size:12px;color:#aaa;margin-top:4px;">美好的回忆永远留在心里</div>';
+    card.innerHTML = '<div style="font-size:28px;margin-bottom:6px;">💔</div><div style="font-size:14px;font-weight:700;color:#888;">你们已解除情侣空间关系</div>';
     wrap.appendChild(card);
+    (function(w, msgRef){
+        var _pt;
+        w.addEventListener('contextmenu', function(e){ e.preventDefault(); csCardCtxMenu(w, msgRef); });
+        w.addEventListener('touchstart', function(e){ _pt=setTimeout(function(){ csCardCtxMenu(w, msgRef); },500); },{passive:true});
+        w.addEventListener('touchend', function(){ clearTimeout(_pt); });
+        w.addEventListener('touchmove', function(){ clearTimeout(_pt); });
+    })(wrap, msg);
     return wrap;
+}
+
+// ── 情侣空间卡片长按菜单 ──
+function csCardCtxMenu(wrapEl, msg) {
+    var menu = document.createElement('div');
+    menu.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,.18);z-index:9999;overflow:hidden;min-width:160px;';
+    menu.innerHTML = '<div id="_csCCardDel" style="padding:15px 24px;font-size:15px;color:#ff7675;font-weight:600;cursor:pointer;text-align:center;border-bottom:1px solid #f0f0f0;">🗑 删除</div><div id="_csCCardCancel" style="padding:12px 24px;font-size:14px;color:#888;cursor:pointer;text-align:center;">取消</div>';
+    var overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:9998;';
+    document.body.appendChild(overlay);
+    document.body.appendChild(menu);
+    function close(){ menu.remove(); overlay.remove(); }
+    menu.querySelector('#_csCCardDel').onclick = async function(){
+        close();
+        // 从 history 中删除该条
+        if(typeof history !== 'undefined'){
+            for(var i=history.length-1;i>=0;i--){
+                if(history[i].type===msg.type && history[i].ts===msg.ts){ history.splice(i,1); break; }
+            }
+            if(typeof ls !== 'undefined') ls.setItem('chatHistory', JSON.stringify(history));
+        }
+        if(wrapEl.parentNode) wrapEl.parentNode.removeChild(wrapEl);
+    };
+    menu.querySelector('#_csCCardCancel').onclick = close;
+    overlay.onclick = close;
 }
 
 function redrawChat() {
@@ -8914,6 +8960,14 @@ $(`btnLemon`).onclick = async () =>{
             }
     // ★ 经期状态自动注入（只描述状态，不提具体日期，避免和自定义剧情时间冲突）
     try {
+        // ★ 情侣空间邀请状态注入
+        var _csPending=false;
+        try{ var _csP=localStorage.getItem('cs_pending_chars'); if(_csP){ var _csPObj=JSON.parse(_csP); _csPending=!!(_csPObj&&_csPObj[currentChatId]); } }catch(e){}
+        if(_csPending){
+            sys+=`【情侣空间邀请 - 极重要】用户刚刚向你发出了情侣空间邀请。请你根据你的性格和当前感情状态，决定是否接受。如果同意，在回复末尾另起一行加：[同意情侣空间]；如果拒绝，在回复末尾另起一行加：[拒绝情侣空间]。不管同意还是拒绝，都要在正文中自然地表达你的态度和情绪。\n`;
+        }
+    } catch(e2) { /* 情侣空间注入异常 */ }
+    try {
         // ★ 恋爱清单上下文注入
         var _llKey='loveList_'+currentChatId;
         var _llData=null;
@@ -9380,6 +9434,15 @@ let hasAccept = txt.includes(`[收取转账]`);
                     }
                     if(_lineTrim.startsWith('[试图发送表情：') || _lineTrim.startsWith('[系统提示：') ||
                        _lineTrim.startsWith('[更新状态：')) return;
+                    // 处理情侣空间邀请指令
+                    if(_lineTrim === '[同意情侣空间]' || _lineTrim === '[接受情侣空间]') {
+                        setTimeout(()=>{ if(typeof window._csHandleInviteReply==='function') window._csHandleInviteReply('accept'); },300);
+                        return;
+                    }
+                    if(_lineTrim === '[拒绝情侣空间]') {
+                        setTimeout(()=>{ if(typeof window._csHandleInviteReply==='function') window._csHandleInviteReply('reject'); },300);
+                        return;
+                    }
                     // 处理恋爱清单指令
                     if(_lineTrim.startsWith('[认领心愿:') || _lineTrim.startsWith('[驳回心愿:')) {
                         let _llMatch = _lineTrim.match(/^\[(认领心愿|驳回心愿):(\d+)\]$/);
@@ -9510,7 +9573,8 @@ function renderQuoteBlock(b, txt, _side) {
            _t.startsWith('[发起视频通话]') || _t.startsWith('[更新状态：') ||
            _t.startsWith('[发送定位：') || _t.startsWith('[发起转账：') ||
            _t.startsWith('[发送红包：') || _t.startsWith('[同意代付]') ||
-           _t.startsWith('[认领心愿:') || _t.startsWith('[驳回心愿:')) {
+           _t.startsWith('[认领心愿:') || _t.startsWith('[驳回心愿:') ||
+           _t === '[同意情侣空间]' || _t === '[接受情侣空间]' || _t === '[拒绝情侣空间]') {
             b.dataset.suppress = '1'; return;
         }
     }
@@ -19508,6 +19572,48 @@ if(document.getElementById('offlineModePanel')) {
 // 情侣空间 (scrCoupleSpace) 逻辑
 // ═══════════════════════════════════════════════
 (function initCoupleSpace(){
+  // ── 当前情侣空间绑定的 charId（全局，供所有功能使用）──
+  window._csCurrentCharId = null;
+
+  function csGetCurrentCharId(){
+    if(window._csCurrentCharId) return window._csCurrentCharId;
+    // 先读上次保存的
+    try{ var saved=localStorage.getItem('cs_active_char'); if(saved){ window._csCurrentCharId=saved; return saved; } }catch(e){}
+    // 取已开通的第一个
+    var opened={};
+    try{ var od=localStorage.getItem('cs_opened_chars'); if(od) opened=JSON.parse(od); }catch(e){}
+    var keys=Object.keys(opened).filter(function(k){return opened[k];});
+    if(keys.length){ window._csCurrentCharId=keys[0]; return keys[0]; }
+    return null;
+  }
+
+  // ── 根据当前 charId 刷新情侣空间两人头像 ──
+  function csRefreshAvatars(){
+    var charId = csGetCurrentCharId();
+    // 右侧：char 头像（aiI_charId）
+    var rImg = document.getElementById('csAvaRImg');
+    var rSpan = document.getElementById('csAvaR')&&document.getElementById('csAvaR').querySelector('span');
+    if(charId && rImg){
+      Promise.resolve().then(async function(){
+        var d=null; try{d=await localforage.getItem('aiI_'+charId);}catch(e){}
+        if(!d){try{d=localStorage.getItem('aiI_'+charId);}catch(e){}}
+        if(d&&d.length>10){rImg.src=d;rImg.style.display='block';if(rSpan)rSpan.style.display='none';}
+        else{rImg.style.display='none';if(rSpan)rSpan.style.display='';}
+      });
+    }
+    // 左侧：user 头像（myI_global）
+    var lImg = document.getElementById('csAvaLImg');
+    var lSpan = document.getElementById('csAvaL')&&document.getElementById('csAvaL').querySelector('span');
+    if(lImg){
+      Promise.resolve().then(async function(){
+        var d=null; try{d=await localforage.getItem('myI_global');}catch(e){}
+        if(!d){try{d=localStorage.getItem('myI_global');}catch(e){}}
+        if(d&&d.length>10){lImg.src=d;lImg.style.display='block';if(lSpan)lSpan.style.display='none';}
+        else{lImg.style.display='none';if(lSpan)lSpan.style.display='';}
+      });
+    }
+  }
+
   // 绑定返回
   var csBack=document.getElementById('csBack');
   if(csBack)csBack.onclick=function(){showScreen('scrHome');};
@@ -19547,8 +19653,8 @@ if(document.getElementById('offlineModePanel')) {
   // 计算在一起天数（复用纪念日卡片的数据 ANN.date）
   function csUpdateDays(){
     var daysEl=document.getElementById('csBoardDays');if(!daysEl)return;
-    // 先读用户手动设置的自定义天数
-    var customKey='cs_custom_days';
+    var cid=csGetCurrentCharId()||'default';
+    var customKey='cs_custom_days_'+cid;
     Promise.resolve().then(async function(){
       var custom=null;
       try{custom=await localforage.getItem(customKey);}catch(e){}
@@ -19556,7 +19662,6 @@ if(document.getElementById('offlineModePanel')) {
       if(custom!==null&&custom!==''&&!isNaN(parseInt(custom))){
         daysEl.value=parseInt(custom);return;
       }
-      // 没有自定义则从纪念日自动计算
       var lfKey='hd_ann_date';
       var v=null;
       try{v=await localforage.getItem(lfKey);}catch(e){}
@@ -19566,15 +19671,16 @@ if(document.getElementById('offlineModePanel')) {
     });
   }
 
-  // 绑定天数输入框：失焦保存
+  // 绑定天数输入框：失焦保存（per-char）
   (function bindDaysInput(){
     var inp=document.getElementById('csBoardDays');if(!inp)return;
     inp.onchange=inp.onblur=function(){
       var v=this.value;
-      localforage.setItem('cs_custom_days',v).catch(function(){});
-      try{localStorage.setItem('cs_custom_days',v);}catch(e){}
+      var cid=csGetCurrentCharId()||'default';
+      var key='cs_custom_days_'+cid;
+      localforage.setItem(key,v).catch(function(){});
+      try{localStorage.setItem(key,v);}catch(e){}
     };
-    // 点击时全选方便修改
     inp.onfocus=function(){this.select();};
   })();
 
@@ -19657,7 +19763,21 @@ if(document.getElementById('offlineModePanel')) {
         // 状态按钮
         var statusEl=document.createElement('div');
         if(isOpened){
-          statusEl.innerHTML='<span style="color:#ff8fab;font-weight:700;font-size:13px;">已开通</span><span onclick="csCsBreakUp(\''+ct.id+'\',\''+name+'\')" style="color:#ccc;font-size:12px;cursor:pointer;margin-left:6px;">解除关系</span>';
+          // 点击整行切换当前情侣空间角色
+          item.style.cursor='pointer';
+          (function(charId, charNm){
+            item.onclick=function(e){
+              if(e.target.tagName==='SPAN'&&e.target.textContent.includes('解除')) return;
+              window._csCurrentCharId=charId;
+              try{localStorage.setItem('cs_active_char',charId);}catch(e2){}
+              localforage.setItem('cs_active_char',charId).catch(function(){});
+              panel.style.display='none';
+              csRefreshAvatars();
+              csUpdateDays();csLoadCheckin();
+              showCsSuccessToast('已切换到「'+charNm+'」的情侣空间 💕');
+            };
+          })(ct.id, name);
+          statusEl.innerHTML='<span style="color:#ff8fab;font-weight:700;font-size:13px;">已开通 ✓</span><span onclick="event.stopPropagation();csCsBreakUp(\''+ct.id+'\',\''+name+'\')" style="color:#ccc;font-size:12px;cursor:pointer;margin-left:6px;">解除关系</span>';
         } else if(isPending){
           statusEl.innerHTML='<span style="color:#aaa;font-size:12px;font-weight:600;">💌 邀请中…</span>';
         } else {
@@ -19737,7 +19857,8 @@ if(document.getElementById('offlineModePanel')) {
 
   // 解除关系
   window.csCsBreakUp=async function(charId,charName){
-    if(!confirm('确定要与「'+charName+'」解除情侣关系吗？'))return;
+    var confirmed = await window._customConfirm('确定要与「'+charName+'」解除情侣关系吗？');
+    if(!confirmed)return;
 
     // 从 opened 移除
     var openedKey='cs_opened_chars';
@@ -19841,13 +19962,14 @@ if(document.getElementById('offlineModePanel')) {
       };r.readAsDataURL(file);
     };
   }
-  bindAva('csAvaL','csAvaLInp','csAvaLImg','cs_ava_l');
-  bindAva('csAvaR','csAvaRInp','csAvaRImg','cs_ava_r');
+  // 头像改为自动从 aiI_/myI_global 读取，不再允许手动上传覆盖
+  csRefreshAvatars();
 
   // 打卡（双写localforage+localStorage）
   window.csCkToggle=function(key,btn){
     var today=new Date().toDateString();
-    var lsKey='cs_ck_'+key+'_'+today;
+    var cid=csGetCurrentCharId()||'default';
+    var lsKey='cs_ck_'+cid+'_'+key+'_'+today;
     var done=false;
     try{done=localStorage.getItem(lsKey)==='1';}catch(e){}
     if(!done){
@@ -19857,19 +19979,21 @@ if(document.getElementById('offlineModePanel')) {
       btn.style.background='#e8e8e8';btn.style.color='#999';
     }
   };
-  // 加载今日打卡状态
   function csLoadCheckin(){
     var today=new Date().toDateString();
+    var cid=csGetCurrentCharId()||'default';
     [['morning','csCkMorning'],['night','csCkNight'],['call','csCkCall'],['love','csCkLove']].forEach(function(pair){
       var btn=document.getElementById(pair[1]);if(!btn)return;
+      btn.textContent='打卡';btn.classList.remove('done');btn.disabled=false;
+      btn.style.background='';btn.style.color='';
+      var lsKey='cs_ck_'+cid+'_'+pair[0]+'_'+today;
       var done=false;
-      try{done=localStorage.getItem('cs_ck_'+pair[0]+'_'+today)==='1';}catch(e){}
+      try{done=localStorage.getItem(lsKey)==='1';}catch(e){}
       if(done){
         btn.textContent='✅';btn.classList.add('done');btn.disabled=true;
         btn.style.background='#e8e8e8';btn.style.color='#999';
       } else {
-        // 异步从localforage检查
-        localforage.getItem('cs_ck_'+pair[0]+'_'+today).then(function(v){
+        localforage.getItem(lsKey).then(function(v){
           if(v==='1'){
             btn.textContent='✅';btn.classList.add('done');btn.disabled=true;
             btn.style.background='#e8e8e8';btn.style.color='#999';
@@ -19877,7 +20001,6 @@ if(document.getElementById('offlineModePanel')) {
         }).catch(function(){});
       }
     });
-    // 加载每日恋语
     csLoadLoveQuote();
   }
   // ★ 每日恋语（按日期轮换，清新不油腻）
@@ -19948,7 +20071,12 @@ if(document.getElementById('offlineModePanel')) {
   var origShowScreen=window.showScreen;
   window.showScreen=function(id){
     origShowScreen(id);
-    if(id==='scrCoupleSpace'){csUpdateDays();csLoadBg();csLoadCheckin();csFitTopBar();}
+    if(id==='scrCoupleSpace'){
+      // 确保有 charId
+      csGetCurrentCharId();
+      csUpdateDays();csLoadBg();csLoadCheckin();csFitTopBar();
+      csRefreshAvatars();
+    }
     if(id==='scrPeriod'){
       if(typeof window._periodLoadAll==='function')window._periodLoadAll().then(function(){
         if(document.getElementById('ptTab2')&&document.getElementById('ptTab2').classList.contains('active')){
@@ -20089,7 +20217,9 @@ window.doScanRecover = async function() {
 
   /* ── 获取当前角色 ── */
   function getLLCharId(){
-    // 取情侣空间已开通的第一个角色，或 currentChatId
+    // 优先用情侣空间当前选中的 char
+    if(window._csCurrentCharId) return window._csCurrentCharId;
+    try{ var saved=localStorage.getItem('cs_active_char'); if(saved) return saved; }catch(e){}
     var opened = {};
     try{ var od = localStorage.getItem('cs_opened_chars'); if(od) opened=JSON.parse(od); }catch(e){}
     var keys = Object.keys(opened).filter(function(k){return opened[k];});
