@@ -1482,7 +1482,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
                     <span id=roomTitle style="font-weight:bold; font-size:16px; color:#333;">专属恋人</span>
                     <div id=roomStatus class=role-status style="font-size:11px; transform:scale(0.9);"></div>
                 </div>
-                <div id=roomSignature style="font-size:11px; color:#a29bfe; margin-top:8px; max-width:220px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; word-break:break-all;"></div>
+                <div id=roomSignature style="font-size:11px; color:#a29bfe; margin-top:2px; max-width:220px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-height:14px;"></div>
             </div>
 
             <span id=btnRoomSet class=settings-btn>⚙️</span>
@@ -4409,8 +4409,8 @@ try{
       }
     }
     modal.style.display='flex';
-    // 滚动到选中项
-    setTimeout(function(){var sel=scroll.querySelector('.selected');if(sel)sel.scrollIntoView({block:'center'});},50);
+    // ★ 修复：用手动scrollTop替代scrollIntoView（scrollIntoView会滚动所有祖先容器导致页面上移）
+    setTimeout(function(){var sel=scroll.querySelector('.selected');if(sel){var scrollRect=scroll.getBoundingClientRect();var selRect=sel.getBoundingClientRect();scroll.scrollTop=scroll.scrollTop+(selRect.top-scrollRect.top)-(scroll.clientHeight/2)+(sel.clientHeight/2);}},50);
   };
   window.closePeriodPicker=function(){
     var modal=document.getElementById('periodPickerModal');
@@ -8055,50 +8055,52 @@ function getCleanText(el) {
 
 let editingOldText = ``;
 $(`ctxCopy`).onclick = () =>{ if(selEl) navigator.clipboard.writeText(getCleanText(selEl)).then(()=>{ alert(`复制成功`); $(`ctxMenu`).style.display = `none`; }); };
-$(`ctxDel`).onclick = () => { 
+$(`ctxDel`).onclick = async () => { 
     if(selEl) { 
-        if(confirm(`确定要删除这1条信息吗？`)) {
-            // ★ 方案A：histIdx直接定位（线下模式气泡必须走此路径）
+        let _delConfirmed = await window._customConfirm(`确定要删除这1条信息吗？`);
+        if(_delConfirmed) {
+            let _selText = getCleanText(selEl);
+            let _selRaw = selEl.dataset && selEl.dataset.raw ? selEl.dataset.raw : '';
+            let _imgEl = selEl.querySelector(`img`);
+            let _searchTarget = '';
+            if(_selRaw && (_selRaw.startsWith(`[定位消息：`) || _selRaw.startsWith(`[实时位置：`))) _searchTarget = _selRaw;
+            else if(_imgEl) _searchTarget = _imgEl.getAttribute(`src`);
+            else _searchTarget = _selText;
+            
+            // 先确定目标history索引
+            let _targetIdx = -1;
             if(selEl.dataset.histIdx !== undefined) {
-                let _di = parseInt(selEl.dataset.histIdx);
-                if(!isNaN(_di) && history[_di]) {
-                    history.splice(_di, 1);
+                _targetIdx = parseInt(selEl.dataset.histIdx);
+            } else {
+                for(let i=history.length-1; i>=0; i--) {
+                    if(history[i].content && history[i].content.includes(_searchTarget)) { _targetIdx = i; break; }
+                }
+            }
+            
+            if(_targetIdx >= 0 && history[_targetIdx]) {
+                let _origContent = history[_targetIdx].content;
+                let _newContent = _origContent;
+                
+                // 从content中移除选中文本
+                if(_imgEl) {
+                    _newContent = _newContent.replace(new RegExp(`\\[图片消息：` + _searchTarget.replace(/[-\/\\^$*+?.()|[\]{}]/g, `\\$&`) + `\\](?:\\n\\(系统提示：.*?\\))?`), ``);
+                } else {
+                    _newContent = _newContent.replace(_searchTarget, ``);
+                }
+                _newContent = _newContent.trim().replace(/^\n+|\n+$/g, ``).replace(/\n{2,}/g, `\n`);
+                
+                // 判断剩余内容是否为空
+                let _afterReply = _newContent.split(`【回复】`)[1];
+                if(_newContent === `` || (_newContent.includes(`【回复】`) && (!_afterReply || _afterReply.trim() === ``))) {
+                    history.splice(_targetIdx, 1);
                     let lmc = parseInt(ls.getItem(`lastMemCount`)) || 0;
                     if(lmc > history.length) ls.setItem(`lastMemCount`, history.length.toString());
-                    ls.setItem(`chatHistory`, JSON.stringify(history));
-                    redrawChat();
-                    if(typeof updateListPreview === `function`) updateListPreview();
-                    $(`ctxMenu`).style.display = `none`;
-                    return;
+                } else {
+                    history[_targetIdx].content = _newContent;
                 }
+                ls.setItem(`chatHistory`, JSON.stringify(history));
             }
-            // ★ 方案B：文字内容搜索（普通气泡后备）
-                                let rawTxt = selEl.dataset && selEl.dataset.raw;
-                    let isLocCard = rawTxt && (rawTxt.startsWith(`[定位消息：`) || rawTxt.startsWith(`[实时位置：`));
-                    let imgEl = (!isLocCard) ? selEl.querySelector(`img`) : null;
-                    let searchTarget = ``;
-                    if (isLocCard) searchTarget = rawTxt;
-                    else if (imgEl) searchTarget = imgEl.getAttribute(`src`);
-                    else searchTarget = getCleanText(selEl);
-                    for(let i=history.length-1; i>=0; i--) {
-                        if(history[i].content.includes(searchTarget)) {
-                            let newContent = history[i].content;
-                            if(imgEl) newContent = newContent.replace(new RegExp(`\\[图片消息：` + searchTarget.replace(/[-\/\\^$*+?.()|[\]{}]/g, `\\$&`) + `\\](?:\\n\\(系统提示：.*?\\))?`), ``);
-                            else newContent = newContent.replace(searchTarget, ``);
-                            newContent = newContent.trim().replace(/^\n+|\n+$/g, ``).replace(/\n{2,}/g, `\n`);
-                            let afterReply = newContent.split(`【回复】`)[1];
-
-                    if (newContent === `` || (newContent.includes(`【回复】`) && (!afterReply || afterReply.trim() === ``))) {
-                        history.splice(i, 1);
-                        let lmc = parseInt(ls.getItem(`lastMemCount`)) || 0;
-                        if(lmc > history.length) ls.setItem(`lastMemCount`, history.length.toString());
-                    } else {
-                        history[i].content = newContent;
-                    }
-                    ls.setItem(`chatHistory`, JSON.stringify(history));
-                    break;
-                }
-            }
+            
             redrawChat();
             if(typeof updateListPreview === `function`) updateListPreview();
         }
@@ -9925,7 +9927,7 @@ function rmThk() {
     let t = $(`thk`); if(t) t.remove(); 
     if($(`rpTyping`)) $(`rpTyping`).remove();
     if($(`roomStatus`)) $(`roomStatus`).style.display = `flex`;
-    if($(`roomSignature`)) $(`roomSignature`).style.display = `-webkit-box`;
+    if($(`roomSignature`)) $(`roomSignature`).style.display = `block`;
     if(typeof applyVis === `function`) applyVis();
 }
 let stickerData = [];
@@ -10973,7 +10975,7 @@ function exitMultiSelectMode() {
                 <span id="roomTitle" style="font-weight:bold; font-size:16px; color:#333;">${dn}</span>
                 <div id="roomStatus" class="role-status" style="font-size:11px; transform:scale(0.9);"></div>
             </div>
-            <div id="roomSignature" style="font-size:11px; color:#a29bfe; margin-top:8px; max-width:220px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; word-break:break-all;"></div>
+            <div id="roomSignature" style="font-size:11px; color:#a29bfe; margin-top:2px; max-width:220px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-height:14px;"></div>
         </div>
 
         <span id="btnRoomSet" class="settings-btn">⚙️</span>
@@ -19421,14 +19423,17 @@ if(document.getElementById('offlineModePanel')) {
   bindAva('csAvaL','csAvaLInp','csAvaLImg','cs_ava_l');
   bindAva('csAvaR','csAvaRInp','csAvaRImg','cs_ava_r');
 
-  // 打卡
+  // 打卡（双写localforage+localStorage）
   window.csCkToggle=function(key,btn){
     var today=new Date().toDateString();
     var lsKey='cs_ck_'+key+'_'+today;
-    var done=localStorage.getItem(lsKey)==='1';
+    var done=false;
+    try{done=localStorage.getItem(lsKey)==='1';}catch(e){}
     if(!done){
-      localStorage.setItem(lsKey,'1');
+      try{localStorage.setItem(lsKey,'1');}catch(e){}
+      localforage.setItem(lsKey,'1').catch(function(){});
       btn.textContent='✅';btn.classList.add('done');btn.disabled=true;
+      btn.style.background='#e8e8e8';btn.style.color='#999';
     }
   };
   // 加载今日打卡状态
@@ -19436,10 +19441,63 @@ if(document.getElementById('offlineModePanel')) {
     var today=new Date().toDateString();
     [['morning','csCkMorning'],['night','csCkNight'],['call','csCkCall'],['love','csCkLove']].forEach(function(pair){
       var btn=document.getElementById(pair[1]);if(!btn)return;
-      if(localStorage.getItem('cs_ck_'+pair[0]+'_'+today)==='1'){
+      var done=false;
+      try{done=localStorage.getItem('cs_ck_'+pair[0]+'_'+today)==='1';}catch(e){}
+      if(done){
         btn.textContent='✅';btn.classList.add('done');btn.disabled=true;
+        btn.style.background='#e8e8e8';btn.style.color='#999';
+      } else {
+        // 异步从localforage检查
+        localforage.getItem('cs_ck_'+pair[0]+'_'+today).then(function(v){
+          if(v==='1'){
+            btn.textContent='✅';btn.classList.add('done');btn.disabled=true;
+            btn.style.background='#e8e8e8';btn.style.color='#999';
+          }
+        }).catch(function(){});
       }
     });
+    // 加载每日恋语
+    csLoadLoveQuote();
+  }
+  // ★ 每日恋语（按日期轮换，清新不油腻）
+  var _loveQuotes=[
+    '想你的时候，风都是甜的。',
+    '你笑起来的样子，是我见过最好看的风景。',
+    '今天的月亮很美，但不及你万分之一。',
+    '能和你一起慢慢变老，是我能想到最浪漫的事。',
+    '你是我最想留住的幸运。',
+    '余生请多指教，我会一直在你身边。',
+    '和你在一起的每一天，都是我最喜欢的日子。',
+    '你是我藏在心底的光，温暖而明亮。',
+    '喜欢你这件事，我从未想过放弃。',
+    '只要你在，我就觉得什么都刚刚好。',
+    '你是冬天里的暖阳，是夏天里的微风。',
+    '谢谢你出现在我的生命里，让一切变得不同。',
+    '我想和你一起看遍世间所有的日出和日落。',
+    '有你在的地方，就是我最想去的远方。',
+    '你是我所有美好心情的原因。',
+    '能牵着你的手走在路上，就已经很幸福了。',
+    '你的每一句晚安，都是我一天中最期待的事。',
+    '春天适合赏花，夏天适合看海，秋冬适合想你。',
+    '遇见你之后，生活变甜了，日子也有盼头了。',
+    '希望我是你回头就能看到的那个人。',
+    '和你聊天的时候，嘴角总是不自觉上扬。',
+    '你是我见过最温柔的意外。',
+    '有你的日子，连呼吸都是开心的。',
+    '我的世界很小，小到只装得下一个你。',
+    '你不用太好，我喜欢就好。',
+    '和你说晚安之后，总要再偷偷看一眼你的头像。',
+    '以前是想被很多人喜欢，现在只想被你一个人喜欢。',
+    '你是年少的欢喜，是我藏了好久的心事。',
+    '只想和你分享每一个平凡的日常。',
+    '今天也是喜欢你的一天。❤️'
+  ];
+  function csLoadLoveQuote(){
+    var el=document.getElementById('csLoveQuote');if(!el)return;
+    // 用日期做种子选固定的一句
+    var now=new Date();
+    var dayIndex=Math.floor((now.getFullYear()*10000+now.getMonth()*100+now.getDate())*7+3)%_loveQuotes.length;
+    el.textContent=_loveQuotes[dayIndex];
   }
   // 功能入口提示（后续可扩展）
   function bindFuncToast(id,name){
