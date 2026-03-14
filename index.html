@@ -8219,25 +8219,21 @@ function renderCsInviteCard(msg) {
 
 // ── 由 AI 回复触发：开通 / 拒绝情侣空间邀请 ──
 window._csHandleInviteReply = async function(action) {
-    // action: 'accept' | 'reject'
     var cid = (typeof currentChatId !== 'undefined') ? currentChatId : null;
     if(!cid) return;
 
     if(action === 'accept') {
-        // 标记已开通
         var openedKey = 'cs_opened_chars';
         var opened = {};
         try{ var od2=await localforage.getItem(openedKey);if(od2)opened=typeof od2==='object'?od2:JSON.parse(od2);}catch(e){}
         opened[cid] = true;
         localforage.setItem(openedKey, opened).catch(function(){});
         try{localStorage.setItem(openedKey, JSON.stringify(opened));}catch(e){}
-        // 从 pending 移除
         var pendingKey='cs_pending_chars'; var pending={};
         try{var pd2=await localforage.getItem(pendingKey);if(pd2)pending=typeof pd2==='object'?pd2:JSON.parse(pd2);}catch(e){}
         delete pending[cid];
         localforage.setItem(pendingKey,pending).catch(function(){});
         try{localStorage.setItem(pendingKey,JSON.stringify(pending));}catch(e){}
-        // 更新 history 中邀请卡状态
         if(typeof history !== 'undefined'){
             for(var i=0;i<history.length;i++){
                 if(history[i].type==='cs_invite'&&history[i].charId===cid){ history[i].status='accepted'; }
@@ -8245,7 +8241,6 @@ window._csHandleInviteReply = async function(action) {
             if(typeof ls !== 'undefined') ls.setItem('chatHistory', JSON.stringify(history));
         }
     } else {
-        // 拒绝：更新 history 状态
         if(typeof history !== 'undefined'){
             for(var i=0;i<history.length;i++){
                 if(history[i].type==='cs_invite'&&history[i].charId===cid){ history[i].status='rejected'; }
@@ -8253,8 +8248,17 @@ window._csHandleInviteReply = async function(action) {
             if(typeof ls !== 'undefined') ls.setItem('chatHistory', JSON.stringify(history));
         }
     }
-    // 重新渲染聊天（卡片自动刷新）
-    if(typeof redrawChat === 'function') redrawChat();
+    // 直接更新已渲染的邀请卡片（不调用redrawChat，避免打断打字动画）
+    var newHtml = action === 'accept'
+        ? '<div style="font-size:28px;margin-bottom:6px;">💕</div><div style="font-size:14px;font-weight:700;color:#c44f7a;">恭喜你们已开通情侣空间！</div>'
+        : '<div style="font-size:28px;margin-bottom:6px;">💔</div><div style="font-size:14px;font-weight:700;color:#aaa;">对方拒绝了情侣空间邀请</div>';
+    if(typeof msgs !== 'undefined' && msgs){
+        var cards = msgs.querySelectorAll('[data-hist-type="cs_invite"]');
+        cards.forEach(function(w){
+            var c = w.querySelector('div[style*="border-radius:18px"]');
+            if(c) c.innerHTML = newHtml;
+        });
+    }
 };
 
 // ── 情侣空间解除关系卡片渲染 ──
@@ -8960,12 +8964,13 @@ $(`btnLemon`).onclick = async () =>{
             }
     // ★ 经期状态自动注入（只描述状态，不提具体日期，避免和自定义剧情时间冲突）
     try {
-        // ★ 情侣空间邀请状态注入
-        var _csPending=false;
-        try{ var _csP=localStorage.getItem('cs_pending_chars'); if(_csP){ var _csPObj=JSON.parse(_csP); _csPending=!!(_csPObj&&_csPObj[currentChatId]); } }catch(e){}
-        if(_csPending){
-            sys+=`【情侣空间邀请 - 极重要】用户刚刚向你发出了情侣空间邀请。请你根据你的性格和当前感情状态，决定是否接受。如果同意，在回复末尾另起一行加：[同意情侣空间]；如果拒绝，在回复末尾另起一行加：[拒绝情侣空间]。不管同意还是拒绝，都要在正文中自然地表达你的态度和情绪。\n`;
-        }
+        // ★ 情侣空间邀请状态注入（纯同步，不阻塞API调用）
+        try{
+            var _csP=localStorage.getItem('cs_pending_chars');
+            if(_csP){ var _csPObj=JSON.parse(_csP); if(_csPObj&&_csPObj[currentChatId]){
+                sys+=`【情侣空间邀请 - 极重要】用户刚刚向你发出了情侣空间邀请。请你根据你的性格和当前感情状态，决定是否接受。如果同意，在回复末尾另起一行加：[同意情侣空间]；如果拒绝，在回复末尾另起一行加：[拒绝情侣空间]。不管同意还是拒绝，都要在正文中自然地表达你的态度和情绪。\n`;
+            }}
+        }catch(e){}
     } catch(e2) { /* 情侣空间注入异常 */ }
     try {
         // ★ 恋爱清单上下文注入
