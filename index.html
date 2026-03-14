@@ -972,7 +972,8 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 <style>
   /* ── 大姨妈页样式 ── */
   #periodTopBar{
-    display:flex;align-items:center;padding:65px 14px 12px;
+    display:flex;align-items:center;padding:14px 14px 12px;
+    padding-top:max(calc(env(safe-area-inset-top, 0px) + 14px), 36px);
     flex-shrink:0;background:linear-gradient(135deg,#ffd86e,#ffb347);
     position:relative;
   }
@@ -987,14 +988,15 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 
   /* 页面内容容器 */
   #periodPages{flex:1;overflow:hidden;position:relative;}
-  .period-page{position:absolute;top:0;left:0;width:100%;height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;display:none;flex-direction:column;}
+  .period-page{position:absolute;top:0;left:0;width:100%;height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;display:none;flex-direction:column;box-sizing:border-box;}
   .period-page.show{display:flex;}
 
   /* ── 页面1：设置 ── */
-  #periodSettings{background:#fffbe6;padding:14px;gap:12px;}
+  #periodSettings{background:#fffbe6;padding:14px 12px;gap:12px;}
   .ps-card{
-    background:white;border-radius:18px;padding:16px 18px;
+    background:white;border-radius:18px;padding:16px 14px;
     box-shadow:0 2px 10px rgba(255,160,60,.1);border:1.5px solid #ffe5b0;
+    box-sizing:border-box;width:100%;
   }
   .ps-row{display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
   .ps-label{font-size:15px;font-weight:700;color:#333;}
@@ -1015,7 +1017,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 
   /* ── 选择器弹窗 ── */
   #periodPickerModal{
-    display:none;position:absolute;bottom:0;left:0;width:100%;
+    display:none;position:absolute;top:0;left:0;width:100%;height:100%;
     background:rgba(0,0,0,.4);z-index:50;justify-content:flex-end;
     flex-direction:column;
   }
@@ -1035,7 +1037,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
   .ppk-item.selected{color:#e8a020;font-weight:700;background:#fff8e8;}
 
   /* ── 页面2：日历 ── */
-  #periodCalendar{background:#fffbe6;}
+  #periodCalendar{background:#fffbe6;box-sizing:border-box;}
   .pc-hdr{
     display:flex;align-items:center;justify-content:space-between;
     padding:12px 20px;background:linear-gradient(135deg,#ffd86e,#ffb347);flex-shrink:0;
@@ -1045,10 +1047,10 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
   .pc-weekrow{display:grid;grid-template-columns:repeat(7,1fr);background:#fff8dc;padding:6px 4px 2px;}
   .pc-wday{text-align:center;font-size:12px;font-weight:700;color:#a07030;padding:4px 0;}
   .pc-wday:last-child,.pc-wday:nth-child(6){color:#cc8800;}
-  .pc-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:0;flex:1;}
+  .pc-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:0;width:100%;box-sizing:border-box;}
   .pc-cell{
-    aspect-ratio:1;display:flex;align-items:center;justify-content:center;
-    font-size:15px;color:#444;cursor:pointer;position:relative;
+    height:48px;display:flex;align-items:center;justify-content:center;
+    font-size:14px;color:#444;cursor:pointer;position:relative;
     font-family:inherit;
   }
   .pc-cell.other{color:#ccc;}
@@ -6531,38 +6533,11 @@ async function renderContacts() {
     if(contactItems) {
         for(let i=1; i<contactItems.length; i++) contactItems[i].remove();
     }
-    // 消息列表（listContent）按聊天时间排序，联系人页（contactContent）按添加顺序
-    let contactsSorted = [...contacts]; // 保持添加顺序（最新添加在前）
-    // ★ 预取所有角色的最后聊天时间（从localforage兜底，修复localStorage满导致排序失效）
-    let _timeCache = {};
-    for(let c of contacts) {
-      try {
-        let t = Number(originalGetItem.call(ls, `lastChatTime_`+c.id) || 0);
-        if(!t) {
-            try { let lft = await localforage.getItem(`lastChatTime_`+c.id); if(lft) t = Number(lft) || 0; } catch(e){}
-        }
-        if(!t) {
-            // 从聊天记录最后一条取时间
-            try {
-                let h = null;
-                try { h = await localforage.getItem(`chatHistory_`+c.id); } catch(e){}
-                if(!h) try { h = originalGetItem.call(ls, `chatHistory_`+c.id); } catch(e){}
-                if(h) {
-                    let arr = typeof h === 'string' ? JSON.parse(h) : h;
-                    if(arr && arr.length) { let last = arr[arr.length-1]; t = last.ts || last.time || 0; }
-                }
-            } catch(e){}
-        }
-        _timeCache[c.id] = t;
-      } catch(e){ _timeCache[c.id] = 0; }
-    }
-    // 消息列表用的排序版本
-    let contactsByTime = [...contacts].sort((a, b) => {
-        return (_timeCache[b.id] || 0) - (_timeCache[a.id] || 0);
-    });
+    // 消息列表（listContent）和联系人页（contactContent）
+    let contactsSorted = [...contacts]; // 联系人页保持添加顺序
 
-    // listContent按聊天时间排序的顺序构建
-    for (let c of contactsByTime) {
+    // ★ 消息列表：不预排序，构建时从聊天记录提取时间戳，最后用DOM排序
+    for (let c of contacts) {
       try {
         let div = document.createElement(`div`);
         div.className = `chat-item`;
@@ -6593,8 +6568,20 @@ async function renderContacts() {
         if (isBlk) isoName += `<span style="color:#ff4757;font-size:10px;margin-left:4px;padding:0 2px;">已拉黑</span>`;
         div.innerHTML = avaHtml + `<div class=chat-info><div class=chat-name>` + isoName + `</div><div class=chat-preview>` + prevTxt + `</div></div>`;
         // 设置最后聊天时间（用于消息列表排序）
-        // ★ 使用预取的时间缓存（已包含localforage兜底）
-        div.dataset.lasttime = String(_timeCache[c.id] || 0);
+        // ★ 从已加载的聊天记录直接提取最后消息时间戳
+        let _itemTime = 0;
+        try {
+            // 优先用 lastChatTime（更准确）
+            let _lct = originalGetItem.call(ls, `lastChatTime_`+c.id);
+            if(_lct) _itemTime = Number(_lct) || 0;
+            if(!_itemTime) { try { let _lft = await localforage.getItem(`lastChatTime_`+c.id); if(_lft) _itemTime = Number(_lft) || 0; } catch(e){} }
+            // 兜底：从聊天记录最后一条消息取时间
+            if(!_itemTime && isoHist && isoHist.length) {
+                let _lm = isoHist[isoHist.length-1];
+                _itemTime = _lm.ts || _lm.time || 0;
+            }
+        } catch(e){}
+        div.dataset.lasttime = String(_itemTime);
                 div.onclick = async () => {
             // ★ 先保存当前char的线下状态，再切换（防止切走时丢失状态）
             if(typeof window._saveCurrentOfflineState === 'function') window._saveCurrentOfflineState();
