@@ -1137,7 +1137,10 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 <div id="pmTopBar">
   <span id="pmBack">＜</span>
   <span id="pmTitle">📖 TA的过去</span>
-  <span id="pmAddChapterBtn" title="添加章节">＋</span>
+  <div style="display:flex;align-items:center;gap:6px;">
+    <span id="pmAdultToggle" title="私密内容开关" style="font-size:17px;cursor:pointer;opacity:0.5;-webkit-tap-highlight-color:transparent;" onclick="pmToggleAdult()">🔞</span>
+    <span id="pmAddChapterBtn" title="添加章节">＋</span>
+  </div>
 </div>
 
 <!-- 章节标签 -->
@@ -20176,8 +20179,12 @@ window.doScanRecover = async function() {
     var charAP = (_pmCharId ? localStorage.getItem('cAP_'+_pmCharId)||'' : '');
     var charRel = (_pmCharId ? localStorage.getItem('cR_'+_pmCharId)||'' : '');
     var combined = charAP + charRel;
+    // 提取年龄数字
+    var ageMatch = combined.match(/(\d{1,3})\s*岁/);
+    var age = ageMatch ? parseInt(ageMatch[1]) : 0;
     var result = ['童年','学生时代','恋爱经历'];
-    if(combined.match(/上班|职场|工作|公司|社会人|打工|职员|白领|律师|医生|工程师|程序员|老师|教授|CEO|总裁|总监|已毕业|大学毕业|参加工作/)){
+    // 35岁以上才有"工作后"章节
+    if(age >= 35){
       result.push('工作后');
     }
     return result;
@@ -20366,20 +20373,61 @@ window.doScanRecover = async function() {
 
   /* ── 带到聊天 ── */
   function bringMemoryToChat(card, chapter){
-    // 跳转到聊天室页面（如果当前charId有聊天）
     var cid = _pmCharId;
     if(!cid){ alert('请先在情侣空间选择伴侣！'); return; }
-    // 把记忆内容写入输入框并跳到聊天页面
-    if(typeof showScreen==='function') showScreen('scrRoom');
-    setTimeout(function(){
-      var inp = document.getElementById('iptMsg');
-      if(inp){
-        inp.value = '我想问你关于「'+chapter+'」的一段往事：「'+card.text+'」你还记得吗？';
-        inp.focus();
-        // 触发自动resize
-        if(typeof _autoResizeIptMsg==='function') _autoResizeIptMsg();
+    var msg = '我想问你关于「'+chapter+'」的一段往事：「'+card.text+'」你还记得吗？';
+
+    // 如果当前就在和这个char聊天，直接跳转
+    if(typeof currentChatId!=='undefined' && currentChatId===cid){
+      if(typeof showScreen==='function') showScreen('scrRoom');
+      setTimeout(function(){
+        var inp=document.getElementById('iptMsg');
+        if(inp){inp.value=msg;inp.focus();if(typeof _autoResizeIptMsg==='function')_autoResizeIptMsg();}
+      },300);
+      return;
+    }
+
+    // 否则需要先切换到对应char的聊天室
+    // 找到contacts里的这个char然后模拟点击
+    var targetContact = null;
+    if(typeof contacts!=='undefined'){
+      for(var i=0;i<contacts.length;i++){
+        if(contacts[i].id===cid){ targetContact=contacts[i]; break; }
       }
-    }, 300);
+    }
+    if(!targetContact){
+      // contacts里找不到，先去列表页让用户手动选
+      if(typeof showScreen==='function') showScreen('scrList');
+      alert('请先点击「'+(_pmCharId?localStorage.getItem('cN_'+_pmCharId)||'该角色':'角色')+'」进入聊天，再发送记忆');
+      return;
+    }
+
+    // 找到对应的聊天列表DOM元素并触发点击
+    if(typeof showScreen==='function') showScreen('scrList');
+    setTimeout(function(){
+      // 遍历chat-item找到对应的元素
+      var items = document.querySelectorAll('#scrList .chat-item');
+      var clicked = false;
+      items.forEach(function(el){
+        if(clicked) return;
+        var nameEl = el.querySelector('.chat-name');
+        var charName = localStorage.getItem('cN_'+cid)||targetContact.name||'';
+        if(nameEl && nameEl.textContent && nameEl.textContent.includes(charName)){
+          el.click();
+          clicked = true;
+        }
+      });
+      if(!clicked){
+        // fallback：直接强制切换
+        if(typeof currentChatId!=='undefined') currentChatId=cid;
+        if(typeof showScreen==='function') showScreen('scrRoom');
+      }
+      // 等聊天室加载完再填入输入框
+      setTimeout(function(){
+        var inp=document.getElementById('iptMsg');
+        if(inp){inp.value=msg;inp.focus();if(typeof _autoResizeIptMsg==='function')_autoResizeIptMsg();}
+      },800);
+    },400);
   }
 
   /* ── AI生成记忆 ── */
@@ -20407,28 +20455,89 @@ window.doScanRecover = async function() {
     var charAP = localStorage.getItem('cAP_'+_pmCharId)||'';
     var charRel = localStorage.getItem('cR_'+_pmCharId)||'';
     var myName = localStorage.getItem('cMyN_'+_pmCharId)||localStorage.getItem('cMyN')||'我';
+    var adultMode = localStorage.getItem('pm_adult_mode')==='1';
 
-    // 判断是否青梅竹马（人设里含有"青梅竹马"/"从小"/"一起长大"之类）
+    // 读取世界书
+    var wbText = '';
+    try{
+      var wbRaw = await localforage.getItem('wbData');
+      if(!wbRaw) wbRaw = localStorage.getItem('wbData');
+      var wbArr = Array.isArray(wbRaw)?wbRaw:(wbRaw?JSON.parse(wbRaw):[]);
+      wbText = wbArr.filter(function(x){return x.type==='global'||(!x.type);}).map(function(x){return x.content||x.name;}).join('\n');
+    }catch(e){}
+
     var isCM = (charAP+charRel).match(/青梅竹马|从小一起|儿时|一起长大|小时候认识/);
-    var userHint = isCM
-      ? `${myName}是${charName}的青梅竹马，从小一起长大，所以在「${ch}」这段时期的记忆里，部分回忆会有${myName}的身影。`
-      : `${myName}是${charName}后来认识的朋友，在「${ch}」时期${charName}还不认识${myName}，这段记忆里没有${myName}。`;
+
+    // ── 按章节定制提示词 ──
+    var chapterInstruction = '';
+
+    if(ch === '童年'){
+      var noUser = isCM
+        ? `（${myName}是${charName}的青梅竹马，可以出现）`
+        : `（这段时期${charName}还不认识${myName}，绝对不要让${myName}出现，hasUser全部false）`;
+      chapterInstruction = `生成「童年」时期3段记忆 ${noUser}。
+不要生成温馨平淡的内容——要挖掘真实的伤口：
+- 家庭关系的裂痕（父母的争吵细节、缺席的背影、用钱代替陪伴）
+- 第一次感受到自己和别人不一样的瞬间
+- 某个一直压在心底没说出口的童年秘密
+记忆要有画面感，带具体场景和感官细节，让人看了想去追问。`;
+
+    } else if(ch === '学生时代'){
+      var noUserS = isCM
+        ? `（${myName}是同学，可以出现）`
+        : `（这段时期${charName}还不认识${myName}，不要让${myName}出现，hasUser全部false）`;
+      chapterInstruction = `生成「学生时代」3段记忆 ${noUserS}。
+要有张力，不要平铺直叙：
+- 那件改变了他某个想法的事
+- 一段没有结局的暗恋或被暗恋
+- 某次出格的叛逆、失控、或者意外的秘密
+记忆要带细节，读完会想问「后来呢」。`;
+
+    } else if(ch === '恋爱经历'){
+      var loveCount = (charAP+charRel).match(/花花公子|滥情|多段感情|前任很多|风流/) ? 3 : 2;
+      var adultHint = adultMode
+        ? `可以包含亲密细节（xp偏好、第一次的具体场景、身体记忆），用克制但清晰的笔触，不要回避。`
+        : ``;
+      chapterInstruction = `生成「恋爱经历」${loveCount}段记忆（每段是不同的人或不同阶段）。
+【重要】这里全是${charName}自己的过去，绝对不要让${myName}出现，不要有「遇到你之后才是真爱」之类的话，hasUser全部false。
+每段要有真实的重量感：
+- 甜过的细节（第一次、某个只有两人知道的暗语）
+- 裂痕的导火索（那句说错的话、背叛的具体方式）
+- 没说出口的东西（最后一次见面时想说但没说的）
+${adultHint}
+不同前任之间要有鲜明对比，不要每段都一个调性。`;
+
+    } else if(ch === '工作后'){
+      var noUserW = isCM ? '' : `（认识${myName}后的事情可以出现，hasUser可以为true）`;
+      chapterInstruction = `生成「工作后」3段记忆 ${noUserW}。
+不要生成励志成功学内容——要挖掘真实的代价：
+- 第一次意识到「钱」和「人」冲突时怎么选的
+- 某件让他开始怀疑自己的事
+- 工作里最不堪的一个瞬间（职场的脏东西、妥协、或者某次越界）`;
+
+    } else {
+      // 自定义章节
+      chapterInstruction = `生成「${ch}」时期3段记忆。
+${isCM?'（'+myName+'是青梅竹马可以出现）':'（这段时期如果还没认识'+myName+'，hasUser=false）'}
+要挖掘有张力的内容，不要平淡无奇。每段要有具体细节，读完让人想追问。`;
+    }
 
     // 已有记忆，避免重复
     var existing = (_pmData[ch]||[]).map(function(c){return c.text;}).join('；');
 
-    var sys = `你是${charName}。${charAP?'性格设定：'+charAP:''}
-${charRel?'背景：'+charRel:''}
-${userHint}
+    var sys = `你是${charName}。
+${charAP?'【性格人设】'+charAP:''}
+${charRel?'【关系背景】'+charRel:''}
+${wbText?'【世界设定】'+wbText.slice(0,300):''}
 
-请以${charName}的第一人称，讲述「${ch}」时期真实发生过的3段具体记忆。
-要求：
-- 每段不超过60字，生动具体，有画面感
-- 每段是一条独立的记忆片段，不是概括
-- 如果这段时期里应该有${myName}的身影，自然带出（不要刻意）
-- 只输出纯JSON数组，不加任何说明文字、不加代码块标记，必须使用英文直引号：
-[{"text":"记忆内容","hasUser":true},{"text":"...","hasUser":false},{"text":"...","hasUser":false}]
-${existing?'已有记忆（不要重复）：'+existing:''}`;
+${chapterInstruction}
+
+输出格式（严格遵守）：
+- 只输出纯JSON数组，不加任何说明文字和代码块标记
+- key和string值全部用英文直引号
+- 文字中如需引号用「」替代，绝对不能在text值内出现未转义的英文双引号
+- 格式：[{"text":"记忆内容","hasUser":false},{"text":"...","hasUser":false}]
+${existing?'【已有记忆，不要重复】'+existing:''}`;
 
     // 显示加载状态
     var board = document.getElementById('pmBoard');
@@ -20448,8 +20557,14 @@ ${existing?'已有记忆（不要重复）：'+existing:''}`;
       var raw = (data.choices?.[0]?.message?.content||'').trim();
       // 清除代码块标记
       var clean = raw.replace(/\s*```json\s*/gi,'').replace(/\s*```\s*/g,'').trim();
-      // ★ 关键修复：把中文弯引号统一替换成标准双引号
-      clean = clean.replace(/[\u201c\u201d\u300c\u300d\u2018\u2019]/g, '"');
+      // 统一替换弯引号为直引号
+      clean = clean.replace(/[\u201c\u201d\u300c\u300d\u2018\u2019\uff02]/g, '"');
+      // 修复文字内容里的未转义双引号（如 "顺路" → \"顺路\"）
+      // 策略：找到 "text":"..." 的字符串值，转义其中内嵌的双引号
+      clean = clean.replace(/"text"\s*:\s*"([\s\S]*?)"\s*,\s*"hasUser"/g, function(match, txt){
+        var escaped = txt.replace(/(?<!\\)"/g, '\\"');
+        return '"text":"' + escaped + '","hasUser"';
+      });
       // 提取JSON数组
       var arrMatch = clean.match(/\[[\s\S]*\]/);
       // 截断修复：找最后一个完整的 }，手动补 ]
@@ -20523,10 +20638,27 @@ ${existing?'已有记忆（不要重复）：'+existing:''}`;
     try{localStorage.setItem(histKey,JSON.stringify(hist));}catch(e){}
   }
 
+  /* ── 成人内容开关 ── */
+  window.pmToggleAdult = function(){
+    var cur = localStorage.getItem('pm_adult_mode')==='1';
+    var next = cur ? '0' : '1';
+    localStorage.setItem('pm_adult_mode', next);
+    var btn = document.getElementById('pmAdultToggle');
+    if(btn) btn.style.opacity = next==='1'?'1':'0.5';
+    var toast = document.createElement('div');
+    toast.style.cssText='position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.7);color:white;padding:8px 18px;border-radius:20px;font-size:13px;z-index:9999;pointer-events:none;';
+    toast.textContent = next==='1'?'🔞 私密内容已开启':'🔒 私密内容已关闭';
+    document.body.appendChild(toast);
+    setTimeout(function(){toast.remove();},2000);
+  };
+
   /* ── 打开页面 ── */
   window._openPastMemory = async function(){
     await pmLoad();
     showScreen('scrPastMemory');
+    // 更新成人模式按钮状态
+    var btn = document.getElementById('pmAdultToggle');
+    if(btn) btn.style.opacity = localStorage.getItem('pm_adult_mode')==='1'?'1':'0.5';
     pmRenderTabs();
     pmRenderBoard();
   };
@@ -20567,6 +20699,8 @@ ${existing?'已有记忆（不要重复）：'+existing:''}`;
   window.showScreen = function(id){
     _origPmShow(id);
     if(id==='scrPastMemory'){
+      var btn = document.getElementById('pmAdultToggle');
+      if(btn) btn.style.opacity = localStorage.getItem('pm_adult_mode')==='1'?'1':'0.5';
       pmLoad().then(function(){
         pmFitTopBar();
         pmRenderTabs();
