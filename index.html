@@ -8311,7 +8311,7 @@ function redrawChat() {
     history.forEach((msg, _hIdx) => {
         window._renderingHistIdx = _hIdx;
         // 渲染情侣空间邀请/解除卡片
-        if(msg.role === `system` && (msg.type === `cs_invite` || msg.type === `cs_breakup`)) {
+        if(msg.type === `cs_invite` || msg.type === `cs_breakup`) {
             let cardEl = msg.type === `cs_invite` ? renderCsInviteCard(msg) : renderCsBreakupCard(msg);
             if(cardEl && typeof msgs !== `undefined` && msgs) msgs.appendChild(cardEl);
             return;
@@ -8927,10 +8927,7 @@ $(`btnLemon`).onclick = async () =>{
         mkBub(t, `r`); iptMsg.value = ``; if(typeof _autoResizeIptMsg === 'function') _autoResizeIptMsg(); $(`quoteBox`).style.display = `none`; currentQuote = ``;
         history.push({role: `user`, content: t}); ls.setItem(`chatHistory`, JSON.stringify(history)); updateListPreview();
     }
-        if(history.length === 0) {
-        // 如果有情侣空间邀请待处理，即使history为空也继续
-        try{ if(!localStorage.getItem('cs_invite_notify_'+currentChatId)) return; }catch(e){ return; }
-    }
+        if(history.length === 0) return;
     let pxy = $(`apiPxy`).value, key = $(`apiK`).value, mod = $(`apiMod`).value, tp = parseFloat($(`apiTemp`).value)||0.8;
     if(!pxy || !key || !mod) { mkBub(`请先配置网络。`, `l`); return; }
     if(!pxy.includes(`chat/completions`)) pxy = pxy.replace(/\/$/, ``) + `/chat/completions`;
@@ -8966,16 +8963,6 @@ $(`btnLemon`).onclick = async () =>{
                 sys += `当前现实时间：` + updTime().toLocaleString() + `，请保持感知。\n`;
             }
     // ★ 经期状态自动注入（只描述状态，不提具体日期，避免和自定义剧情时间冲突）
-    try {
-        // ★ 情侣空间邀请一次性提示注入（读后立即清除，不影响后续消息）
-        try{
-            var _csNotifyKey='cs_invite_notify_'+currentChatId;
-            if(localStorage.getItem(_csNotifyKey)==='1'){
-                localStorage.removeItem(_csNotifyKey); // 立即清除，只注入一次
-                sys+=`【情侣空间邀请】用户刚向你发了一张情侣空间邀请卡。请根据你的性格和感情状态自然决定是否接受，在回复末尾另起一行加 [同意情侣空间] 或 [拒绝情侣空间]。\n`;
-            }
-        }catch(e){}
-    } catch(e2) {}
     try {
         // ★ 恋爱清单上下文注入
         var _llKey='loveList_'+currentChatId;
@@ -9194,8 +9181,14 @@ if(charStickers.length > 0) {
     let ctxHist = history.slice(-(parseInt($(`cfgCtx`).value)||10));
     // ★ 过滤掉非标准消息（邀请卡片、解除卡片等），这些不能发给API
     ctxHist = ctxHist.filter(m => {
-        if(m.type === 'cs_invite' || m.type === 'cs_breakup') return false;
-        if(m.role === 'system' && !m.content) return false;
+        if(m.type === 'cs_breakup' || m.type === 'll_reply') return false;
+        if(m.role === 'system') return false;
+        if(!m.content) return false;
+        return true;
+    });
+    // cs_invite 卡片：保留发给API（content字段里有邀请文字），但过滤掉已处理的
+    ctxHist = ctxHist.filter(m => {
+        if(m.type === 'cs_invite' && (m.status === 'accepted' || m.status === 'rejected')) return false;
         return true;
     });
         let mappedHist = ctxHist.map(m => {
@@ -9770,7 +9763,7 @@ function renderQuoteBlock(b, txt, _side) {
                                 let charN = $(`cfgName`).value || `对方`;
 
                                 let charP = $(`cfgAiP`).value || ``;
-                                let recentChat = history.slice(-10).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
+                                let recentChat = history.slice(-10).filter(m=>m.content&&m.role!=="system").map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
                                 let sys = `你现在的身份是：${charN}。你的底层性格是：${charP}。\n这是近期的聊天记录：\n${recentChat}\n\n【突发剧情】：玩家（${myN}）刚刚狠心拒收了你发出的 ${amt.toFixed(2)} 元红包（你的留言是：${note}）。\n你的任务：请严格遵循你的底层性格，对此事作出第一反应！可以直接表达你的情绪、质问玩家、或者傲娇地吐槽。绝对不要使用任何形式的引号符号。`;
                                 
                                 (async () => {
@@ -9907,7 +9900,7 @@ function renderQuoteBlock(b, txt, _side) {
                                 let myN = $(`cfgMyName`).value || `我`;
                                 let charN = $(`cfgName`).value || `对方`;
                                 let charP = $(`cfgAiP`).value || ``;
-                                let recentChat = history.slice(-10).map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
+                                let recentChat = history.slice(-10).filter(m=>m.content&&m.role!=="system").map(m => (m.role === `user` ? myN : charN) + `：` + m.content).join(`\n`);
                                 let sys = `你现在的身份是：${charN}。你的底层性格是：${charP}。\n这是近期的聊天记录：\n${recentChat}\n\n【突发剧情】：玩家（${myN}）刚刚退还了你发起的 ${amt.toFixed(2)} 元转账（你的转账说明是：${note}）。\n你的任务：请严格遵循你的底层性格，对此事作出第一反应！可以直接表达你的情绪、质问玩家、或者傲娇地吐槽。绝对不要使用任何形式的引号符号。`;
                                 
                                 (async () => {
@@ -11528,7 +11521,7 @@ window.forceCheckAutoMem = async function() {
         let cN = $(`cfgName`).value || `专属恋人`;
         let myN = $(`cfgMyName`).value || `我`;
         let promptCtx = ls.getItem(`cMemP`) || `提炼关键事实、情绪变化和约定。`;
-        let chatText = history.slice(-mt).map(m => (m.role === `user` ? myN : cN) + `：` + m.content).join(`\n`);
+        let chatText = history.slice(-mt).filter(m=>m.content&&m.role!=="system").map(m => (m.role === `user` ? myN : cN) + `：` + m.content).join(`\n`);
         let sys = `你现在的身份是：${cN}。请以你的第一人称视角，提取以下聊天记录中的重要事实、情感变化和约定，总结为简短的记忆片段。要求：\n1. 语气符合性格设定。\n2. 遵循提取侧重点：${promptCtx}\n3. 纯文本直接输出，禁止废话。\n\n【近期记录】：\n${chatText}`;
         
         try {
@@ -18376,7 +18369,7 @@ async function _callAIConnect(type, isIncoming) {
     let charAP = $('cfgAiP')?.value || '';
     let myName = $('cfgMyName')?.value || '对方';
     let curStatus = originalGetItem.call(ls, 'cStatusTxt_' + currentChatId) || '在线';
-    let recentHist = history.slice(-6).map(m => m.role === 'assistant'
+    let recentHist = history.slice(-6).filter(m => (m.role==='assistant'||m.role==='user') && m.content && !m._sys && !m._offlineDivider && m.type!=='cs_invite' && m.type!=='cs_breakup').map(m => m.role === 'assistant'
         ? (charName + '：' + m.content.replace(/【[\s\S]*?】[^\n]*/g,'').trim().slice(0,60))
         : (myName + '：' + m.content.slice(0,40))).join('\n');
     let callTypeName = type === 'voice' ? '语音通话' : '视频通话';
@@ -19837,12 +19830,13 @@ if(document.getElementById('offlineModePanel')) {
         // 发送邀请卡片到该char的聊天记录（带唯一ID便于后续处理）
         var inviteId='csinv_'+Date.now();
         var cardMsg={
-          role:'system',
+          role:'user',
           type:'cs_invite',
           inviteId:inviteId,
           charId:cid,
           charName:cname,
           status:'pending',
+          content:'[情侣空间邀请卡：我向你发出了情侣空间邀请，请告诉我你是否愿意接受？如果接受，请在回复末尾另起一行写 [同意情侣空间]；如果拒绝，请写 [拒绝情侣空间]。]',
           text:'💌 情侣空间邀请卡',
           ts:Date.now()
         };
@@ -19853,25 +19847,15 @@ if(document.getElementById('offlineModePanel')) {
         hist.push(cardMsg);
         localforage.setItem(histKey,hist).catch(function(){});
         try{localStorage.setItem(histKey,JSON.stringify(hist));}catch(e){}
-        // 设置一次性标记供sys注入使用
-        try{localStorage.setItem('cs_invite_notify_'+cid,'1');}catch(e){}
 
-        // 如果当前就在该char的聊天页面，立即渲染邀请卡片并自动触发char回复
+        // 如果当前就在该char的聊天页面，立即渲染邀请卡片
         if(typeof currentChatId!=='undefined'&&currentChatId===cid&&typeof msgs!=='undefined'&&msgs){
           var cardEl=renderCsInviteCard(cardMsg);
           if(cardEl) msgs.appendChild(cardEl);
           msgs.scrollTop=msgs.scrollHeight;
-          // 关闭面板后自动让char对邀请做出反应（模拟点击发送，不带输入内容）
-          panel.style.display='none';
-          setTimeout(function(){
-            var lemonBtn=document.getElementById('btnLemon');
-            if(lemonBtn) lemonBtn.click();
-          }, 600);
-          showCsSuccessToast('💌 邀请卡已发送！');
-          return; // 已处理，跳过下面的toast
         }
 
-        showCsSuccessToast('💌 邀请卡已发送！去聊天页面和他确认吧~');
+        showCsSuccessToast('💌 邀请卡已发送！去聊天页面发消息等他回应吧~');
       };
     }
 
