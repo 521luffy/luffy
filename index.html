@@ -20309,6 +20309,8 @@ window.doScanRecover = async function() {
 
     var textEl = document.createElement('div');
     textEl.className = 'pm-card-text';
+    // 支持换行显示
+    textEl.style.whiteSpace = 'pre-wrap';
     textEl.textContent = card.text;
     div.appendChild(textEl);
 
@@ -20532,11 +20534,13 @@ ${wbText?'【世界设定】'+wbText.slice(0,300):''}
 
 ${chapterInstruction}
 
-输出格式（严格遵守）：
-- 只输出纯JSON数组，不加任何说明文字和代码块标记
-- key和string值全部用英文直引号
-- 文字中如需引号用「」替代，绝对不能在text值内出现未转义的英文双引号
-- 格式：[{"text":"记忆内容","hasUser":false},{"text":"...","hasUser":false}]
+输出格式（严格遵守，每条记忆独占一段，用|||分隔内容和标记）：
+记忆文字（200-400字，沉浸式第一人称，像私密日记）|||有你
+记忆文字（200-400字）|||无你
+记忆文字（200-400字）|||无你
+
+只输出这几段，不加任何说明、编号、标题、代码块。「有你」表示${myName}在这段记忆里，「无你」表示没有。
+每段要有：具体的时间地点、感官细节（声音/气味/触感）、当时没说出口的心里话。
 ${existing?'【已有记忆，不要重复】'+existing:''}`;
 
     // 显示加载状态
@@ -20552,44 +20556,20 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     if(genBtn){ genBtn.disabled=true; genBtn.style.opacity='0.6'; }
 
     try{
-      var resp = await fetch(pxy,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:2000,messages:[{role:'user',content:sys}]})});
+      var resp = await fetch(pxy,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:3000,messages:[{role:'user',content:sys}]})});
       var data = await resp.json();
       var raw = (data.choices?.[0]?.message?.content||'').trim();
-      // 清除代码块标记
-      var clean = raw.replace(/\s*```json\s*/gi,'').replace(/\s*```\s*/g,'').trim();
-      // 统一替换弯引号为直引号
-      clean = clean.replace(/[\u201c\u201d\u300c\u300d\u2018\u2019\uff02]/g, '"');
-      // 修复文字内容里的未转义双引号（如 "顺路" → \"顺路\"）
-      // 策略：找到 "text":"..." 的字符串值，转义其中内嵌的双引号
-      clean = clean.replace(/"text"\s*:\s*"([\s\S]*?)"\s*,\s*"hasUser"/g, function(match, txt){
-        var escaped = txt.replace(/(?<!\\)"/g, '\\"');
-        return '"text":"' + escaped + '","hasUser"';
-      });
-      // 提取JSON数组
-      var arrMatch = clean.match(/\[[\s\S]*\]/);
-      // 截断修复：找最后一个完整的 }，手动补 ]
-      if(!arrMatch){
-        var bracketStart = clean.indexOf('[');
-        if(bracketStart !== -1){
-          var partial = clean.slice(bracketStart);
-          var lastBrace = partial.lastIndexOf('}');
-          if(lastBrace !== -1){
-            partial = partial.slice(0, lastBrace+1) + ']';
-            try{ JSON.parse(partial); arrMatch = [partial]; }catch(e2){
-              // 还是失败说明内部也有问题，逐个取完整对象
-              var items = []; var depth=0; var start=-1;
-              for(var ci=0;ci<partial.length;ci++){
-                if(partial[ci]==='{'){if(depth===0)start=ci;depth++;}
-                else if(partial[ci]==='}'){depth--;if(depth===0&&start!==-1){try{items.push(JSON.parse(partial.slice(start,ci+1)));}catch(e3){}start=-1;}}
-              }
-              if(items.length) arrMatch = [JSON.stringify(items)];
-            }
-          }
-        }
+
+      // 解析：每条记忆以 |||有你 或 |||无你 结尾，按此切割（支持多行长文本）
+      var arr = [];
+      var segments = raw.replace(/```[\s\S]*?```/g,'').split(/\|\|\|(有你|无你)/);
+      for(var si=0; si+1<segments.length; si+=2){
+        var txt = segments[si].replace(/^[\s\n]+|[\s\n]+$/g,'');
+        txt = txt.replace(/^[\d一二三四五六七八九十]+[\.、\s]+/,'').trim();
+        var hasU = segments[si+1].trim()==='有你';
+        if(txt.length>10) arr.push({text:txt, hasUser:hasU});
       }
-      if(!arrMatch) throw new Error('no array found\n原始：'+raw.slice(0,150));
-      var arr = JSON.parse(arrMatch[0]);
-      if(!Array.isArray(arr)) throw new Error('not array');
+      if(!arr.length) throw new Error('解析失败，原始返回：'+raw.slice(0,200));
       if(!_pmData[ch]) _pmData[ch]=[];
       arr.forEach(function(item){
         _pmData[ch].push({
