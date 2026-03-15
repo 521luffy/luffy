@@ -5353,7 +5353,7 @@ if(typeof localforage === 'undefined') {
    匿名问答 (scrAnon) 样式
 ══════════════════════════════════════ */
 #scrAnon{background:linear-gradient(160deg,#1a0530 0%,#0d0820 60%,#180a30 100%);color:#f0e6ff;}
-.anon-topbar{display:flex;align-items:center;justify-content:space-between;padding:max(calc(env(safe-area-inset-top,0px)+22px),44px) 15px 14px;flex-shrink:0;background:linear-gradient(180deg,rgba(26,5,48,0.98),transparent);}
+.anon-topbar{display:flex;align-items:center;justify-content:space-between;padding:max(calc(env(safe-area-inset-top,0px)+36px),60px) 15px 14px;flex-shrink:0;background:linear-gradient(180deg,rgba(26,5,48,0.98),transparent);}
 .anon-back{font-size:22px;color:#c084fc;cursor:pointer;width:30px;}
 .anon-title{font-size:17px;font-weight:700;color:#f0e6ff;letter-spacing:2px;}
 .anon-tabs{display:flex;background:rgba(15,5,30,0.9);border-bottom:1px solid rgba(140,60,220,0.25);flex-shrink:0;}
@@ -23044,6 +23044,30 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
   }
 
   // Fix3+Fix4: getCharCtx 读人设+关系+记忆库+世界书
+  // Fix3: 读取自定义/现实日期（与聊天室一致）
+  function getAnonDateStr(){
+    var cid=_cid();
+    if(cid){
+      try{
+        var sfx='_'+cid;
+        var isOn=originalGetItem.call(localStorage,'cCTon'+sfx);
+        if(isOn==='true'){
+          var y=originalGetItem.call(localStorage,'cCTy'+sfx)||new Date().getFullYear();
+          var m=originalGetItem.call(localStorage,'cCTm'+sfx)||(new Date().getMonth()+1);
+          var d=originalGetItem.call(localStorage,'cCTd'+sfx)||new Date().getDate();
+          var h=originalGetItem.call(localStorage,'cCTh'+sfx)||new Date().getHours();
+          var min=originalGetItem.call(localStorage,'cCTmin'+sfx)||new Date().getMinutes();
+          var days=['日','一','二','三','四','五','六'];
+          var refD=new Date(parseInt(y),parseInt(m)-1,parseInt(d));
+          return y+'年'+m+'月'+d+'日 星期'+days[refD.getDay()]+' '+h+':'+(String(min).padStart(2,'0'));
+        }
+      }catch(e){}
+    }
+    var n=new Date();
+    var days=['日','一','二','三','四','五','六'];
+    return n.getFullYear()+'年'+(n.getMonth()+1)+'月'+n.getDate()+'日 星期'+days[n.getDay()]+' '+n.getHours()+':'+(String(n.getMinutes()).padStart(2,'0'));
+  }
+
   async function getCharCtx(){
     var cid=_cid();
     var name=cid?(localStorage.getItem('cN_'+cid)||'TA'):'TA';
@@ -23087,7 +23111,9 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     if(cc.rel) parts.push('【你和'+cc.myName+'的关系背景】\n'+cc.rel);
     if(cc.wb)  parts.push('【世界设定】\n'+cc.wb);
     if(cc.mem) parts.push('【你对'+cc.myName+'的记忆片段（仅供参考）】\n'+cc.mem);
-    // Fix3: 明确告知处于情侣空间
+    // Fix3: 注入自定义/现实日期
+    parts.push('【当前时间】'+getAnonDateStr());
+    // 明确告知处于情侣空间
     parts.push('【重要情境】你现在处于与'+cc.myName+'的情侣空间中。你们是亲密的恋人关系，上面的关系背景和人设都是真实的。在所有回答中，必须体现你作为'+cc.myName+'的恋人的立场和情感，不要否认或回避你们的关系。');
     return parts.join('\n\n');
   }
@@ -23277,11 +23303,33 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     var rec = records.find(function(r){return String(r.id)===String(id);});
     if(!rec){anonToast('记录不存在，请稍后重试');return;}
     var modeLabel=rec.mode==='peek'?'偷看':rec.mode==='mask'?'伪装':'被问';
-    var cardText='[匿名问答·'+modeLabel+']\n'+
-      '🎭 身份：'+(rec.identity||'')+'\n'+
-      '❓ 问：'+(rec.question||'')+'\n'+
-      (rec.userAnswer?'🙋 我的回答：'+rec.userAnswer+'\n':'')+
-      '💬 '+(rec.charName||'TA')+'：'+(rec.answer||'').replace(/【[^】]+】：?/g,'');
+    var charN=rec.charName||'TA';
+    // Fix2: 卡片语气要清晰——user分享给char看，不能让char错认视角
+    // 明确：用户是"我"，char是被问/被偷看的那个人
+    var cleanAnswer=(rec.answer||'').replace(/【[^】]+】：?/g,'').trim();
+    var cardText='';
+    if(rec.mode==='be'){
+      // 被问模式：char问了我，我回答了，然后char揭晓身份
+      cardText='【匿名问答回顾·被问】\n'+
+        '刚才有个身份是「'+(rec.identity||'匿名')+'」的人匿名问了我：\n'+
+        '"'+(rec.question||'')+'"\n'+
+        '我回答了："'+(rec.userAnswer||'')+'"\n'+
+        '然后对方揭开了身份——'+cleanAnswer;
+    } else if(rec.mode==='mask'){
+      // 伪装模式：我伪装成某人问了char，char回答了
+      cardText='【匿名问答回顾·伪装提问】\n'+
+        '我刚才伪装成「'+(rec.identity||'匿名')+'」偷偷问了你：\n'+
+        '"'+(rec.question||'')+'"\n'+
+        '你的回答是："'+cleanAnswer+'"\n'+
+        '（那个匿名提问的人其实是我）';
+    } else {
+      // 偷看模式：我偷看了char和某人的匿名互动
+      cardText='【匿名问答回顾·偷看】\n'+
+        '有个「'+(rec.identity||'匿名')+'」匿名问了你：\n'+
+        '"'+(rec.question||'')+'"\n'+
+        '你的回答是："'+cleanAnswer+'"\n'+
+        '（我偷偷看到了这段对话）';
+    }
     var cid=_cid();
     if(typeof currentChatId!=='undefined'&&currentChatId===cid){
       if(typeof showScreen==='function')showScreen('scrRoom');
