@@ -21704,8 +21704,15 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     if(!mod)mod="claude-sonnet-4-20250514";
     var charSys="";
     if(charId){try{charSys=originalGetItem.call(localStorage,"cAP_"+charId)||"";}catch(e){}}
-    var ctx=entry.content.filter(function(b){return b.type==="text"&&!b.striked&&!b.isError;})
-      .map(function(b){return b.text;}).join(" ");
+    var ctxForLock=entry.content.filter(function(b){return b.type==="text"&&!b.isError;})
+      .map(function(b){
+        if(b.striked){
+          var sp=b.strikedPart||b.text;
+          return (b.rewrite?(b.before||"")+"【划掉："+sp+"→改为："+b.rewrite+"】"+(b.after||""): "【划掉："+sp+"】");
+        }
+        return b.text;
+      }).join(" ");
+    var ctx=ctxForLock;
     diaryToast(charName+"正在思考要不要锁住这篇日记…");
     var sys=(charSys?charSys+"\n\n":"")+
       "今天日记的内容是："+ctx+"\n\n"+
@@ -21826,8 +21833,37 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     var charSys="";
     if(charId){
       try{charSys=originalGetItem.call(localStorage,"cAP_"+charId)||"";}catch(e){}}
-    var ctx=entry.content.filter(function(b){return b.type==="text"&&!b.striked&&!b.isError;})
-      .map(function(b){return (b.author==="user"?"我":"你")+": "+b.text;}).join("\n");
+    // 构建带改动记录的上下文：让char看到所有划掉和改写的痕迹
+    var ctxLines=[];
+    entry.content.forEach(function(b){
+      if(b.type!=="text"||b.isError) return;
+      var who=b.author==="user"?"我":"你";
+      if(b.striked){
+        // 有划掉：区分是谁划掉了谁的
+        var strikedText=b.strikedPart||b.text;
+        var beforeText=b.before||"";
+        var afterText=b.after||"";
+        var fullOrig=beforeText+strikedText+afterText;
+        if(b.author==="char"){
+          // user划掉了char写的
+          if(b.rewrite){
+            ctxLines.push("你原本写的：「"+fullOrig+"」——我觉得太腻了，给你划掉改成了：「"+beforeText+b.rewrite+afterText+"」");
+          } else {
+            ctxLines.push("你原本写的：「"+fullOrig+"」——我给你划掉了");
+          }
+        } else {
+          // char划掉了user写的
+          if(b.rewrite){
+            ctxLines.push("我原本写的：「"+fullOrig+"」——你给我划掉改成了：「"+beforeText+b.rewrite+afterText+"」");
+          } else {
+            ctxLines.push("我原本写的：「"+fullOrig+"」——被你划掉了");
+          }
+        }
+      } else {
+        ctxLines.push(who+"："+b.text);
+      }
+    });
+    var ctx=ctxLines.join("\n");
     var container=document.getElementById("diaryContent");
     var typingDiv=document.createElement("div");
     typingDiv.className="diary-ai-typing";
@@ -21837,9 +21873,9 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     if(scroll)scroll.scrollTop=scroll.scrollHeight;
     var sysparts=[];
     if(charSys)sysparts.push(charSys);
-    sysparts.push("今天是"+entry.dateStr+"。你正在和用户共用一本情侣日记本。请用温柔、亲密、带一点撒娇的语气，写一段今天的日记内容（2-4句话）。");
-    if(ctx)sysparts.push("日记目前内容：\n"+ctx+"\n\n请接着写或回应。");
-    sysparts.push("直接输出日记正文，不加任何前缀、引号或说明。");
+    sysparts.push("今天是"+entry.dateStr+"。你正在和用户共用一本情侣日记本。");
+    if(ctx)sysparts.push("日记目前的内容和改动记录如下：\n"+ctx);
+    sysparts.push("请根据上面的内容接着写2-4句，可以顺着改动后的内容继续，也可以用温柔撒娇的语气吐槽对方的改动——就像真正在日记本上互相涂涂改改的恋人一样。直接输出日记正文，不加任何前缀、引号或说明。");
     var sys=sysparts.join("\n\n");
     // Bug3修复：只请求续写，不同时判断锁定（用户主动让ta续写，不应该被锁）
     try{
