@@ -4964,11 +4964,19 @@ window.wkDelSongRecord=function(idx,cid){
 try{
 (function initPeriod(){
   // ── 数据存取 ──
+  // 大姨妈数据按charId隔离
+  function _periodCharSuffix(){
+    var cid=window._csCurrentCharId||null;
+    if(!cid){try{cid=localStorage.getItem('cs_active_char');}catch(e){}}
+    return cid?('_'+cid):'';
+  }
   var KEYS={startDate:'period_start',cycle:'period_cycle',duration:'period_duration'};
-  function save(k,v){localforage.setItem(KEYS[k],String(v)).catch(()=>{});try{localStorage.setItem(KEYS[k],String(v));}catch(e){}}
+  function _key(k){ return KEYS[k]+_periodCharSuffix(); }
+  function save(k,v){var rk=_key(k);localforage.setItem(rk,String(v)).catch(function(){});try{localStorage.setItem(rk,String(v));}catch(e){}}
   async function load(k,def){
-    var v=null;try{v=await localforage.getItem(KEYS[k]);}catch(e){}
-    if(!v)try{v=localStorage.getItem(KEYS[k]);}catch(e){}
+    var rk=_key(k);
+    var v=null;try{v=await localforage.getItem(rk);}catch(e){}
+    if(!v)try{v=localStorage.getItem(rk);}catch(e){}
     return v!==null&&v!==''?v:def;
   }
 
@@ -9377,9 +9385,11 @@ $(`btnLemon`).onclick = async () =>{
     }catch(e){}
     // ★ 经期状态自动注入（只描述状态，不提具体日期，避免和自定义剧情时间冲突）
     try {
-        let _pStart = originalGetItem.call(ls, 'period_start') || '';
-        let _pCycle = parseInt(originalGetItem.call(ls, 'period_cycle') || '28');
-        let _pDur = parseInt(originalGetItem.call(ls, 'period_duration') || '6');
+        let _pSfx = (window._csCurrentCharId||(()=>{try{return localStorage.getItem('cs_active_char');}catch(e){}return '';})()) || '';
+        let _pSfxKey = _pSfx ? ('_'+_pSfx) : '';
+        let _pStart = originalGetItem.call(ls, 'period_start'+_pSfxKey) || '';
+        let _pCycle = parseInt(originalGetItem.call(ls, 'period_cycle'+_pSfxKey) || '28');
+        let _pDur = parseInt(originalGetItem.call(ls, 'period_duration'+_pSfxKey) || '6');
         if(_pStart && !isNaN(_pCycle) && !isNaN(_pDur)) {
             let _pDate = new Date(_pStart);
             let _today = new Date(); _today.setHours(0,0,0,0);
@@ -21304,24 +21314,7 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     if(!d||!Array.isArray(d)){
       try{ var r=localStorage.getItem(DIARY_KEY); if(r)d=JSON.parse(r); }catch(e){d=null;}
     }
-    // Bug2修复：如果当前char还没有日记，但旧通用key有数据，则迁移过来
-    if((!d||!d.length) && DIARY_KEY!==DIARY_KEY_BASE){
-      var oldD=null;
-      try{ oldD=await localforage.getItem(DIARY_KEY_BASE); }catch(e){}
-      if(typeof oldD==="string"){try{oldD=JSON.parse(oldD);}catch(e){oldD=null;}}
-      if(!oldD||!Array.isArray(oldD)){
-        try{ var oldR=localStorage.getItem(DIARY_KEY_BASE); if(oldR)oldD=JSON.parse(oldR); }catch(e){oldD=null;}
-      }
-      if(oldD&&oldD.length){
-        d=oldD;
-        // 迁移完成后清空旧key，避免重复迁移
-        try{ await localforage.removeItem(DIARY_KEY_BASE); }catch(e){}
-        try{ localStorage.removeItem(DIARY_KEY_BASE); }catch(e){}
-        diaryToast("📖 已将日记迁移到当前角色 💕");
-      }
-    }
     _entries=Array.isArray(d)?d:[];
-    // 同步保证两个存储一致
     if(_entries.length>0){
       try{await localforage.setItem(DIARY_KEY,_entries);}catch(e){}
     }
@@ -21439,8 +21432,17 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
           '<span class="diary-para-time">'+diaryFmtTime(block.ts)+'</span>';
         var textEl=document.createElement('div');textEl.style.cssText='padding-left:26px;word-wrap:break-word;overflow-wrap:break-word;word-break:break-word;white-space:pre-wrap;width:100%;max-width:100%;box-sizing:border-box;';
         if(block.striked){
-          textEl.innerHTML='<span class="diary-strikethrough">'+block.text+'</span>'+
-            (block.rewrite?'<br><span style="color:#880e4f;font-style:italic;">↳ '+block.rewrite+'</span>':'');
+          // 支持精确划线（before+strikedPart+after）和整段划线两种模式
+          if(block.strikedPart!==undefined){
+            textEl.innerHTML=
+              (block.before||'')+
+              '<span class="diary-strikethrough">'+block.strikedPart+'</span>'+
+              (block.after||'')+
+              (block.rewrite?'<br><span style="color:#880e4f;font-style:italic;">↳ '+block.rewrite+'</span>':'');
+          } else {
+            textEl.innerHTML='<span class="diary-strikethrough">'+block.text+'</span>'+
+              (block.rewrite?'<br><span style="color:#880e4f;font-style:italic;">↳ '+block.rewrite+'</span>':'');
+          }
         } else if(block.isError){
           // 错误块：显示重新生成和删除按钮
           var errBtnRow=document.createElement('div');
@@ -21528,74 +21530,150 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
   window.diaryStrikeLastChar=async function(){
     var entry=_entries.find(function(e){return e.id===_curId;});
     if(!entry) return;
-    // 找出所有char写的、未划掉的段落
     var charBlocks=[];
     entry.content.forEach(function(b,i){
       if(b.type==='text'&&b.author==='char'&&!b.striked&&!b.isError) charBlocks.push({idx:i,block:b});
     });
     if(!charBlocks.length){ diaryToast('没有TA的内容可以划掉'); return; }
-    // Bug4修复：进入选段模式——高亮所有char段落，让用户点选
     var container=document.getElementById('diaryContent');
     if(!container) return;
-    // 给每个char段落加上选段样式和点击事件
     var paras=container.querySelectorAll('.diary-para-char');
     var highlighted=[];
+    // 进入"笔划模式"：给每段char文字拆成可划词的span
     charBlocks.forEach(function(item,pi){
       var para=paras[pi];
       if(!para) return;
       para.style.outline='2px dashed #e91e63';
-      para.style.cursor='pointer';
       para.style.borderRadius='10px';
-      para.title='点击划掉这段';
       highlighted.push(para);
-      (function(bidx, block, paraEl){
-        para.onclick=function(ev){
-          // 退出选段模式
-          highlighted.forEach(function(p){ p.style.outline=''; p.style.cursor=''; p.title=''; p.onclick=null; });
-          // 划掉这段，行内展示输入框
-          var textEl=paraEl.querySelector('div[style*="padding-left"]');
-          if(textEl){
-            textEl.innerHTML='<span class="diary-strikethrough">'+block.text+'</span>';
-            // 行内输入框
-            var inlineWrap=document.createElement('div');
-            inlineWrap.style.cssText='display:flex;gap:6px;margin-top:8px;padding-left:26px;align-items:center;';
-            var inlineInp=document.createElement('input');
-            inlineInp.type='text';
-            inlineInp.placeholder='写下你的替换内容…';
-            inlineInp.style.cssText='flex:1;padding:6px 10px;border:1.5px solid #e91e63;border-radius:18px;font-size:13px;outline:none;background:#fff0f5;';
-            var confirmBtn=document.createElement('button');
-            confirmBtn.textContent='✓';
-            confirmBtn.style.cssText='background:#e91e63;color:white;border:none;border-radius:50%;width:28px;height:28px;font-size:15px;cursor:pointer;flex-shrink:0;';
-            var cancelBtn=document.createElement('button');
-            cancelBtn.textContent='✕';
-            cancelBtn.style.cssText='background:#f0f0f0;color:#666;border:none;border-radius:50%;width:28px;height:28px;font-size:15px;cursor:pointer;flex-shrink:0;';
-            inlineWrap.appendChild(inlineInp);
-            inlineWrap.appendChild(confirmBtn);
-            inlineWrap.appendChild(cancelBtn);
-            textEl.appendChild(inlineWrap);
-            inlineInp.focus();
-            confirmBtn.onclick=async function(){
-              var newText=inlineInp.value.trim();
-              if(!newText){ diaryToast('替换内容不能为空'); return; }
-              entry.content[bidx].striked=true;
-              entry.content[bidx].rewrite=newText;
-              await diarySaveAll();diaryRenderContent(entry);diaryToast('已划掉并改写 ✏️');
-            };
-            cancelBtn.onclick=function(){
-              diaryRenderContent(entry); // 还原
-            };
-            inlineInp.addEventListener('keydown',function(e){
-              if(e.key==='Enter'){ e.preventDefault(); confirmBtn.click(); }
-              if(e.key==='Escape'){ cancelBtn.click(); }
-            });
-          }
-        };
-      })(item.idx, item.block, para);
+      var textEl=para.querySelector('div[style*="padding-left"]');
+      if(!textEl) return;
+      var text=item.block.text;
+      // 把每个字拆成独立span，支持touch/mouse滑过高亮
+      var spans=[];
+      textEl.innerHTML='';
+      for(var ci=0;ci<text.length;ci++){
+        var sp=document.createElement('span');
+        sp.textContent=text[ci];
+        sp.style.cssText='display:inline;border-radius:2px;transition:background .1s;';
+        sp.dataset.ci=ci;
+        textEl.appendChild(sp);
+        spans.push(sp);
+      }
+      // 划线范围
+      var _strikeStart=-1, _strikeEnd=-1, _isSelecting=false;
+      function _markRange(from,to){
+        var lo=Math.min(from,to),hi=Math.max(from,to);
+        spans.forEach(function(s,i){
+          s.style.background=(i>=lo&&i<=hi)?'rgba(233,30,99,0.25)':'';
+          s.style.textDecoration=(i>=lo&&i<=hi)?'line-through':'';
+          s.style.color=(i>=lo&&i<=hi)?'#c2185b':'';
+        });
+      }
+      function _getIdx(el){
+        if(el&&el.dataset&&el.dataset.ci!==undefined) return parseInt(el.dataset.ci);
+        return -1;
+      }
+      // touch支持
+      textEl.addEventListener('touchstart',function(e){
+        var t=e.touches[0];
+        var el=document.elementFromPoint(t.clientX,t.clientY);
+        var i=_getIdx(el); if(i<0) return;
+        _isSelecting=true; _strikeStart=i; _strikeEnd=i; _markRange(i,i);
+      },{passive:true});
+      textEl.addEventListener('touchmove',function(e){
+        if(!_isSelecting) return;
+        var t=e.touches[0];
+        var el=document.elementFromPoint(t.clientX,t.clientY);
+        var i=_getIdx(el); if(i<0) return;
+        _strikeEnd=i; _markRange(_strikeStart,_strikeEnd);
+      },{passive:true});
+      textEl.addEventListener('touchend',function(){
+        if(!_isSelecting||_strikeStart<0) return;
+        _isSelecting=false;
+        _showInlineInput(item,textEl,spans,_strikeStart,_strikeEnd,text,entry,highlighted);
+      });
+      // mouse支持（桌面）
+      textEl.addEventListener('mousedown',function(e){
+        var i=_getIdx(e.target); if(i<0) return;
+        _isSelecting=true; _strikeStart=i; _strikeEnd=i; _markRange(i,i);
+      });
+      textEl.addEventListener('mousemove',function(e){
+        if(!_isSelecting) return;
+        var i=_getIdx(e.target); if(i<0) return;
+        _strikeEnd=i; _markRange(_strikeStart,_strikeEnd);
+      });
+      textEl.addEventListener('mouseup',function(){
+        if(!_isSelecting||_strikeStart<0) return;
+        _isSelecting=false;
+        _showInlineInput(item,textEl,spans,_strikeStart,_strikeEnd,text,entry,highlighted);
+      });
     });
-    diaryToast('点击要划掉的段落 ✏️');
+    diaryToast('用手指划过要删改的文字 ✏️');
   };
 
-  window.diaryInsertNote=async function(){
+  function _showInlineInput(item,textEl,spans,s,e,fullText,entry,highlighted){
+    var lo=Math.min(s,e),hi=Math.max(s,e);
+    // 退出选段模式
+    highlighted.forEach(function(p){ p.style.outline=''; });
+    // 重建划线展示
+    textEl.innerHTML='';
+    for(var i=0;i<fullText.length;i++){
+      var sp=document.createElement('span');
+      sp.textContent=fullText[i];
+      if(i>=lo&&i<=hi){
+        sp.style.cssText='text-decoration:line-through;color:#c2185b;background:rgba(233,30,99,0.1);';
+      }
+      textEl.appendChild(sp);
+    }
+    // 行内输入框
+    var inlineWrap=document.createElement('div');
+    inlineWrap.style.cssText='display:flex;gap:6px;margin-top:8px;padding-left:26px;align-items:center;';
+    var inlineInp=document.createElement('input');
+    inlineInp.type='text';
+    inlineInp.placeholder='写下你的替换内容…';
+    inlineInp.style.cssText='flex:1;padding:6px 10px;border:1.5px solid #e91e63;border-radius:18px;font-size:13px;outline:none;background:#fff0f5;';
+    var confirmBtn=document.createElement('button');
+    confirmBtn.textContent='✓';
+    confirmBtn.style.cssText='background:#e91e63;color:white;border:none;border-radius:50%;width:28px;height:28px;font-size:15px;cursor:pointer;flex-shrink:0;';
+    var cancelBtn=document.createElement('button');
+    cancelBtn.textContent='✕';
+    cancelBtn.style.cssText='background:#f0f0f0;color:#666;border:none;border-radius:50%;width:28px;height:28px;font-size:15px;cursor:pointer;flex-shrink:0;';
+    inlineWrap.appendChild(inlineInp);
+    inlineWrap.appendChild(confirmBtn);
+    inlineWrap.appendChild(cancelBtn);
+    textEl.appendChild(inlineWrap);
+    inlineInp.focus();
+    // 确认：把被划掉的字符替换，保存
+    confirmBtn.onclick=async function(){
+      var newText=inlineInp.value.trim();
+      if(!newText){ diaryToast('替换内容不能为空'); return; }
+      // 只把选中部分标记划掉，rewrite填新内容
+      // 为精确保存，把选中区域变成删除线文本，其余保留
+      var before=fullText.slice(0,lo);
+      var strikedPart=fullText.slice(lo,hi+1);
+      var after=fullText.slice(hi+1);
+      // 存储：striked段记录原文，rewrite记录替换
+      entry.content[item.idx].striked=true;
+      entry.content[item.idx].strikedPart=strikedPart;
+      entry.content[item.idx].before=before;
+      entry.content[item.idx].after=after;
+      entry.content[item.idx].rewrite=newText;
+      var diarySaveAll2=window._diarySaveAll||diarySaveAll;
+      await diarySaveAll2();
+      diaryRenderContent(entry);
+      diaryToast('已划掉并改写 ✏️');
+    };
+    cancelBtn.onclick=function(){
+      diaryRenderContent(entry);
+    };
+    inlineInp.addEventListener('keydown',function(ev){
+      if(ev.key==='Enter'){ev.preventDefault();confirmBtn.click();}
+      if(ev.key==='Escape'){cancelBtn.click();}
+    });
+  }
+
+    window.diaryInsertNote=async function(){
     var entry=_entries.find(function(e){return e.id===_curId;});
     if(!entry) return;
     diaryPrompt('💌 插入小纸条','写下想夹给TA看的丛小话…',async function(text){
