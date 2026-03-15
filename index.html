@@ -9475,15 +9475,12 @@ $(`btnSend`).onclick = () =>{
     history.push({role: `user`, content: _tForHistory});
     ls.setItem(`chatHistory`, JSON.stringify(history));
     updateListPreview();
-    // forceOnline: 卡片发送后自动触发AI回复，且强制关闭线下模式
+    // forceOnline: 发送前临时关闭线下模式，确保回复走线上格式
     if(_forceOnline){
         let _prevOffline = window._offlineMode;
         window._offlineMode = false;
-        setTimeout(function(){
-            $(`btnLemon`).click();
-            // 回复生成后恢复原线下状态
-            setTimeout(function(){ window._offlineMode = _prevOffline; }, 200);
-        }, 50);
+        // 本次API请求结束后恢复线下状态（延迟足够长确保回复已完成）
+        setTimeout(function(){ window._offlineMode = _prevOffline; }, 8000);
     }
 };
 
