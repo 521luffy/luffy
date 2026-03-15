@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
 <meta charset=utf-8>
@@ -9905,12 +9905,16 @@ let hasAccept = txt.includes(`[收取转账]`);
                     ls.setItem(`chatHistory`, JSON.stringify(history));
                 }
                 setTimeout(updateListPreview, lns.length * 1500 + 500);
-
-                // ★ 共享日记 UNLOCK/DENY 检测
+                // ★ 共享日记解锁检测
                 try{
-                  var _dReply = out || txt;
-                  if(_dReply && _dReply.includes('UNLOCK') && typeof window._diaryAutoUnlock==='function'){
-                    window._diaryAutoUnlock();
+                  var _dr=out||txt;
+                  if(_dr&&window._diaryHasPendingUnlock&&typeof window._diaryAutoUnlock==='function'){
+                    var _uk=['UNLOCK','好了','解开','给你看','看吧','打开','可以看','解锁','同意','好的'];
+                    var _dk=['DENY','不给','拒绝','不让','不可以'];
+                    var _hu=_uk.some(function(k){return _dr.includes(k);});
+                    var _hd=_dk.some(function(k){return _dr.includes(k);});
+                    if(_hu&&!_hd){window._diaryHasPendingUnlock=false;window._diaryAutoUnlock();}
+                    else if(_hd){window._diaryHasPendingUnlock=false;}
                   }
                 }catch(_de){}
 
@@ -21582,47 +21586,38 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
   };
   window.diaryToggleLock=window.diaryRequestLock;
 
-      window.diaryGoUnlock=async function(){
+        window.diaryGoUnlock=async function(){
     var cid=window._csCurrentCharId||null;
     if(!cid){try{cid=localStorage.getItem("cs_active_char");}catch(e){}}
     if(!cid&&typeof csGetCurrentCharId==="function"){cid=await csGetCurrentCharId();}
-    if(!cid){diaryToast("找不到绑定的伴侣，请先在情侣空间设置");return;}
-    // 根据当前锁定的日记生成更有针对性的消息
-    var lockedEntry=_entries.filter(function(e){return e.locked;}).sort(function(a,b){return b.id-a.id;})[0];
+    if(!cid){diaryToast("找不到绑定的伴侣");return;}
+    var lockedEntry=_entries.filter(function(e){return e.locked;})
+      .sort(function(a,b){return b.id-a.id;})[0];
     var dateHint=lockedEntry?lockedEntry.dateStr:"";
-    var msg="【共享日记】"+(dateHint?dateHint+"的":"")+"那篇日记被你锁起来了，我想看，能解开吗？💕";
-    // 如果当前就在该char聊天，直接跳聊天室
-    if(typeof currentChatId!=="undefined"&&currentChatId===cid){
-      if(typeof showScreen==="function")showScreen("scrRoom");
-      setTimeout(function(){
-        var inp=document.getElementById("iptMsg");
-        if(inp){inp.value=msg;inp.focus();if(typeof _autoResizeIptMsg==="function")_autoResizeIptMsg();}
-      },300);
-      return;
+    var vMsg="【共享日记】"+(dateHint?"「"+dateHint+"」":"")+"那篇日记被你锁起来了，我想看，能解开吗？💕";
+    var hMsg="\n\n%%%共享日记系统指令：用户请求解锁日记。直接用人设语气表明决定，同意就说好了或给你看，拒绝就说出理由。不要只做动作描写。";
+    window._diaryHasPendingUnlock=true;
+    var tName=localStorage.getItem("cN_"+cid)||"";
+    var items=document.querySelectorAll(".chat-item");
+    var clicked=false;
+    for(var i=0;i<items.length;i++){
+      if(items[i].style.display==="none")continue;
+      var ne=items[i].querySelector(".chat-name")||items[i].querySelector(".role-name");
+      if(ne&&ne.innerText&&ne.innerText.trim()===tName){items[i].click();clicked=true;break;}
     }
-    // 先跳到聊天列表，模拟点击对应char的chat-item
-    if(typeof showScreen==="function")showScreen("scrList");
+    if(!clicked){
+      if(typeof currentChatId!=="undefined")currentChatId=cid;
+      try{localStorage.setItem("currentChatId",cid);}catch(e){}
+      if(typeof loadRoom==="function")loadRoom();
+      showScreen("scrRoom");
+    }
     setTimeout(function(){
-      var items=document.querySelectorAll("#scrList .chat-item");
-      var clicked=false;
-      var charName=localStorage.getItem("cN_"+cid)||"";
-      items.forEach(function(el){
-        if(clicked)return;
-        var nameEl=el.querySelector(".chat-name");
-        if(nameEl&&charName&&nameEl.textContent.includes(charName)){
-          el.click();clicked=true;
-        }
-      });
-      if(!clicked){
-        // fallback
-        if(typeof currentChatId!=="undefined")currentChatId=cid;
-        if(typeof showScreen==="function")showScreen("scrRoom");
-      }
-      setTimeout(function(){
-        var inp=document.getElementById("iptMsg");
-        if(inp){inp.value=msg;inp.focus();if(typeof _autoResizeIptMsg==="function")_autoResizeIptMsg();}
-      },800);
-    },400);
+      var inp=document.getElementById("iptMsg");
+      if(!inp)return;
+      inp.value=vMsg+hMsg;
+      if(typeof _autoResizeIptMsg==="function")_autoResizeIptMsg();
+      inp.focus();
+    },500);
   };
 
   window.diaryAskChar=async function(retryBlockIdx){
@@ -21802,15 +21797,14 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
   window._injectDiaryMemory=injectDiaryMemory;
 
   // ── 主聊天检测到 UNLOCK 关键词时自动解锁 ──
-  window._diaryAutoUnlock=async function(){
+    window._diaryAutoUnlock=async function(){
     await diaryLoadAll();
     var locked=_entries.filter(function(e){return e.locked;});
-    if(!locked.length) return;
-    // 解锁最近一篇锁定的日记
+    if(!locked.length)return;
     locked.sort(function(a,b){return b.id-a.id;});
     locked[0].locked=false;
     await diarySaveAll();
-    injectDiaryMemory();
+    if(typeof injectDiaryMemory==="function")injectDiaryMemory();
     diaryToast("🔓 TA同意解开了！可以回共享日记查看了💕");
   };
 
