@@ -9906,8 +9906,13 @@ let hasAccept = txt.includes(`[收取转账]`);
                 }
                 setTimeout(updateListPreview, lns.length * 1500 + 500);
 
-
-
+                // ★ 共享日记 UNLOCK/DENY 检测
+                try{
+                  var _dReply = out || txt;
+                  if(_dReply && _dReply.includes('UNLOCK') && typeof window._diaryAutoUnlock==='function'){
+                    window._diaryAutoUnlock();
+                  }
+                }catch(_de){}
 
             
                         // 推进外卖配送进度（每次char回复后+1轮）
@@ -21795,6 +21800,19 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     window._diaryContextHint=hint;
   }
   window._injectDiaryMemory=injectDiaryMemory;
+
+  // ── 主聊天检测到 UNLOCK 关键词时自动解锁 ──
+  window._diaryAutoUnlock=async function(){
+    await diaryLoadAll();
+    var locked=_entries.filter(function(e){return e.locked;});
+    if(!locked.length) return;
+    // 解锁最近一篇锁定的日记
+    locked.sort(function(a,b){return b.id-a.id;});
+    locked[0].locked=false;
+    await diarySaveAll();
+    injectDiaryMemory();
+    diaryToast("🔓 TA同意解开了！可以回共享日记查看了💕");
+  };
 
   diaryLoadAll().then(function(){injectDiaryMemory();});
 })();;
