@@ -23318,14 +23318,16 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     var charN=rec.charName||'TA';
     var _myN=''; try{_myN=localStorage.getItem('cMyN_'+_cid())||'';}catch(e){} _myN=_myN||'我';
     var cleanAnswer=(rec.answer||'').split('\n').join(' ').trim();
+    // 视角强指令放进全局变量，发送时由btnSend悄悄拼入history，输入框里看不到
     var _vs='%%'+'%'+'[视角]你='+charN+'，对方='+_myN+'，不要搞反。用'+charN+'的身份正常回复。';
+    window._diaryPendingHiddenSuffix = '\n\n' + _vs;
     var cardText='';
     if(rec.mode==='be'){
-      cardText='（匿名问答·被问）有人匿名问'+_myN+'："'+(rec.question||'')+'" '+_myN+'答："'+(rec.userAnswer||'')+'" 匿名者揭开了：'+cleanAnswer+'\n\n'+_vs;
+      cardText='（匿名问答·被问）有人匿名问'+_myN+'："'+(rec.question||'')+'" '+_myN+'答："'+(rec.userAnswer||'')+'" 匿名者揭开了：'+cleanAnswer;
     } else if(rec.mode==='mask'){
-      cardText='（匿名问答·伪装）'+_myN+'伪装成「'+(rec.identity||'匿名')+'」问了你："'+(rec.question||'')+'" 你答："'+cleanAnswer+'" 提问的其实是'+_myN+'。\n\n'+_vs;
+      cardText='（匿名问答·伪装）'+_myN+'伪装成「'+(rec.identity||'匿名')+'」问了你："'+(rec.question||'')+'" 你答："'+cleanAnswer+'" 提问的其实是'+_myN+'。';
     } else {
-      cardText='（匿名问答·偷看）「'+(rec.identity||'匿名')+'」问了你："'+(rec.question||'')+'" 你答："'+cleanAnswer+'" '+_myN+'偷看到了。\n\n'+_vs;
+      cardText='（匿名问答·偷看）「'+(rec.identity||'匿名')+'」问了你："'+(rec.question||'')+'" 你答："'+cleanAnswer+'" '+_myN+'偷看到了。';
     }
     var cid=_cid();
     if(typeof currentChatId!=='undefined'&&currentChatId===cid){
@@ -23333,17 +23335,12 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     } else {
       if(typeof showScreen==='function')showScreen('scrList');
     }
-    // Fix2: 确保回复用当前聊天模式，不被线下模式污染
-    // 在填入输入框前，把可能触发线下格式的内容包裹成普通线上消息
-    window._anonCardPending = cardText;
     setTimeout(function(){
       var inp=document.getElementById('iptMsg');
       if(inp){
-        inp.value=window._anonCardPending||cardText;
-        window._anonCardPending=null;
+        inp.value=cardText;
         inp.focus();
         if(typeof _autoResizeIptMsg==='function')_autoResizeIptMsg();
-        // 确保此次发送强制走线上模式（不管char之前是否开了线下）
         inp.dataset.forceOnline='1';
       }
     }, 400);
@@ -23367,6 +23364,8 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
   }
 
   window._openAnon = async function(){
+    // 确保_csCurrentCharId是最新的（跟随情侣空间当前选中的char）
+    if(typeof csGetCurrentCharId==='function') csGetCurrentCharId();
     if(typeof showScreen==='function')showScreen('scrAnon');
     renderIdGrid('anonPeekIdGrid','anonPeekIdCustom');
     renderIdGrid('anonMaskIdGrid','anonMaskIdCustom');
@@ -23378,6 +23377,8 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
   window.showScreen = function(id){
     _origAnonShow(id);
     if(id==='scrAnon'){
+      // 刷新charId，保证记录key正确
+      if(typeof csGetCurrentCharId==='function') csGetCurrentCharId();
       renderIdGrid('anonPeekIdGrid','anonPeekIdCustom');
       renderIdGrid('anonMaskIdGrid','anonMaskIdCustom');
       renderIdGrid('anonBeIdGrid','anonBeIdCustom');
