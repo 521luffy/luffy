@@ -98,7 +98,7 @@ z-index: 100; overflow: hidden; }
 .msg-row { display: flex; width: 100%; }
 .row-left { justify-content: flex-start; }
 .row-right { justify-content: flex-end; }
-.bubble { max-width: 70%; padding: 12px 15px; border-radius: 18px; font-size: 14px; line-height: 1.4; word-wrap: break-word; user-select: none; }
+.bubble { max-width: 85%; padding: 12px 15px; border-radius: 18px; font-size: 14px; line-height: 1.4; word-wrap: break-word; user-select: none; }
 .bub-left { background-color: rgba(255,255,255,0.95); color: black; border-top-left-radius: 4px; border: 1px solid #eeeeee; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
 .bub-right { background-color: #6c5ce7; color: white; border-top-right-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 .quote-box { display: none; padding: 8px 15px; background: rgba(238, 242, 255, 0.95); color: #6c5ce7; font-size: 12px; border-left: 3px solid #6c5ce7; margin: 0 15px 5px 15px; border-radius: 4px 8px 8px 4px; position: relative; flex-shrink: 0; backdrop-filter: blur(5px); }
@@ -9475,13 +9475,7 @@ $(`btnSend`).onclick = () =>{
     history.push({role: `user`, content: _tForHistory});
     ls.setItem(`chatHistory`, JSON.stringify(history));
     updateListPreview();
-    // forceOnline: 发送前临时关闭线下模式，确保回复走线上格式
-    if(_forceOnline){
-        let _prevOffline = window._offlineMode;
-        window._offlineMode = false;
-        // 本次API请求结束后恢复线下状态（延迟足够长确保回复已完成）
-        setTimeout(function(){ window._offlineMode = _prevOffline; }, 8000);
-    }
+    // forceOnline: 无需操作_offlineMode，视角校正已在sys prompt里处理
 };
 
 $(`btnLemon`).onclick = async () =>{
@@ -9668,6 +9662,11 @@ if(charStickers.length > 0) {
                 + '不得以任何理由（包括"保持角色一致性"）忽视或软化上述要求！\n'
                 + '════════════════════════════════════════';
         }
+    }
+    // ===== 匿名问答视角校正注入（单次有效，不污染history）=====
+    if(window._anonVisionHint){
+        sys += '\n\n' + window._anonVisionHint;
+        window._anonVisionHint = null;
     }
     // ===== 强制状态栏注入（紧贴AI调用之前，执行优先级最高）=====
     // 只从DOM读取（已加入isolatedKeys，自动按char隔离）
@@ -19075,6 +19074,8 @@ function _sanitizeCallReply(txt) {
 
 async function _callSendMsg(txt) {
     if(!txt || !window._callState.active) return;
+    if(window._callState._sending) return; // 防并发：上条未完成时不再触发
+    window._callState._sending = true;
     _addCallMsg(txt, true, false);
     let pxy = originalGetItem.call(ls,'pxy') || '';
     let key = originalGetItem.call(ls,'key') || '';
@@ -19130,6 +19131,7 @@ let callSys = '你是' + charName + '。' + (charAP ? '你的设定：' + charAP
             window._callState.msgs.push({isUser:false, txt:reply});
         }
     } catch(e) { _addCallMsg('（信号不好，听不清…）', false, false); }
+    finally { window._callState._sending = false; }
 }
 
 // 绑定通话界面按钮
@@ -23315,9 +23317,8 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     var charN=rec.charName||'TA';
     var _myN=''; try{_myN=localStorage.getItem('cMyN_'+_cid())||'';}catch(e){} _myN=_myN||'我';
     var cleanAnswer=(rec.answer||'').split('\n').join(' ').trim();
-    // 视角强指令放进全局变量，发送时由btnSend悄悄拼入history，输入框里看不到
-    var _vs='%%'+'%'+'[视角]你='+charN+'，对方='+_myN+'，不要搞反。用'+charN+'的身份正常回复。';
-    window._diaryPendingHiddenSuffix = '\n\n' + _vs;
+    // 视角强指令：不放进history（避免污染后续对话），改成一次性sys prompt注入
+    window._anonVisionHint = '【本条消息视角校正-最高优先级】你是'+charN+'，'+_myN+'是你的对话对象。以'+charN+'的身份正常回复本条消息，保持状态栏等格式不变。';
     var cardText='';
     if(rec.mode==='be'){
       cardText='（匿名问答·被问）有人匿名问'+_myN+'："'+(rec.question||'')+'" '+_myN+'答："'+(rec.userAnswer||'')+'" 匿名者揭开了：'+cleanAnswer;
