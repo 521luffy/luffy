@@ -9316,7 +9316,10 @@ $(`btnSend`).onclick = () =>{
     if(currentQuote) t = `「引用：` + currentQuote + `」\n` + t;
     mkBub(t, `r`); iptMsg.value = ``; if(typeof _autoResizeIptMsg === 'function') _autoResizeIptMsg(); $(`quoteBox`).style.display = `none`;
     currentQuote = ``;
-    history.push({role: `user`, content: t});
+    // Bug1修复：如果日记系统留有隐藏指令，拼接后再存入history（气泡不显示）
+    let _tForHistory = t;
+    if(window._diaryPendingHiddenSuffix){ _tForHistory = t + window._diaryPendingHiddenSuffix; window._diaryPendingHiddenSuffix = null; }
+    history.push({role: `user`, content: _tForHistory});
     ls.setItem(`chatHistory`, JSON.stringify(history));
     updateListPreview();
 };
@@ -21231,7 +21234,12 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
 // 共享日记 (scrDiary) 逻辑
 // ═══════════════════════════════════════════════
 (function initDiary(){
-  var DIARY_KEY='sharedDiary_v2';
+  var DIARY_KEY_BASE='sharedDiary_v2';
+  function getDiaryKey(){
+    var cid=window._csCurrentCharId||null;
+    if(!cid){try{cid=localStorage.getItem('cs_active_char');}catch(e){}}
+    return cid?(DIARY_KEY_BASE+'_char_'+cid):DIARY_KEY_BASE;
+  }
 
   // ── 自定义弹窗（替代 confirm/prompt）──
   function diaryConfirm(msg, onOk){
@@ -21281,6 +21289,7 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
   var STAMPS=['😊','🥰','😢','😤','😴','🌸','💕','🔥','😌','🫶'];
 
   async function diarySaveAll(){
+    var DIARY_KEY=getDiaryKey();
     var ok=false;
     try{ await localforage.setItem(DIARY_KEY,_entries); ok=true; }catch(e){}
     try{ localStorage.setItem(DIARY_KEY,JSON.stringify(_entries)); ok=true; }catch(e){}
@@ -21288,12 +21297,28 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     return ok;
   }
   async function diaryLoadAll(){
+    var DIARY_KEY=getDiaryKey();
     var d=null;
     try{ d=await localforage.getItem(DIARY_KEY); }catch(e){}
-    // localforage 可能返回字符串（某些环境下）
     if(typeof d==="string"){try{d=JSON.parse(d);}catch(e){d=null;}}
     if(!d||!Array.isArray(d)){
       try{ var r=localStorage.getItem(DIARY_KEY); if(r)d=JSON.parse(r); }catch(e){d=null;}
+    }
+    // Bug2修复：如果当前char还没有日记，但旧通用key有数据，则迁移过来
+    if((!d||!d.length) && DIARY_KEY!==DIARY_KEY_BASE){
+      var oldD=null;
+      try{ oldD=await localforage.getItem(DIARY_KEY_BASE); }catch(e){}
+      if(typeof oldD==="string"){try{oldD=JSON.parse(oldD);}catch(e){oldD=null;}}
+      if(!oldD||!Array.isArray(oldD)){
+        try{ var oldR=localStorage.getItem(DIARY_KEY_BASE); if(oldR)oldD=JSON.parse(oldR); }catch(e){oldD=null;}
+      }
+      if(oldD&&oldD.length){
+        d=oldD;
+        // 迁移完成后清空旧key，避免重复迁移
+        try{ await localforage.removeItem(DIARY_KEY_BASE); }catch(e){}
+        try{ localStorage.removeItem(DIARY_KEY_BASE); }catch(e){}
+        diaryToast("📖 已将日记迁移到当前角色 💕");
+      }
     }
     _entries=Array.isArray(d)?d:[];
     // 同步保证两个存储一致
@@ -21503,16 +21528,71 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
   window.diaryStrikeLastChar=async function(){
     var entry=_entries.find(function(e){return e.id===_curId;});
     if(!entry) return;
-    var lastIdx=-1;
-    entry.content.forEach(function(b,i){if(b.type==='text'&&b.author==='char'&&!b.striked) lastIdx=i;});
-    if(lastIdx===-1){ diaryToast('没有TA的内容可以划掉'); return; }
-    var preview=entry.content[lastIdx].text.slice(0,15);
-    diaryPrompt('划掉「'+preview+'…」','你想写什么？',async function(newText){
-      if(!newText) return;
-      entry.content[lastIdx].striked=true;
-      entry.content[lastIdx].rewrite=newText;
-      await diarySaveAll();diaryRenderContent(entry);diaryToast('已划掉并续写 ✏️');
+    // 找出所有char写的、未划掉的段落
+    var charBlocks=[];
+    entry.content.forEach(function(b,i){
+      if(b.type==='text'&&b.author==='char'&&!b.striked&&!b.isError) charBlocks.push({idx:i,block:b});
     });
+    if(!charBlocks.length){ diaryToast('没有TA的内容可以划掉'); return; }
+    // Bug4修复：进入选段模式——高亮所有char段落，让用户点选
+    var container=document.getElementById('diaryContent');
+    if(!container) return;
+    // 给每个char段落加上选段样式和点击事件
+    var paras=container.querySelectorAll('.diary-para-char');
+    var highlighted=[];
+    charBlocks.forEach(function(item,pi){
+      var para=paras[pi];
+      if(!para) return;
+      para.style.outline='2px dashed #e91e63';
+      para.style.cursor='pointer';
+      para.style.borderRadius='10px';
+      para.title='点击划掉这段';
+      highlighted.push(para);
+      (function(bidx, block, paraEl){
+        para.onclick=function(ev){
+          // 退出选段模式
+          highlighted.forEach(function(p){ p.style.outline=''; p.style.cursor=''; p.title=''; p.onclick=null; });
+          // 划掉这段，行内展示输入框
+          var textEl=paraEl.querySelector('div[style*="padding-left"]');
+          if(textEl){
+            textEl.innerHTML='<span class="diary-strikethrough">'+block.text+'</span>';
+            // 行内输入框
+            var inlineWrap=document.createElement('div');
+            inlineWrap.style.cssText='display:flex;gap:6px;margin-top:8px;padding-left:26px;align-items:center;';
+            var inlineInp=document.createElement('input');
+            inlineInp.type='text';
+            inlineInp.placeholder='写下你的替换内容…';
+            inlineInp.style.cssText='flex:1;padding:6px 10px;border:1.5px solid #e91e63;border-radius:18px;font-size:13px;outline:none;background:#fff0f5;';
+            var confirmBtn=document.createElement('button');
+            confirmBtn.textContent='✓';
+            confirmBtn.style.cssText='background:#e91e63;color:white;border:none;border-radius:50%;width:28px;height:28px;font-size:15px;cursor:pointer;flex-shrink:0;';
+            var cancelBtn=document.createElement('button');
+            cancelBtn.textContent='✕';
+            cancelBtn.style.cssText='background:#f0f0f0;color:#666;border:none;border-radius:50%;width:28px;height:28px;font-size:15px;cursor:pointer;flex-shrink:0;';
+            inlineWrap.appendChild(inlineInp);
+            inlineWrap.appendChild(confirmBtn);
+            inlineWrap.appendChild(cancelBtn);
+            textEl.appendChild(inlineWrap);
+            inlineInp.focus();
+            confirmBtn.onclick=async function(){
+              var newText=inlineInp.value.trim();
+              if(!newText){ diaryToast('替换内容不能为空'); return; }
+              entry.content[bidx].striked=true;
+              entry.content[bidx].rewrite=newText;
+              await diarySaveAll();diaryRenderContent(entry);diaryToast('已划掉并改写 ✏️');
+            };
+            cancelBtn.onclick=function(){
+              diaryRenderContent(entry); // 还原
+            };
+            inlineInp.addEventListener('keydown',function(e){
+              if(e.key==='Enter'){ e.preventDefault(); confirmBtn.click(); }
+              if(e.key==='Escape'){ cancelBtn.click(); }
+            });
+          }
+        };
+      })(item.idx, item.block, para);
+    });
+    diaryToast('点击要划掉的段落 ✏️');
   };
 
   window.diaryInsertNote=async function(){
@@ -21598,7 +21678,10 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     var _sep="%%"+"%";
     var hiddenCmd="\n\n"+_sep+"共享日记系统指令：用户请求解锁日记。直接用人设语气表明决定，同意就说好了或给你看，拒绝就说出理由。不要只做动作描写。";
     window._diaryHasPendingUnlock=true;
-    var msg="【共享日记】"+(dateHint?dateHint+"的":"")+"那篇日记被你锁起来了，我想看，能解开吗？💕"+hiddenCmd;
+    // Bug1修复：输入框只放用户可见的文字，隐藏指令另存，发送时由btnSend拼接
+    var visibleMsg="【共享日记】"+(dateHint?dateHint+"的":"")+"那篇日记被你锁起来了，我想看，能解开吗？💕";
+    window._diaryPendingHiddenSuffix=hiddenCmd;
+    var msg=visibleMsg;
     // 如果当前就在该char聊天，直接跳聊天室
     if(typeof currentChatId!=="undefined"&&currentChatId===cid){
       if(typeof showScreen==="function")showScreen("scrRoom");
@@ -21680,61 +21763,29 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     if(ctx)sysparts.push("日记目前内容：\n"+ctx+"\n\n请接着写或回应。");
     sysparts.push("直接输出日记正文，不加任何前缀、引号或说明。");
     var sys=sysparts.join("\n\n");
-    // 写日记的请求
-    var writeReq=fetch(pxy,{method:"POST",
-      headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},
-      body:JSON.stringify({model:mod,max_tokens:300,temperature:tp,
-        messages:[{role:"user",content:sys}]})
-    });
-    // 锁定决策的请求（同时发出，不容置疑）
-    var lockSys=(charSys?charSys+"\n\n":"")+
-      "今天你要在情侣日记里写一段内容。你会把这篇日记锁起来不让对方看吗？"+
-      "回复 YES 或 NO，只这一个单词。";
-    var lockReq=fetch(pxy,{method:"POST",
-      headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},
-      body:JSON.stringify({model:mod,max_tokens:10,temperature:0.9,
-        messages:[{role:"user",content:lockSys}]})
-    });
+    // Bug3修复：只请求续写，不同时判断锁定（用户主动让ta续写，不应该被锁）
     try{
-      // 两个请求并发，同时等待
-      var results=await Promise.all([writeReq,lockReq]);
-      var writeData=await results[0].json();
-      var lockData=await results[1].json();
+      var writeRes=await fetch(pxy,{method:"POST",
+        headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},
+        body:JSON.stringify({model:mod,max_tokens:300,temperature:tp,
+          messages:[{role:"user",content:sys}]})
+      });
+      var writeData=await writeRes.json();
       if(typingDiv.parentNode)typingDiv.remove();
-      // 提取内容
       var text="";
       if(writeData.content&&writeData.content[0])text=writeData.content[0].text||"";
       else if(writeData.choices&&writeData.choices[0])text=(writeData.choices[0].message&&writeData.choices[0].message.content)||"";
       text=text.trim();
       if(!text){diaryToast("生成内容为空，请重试");return;}
-      // 提取锁定决策
-      var lr="";
-      if(lockData.content&&lockData.content[0])lr=lockData.content[0].text||"";
-      else if(lockData.choices&&lockData.choices[0])lr=(lockData.choices[0].message&&lockData.choices[0].message.content)||"";
-      var shouldLock=lr.trim().toUpperCase().startsWith("YES");
-      // 将内容存入（无论锁不锁就先存）
       entry.content.push({type:"text",author:"char",text:text,ts:Date.now(),striked:false,isError:false});
       if(!entry.stamps.char){
         var cs=["🥰","💕","🌸","😌","💗"];
         entry.stamps.char=cs[Math.floor(Math.random()*cs.length)];
       }
-      if(shouldLock){
-        // 锁定：内容存下但直接显示锁屏，用户永远看不到
-        entry.locked=true;
-        await diarySaveAll();
-        diaryRenderList();
-        renderStampArea(entry);
-        // 不调用 diaryRenderContent，直接显示锁屏
-        var mask=document.getElementById("diaryLockedMask");
-        if(mask)mask.style.display="flex";
-        diaryToast(charName+"把这篇锁起来了 🔒");
-      }else{
-        // 不锁：正常显示
-        await diarySaveAll();
-        diaryRenderContent(entry);
-        diaryRenderList();
-        diaryToast(charName+" 写好啊 💕");
-      }
+      await diarySaveAll();
+      diaryRenderContent(entry);
+      diaryRenderList();
+      diaryToast(charName+" 写好啦 💕");
     }catch(err){
       if(typingDiv.parentNode)typingDiv.remove();
       entry.content.push({type:"text",author:"char",text:"[网络错误，点击重新生成]",ts:Date.now(),striked:false,isError:true});
