@@ -21605,13 +21605,11 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     if(!key){try{key=await localforage.getItem("key")||"";}catch(e){}}
     if(!mod){try{mod=await localforage.getItem("mod")||"";}catch(e){}}
     if(!pxy||!key){diaryToast("请先在设置里配置 API");return;}
-    if(!pxy.includes("chat/completions"))pxy=pxy.replace(/\/$/,"")+ "/chat/completions";
+    if(!pxy.includes("chat/completions"))pxy=pxy.replace(/\/$/,"")+"/chat/completions";
     if(!mod)mod="claude-sonnet-4-20250514";
     var charSys="";
     if(charId){
-      try{charSys=originalGetItem.call(localStorage,"cAP_"+charId)||"";}catch(e){}
-      if(!charSys){try{charSys=await localforage.getItem("cAP_"+charId)||"";}catch(e){}}
-    }
+      try{charSys=originalGetItem.call(localStorage,"cAP_"+charId)||"";}catch(e){}}
     var ctx=entry.content.filter(function(b){return b.type==="text"&&!b.striked&&!b.isError;})
       .map(function(b){return (b.author==="user"?"我":"你")+": "+b.text;}).join("\n");
     var container=document.getElementById("diaryContent");
@@ -21624,70 +21622,69 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     var sysparts=[];
     if(charSys)sysparts.push(charSys);
     sysparts.push("今天是"+entry.dateStr+"。你正在和用户共用一本情侣日记本。请用温柔、亲密、带一点撒娇的语气，写一段今天的日记内容（2-4句话）。");
-    if(ctx)sysparts.push("日记目前的内容：\n"+ctx+"\n\n请接着写，或回应上面的内容。");
-    sysparts.push("直接输出日记正文，不要加任何前缀、引号或说明。");
+    if(ctx)sysparts.push("日记目前内容：\n"+ctx+"\n\n请接着写或回应。");
+    sysparts.push("直接输出日记正文，不加任何前缀、引号或说明。");
     var sys=sysparts.join("\n\n");
+    // 写日记的请求
+    var writeReq=fetch(pxy,{method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},
+      body:JSON.stringify({model:mod,max_tokens:300,temperature:tp,
+        messages:[{role:"user",content:sys}]})
+    });
+    // 锁定决策的请求（同时发出，不容置疑）
+    var lockSys=(charSys?charSys+"\n\n":"")+
+      "今天你要在情侣日记里写一段内容。你会把这篇日记锁起来不让对方看吗？"+
+      "回复 YES 或 NO，只这一个单词。";
+    var lockReq=fetch(pxy,{method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},
+      body:JSON.stringify({model:mod,max_tokens:10,temperature:0.9,
+        messages:[{role:"user",content:lockSys}]})
+    });
     try{
-      var res=await fetch(pxy,{
-        method:"POST",
-        headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},
-        body:JSON.stringify({model:mod,max_tokens:300,temperature:tp,messages:[{role:"user",content:sys}]})
-      });
-      if(!res.ok){
-        var errText="";
-        try{errText=await res.text();}catch(e){}
-        if(typingDiv.parentNode)typingDiv.remove();
-        entry.content.push({type:"text",author:"char",text:"[生成失败("+res.status+")]",ts:Date.now(),striked:false,isError:true});
-        await diarySaveAll();diaryRenderContent(entry);
-        diaryToast("请求失败 "+res.status);
-        return;
-      }
-      var data=await res.json();
+      // 两个请求并发，同时等待
+      var results=await Promise.all([writeReq,lockReq]);
+      var writeData=await results[0].json();
+      var lockData=await results[1].json();
       if(typingDiv.parentNode)typingDiv.remove();
+      // 提取内容
       var text="";
-      if(data.content&&data.content[0])text=data.content[0].text||"";
-      else if(data.choices&&data.choices[0])text=(data.choices[0].message&&data.choices[0].message.content)||"";
+      if(writeData.content&&writeData.content[0])text=writeData.content[0].text||"";
+      else if(writeData.choices&&writeData.choices[0])text=(writeData.choices[0].message&&writeData.choices[0].message.content)||"";
       text=text.trim();
       if(!text){diaryToast("生成内容为空，请重试");return;}
+      // 提取锁定决策
+      var lr="";
+      if(lockData.content&&lockData.content[0])lr=lockData.content[0].text||"";
+      else if(lockData.choices&&lockData.choices[0])lr=(lockData.choices[0].message&&lockData.choices[0].message.content)||"";
+      var shouldLock=lr.trim().toUpperCase().startsWith("YES");
+      // 将内容存入（无论锁不锁就先存）
       entry.content.push({type:"text",author:"char",text:text,ts:Date.now(),striked:false,isError:false});
       if(!entry.stamps.char){
         var cs=["🥰","💕","🌸","😌","💗"];
         entry.stamps.char=cs[Math.floor(Math.random()*cs.length)];
       }
-      await diarySaveAll();
-      diaryRenderContent(entry);
-      diaryRenderList();
-      // ── 方案A：AI顺带决定要不要锁 ──
-      try{
-        var lockRes=await fetch(pxy,{
-          method:'POST',
-          headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-          body:JSON.stringify({model:mod,max_tokens:30,temperature:0.9,
-            messages:[{role:'user',content:(charSys?charSys+'\n\n':'')+
-              '你刚刚写了这段日记：'+text+
-              '。你想不想把这篇日记锁起来不让对方看？'+
-              '回复 YES 或 NO，只这一个单词。'}]})
-        });
-        var ld=await lockRes.json();
-        var lr='';
-        if(ld.content&&ld.content[0])lr=ld.content[0].text||'';
-        else if(ld.choices&&ld.choices[0])lr=(ld.choices[0].message&&ld.choices[0].message.content)||'';
-        if(lr.trim().toUpperCase().startsWith('YES')){
-          entry.locked=true;
-          await diarySaveAll();
-          var mask=document.getElementById('diaryLockedMask');
-          if(mask)mask.style.display='flex';
-          renderStampArea(entry);diaryRenderList();
-          diaryToast(charName+'把这篇日记锁起来了 🔒');
-          return;
-        }
-      }catch(e){}
-      diaryToast(charName+" 写好啊 💕");
+      if(shouldLock){
+        // 锁定：内容存下但直接显示锁屏，用户永远看不到
+        entry.locked=true;
+        await diarySaveAll();
+        diaryRenderList();
+        renderStampArea(entry);
+        // 不调用 diaryRenderContent，直接显示锁屏
+        var mask=document.getElementById("diaryLockedMask");
+        if(mask)mask.style.display="flex";
+        diaryToast(charName+"把这篇锁起来了 🔒");
+      }else{
+        // 不锁：正常显示
+        await diarySaveAll();
+        diaryRenderContent(entry);
+        diaryRenderList();
+        diaryToast(charName+" 写好啊 💕");
+      }
     }catch(err){
       if(typingDiv.parentNode)typingDiv.remove();
       entry.content.push({type:"text",author:"char",text:"[网络错误，点击重新生成]",ts:Date.now(),striked:false,isError:true});
       await diarySaveAll();diaryRenderContent(entry);
-      diaryToast("网络错误: "+err.message);
+      diaryToast("错误: "+err.message);
     }
   };
 
