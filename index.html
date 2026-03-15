@@ -21752,7 +21752,7 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     window.diaryInsertNote=async function(){
     var entry=_entries.find(function(e){return e.id===_curId;});
     if(!entry) return;
-    diaryPrompt('💌 插入小纸条','写下想夹给TA看的丛小话…',async function(text){
+    diaryPrompt('💌 插入小纸条','写下想夹给TA看的悄悄话…',async function(text){
       if(!text) return;
       entry.content.push({type:'note',author:'user',text:text,ts:Date.now()});
       await diarySaveAll();diaryRenderContent(entry);diaryToast('小纸条已夹入 💌');
@@ -21949,7 +21949,14 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     // 构建带改动记录的上下文：让char看到所有划掉和改写的痕迹
     var ctxLines=[];
     entry.content.forEach(function(b){
-      if(b.type!=="text"||b.isError) return;
+      if(b.isError) return;
+      // 纸条也纳入上下文，让char能看见
+      if(b.type==="note"){
+        var noteWho=b.author==="user"?"我":"你";
+        ctxLines.push("【"+noteWho+"夹的小纸条】"+b.text);
+        return;
+      }
+      if(b.type!=="text") return;
       var who=b.author==="user"?"我":"你";
       if(b.striked){
         // 有划掉：区分是谁划掉了谁的
@@ -21992,7 +21999,7 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     var _myN=myName||"对方";
     sysparts.push("今天是"+entry.dateStr+"。你正在和"+_myN+"共用一本情侣日记本，在上面手写留言。\n【重要】写日记时必须完全符合你上方的人设性格，用你平时说话的口吻和语气，不要变成温柔撒娇的风格，除非你的人设本就如此。");
     if(ctx)sysparts.push("日记目前的内容和改动记录如下：\n"+ctx);
-    sysparts.push("请根据上面的内容接着写2-4句。可以顺着改动后的内容继续，也可以用符合你人设的语气回应或吐槽对方的改动。直接输出日记正文，不加任何前缀、引号或说明。");
+    sysparts.push("请根据上面的内容接着写2-4句，完全用你平时说话的语气和风格，自然地回应或接续。直接输出日记正文，不加任何前缀、引号或说明。");
     var sys=sysparts.join("\n\n");
     // Bug3修复：只请求续写，不同时判断锁定（用户主动让ta续写，不应该被锁）
     try{
