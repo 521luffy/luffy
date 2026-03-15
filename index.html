@@ -9367,6 +9367,11 @@ $(`btnLemon`).onclick = async () =>{
     try{
         if(window._petContextHint) sys += '\n【宠物信息】'+window._petContextHint+'\n';
     }catch(e){}
+    // ★ 共享日记上下文注入
+    try{
+        if(window._diaryContextHint) sys += '\n【共享日记】'+window._diaryContextHint+'\n';
+        if(typeof window._injectDiaryMemory==='function') window._injectDiaryMemory();
+    }catch(e){}
     // ★ 经期状态自动注入（只描述状态，不提具体日期，避免和自定义剧情时间冲突）
     try {
         let _pStart = originalGetItem.call(ls, 'period_start') || '';
@@ -21266,14 +21271,25 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
   var STAMPS=['😊','🥰','😢','😤','😴','🌸','💕','🔥','😌','🫶'];
 
   async function diarySaveAll(){
-    try{ await localforage.setItem(DIARY_KEY,_entries); }catch(e){}
-    try{ localStorage.setItem(DIARY_KEY,JSON.stringify(_entries)); }catch(e){}
+    var ok=false;
+    try{ await localforage.setItem(DIARY_KEY,_entries); ok=true; }catch(e){}
+    try{ localStorage.setItem(DIARY_KEY,JSON.stringify(_entries)); ok=true; }catch(e){}
+    if(!ok) diaryToast("⚠️ 保存失败，请检查存储空间");
+    return ok;
   }
   async function diaryLoadAll(){
     var d=null;
     try{ d=await localforage.getItem(DIARY_KEY); }catch(e){}
-    if(!d){ try{ var r=localStorage.getItem(DIARY_KEY); d=r?JSON.parse(r):null; }catch(e){} }
+    // localforage 可能返回字符串（某些环境下）
+    if(typeof d==="string"){try{d=JSON.parse(d);}catch(e){d=null;}}
+    if(!d||!Array.isArray(d)){
+      try{ var r=localStorage.getItem(DIARY_KEY); if(r)d=JSON.parse(r); }catch(e){d=null;}
+    }
     _entries=Array.isArray(d)?d:[];
+    // 同步保证两个存储一致
+    if(_entries.length>0){
+      try{await localforage.setItem(DIARY_KEY,_entries);}catch(e){}
+    }
   }
 
   function diaryToast(msg){
@@ -21566,7 +21582,10 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     if(!cid){try{cid=localStorage.getItem("cs_active_char");}catch(e){}}
     if(!cid&&typeof csGetCurrentCharId==="function"){cid=await csGetCurrentCharId();}
     if(!cid){diaryToast("找不到绑定的伴侣，请先在情侣空间设置");return;}
-    var msg="我想看你锁着的日记，能帮我解开吗？💕";
+    // 根据当前锁定的日记生成更有针对性的消息
+    var lockedEntry=_entries.filter(function(e){return e.locked;}).sort(function(a,b){return b.id-a.id;})[0];
+    var dateHint=lockedEntry?lockedEntry.dateStr:"";
+    var msg="【共享日记】"+(dateHint?dateHint+"的":"")+"那篇日记被你锁起来了，我想看，能解开吗？💕";
     // 如果当前就在该char聊天，直接跳聊天室
     if(typeof currentChatId!=="undefined"&&currentChatId===cid){
       if(typeof showScreen==="function")showScreen("scrRoom");
@@ -21750,12 +21769,34 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
       diaryLoadAll().then(function(){
         var dv=document.getElementById('diaryDetailView');if(dv) dv.style.display='none';
         var lv=document.getElementById('diaryListView');if(lv) lv.style.display='block';
-        _curId=null;diaryRenderList();
+        _curId=null;
+        diaryRenderList();
+        injectDiaryMemory();
       });
     }
   };
 
-  diaryLoadAll().then(function(){});
+  // ── 注入日记上下文到系统提示（供主聊天使用）──
+  function injectDiaryMemory(){
+    var charId=window._csCurrentCharId||(typeof localStorage!=="undefined"?localStorage.getItem("cs_active_char"):null);
+    var locked=_entries.filter(function(e){return e.locked;});
+    var total=_entries.length;
+    if(total===0){window._diaryContextHint=null;return;}
+    var hint="你们有一本共享日记，一共"+total+"篇";
+    if(locked.length>0) hint+="，其中"+locked.length+"篇被你锁起来不让对方看";
+    // 最近一篇未锁的内容摘要
+    var recent=_entries.filter(function(e){return !e.locked;}).sort(function(a,b){return b.id-a.id;})[0];
+    if(recent&&recent.content&&recent.content.length){
+      var t=recent.content.filter(function(b){return b.type==="text"&&!b.striked;})
+        .map(function(b){return b.text;}).join("、").slice(0,30);
+      if(t) hint+="，最近一篇内容：「"+t+"…」";
+    }
+    hint+="。如果对方谈到日记，不要尝试用其他日记解释，这是专属app功能。";
+    window._diaryContextHint=hint;
+  }
+  window._injectDiaryMemory=injectDiaryMemory;
+
+  diaryLoadAll().then(function(){injectDiaryMemory();});
 })();;
 </script>
 
