@@ -5353,7 +5353,7 @@ if(typeof localforage === 'undefined') {
    匿名问答 (scrAnon) 样式
 ══════════════════════════════════════ */
 #scrAnon{background:linear-gradient(160deg,#1a0530 0%,#0d0820 60%,#180a30 100%);color:#f0e6ff;}
-.anon-topbar{display:flex;align-items:center;justify-content:space-between;padding:max(calc(env(safe-area-inset-top,0px)+36px),60px) 15px 14px;flex-shrink:0;background:linear-gradient(180deg,rgba(26,5,48,0.98),transparent);}
+.anon-topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 15px 14px;padding-top:60px;flex-shrink:0;background:linear-gradient(180deg,rgba(26,5,48,0.98),transparent);}
 .anon-back{font-size:22px;color:#c084fc;cursor:pointer;width:30px;}
 .anon-title{font-size:17px;font-weight:700;color:#f0e6ff;letter-spacing:2px;}
 .anon-tabs{display:flex;background:rgba(15,5,30,0.9);border-bottom:1px solid rgba(140,60,220,0.25);flex-shrink:0;}
@@ -9464,6 +9464,9 @@ if($(`picUploadInput`)) {
 $(`btnSend`).onclick = () =>{
     let t = iptMsg.value; if(!t && !currentQuote) return;
     if(currentQuote) t = `「引用：` + currentQuote + `」\n` + t;
+    // forceOnline: 来自匿名问答/日记的卡片消息，强制走线上模式
+    let _forceOnline = iptMsg.dataset.forceOnline === '1';
+    if(_forceOnline) delete iptMsg.dataset.forceOnline;
     mkBub(t, `r`); iptMsg.value = ``; if(typeof _autoResizeIptMsg === 'function') _autoResizeIptMsg(); $(`quoteBox`).style.display = `none`;
     currentQuote = ``;
     // Bug1修复：如果日记系统留有隐藏指令，拼接后再存入history（气泡不显示）
@@ -9472,6 +9475,16 @@ $(`btnSend`).onclick = () =>{
     history.push({role: `user`, content: _tForHistory});
     ls.setItem(`chatHistory`, JSON.stringify(history));
     updateListPreview();
+    // forceOnline: 卡片发送后自动触发AI回复，且强制关闭线下模式
+    if(_forceOnline){
+        let _prevOffline = window._offlineMode;
+        window._offlineMode = false;
+        setTimeout(function(){
+            $(`btnLemon`).click();
+            // 回复生成后恢复原线下状态
+            setTimeout(function(){ window._offlineMode = _prevOffline; }, 200);
+        }, 50);
+    }
 };
 
 $(`btnLemon`).onclick = async () =>{
@@ -21989,7 +22002,7 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
       if(typeof showScreen==="function")showScreen("scrRoom");
       setTimeout(function(){
         var inp=document.getElementById("iptMsg");
-        if(inp){inp.value=msg;inp.focus();if(typeof _autoResizeIptMsg==="function")_autoResizeIptMsg();}
+        if(inp){inp.value=msg;inp.focus();if(typeof _autoResizeIptMsg==="function")_autoResizeIptMsg();inp.dataset.forceOnline='1';}
       },300);
       return;
     }
@@ -22013,7 +22026,7 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
       }
       setTimeout(function(){
         var inp=document.getElementById("iptMsg");
-        if(inp){inp.value=msg;inp.focus();if(typeof _autoResizeIptMsg==="function")_autoResizeIptMsg();}
+        if(inp){inp.value=msg;inp.focus();if(typeof _autoResizeIptMsg==="function")_autoResizeIptMsg();inp.dataset.forceOnline='1';}
       },800);
     },400);
   };
@@ -23304,31 +23317,15 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     if(!rec){anonToast('记录不存在，请稍后重试');return;}
     var modeLabel=rec.mode==='peek'?'偷看':rec.mode==='mask'?'伪装':'被问';
     var charN=rec.charName||'TA';
-    // Fix2: 卡片语气要清晰——user分享给char看，不能让char错认视角
-    // 明确：用户是"我"，char是被问/被偷看的那个人
-    var cleanAnswer=(rec.answer||'').replace(/【[^】]+】：?/g,'').trim();
+    // Fix2: 彻底清洗线下模式特征——去掉状态栏格式|xx|、动作描写块
+    var cleanAnswer=(rec.answer||"").replace(/\n{3,}/g,"\n").trim();
     var cardText='';
     if(rec.mode==='be'){
-      // 被问模式：char问了我，我回答了，然后char揭晓身份
-      cardText='【匿名问答回顾·被问】\n'+
-        '刚才有个身份是「'+(rec.identity||'匿名')+'」的人匿名问了我：\n'+
-        '"'+(rec.question||'')+'"\n'+
-        '我回答了："'+(rec.userAnswer||'')+'"\n'+
-        '然后对方揭开了身份——'+cleanAnswer;
+      cardText='【匿名问答·被问】刚才有个「'+(rec.identity||'匿名')+'」匿名问了我："'+(rec.question||'')+'" 我回答了："'+(rec.userAnswer||'')+'" 然后对方揭开了身份：'+cleanAnswer;
     } else if(rec.mode==='mask'){
-      // 伪装模式：我伪装成某人问了char，char回答了
-      cardText='【匿名问答回顾·伪装提问】\n'+
-        '我刚才伪装成「'+(rec.identity||'匿名')+'」偷偷问了你：\n'+
-        '"'+(rec.question||'')+'"\n'+
-        '你的回答是："'+cleanAnswer+'"\n'+
-        '（那个匿名提问的人其实是我）';
+      cardText='【匿名问答·伪装】我刚才伪装成「'+(rec.identity||'匿名')+'」偷偷问了你："'+(rec.question||'')+'" 你当时说："'+cleanAnswer+'"（提问的人其实是我）';
     } else {
-      // 偷看模式：我偷看了char和某人的匿名互动
-      cardText='【匿名问答回顾·偷看】\n'+
-        '有个「'+(rec.identity||'匿名')+'」匿名问了你：\n'+
-        '"'+(rec.question||'')+'"\n'+
-        '你的回答是："'+cleanAnswer+'"\n'+
-        '（我偷偷看到了这段对话）';
+      cardText='【匿名问答·偷看】有个「'+(rec.identity||'匿名')+'」匿名问了你："'+(rec.question||'')+'" 你回答了："'+cleanAnswer+'"（我偷看到了这段）';
     }
     var cid=_cid();
     if(typeof currentChatId!=='undefined'&&currentChatId===cid){
@@ -23336,9 +23333,19 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     } else {
       if(typeof showScreen==='function')showScreen('scrList');
     }
+    // Fix2: 确保回复用当前聊天模式，不被线下模式污染
+    // 在填入输入框前，把可能触发线下格式的内容包裹成普通线上消息
+    window._anonCardPending = cardText;
     setTimeout(function(){
       var inp=document.getElementById('iptMsg');
-      if(inp){inp.value=cardText;inp.focus();if(typeof _autoResizeIptMsg==='function')_autoResizeIptMsg();}
+      if(inp){
+        inp.value=window._anonCardPending||cardText;
+        window._anonCardPending=null;
+        inp.focus();
+        if(typeof _autoResizeIptMsg==='function')_autoResizeIptMsg();
+        // 确保此次发送强制走线上模式（不管char之前是否开了线下）
+        inp.dataset.forceOnline='1';
+      }
     }, 400);
     anonToast('已填入聊天输入框，发送即可 💬');
   };
