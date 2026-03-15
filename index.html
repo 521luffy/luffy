@@ -9906,11 +9906,16 @@ let hasAccept = txt.includes(`[收取转账]`);
                 }
                 setTimeout(updateListPreview, lns.length * 1500 + 500);
 
-                // ★ 共享日记 UNLOCK/DENY 检测
+                // ★ 共享日记解锁检测
                 try{
                   var _dReply = out || txt;
-                  if(_dReply && _dReply.includes('UNLOCK') && typeof window._diaryAutoUnlock==='function'){
-                    window._diaryAutoUnlock();
+                  if(_dReply && window._diaryHasPendingUnlock && typeof window._diaryAutoUnlock==='function'){
+                    var _unlockWords=['UNLOCK','好了','解开','给你看','看吧','打开','可以看','解锁','同意','好的'];
+                    var _denyWords=['DENY','不给','拒绝','不让','不可以','不行'];
+                    var _hasUnlock=_unlockWords.some(function(w){return _dReply.includes(w);});
+                    var _hasDeny=_denyWords.some(function(w){return _dReply.includes(w);});
+                    if(_hasUnlock && !_hasDeny){ window._diaryHasPendingUnlock=false; window._diaryAutoUnlock(); }
+                    else if(_hasDeny){ window._diaryHasPendingUnlock=false; }
                   }
                 }catch(_de){}
 
@@ -21590,7 +21595,10 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     // 根据当前锁定的日记生成更有针对性的消息
     var lockedEntry=_entries.filter(function(e){return e.locked;}).sort(function(a,b){return b.id-a.id;})[0];
     var dateHint=lockedEntry?lockedEntry.dateStr:"";
-    var msg="【共享日记】"+(dateHint?dateHint+"的":"")+"那篇日记被你锁起来了，我想看，能解开吗？💕";
+    var _sep="%%"+"%";
+    var hiddenCmd="\n\n"+_sep+"共享日记系统指令：用户请求解锁日记。直接用人设语气表明决定，同意就说好了或给你看，拒绝就说出理由。不要只做动作描写。";
+    window._diaryHasPendingUnlock=true;
+    var msg="【共享日记】"+(dateHint?dateHint+"的":"")+"那篇日记被你锁起来了，我想看，能解开吗？💕"+hiddenCmd;
     // 如果当前就在该char聊天，直接跳聊天室
     if(typeof currentChatId!=="undefined"&&currentChatId===cid){
       if(typeof showScreen==="function")showScreen("scrRoom");
@@ -21810,7 +21818,7 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     locked.sort(function(a,b){return b.id-a.id;});
     locked[0].locked=false;
     await diarySaveAll();
-    injectDiaryMemory();
+    if(typeof injectDiaryMemory==="function") injectDiaryMemory();
     diaryToast("🔓 TA同意解开了！可以回共享日记查看了💕");
   };
 
