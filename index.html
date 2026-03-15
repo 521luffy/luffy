@@ -21409,110 +21409,88 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
   window.diaryAskChar=async function(retryBlockIdx){
     var entry=_entries.find(function(e){return e.id===_curId;});
     if(!entry) return;
-
-    // 如果是重新生成某块，先删掉那块
-    if(typeof retryBlockIdx==='number' && retryBlockIdx>=0){
+    if(typeof retryBlockIdx==="number"&&retryBlockIdx>=0&&retryBlockIdx<entry.content.length){
       entry.content.splice(retryBlockIdx,1);
       await diarySaveAll();
       diaryRenderContent(entry);
     }
-
-    // 获取情侣空间绑定的charId
     var charId=window._csCurrentCharId||null;
-    if(!charId){ try{ charId=localStorage.getItem('cs_active_char'); }catch(e){} }
-    if(!charId&&typeof csGetCurrentCharId==='function'){ charId=await csGetCurrentCharId(); }
-    var charName=charId?(localStorage.getItem('cN_'+charId)||'TA'):'TA';
-
-    // 读API配置（key_charId格式）
-    var cid=charId?('_'+charId):'';
-    var pxy='',key='',mod='',tp=0.85;
+    if(!charId){try{charId=localStorage.getItem("cs_active_char");}catch(e){}}
+    if(!charId&&typeof csGetCurrentCharId==="function"){charId=await csGetCurrentCharId();}
+    var charName=charId?(localStorage.getItem("cN_"+charId)||"TA"):"TA";
+    var pxy="",key="",mod="",tp=0.85;
     try{
-      pxy=(typeof originalGetItem==='function'?originalGetItem.call(localStorage,'pxy'+cid):localStorage.getItem('pxy'+cid))||'';
-      if(!pxy) pxy=(typeof originalGetItem==='function'?originalGetItem.call(localStorage,'pxy'):localStorage.getItem('pxy'))||'';
-      key=(typeof originalGetItem==='function'?originalGetItem.call(localStorage,'key'+cid):localStorage.getItem('key'+cid))||'';
-      if(!key) key=(typeof originalGetItem==='function'?originalGetItem.call(localStorage,'key'):localStorage.getItem('key'))||'';
-      mod=(typeof originalGetItem==='function'?originalGetItem.call(localStorage,'mod'+cid):localStorage.getItem('mod'+cid))||'';
-      if(!mod) mod=(typeof originalGetItem==='function'?originalGetItem.call(localStorage,'mod'):localStorage.getItem('mod'))||'';
-      tp=parseFloat((typeof originalGetItem==='function'?originalGetItem.call(localStorage,'temp'+cid):localStorage.getItem('temp'+cid))||'0.85')||0.85;
-    }catch(e){}
-    if(!pxy||!key){
-      try{ pxy=await localforage.getItem('pxy'+cid)||pxy||await localforage.getItem('pxy')||''; }catch(e){}
-      try{ key=await localforage.getItem('key'+cid)||key||await localforage.getItem('key')||''; }catch(e){}
-      try{ mod=await localforage.getItem('mod'+cid)||mod||await localforage.getItem('mod')||''; }catch(e){}
+      pxy=originalGetItem.call(localStorage,"pxy")||"";
+      key=originalGetItem.call(localStorage,"key")||"";
+      mod=originalGetItem.call(localStorage,"mod")||"";
+      tp=parseFloat(originalGetItem.call(localStorage,"temp")||"0.85")||0.85;
+    }catch(e){
+      try{pxy=localStorage.getItem("pxy")||"";}catch(e2){}
+      try{key=localStorage.getItem("key")||"";}catch(e2){}
+      try{mod=localStorage.getItem("mod")||"";}catch(e2){}
     }
-    if(!pxy||!key){ diaryToast('请先在设置里配置API ⚙️'); return; }
-    if(!pxy.includes('chat/completions')) pxy=pxy.replace(/\/$/,'')+'/chat/completions';
-    if(!mod) mod='claude-sonnet-4-20250514';
-
-    // 读char人设
-    var charSys='';
-    try{
-      charSys=(typeof originalGetItem==='function'?originalGetItem.call(localStorage,'cAP'+cid):localStorage.getItem('cAP'+cid))||'';
-      if(!charSys) charSys=(typeof originalGetItem==='function'?originalGetItem.call(localStorage,'sys_'+charId):localStorage.getItem('sys_'+charId))||'';
-      if(!charSys) charSys=await localforage.getItem('cAP'+cid)||'';
-    }catch(e){}
-
-    // 构建上下文
-    var ctx=entry.content.filter(function(b){return b.type==='text'&&!b.striked&&!b.isError;})
-      .map(function(b){return (b.author==='user'?'我':'你')+': '+b.text;}).join('\n');
-
-    // 打字动画
-    var container=document.getElementById('diaryContent');
-    var typingDiv=document.createElement('div');
-    typingDiv.className='diary-ai-typing';
-    typingDiv.innerHTML='<span></span><span></span><span></span>';
-    if(container) container.appendChild(typingDiv);
-    var scroll=document.getElementById('diaryPaperScroll');
-    if(scroll) scroll.scrollTop=scroll.scrollHeight;
-
-    var sys=(charSys?charSys+'\n\n':'')+
-      '今天是'+entry.dateStr+'。你正在和用户共用一本情侣日记本。'+
-      '请用温柔、亲密、带一点撒娇的语气，写一段今天的日记内容（2-4句话）。'+
-      (ctx?'\n\n日记目前的内容：\n'+ctx+'\n\n请接着写，或回应上面的内容。':'')+
-      '\n\n注意：直接输出日记正文，不要加任何前缀、引号或说明。';
-
+    if(!pxy){try{pxy=await localforage.getItem("pxy")||"";}catch(e){}}
+    if(!key){try{key=await localforage.getItem("key")||"";}catch(e){}}
+    if(!mod){try{mod=await localforage.getItem("mod")||"";}catch(e){}}
+    if(!pxy||!key){diaryToast("请先在设置里配置 API");return;}
+    if(!pxy.includes("chat/completions"))pxy=pxy.replace(/\/$/,"")+ "/chat/completions";
+    if(!mod)mod="claude-sonnet-4-20250514";
+    var charSys="";
+    if(charId){
+      try{charSys=originalGetItem.call(localStorage,"cAP_"+charId)||"";}catch(e){}
+      if(!charSys){try{charSys=await localforage.getItem("cAP_"+charId)||"";}catch(e){}}
+    }
+    var ctx=entry.content.filter(function(b){return b.type==="text"&&!b.striked&&!b.isError;})
+      .map(function(b){return (b.author==="user"?"我":"你")+": "+b.text;}).join("\n");
+    var container=document.getElementById("diaryContent");
+    var typingDiv=document.createElement("div");
+    typingDiv.className="diary-ai-typing";
+    typingDiv.innerHTML="<span></span><span></span><span></span>";
+    if(container)container.appendChild(typingDiv);
+    var scroll=document.getElementById("diaryPaperScroll");
+    if(scroll)scroll.scrollTop=scroll.scrollHeight;
+    var sysparts=[];
+    if(charSys)sysparts.push(charSys);
+    sysparts.push("今天是"+entry.dateStr+"。你正在和用户共用一本情侣日记本。请用温柔、亲密、带一点撒娇的语气，写一段今天的日记内容（2-4句话）。");
+    if(ctx)sysparts.push("日记目前的内容：\n"+ctx+"\n\n请接着写，或回应上面的内容。");
+    sysparts.push("直接输出日记正文，不要加任何前缀、引号或说明。");
+    var sys=sysparts.join("\n\n");
     try{
       var res=await fetch(pxy,{
-        method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-        body:JSON.stringify({model:mod,max_tokens:300,temperature:tp,
-          messages:[{role:'user',content:sys}]})
+        method:"POST",
+        headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},
+        body:JSON.stringify({model:mod,max_tokens:300,temperature:tp,messages:[{role:"user",content:sys}]})
       });
       if(!res.ok){
-        var errText=await res.text().catch(function(){return '';});
-        typingDiv.remove();
-        // 添加错误块（可重新生成）
-        var errIdx=entry.content.length;
-        entry.content.push({type:'text',author:'char',text:'[生成失败('+res.status+')，点击重新生成]',ts:Date.now(),striked:false,isError:true,errIdx:errIdx});
-        await diarySaveAll(); diaryRenderContent(entry);
-        diaryToast('请求失败('+res.status+')');
+        var errText="";
+        try{errText=await res.text();}catch(e){}
+        if(typingDiv.parentNode)typingDiv.remove();
+        entry.content.push({type:"text",author:"char",text:"[生成失败("+res.status+")]",ts:Date.now(),striked:false,isError:true});
+        await diarySaveAll();diaryRenderContent(entry);
+        diaryToast("请求失败 "+res.status);
         return;
       }
       var data=await res.json();
-      typingDiv.remove();
-      var text='';
-      if(data.content&&data.content[0]) text=data.content[0].text||'';
-      else if(data.choices&&data.choices[0]) text=(data.choices[0].message&&data.choices[0].message.content)||'';
+      if(typingDiv.parentNode)typingDiv.remove();
+      var text="";
+      if(data.content&&data.content[0])text=data.content[0].text||"";
+      else if(data.choices&&data.choices[0])text=(data.choices[0].message&&data.choices[0].message.content)||"";
       text=text.trim();
-      if(!text){
-        diaryToast('生成失败：'+(data.error?data.error.message:JSON.stringify(data).slice(0,60)));
-        return;
-      }
-      entry.content.push({type:'text',author:'char',text:text,ts:Date.now(),striked:false,isError:false});
+      if(!text){diaryToast("生成内容为空，请重试");return;}
+      entry.content.push({type:"text",author:"char",text:text,ts:Date.now(),striked:false,isError:false});
       if(!entry.stamps.char){
-        var cs=['🥰','💕','🌸','😌','💗'];
+        var cs=["🥰","💕","🌸","😌","💗"];
         entry.stamps.char=cs[Math.floor(Math.random()*cs.length)];
       }
       await diarySaveAll();
       diaryRenderContent(entry);
       diaryRenderList();
-      diaryToast(charName+' 写好啦 💕');
+      diaryToast(charName+" 写好啊 💕");
     }catch(err){
-      if(typingDiv.parentNode) typingDiv.remove();
-      var errIdx2=entry.content.length;
-      entry.content.push({type:'text',author:'char',text:'[网络错误，点击重新生成]',ts:Date.now(),striked:false,isError:true,errIdx:errIdx2});
-      await diarySaveAll(); diaryRenderContent(entry);
-      diaryToast('网络错误：'+err.message);
+      if(typingDiv.parentNode)typingDiv.remove();
+      entry.content.push({type:"text",author:"char",text:"[网络错误，点击重新生成]",ts:Date.now(),striked:false,isError:true});
+      await diarySaveAll();diaryRenderContent(entry);
+      diaryToast("网络错误: "+err.message);
     }
   };
 
