@@ -1174,81 +1174,87 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
      ═══════════════════════════════════════════════ -->
 <div id="scrPet" style="display:none;flex-direction:column;position:absolute;top:0;width:100%;height:100%;z-index:42;overflow:hidden;">
 <style>
-#scrPet { background:#7ec850; }
+#scrPet { background:#a8d8a0; }
 
 /* ── 顶栏 ── */
 #petTopBar{
   display:flex;align-items:center;justify-content:space-between;
   padding:14px 14px 10px;padding-top:65px;
-  background:linear-gradient(180deg,rgba(0,0,0,.18) 0%,rgba(0,0,0,0) 100%);
+  background:linear-gradient(180deg,rgba(0,0,0,.15) 0%,rgba(0,0,0,0) 100%);
   flex-shrink:0;z-index:3;position:relative;
 }
-#petBack{font-size:22px;color:white;cursor:pointer;width:34px;text-shadow:0 1px 3px rgba(0,0,0,.4);}
-#petTitle{font-size:16px;font-weight:700;color:white;flex:1;text-align:center;text-shadow:0 1px 3px rgba(0,0,0,.4);}
+#petBack{font-size:22px;color:white;cursor:pointer;width:34px;text-shadow:0 1px 3px rgba(0,0,0,.3);}
+#petTitle{font-size:16px;font-weight:700;color:white;flex:1;text-align:center;text-shadow:0 1px 4px rgba(0,0,0,.3);}
 #petShopBtn{font-size:22px;cursor:pointer;width:34px;text-align:right;}
 #petProfileBtn{font-size:20px;cursor:pointer;width:30px;text-align:right;}
 
 /* ── 草地场景区 ── */
 #petScene{
-  position:relative;height:340px;flex-shrink:0;overflow:hidden;
-  background:linear-gradient(180deg,#87ceeb 0%,#a8e063 55%,#7ec850 100%);
+  position:relative;height:320px;flex-shrink:0;overflow:hidden;
+  background:linear-gradient(180deg,
+    #c8e8ff 0%,
+    #d8eeff 25%,
+    #e0f0d8 55%,
+    #a0c860 80%,
+    #88b840 100%);
 }
-/* 云朵 */
-#petCloud1,#petCloud2{position:absolute;top:18px;font-size:36px;animation:cloudFloat 8s ease-in-out infinite;opacity:.85;}
-#petCloud1{left:10%;animation-delay:0s;}
-#petCloud2{right:8%;animation-delay:3s;font-size:28px;}
-@keyframes cloudFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-6px);}}
+/* 远山 */
+#petScene::before{
+  content:'';position:absolute;bottom:90px;left:0;right:0;height:80px;
+  background:linear-gradient(180deg,transparent 0%,rgba(120,180,100,.3) 100%);
+  border-radius:50% 50% 0 0 / 60px 60px 0 0;
+}
 
-/* 樱花树（用CSS画） */
-#petTree{position:absolute;left:-10px;bottom:80px;width:120px;height:160px;}
-.tree-trunk{position:absolute;bottom:0;left:50px;width:20px;height:70px;background:linear-gradient(90deg,#a0784a,#8b6035);border-radius:3px;}
-.tree-branch{position:absolute;background:radial-gradient(circle,#ffb7c5 0%,#ff8fab 40%,rgba(255,143,171,0) 70%);border-radius:50%;}
+/* 云朵SVG */
+.pet-cloud{position:absolute;opacity:.9;}
+#petCloud1{top:20px;left:8%;}
+#petCloud2{top:30px;right:10%;}
+@keyframes cloudDrift{0%{transform:translateX(0);}100%{transform:translateX(12px);}}
+#petCloud1{animation:cloudDrift 6s ease-in-out infinite alternate;}
+#petCloud2{animation:cloudDrift 8s ease-in-out infinite alternate-reverse;}
 
-/* 地面 */
+/* 草地地面 */
 #petGround{
-  position:absolute;bottom:0;left:0;right:0;height:90px;
-  background:linear-gradient(180deg,#90c040 0%,#7ab030 100%);
+  position:absolute;bottom:0;left:0;right:0;height:100px;
+  background:linear-gradient(180deg,#88c840 0%,#70a830 100%);
+  overflow:hidden;
 }
-/* 草地花纹 */
-#petGround::before{
-  content:'';position:absolute;inset:0;
-  background:repeating-linear-gradient(90deg,rgba(255,255,255,.05) 0px,rgba(255,255,255,.05) 2px,transparent 2px,transparent 20px);
-}
+/* 小花 */
+.pet-flower{position:absolute;bottom:0;font-size:16px;}
 
-/* 猫咪垫子 */
+/* 爪印垫 */
 #petCushion{
-  position:absolute;bottom:70px;left:50%;transform:translateX(-50%);
-  width:120px;height:32px;
-  background:radial-gradient(ellipse,#e8c87a 60%,#c8a050 100%);
-  border-radius:50%;box-shadow:0 4px 12px rgba(0,0,0,.2);
+  position:absolute;bottom:88px;left:50%;transform:translateX(-50%);
+  width:110px;height:28px;
+  background:radial-gradient(ellipse,rgba(180,140,80,.5) 60%,transparent 100%);
+  border-radius:50%;
 }
 
-/* 猫咪/狗狗 SVG */
+/* 宠物包装 */
 #petAnimalWrap{
-  position:absolute;bottom:90px;left:50%;transform:translateX(-50%);
-  width:110px;height:110px;
-  animation:petIdle 2.5s ease-in-out infinite;
+  position:absolute;bottom:85px;left:50%;transform:translateX(-50%);
+  width:120px;height:120px;
   cursor:pointer;-webkit-tap-highlight-color:transparent;
   user-select:none;
 }
-@keyframes petIdle{0%,100%{transform:translateX(-50%) translateY(0) rotate(-1deg);}50%{transform:translateX(-50%) translateY(-8px) rotate(1deg);}}
-#petAnimalWrap.eating{animation:petEat .25s ease-in-out 5 !important;}
-@keyframes petEat{0%,100%{transform:translateX(-50%) scale(1);}50%{transform:translateX(-50%) scale(.88) translateY(4px);}}
-#petAnimalWrap.happy{animation:petHappy .3s ease-in-out 5 !important;}
-@keyframes petHappy{0%,100%{transform:translateX(-50%) scale(1) rotate(0deg);}25%{transform:translateX(-50%) scale(1.15) rotate(-8deg);}75%{transform:translateX(-50%) scale(1.15) rotate(8deg);}}
-#petAnimalWrap.bathing{animation:petBath .4s ease-in-out 4 !important;}
-@keyframes petBath{0%,100%{transform:translateX(-50%) translateY(0);}50%{transform:translateX(-50%) translateY(-12px) scale(1.05);}}
-
-/* 猫咪SVG */
-#petSvg{width:110px;height:110px;}
+#petAnimalWrap svg{width:120px;height:120px;}
+@keyframes petIdle{0%,100%{transform:translateX(-50%) translateY(0);}50%{transform:translateX(-50%) translateY(-7px);}}
+@keyframes petEat{0%{transform:translateX(-50%) scale(1) translateY(0);}20%{transform:translateX(-50%) scale(.92) translateY(4px) rotate(-3deg);}40%{transform:translateX(-50%) scale(1.02) translateY(-2px) rotate(2deg);}60%{transform:translateX(-50%) scale(.94) translateY(3px) rotate(-2deg);}80%{transform:translateX(-50%) scale(1) translateY(0);}100%{transform:translateX(-50%) scale(1) translateY(0);}}
+@keyframes petHappy{0%,100%{transform:translateX(-50%) scale(1) rotate(0);}25%{transform:translateX(-50%) scale(1.12) rotate(-10deg);}75%{transform:translateX(-50%) scale(1.12) rotate(10deg);}}
+@keyframes petBath{0%,100%{transform:translateX(-50%) translateY(0) scale(1);}30%{transform:translateX(-50%) translateY(-10px) scale(1.05);}60%{transform:translateX(-50%) translateY(-5px) scale(.97);}}
+#petAnimalWrap.idle{animation:petIdle 2.5s ease-in-out infinite;}
+#petAnimalWrap.eating{animation:petEat .4s ease-in-out 4 !important;}
+#petAnimalWrap.happy{animation:petHappy .35s ease-in-out 5 !important;}
+#petAnimalWrap.bathing{animation:petBath .5s ease-in-out 4 !important;}
+#petSvg{width:120px;height:120px;}
 
 /* 对话气泡 */
 #petBubble{
-  position:absolute;bottom:205px;left:50%;transform:translateX(-50%);
+  position:absolute;bottom:210px;left:50%;transform:translateX(-50%);
   background:white;border-radius:16px;padding:5px 14px;
   font-size:12px;color:#555;white-space:nowrap;
-  box-shadow:0 3px 10px rgba(0,0,0,.15);
-  transition:all .3s;
+  box-shadow:0 3px 10px rgba(0,0,0,.12);
+  transition:all .3s;z-index:2;
 }
 #petBubble::after{
   content:'';position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);
@@ -1257,25 +1263,46 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 
 /* 食碗 */
 #petBowl{
-  position:absolute;bottom:74px;right:18%;
-  font-size:32px;
-  transition:all .3s;
-  cursor:pointer;-webkit-tap-highlight-color:transparent;
+  position:absolute;bottom:90px;right:10%;
+  font-size:36px;cursor:pointer;-webkit-tap-highlight-color:transparent;
+  transition:transform .2s;z-index:2;
 }
+#petBowl:active{transform:scale(.88);}
+
 /* 玩具 */
 #petToy{
-  position:absolute;bottom:80px;left:14%;
-  font-size:28px;
-  animation:toyBounce 3s ease-in-out infinite;
+  position:absolute;bottom:96px;left:8%;
+  font-size:32px;cursor:pointer;-webkit-tap-highlight-color:transparent;
+  z-index:2;
 }
-@keyframes toyBounce{0%,100%{transform:translateY(0) rotate(0deg);}50%{transform:translateY(-4px) rotate(15deg);}}
+@keyframes toyBounce{0%,100%{transform:rotate(-10deg) translateY(0);}50%{transform:rotate(10deg) translateY(-5px);}}
+#petToy{animation:toyBounce 2s ease-in-out infinite;}
+#petToy:active{transform:scale(.85);}
 
-/* 心情粒子 */
+/* 粒子 */
 .pet-particle{
-  position:absolute;pointer-events:none;font-size:20px;
-  animation:particleFly .8s ease-out forwards;
+  position:absolute;pointer-events:none;font-size:18px;
+  animation:particleFly .9s ease-out forwards;z-index:5;
 }
-@keyframes particleFly{0%{opacity:1;transform:translateY(0) scale(1);}100%{opacity:0;transform:translateY(-60px) scale(.5);}}
+@keyframes particleFly{0%{opacity:1;transform:translateY(0) scale(1);}100%{opacity:0;transform:translateY(-70px) scale(.4) rotate(30deg);}}
+
+/* 泡泡（洗澡专用） */
+.pet-bubble{
+  position:absolute;border-radius:50%;pointer-events:none;
+  animation:bubbleRise 1.2s ease-out forwards;
+}
+@keyframes bubbleRise{0%{opacity:.8;transform:translateY(0) scale(1);}100%{opacity:0;transform:translateY(-80px) scale(1.5);}}
+
+/* XP进度条 */
+#petXpBar{
+  background:white;border-radius:18px;padding:10px 16px;
+  box-shadow:0 3px 12px rgba(0,0,0,.08);margin-bottom:10px;
+  display:flex;align-items:center;gap:10px;
+}
+#petXpLabel{font-size:12px;color:#888;flex-shrink:0;}
+#petXpTrack{flex:1;height:8px;background:#f0f0f0;border-radius:4px;overflow:hidden;}
+#petXpFill{height:100%;border-radius:4px;background:linear-gradient(90deg,#ffcc40,#ff8c00);transition:width .6s ease;}
+#petXpVal{font-size:11px;color:#e07030;font-weight:700;flex-shrink:0;width:50px;text-align:right;}
 
 /* ── 状态面板 ── */
 #petPanel{
@@ -1430,26 +1457,45 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
   <!-- 房间主视图 -->
   <div id="petMain" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
     <div id="petScene">
-      <!-- 天空装饰 -->
-      <div id="petCloud1">☁️</div>
-      <div id="petCloud2">☁️</div>
-      <!-- 树 -->
-      <div id="petTree">
-        <div class="tree-trunk"></div>
-        <div class="tree-branch" style="width:90px;height:90px;top:10px;left:10px;"></div>
-        <div class="tree-branch" style="width:70px;height:70px;top:0;left:25px;opacity:.8;"></div>
-        <div class="tree-branch" style="width:60px;height:60px;top:20px;left:35px;opacity:.9;"></div>
-      </div>
+      <!-- 云朵 -->
+      <svg id="petCloud1" class="pet-cloud" width="90" height="36" viewBox="0 0 90 36">
+        <ellipse cx="45" cy="28" rx="42" ry="14" fill="white" opacity=".95"/>
+        <ellipse cx="28" cy="22" rx="22" ry="16" fill="white" opacity=".95"/>
+        <ellipse cx="58" cy="20" rx="20" ry="14" fill="white" opacity=".95"/>
+        <ellipse cx="42" cy="16" rx="18" ry="13" fill="white"/>
+      </svg>
+      <svg id="petCloud2" class="pet-cloud" width="70" height="28" viewBox="0 0 70 28">
+        <ellipse cx="35" cy="22" rx="32" ry="10" fill="white" opacity=".9"/>
+        <ellipse cx="22" cy="17" rx="16" ry="12" fill="white" opacity=".9"/>
+        <ellipse cx="46" cy="15" rx="14" ry="11" fill="white" opacity=".9"/>
+      </svg>
+      <!-- 远处树木 -->
+      <svg style="position:absolute;bottom:88px;left:0;right:0;width:100%" height="60" viewBox="0 0 360 60" preserveAspectRatio="none">
+        <ellipse cx="30" cy="50" rx="28" ry="36" fill="#6aaa40" opacity=".7"/>
+        <ellipse cx="22" cy="45" rx="20" ry="28" fill="#78bc48" opacity=".7"/>
+        <ellipse cx="320" cy="50" rx="30" ry="38" fill="#6aaa40" opacity=".65"/>
+        <ellipse cx="330" cy="42" rx="22" ry="30" fill="#78bc48" opacity=".65"/>
+        <ellipse cx="290" cy="55" rx="18" ry="24" fill="#5a9a38" opacity=".5"/>
+      </svg>
       <!-- 地面 -->
-      <div id="petGround"></div>
+      <div id="petGround">
+        <!-- 小花 -->
+        <span class="pet-flower" style="left:5%">🌸</span>
+        <span class="pet-flower" style="left:18%">🌼</span>
+        <span class="pet-flower" style="left:30%">🌺</span>
+        <span class="pet-flower" style="right:25%">🌼</span>
+        <span class="pet-flower" style="right:12%">🌸</span>
+        <span class="pet-flower" style="right:4%">🌻</span>
+        <span class="pet-flower" style="left:48%">🌹</span>
+      </div>
       <!-- 垫子 -->
       <div id="petCushion"></div>
       <!-- 食碗+玩具 -->
       <div id="petBowl" onclick="petDo('feed')">🍚</div>
-      <div id="petToy">🧶</div>
+      <div id="petToy" onclick="petDo('play')">🧶</div>
       <!-- 宠物 -->
-      <div id="petAnimalWrap" onclick="petPet()">
-        <svg id="petSvg" viewBox="0 0 110 110" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div id="petAnimalWrap" class="idle" onclick="petPet()">
+        <svg id="petSvg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"></svg>
       </div>
       <!-- 气泡 -->
       <div id="petBubble">😸 喵～</div>
@@ -1461,6 +1507,12 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         <span id="petNameDisplay">小喵</span>
         <span id="petTypeTag">猫咪</span>
         <span id="petLvTag">Lv.1</span>
+      </div>
+      <!-- XP进度条 -->
+      <div id="petXpBar">
+        <span id="petXpLabel">Lv.<span id="petLvNum">1</span></span>
+        <div id="petXpTrack"><div id="petXpFill" style="width:0%"></div></div>
+        <span id="petXpVal">0/100 XP</span>
       </div>
       <div id="petStats">
         <div class="pet-stat-row"><span class="pet-stat-icon">🍚</span><span class="pet-stat-label">饱食</span><div class="pet-stat-bar"><div class="pet-stat-fill food" id="statFood" style="width:80%"></div></div><span class="pet-stat-val" id="statFoodVal">80</span></div>
@@ -1522,7 +1574,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
     </div>
     <div class="pp-row"><span class="pp-label">生日</span><input class="pp-input" id="ppBirthday" type="date"></div>
     <div class="pp-row"><span class="pp-label">年龄</span><input class="pp-input" id="ppAge" type="number" min="0" max="30" placeholder="岁" style="max-width:80px;"></div>
-    <div class="pp-row"><span class="pp-label">等级</span><input class="pp-input" id="ppLevel" type="number" min="1" max="99" placeholder="1" style="max-width:80px;"></div>
+
     <div class="pp-row"><span class="pp-label">备注</span><input class="pp-input" id="ppNote" placeholder="关于它的小故事…" maxlength="30"></div>
     <div style="display:flex;gap:10px;margin-top:4px;">
       <button onclick="document.getElementById('petProfileModal').style.display='none'" style="flex:1;padding:11px;border:1.5px solid #ddd;background:#f8f8f8;color:#999;border-radius:12px;font-size:14px;cursor:pointer;font-weight:600;">取消</button>
@@ -21212,61 +21264,158 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     var NS = 'http://www.w3.org/2000/svg';
     function el(tag, attrs){
       var e = document.createElementNS(NS, tag);
-      for(var k in attrs) e.setAttribute(k, attrs[k]);
+      for(var k in attrs) e.setAttribute(k, String(attrs[k]));
       return e;
     }
     while(svg.firstChild) svg.removeChild(svg.firstChild);
+
     if(type==='cat'){
-      var eyeRy = happy ? '8' : '6';
-      var mouthD = happy ? 'M51 61 Q55 66 59 61' : 'M51 62 Q55 60 59 62';
-      svg.appendChild(el('path',{d:'M75 90 Q95 70 90 55 Q85 45 80 55',fill:'none',stroke:'#f4a460','stroke-width':'7','stroke-linecap':'round'}));
-      svg.appendChild(el('ellipse',{cx:'55',cy:'80',rx:'30',ry:'26',fill:'#f4a460'}));
-      svg.appendChild(el('ellipse',{cx:'55',cy:'84',rx:'18',ry:'16',fill:'#fde8c8'}));
-      svg.appendChild(el('circle',{cx:'55',cy:'50',r:'28',fill:'#f4a460'}));
-      svg.appendChild(el('polygon',{points:'30,28 22,10 42,24',fill:'#f4a460'}));
-      svg.appendChild(el('polygon',{points:'80,28 88,10 68,24',fill:'#f4a460'}));
-      svg.appendChild(el('polygon',{points:'32,27 26,14 40,25',fill:'#ffb6c1'}));
-      svg.appendChild(el('polygon',{points:'78,27 84,14 70,25',fill:'#ffb6c1'}));
-      svg.appendChild(el('ellipse',{cx:'44',cy:'48',rx:'7',ry:eyeRy,fill:'#2c1810'}));
-      svg.appendChild(el('ellipse',{cx:'66',cy:'48',rx:'7',ry:eyeRy,fill:'#2c1810'}));
-      svg.appendChild(el('circle',{cx:'46',cy:'46',r:'2.5',fill:'white'}));
-      svg.appendChild(el('circle',{cx:'68',cy:'46',r:'2.5',fill:'white'}));
-      svg.appendChild(el('ellipse',{cx:'55',cy:'57',rx:'4',ry:'3',fill:'#ff9eb5'}));
-      svg.appendChild(el('path',{d:mouthD,fill:'none',stroke:'#c07070','stroke-width':'2','stroke-linecap':'round'}));
-      svg.appendChild(el('line',{x1:'26',y1:'56',x2:'46',y2:'58',stroke:'#888','stroke-width':'1.5','stroke-linecap':'round'}));
-      svg.appendChild(el('line',{x1:'26',y1:'61',x2:'46',y2:'61',stroke:'#888','stroke-width':'1.5','stroke-linecap':'round'}));
-      svg.appendChild(el('line',{x1:'64',y1:'58',x2:'84',y2:'56',stroke:'#888','stroke-width':'1.5','stroke-linecap':'round'}));
-      svg.appendChild(el('line',{x1:'64',y1:'61',x2:'84',y2:'61',stroke:'#888','stroke-width':'1.5','stroke-linecap':'round'}));
-      svg.appendChild(el('ellipse',{cx:'42',cy:'102',rx:'10',ry:'7',fill:'#f4a460'}));
-      svg.appendChild(el('ellipse',{cx:'68',cy:'102',rx:'10',ry:'7',fill:'#f4a460'}));
-      svg.appendChild(el('path',{d:'M47 72 Q55 76 63 72 Q55 80 47 72Z',fill:'#ffb6c1',opacity:'.9'}));
+      // ── 插画风橘猫：胖圆脸 + 小眯眯眼 ──
+
+      // 尾巴（侧面卷起）
+      svg.appendChild(el('path',{d:'M82 108 Q106 88 100 64 Q96 50 85 62',
+        fill:'none',stroke:'#e8883a','stroke-width':'10','stroke-linecap':'round'}));
+      svg.appendChild(el('path',{d:'M82 108 Q106 88 100 64 Q96 50 85 62',
+        fill:'none',stroke:'#f8b87a','stroke-width':'5','stroke-linecap':'round'}));
+
+      // 身体（圆滚滚）
+      svg.appendChild(el('ellipse',{cx:'58',cy:'90',rx:'36',ry:'30',fill:'#f0a040'}));
+      // 腹部白
+      svg.appendChild(el('ellipse',{cx:'58',cy:'96',rx:'22',ry:'20',fill:'#fde8b8'}));
+      // 身体虎斑
+      svg.appendChild(el('path',{d:'M40 80 Q58 86 76 80',fill:'none',stroke:'#c87020','stroke-width':'2.5','stroke-linecap':'round','opacity':'.7'}));
+      svg.appendChild(el('path',{d:'M38 90 Q58 97 78 90',fill:'none',stroke:'#c87020','stroke-width':'2','stroke-linecap':'round','opacity':'.5'}));
+
+      // 头（大圆脸）
+      svg.appendChild(el('circle',{cx:'58',cy:'50',r:'36',fill:'#f0a040'}));
+
+      // 耳朵
+      svg.appendChild(el('polygon',{points:'24,24 16,4 44,22',fill:'#f0a040'}));
+      svg.appendChild(el('polygon',{points:'92,24 104,4 76,22',fill:'#f0a040'}));
+      // 耳内粉
+      svg.appendChild(el('polygon',{points:'27,22 21,8 42,21',fill:'#ffb0a0'}));
+      svg.appendChild(el('polygon',{points:'89,22 99,8 78,21',fill:'#ffb0a0'}));
+
+      // 额头虎斑
+      svg.appendChild(el('path',{d:'M46 26 Q58 22 70 26',fill:'none',stroke:'#c87020','stroke-width':'2.5','stroke-linecap':'round','opacity':'.6'}));
+      svg.appendChild(el('path',{d:'M42 34 Q58 29 74 34',fill:'none',stroke:'#c87020','stroke-width':'2','stroke-linecap':'round','opacity':'.5'}));
+
+      // 脸颊白
+      svg.appendChild(el('ellipse',{cx:'58',cy:'60',rx:'26',ry:'20',fill:'#fde8b8'}));
+
+      // 眼睛（插画风：细长弯弧，开心=弯月 / 普通=圆）
+      if(happy){
+        // 弯弧眯眯眼
+        svg.appendChild(el('path',{d:'M42 50 Q48 44 54 50',fill:'none',stroke:'#1a0800','stroke-width':'4','stroke-linecap':'round'}));
+        svg.appendChild(el('path',{d:'M62 50 Q68 44 74 50',fill:'none',stroke:'#1a0800','stroke-width':'4','stroke-linecap':'round'}));
+      } else {
+        // 圆眼
+        svg.appendChild(el('circle',{cx:'48',cy:'50',r:'7',fill:'#1a0800'}));
+        svg.appendChild(el('circle',{cx:'68',cy:'50',r:'7',fill:'#1a0800'}));
+        // 高光
+        svg.appendChild(el('circle',{cx:'50',cy:'47',r:'2.5',fill:'white'}));
+        svg.appendChild(el('circle',{cx:'70',cy:'47',r:'2.5',fill:'white'}));
+        // 棕色虹膜
+        svg.appendChild(el('circle',{cx:'48',cy:'50',r:'5',fill:'#5a3010','opacity':'.5'}));
+        svg.appendChild(el('circle',{cx:'68',cy:'50',r:'5',fill:'#5a3010','opacity':'.5'}));
+      }
+
+      // 鼻子（小三角）
+      svg.appendChild(el('polygon',{points:'54,62 62,62 58,67',fill:'#ff8090'}));
+      // 嘴
+      if(happy){
+        svg.appendChild(el('path',{d:'M52 68 Q58 76 64 68',fill:'none',stroke:'#c05060','stroke-width':'2.5','stroke-linecap':'round'}));
+        svg.appendChild(el('path',{d:'M58 67 L58 68',fill:'none',stroke:'#c05060','stroke-width':'2','stroke-linecap':'round'}));
+      } else {
+        svg.appendChild(el('path',{d:'M52 68 Q58 66 64 68',fill:'none',stroke:'#c05060','stroke-width':'2.5','stroke-linecap':'round'}));
+        svg.appendChild(el('path',{d:'M58 67 L58 68',fill:'none',stroke:'#c05060','stroke-width':'2','stroke-linecap':'round'}));
+      }
+
+      // 胡须
+      svg.appendChild(el('line',{x1:'22',y1:'64',x2:'48',y2:'66',stroke:'#aaa','stroke-width':'1.5','stroke-linecap':'round'}));
+      svg.appendChild(el('line',{x1:'22',y1:'70',x2:'48',y2:'70',stroke:'#aaa','stroke-width':'1.5','stroke-linecap':'round'}));
+      svg.appendChild(el('line',{x1:'68',y1:'66',x2:'94',y2:'64',stroke:'#aaa','stroke-width':'1.5','stroke-linecap':'round'}));
+      svg.appendChild(el('line',{x1:'68',y1:'70',x2:'94',y2:'70',stroke:'#aaa','stroke-width':'1.5','stroke-linecap':'round'}));
+
+      // 脸颊腮红
+      svg.appendChild(el('ellipse',{cx:'34',cy:'64',rx:'8',ry:'5',fill:'#ffb0a0','opacity':'.5'}));
+      svg.appendChild(el('ellipse',{cx:'82',cy:'64',rx:'8',ry:'5',fill:'#ffb0a0','opacity':'.5'}));
+
+      // 前爪
+      svg.appendChild(el('ellipse',{cx:'40',cy:'116',rx:'14',ry:'9',fill:'#f0a040'}));
+      svg.appendChild(el('ellipse',{cx:'76',cy:'116',rx:'14',ry:'9',fill:'#f0a040'}));
+
+      // 围巾/蝴蝶结
+      svg.appendChild(el('path',{d:'M36 76 Q58 84 80 76',fill:'none',stroke:'#ff8080','stroke-width':'5','stroke-linecap':'round'}));
+      svg.appendChild(el('ellipse',{cx:'58',cy:'76',rx:'5',ry:'4',fill:'#ff6070'}));
+
     } else {
-      var eyeRy2 = happy ? '7' : '5';
-      var mouthD2 = happy ? 'M47 63 Q54 70 61 63' : 'M47 64 Q54 61 61 64';
-      svg.appendChild(el('path',{d:'M75 88 Q98 72 92 58',fill:'none',stroke:'#c8a060','stroke-width':'8','stroke-linecap':'round'}));
-      svg.appendChild(el('ellipse',{cx:'54',cy:'80',rx:'32',ry:'25',fill:'#c8a060'}));
-      svg.appendChild(el('ellipse',{cx:'54',cy:'84',rx:'20',ry:'14',fill:'#f0d8a0'}));
-      svg.appendChild(el('circle',{cx:'54',cy:'50',r:'26',fill:'#c8a060'}));
-      svg.appendChild(el('ellipse',{cx:'34',cy:'30',rx:'10',ry:'13',fill:'#c8a060',transform:'rotate(-15,34,30)'}));
-      svg.appendChild(el('ellipse',{cx:'74',cy:'30',rx:'10',ry:'13',fill:'#c8a060',transform:'rotate(15,74,30)'}));
-      svg.appendChild(el('ellipse',{cx:'34',cy:'30',rx:'6',ry:'9',fill:'#e8b890',transform:'rotate(-15,34,30)'}));
-      svg.appendChild(el('ellipse',{cx:'74',cy:'30',rx:'6',ry:'9',fill:'#e8b890',transform:'rotate(15,74,30)'}));
-      svg.appendChild(el('ellipse',{cx:'44',cy:'48',rx:'7',ry:eyeRy2,fill:'#4a3020'}));
-      svg.appendChild(el('ellipse',{cx:'64',cy:'48',rx:'7',ry:eyeRy2,fill:'#4a3020'}));
-      svg.appendChild(el('circle',{cx:'46',cy:'46',r:'2',fill:'white'}));
-      svg.appendChild(el('circle',{cx:'66',cy:'46',r:'2',fill:'white'}));
-      svg.appendChild(el('ellipse',{cx:'54',cy:'56',rx:'7',ry:'5',fill:'#e8a090'}));
-      svg.appendChild(el('path',{d:mouthD2,fill:'none',stroke:'#a06050','stroke-width':'2.5','stroke-linecap':'round'}));
-      svg.appendChild(el('line',{x1:'24',y1:'56',x2:'44',y2:'58',stroke:'#888','stroke-width':'1.5'}));
-      svg.appendChild(el('line',{x1:'24',y1:'62',x2:'44',y2:'62',stroke:'#888','stroke-width':'1.5'}));
-      svg.appendChild(el('line',{x1:'64',y1:'58',x2:'84',y2:'56',stroke:'#888','stroke-width':'1.5'}));
-      svg.appendChild(el('line',{x1:'64',y1:'62',x2:'84',y2:'62',stroke:'#888','stroke-width':'1.5'}));
-      svg.appendChild(el('ellipse',{cx:'40',cy:'102',rx:'11',ry:'7',fill:'#c8a060'}));
-      svg.appendChild(el('ellipse',{cx:'68',cy:'102',rx:'11',ry:'7',fill:'#c8a060'}));
-      svg.appendChild(el('path',{d:'M34 68 Q54 76 74 68',fill:'none',stroke:'#5a9030','stroke-width':'5','stroke-linecap':'round'}));
-      svg.appendChild(el('circle',{cx:'54',cy:'72',r:'4',fill:'#90d060'}));
+      // ── 插画风柴犬 ──
+
+      // 尾巴（高卷）
+      svg.appendChild(el('path',{d:'M82 100 Q110 75 105 52 Q102 40 90 52',
+        fill:'none',stroke:'#c89040','stroke-width':'11','stroke-linecap':'round'}));
+      svg.appendChild(el('path',{d:'M82 100 Q110 75 105 52 Q102 40 90 52',
+        fill:'none',stroke:'#f0d080','stroke-width':'5','stroke-linecap':'round'}));
+
+      // 身体
+      svg.appendChild(el('ellipse',{cx:'58',cy:'90',rx:'36',ry:'28',fill:'#c89040'}));
+      // 胸部白
+      svg.appendChild(el('ellipse',{cx:'58',cy:'94',rx:'22',ry:'18',fill:'#f5e8b0'}));
+
+      // 头
+      svg.appendChild(el('circle',{cx:'58',cy:'50',r:'36',fill:'#c89040'}));
+
+      // 耳朵（三角尖耳）
+      svg.appendChild(el('polygon',{points:'22,28 12,4 46,24',fill:'#c89040'}));
+      svg.appendChild(el('polygon',{points:'94,28 108,4 74,24',fill:'#c89040'}));
+      svg.appendChild(el('polygon',{points:'25,26 17,8 44,23',fill:'#a87030'}));
+      svg.appendChild(el('polygon',{points:'91,26 103,8 76,23',fill:'#a87030'}));
+
+      // 脸部白色区
+      svg.appendChild(el('ellipse',{cx:'58',cy:'58',rx:'28',ry:'24',fill:'#f5e8b0'}));
+      // 额头深色区
+      svg.appendChild(el('ellipse',{cx:'58',cy:'36',rx:'28',ry:'20',fill:'#c89040'}));
+
+      // 眼睛（圆润有神）
+      if(happy){
+        svg.appendChild(el('path',{d:'M40 50 Q48 43 56 50',fill:'none',stroke:'#1a0800','stroke-width':'4','stroke-linecap':'round'}));
+        svg.appendChild(el('path',{d:'M60 50 Q68 43 76 50',fill:'none',stroke:'#1a0800','stroke-width':'4','stroke-linecap':'round'}));
+      } else {
+        svg.appendChild(el('circle',{cx:'48',cy:'50',r:'8',fill:'#1a0800'}));
+        svg.appendChild(el('circle',{cx:'68',cy:'50',r:'8',fill:'#1a0800'}));
+        svg.appendChild(el('circle',{cx:'51',cy:'46',r:'3',fill:'white'}));
+        svg.appendChild(el('circle',{cx:'71',cy:'46',r:'3',fill:'white'}));
+      }
+
+      // 脸颊腮红（大大的）
+      svg.appendChild(el('ellipse',{cx:'34',cy:'60',rx:'10',ry:'7',fill:'#ffb0a0','opacity':'.65'}));
+      svg.appendChild(el('ellipse',{cx:'82',cy:'60',rx:'10',ry:'7',fill:'#ffb0a0','opacity':'.65'}));
+
+      // 鼻子（大黑豆）
+      svg.appendChild(el('ellipse',{cx:'58',cy:'62',rx:'8',ry:'6',fill:'#1a0800'}));
+      svg.appendChild(el('ellipse',{cx:'56',cy:'60',rx:'3',ry:'2',fill:'#606060','opacity':'.5'}));
+
+      // 嘴
+      if(happy){
+        svg.appendChild(el('path',{d:'M50 70 Q58 80 66 70',fill:'none',stroke:'#8a5030','stroke-width':'2.5','stroke-linecap':'round'}));
+        // 舌头
+        svg.appendChild(el('ellipse',{cx:'58',cy:'77',rx:'7',ry:'5',fill:'#ff7070'}));
+        svg.appendChild(el('path',{d:'M54 77 Q58 82 62 77',fill:'none',stroke:'#e05050','stroke-width':'1.5','stroke-linecap':'round'}));
+      } else {
+        svg.appendChild(el('path',{d:'M50 70 Q58 67 66 70',fill:'none',stroke:'#8a5030','stroke-width':'2.5','stroke-linecap':'round'}));
+      }
+
+      // 前爪
+      svg.appendChild(el('ellipse',{cx:'38',cy:'116',rx:'15',ry:'9',fill:'#c89040'}));
+      svg.appendChild(el('ellipse',{cx:'78',cy:'116',rx:'15',ry:'9',fill:'#c89040'}));
+
+      // 项圈
+      svg.appendChild(el('path',{d:'M30 74 Q58 84 86 74',fill:'none',stroke:'#e04040','stroke-width':'6','stroke-linecap':'round'}));
+      svg.appendChild(el('circle',{cx:'58',cy:'79',r:'5',fill:'#f8c030'}));
     }
   }
+
 
   // ── 加载 ──
   async function petLoad(){
@@ -21324,7 +21473,12 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     var iscat=_pet.type==='cat';
     document.getElementById('petNameDisplay').textContent=_pet.name||'未命名';
     document.getElementById('petTypeTag').textContent=iscat?'猫咪':'狗狗';
-    document.getElementById('petLvTag').textContent='Lv.'+((_pet.level)||1);
+    var lv=_pet.level||1; var xp=_pet.xp||0;
+    var xpNeed=lv*100;
+    document.getElementById('petLvTag').textContent='Lv.'+lv;
+    if(document.getElementById('petLvNum')) document.getElementById('petLvNum').textContent=lv;
+    if(document.getElementById('petXpFill')) document.getElementById('petXpFill').style.width=Math.min(100,Math.round(xp/xpNeed*100))+'%';
+    if(document.getElementById('petXpVal')) document.getElementById('petXpVal').textContent=xp+'/'+xpNeed+' XP';
     document.getElementById('petBowl').textContent=iscat?'🍚':'🦴';
     document.getElementById('petToy').textContent=iscat?'🧶':'🎾';
     // 状态条
@@ -21347,6 +21501,7 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     document.getElementById('petBubble').textContent=bubble;
     // SVG
     drawPetSvg(_pet.type, _pet.mood);
+    var aw2=document.getElementById('petAnimalWrap');if(aw2)aw2.className='idle';
     petSwitchTab('main');
   }
 
@@ -21376,10 +21531,12 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     if(aw){
       aw.className='';void aw.offsetWidth;
       aw.className=action==='feed'||action==='water'?'eating':action==='bath'?'bathing':'happy';
-      setTimeout(function(){aw.className='';},1600);
+      setTimeout(function(){aw.className='idle';},1600);
     }
     // 粒子特效
     spawnParticles(action);
+    // 洗澡：额外泡泡
+    if(action==='bath') spawnBubbles();
     // 刷新状态条和SVG
     var f=Math.round(_pet.food),w=Math.round(_pet.water),m=Math.round(_pet.mood),c=Math.round(_pet.clean);
     document.getElementById('statFood').style.width=f+'%'; document.getElementById('statFoodVal').textContent=f;
@@ -21414,6 +21571,23 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     }
   }
 
+  // ── 洗澡泡泡 ──
+  function spawnBubbles(){
+    var scene=document.getElementById('petScene'); if(!scene) return;
+    for(var i=0;i<8;i++){
+      (function(idx){
+        setTimeout(function(){
+          var b=document.createElement('div');
+          b.className='pet-bubble';
+          var sz=10+Math.random()*16;
+          b.style.cssText='width:'+sz+'px;height:'+sz+'px;background:rgba(180,220,255,.7);border:1.5px solid rgba(150,200,255,.8);left:'+(30+Math.random()*40)+'%;bottom:100px;';
+          scene.appendChild(b);
+          setTimeout(function(){b.remove();},1300);
+        },idx*120);
+      })(i);
+    }
+  }
+
   // ── 使用道具 ──
   window.petUseItem=function(itemId){
     var idx=_bag.findIndex(function(b){return b.id===itemId;});
@@ -21430,6 +21604,8 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     petToast(item.emoji+' 使用了「'+item.name+'」！');
   };
 
+  // XP gained per action
+  var XP_MAP={feed:8,water:6,play:10,clean:7,mood:5};
   function applyEffect(effect,val){
     if(!_pet) return; val=val||20;
     if(effect==='feed') _pet.food=Math.min(100,_pet.food+val);
@@ -21437,6 +21613,22 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     else if(effect==='play') _pet.mood=Math.min(100,_pet.mood+val);
     else if(effect==='clean') _pet.clean=Math.min(100,_pet.clean+val);
     else if(effect==='mood') _pet.mood=Math.min(100,_pet.mood+val);
+    // XP
+    var gain=XP_MAP[effect]||5;
+    if(!_pet.xp) _pet.xp=0;
+    if(!_pet.level) _pet.level=1;
+    _pet.xp+=gain;
+    var needed=_pet.level*100;
+    if(_pet.xp>=needed){
+      _pet.xp-=needed;
+      _pet.level+=1;
+      // 升级特效
+      setTimeout(function(){
+        var tb=document.getElementById('petBubble');
+        if(tb) tb.textContent='✨ 升级啦！Lv.'+_pet.level;
+        setTimeout(function(){if(tb) tb.textContent='';},2000);
+      },400);
+    }
   }
 
   // ── 喊char来（修复：使用情侣空间当前charId）──
@@ -21494,7 +21686,7 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     var name=(document.getElementById('petNameInput')||{}).value||'';
     name=name.trim();
     if(!name){petToast('请给宠物起个名字！');return;}
-    _pet={type:_selectedType,name:name,food:80,water:80,mood:80,clean:80,level:1,gender:'unknown',lastUpdate:Date.now()};
+    _pet={type:_selectedType,name:name,food:80,water:80,mood:80,clean:80,level:1,xp:0,gender:'unknown',lastUpdate:Date.now()};
     petSave();petRender();
     petToast('🎉 欢迎「'+name+'」来到新家！');
   };
@@ -21528,7 +21720,7 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     _pet.gender=_ppGender;
     _pet.birthday=document.getElementById('ppBirthday').value||'';
     _pet.age=parseInt(document.getElementById('ppAge').value)||0;
-    _pet.level=parseInt(document.getElementById('ppLevel').value)||1;
+    // level managed by XP system
     _pet.note=document.getElementById('ppNote').value||'';
     petSave();petRender();
     document.getElementById('petProfileModal').style.display='none';
