@@ -1295,7 +1295,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 
 /* 日记纸张主体 */
 #diaryPaperScroll {
-  flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
 }
 #diaryPaper {
   min-height:100%;
@@ -1307,6 +1307,8 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
     linear-gradient(160deg,#fff9fb 0%,#fff0f5 100%);
   padding:16px 20px 100px 48px;
   position:relative;
+  word-wrap:break-word;overflow-wrap:break-word;
+  box-sizing:border-box;overflow-x:hidden;
 }
 /* 装订孔 */
 #diaryPaper::before {
@@ -1331,14 +1333,18 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 /* 日记段落 */
 .diary-para {
   margin-bottom:12px;line-height:2;position:relative;
+  word-wrap:break-word;overflow-wrap:break-word;word-break:break-word;
+  overflow:hidden;max-width:100%;
 }
 .diary-para-user {
   font-family:'Georgia',serif;
   font-size:14px;color:#1a237e;
+  word-wrap:break-word;overflow-wrap:break-word;word-break:break-word;
 }
 .diary-para-char {
   font-family:'cursive','Snell Roundhand','Comic Sans MS';
   font-size:14px;color:#880e4f;
+  word-wrap:break-word;overflow-wrap:break-word;word-break:break-word;
 }
 .diary-para-header {
   display:flex;align-items:center;gap:6px;margin-bottom:4px;
@@ -1371,6 +1377,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
   box-shadow:2px 3px 8px rgba(0,0,0,.08);
   font-size:12px;color:#5d4037;
   font-family:'cursive';
+  word-wrap:break-word;overflow-wrap:break-word;word-break:break-word;
 }
 .diary-note::before {
   content:'💌';position:absolute;top:-10px;right:10px;font-size:16px;
@@ -21261,7 +21268,7 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
         header.innerHTML='<span class="diary-para-avatar" style="background:'+avatarColor+';color:'+textColor+'">'+(block.author==='char'?'💕':'🌙')+'</span>'+
           '<span class="diary-para-name" style="color:'+textColor+'">'+authorName+'</span>'+
           '<span class="diary-para-time">'+diaryFmtTime(block.ts)+'</span>';
-        var textEl=document.createElement('div');textEl.style.cssText='padding-left:26px;';
+        var textEl=document.createElement('div');textEl.style.cssText='padding-left:26px;word-wrap:break-word;overflow-wrap:break-word;word-break:break-word;white-space:pre-wrap;max-width:100%;';
         if(block.striked){
           textEl.innerHTML='<span class="diary-strikethrough">'+block.text+'</span>'+
             (block.rewrite?'<br><span style="color:#880e4f;font-style:italic;">↳ '+block.rewrite+'</span>':'');
@@ -21277,15 +21284,13 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     setTimeout(function(){var s=document.getElementById('diaryPaperScroll');if(s)s.scrollTop=s.scrollHeight;},100);
   }
 
-  window.diaryNewEntry=async function(){
+  window.diaryNewEntry=function(){
     var now=Date.now();
     var entry={id:now,dateStr:diaryFmt(now),content:[],stamps:{user:'',char:''},locked:false};
-    _entries.push(entry);
-    await diarySaveAll();
-    diaryOpenEntry(now);
+    _entries.push(entry);diarySaveAll();diaryOpenEntry(now);
   };
 
-  window.diarySend=async function(){
+  window.diarySend=function(){
     var inp=document.getElementById('diaryTextInput');
     var text=inp?inp.value.trim():'';
     if(!text) return;
@@ -21293,12 +21298,10 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     if(!entry) return;
     entry.content.push({type:'text',author:'user',text:text,ts:Date.now(),striked:false});
     inp.value='';inp.style.height='36px';
-    await diarySaveAll();
-    diaryRenderContent(entry);
-    diaryRenderList();
+    diarySaveAll();diaryRenderContent(entry);diaryRenderList();
   };
 
-  window.diaryStrikeLastChar=async function(){
+  window.diaryStrikeLastChar=function(){
     var entry=_entries.find(function(e){return e.id===_curId;});
     if(!entry) return;
     var lastIdx=-1;
@@ -21308,135 +21311,73 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     if(newText===null) return;
     entry.content[lastIdx].striked=true;
     entry.content[lastIdx].rewrite=newText.trim();
-    await diarySaveAll();diaryRenderContent(entry);diaryToast('已划掉并续写 ✏️');
+    diarySaveAll();diaryRenderContent(entry);diaryToast('已划掉并续写 ✏️');
   };
 
-  window.diaryInsertNote=async function(){
+  window.diaryInsertNote=function(){
     var text=prompt('写一张小纸条 💌');
     if(!text||!text.trim()) return;
     var entry=_entries.find(function(e){return e.id===_curId;});
     if(!entry) return;
     entry.content.push({type:'note',author:'user',text:text.trim(),ts:Date.now()});
-    await diarySaveAll();diaryRenderContent(entry);diaryToast('小纸条已插入 💌');
+    diarySaveAll();diaryRenderContent(entry);diaryToast('小纸条已插入 💌');
   };
 
-  window.diaryToggleLock=async function(){
+  window.diaryToggleLock=function(){
     var entry=_entries.find(function(e){return e.id===_curId;});
     if(!entry) return;
     entry.locked=!entry.locked;
-    await diarySaveAll();
+    diarySaveAll();
     var mask=document.getElementById('diaryLockedMask');
     if(mask) mask.style.display=entry.locked?'flex':'none';
     renderStampArea(entry);diaryRenderList();
     diaryToast(entry.locked?'日记已锁定 🔒':'日记已解锁 🔓');
   };
 
-  window.diaryGoUnlock=async function(){
-    // 获取情侣空间绑定的 char，切换到对应聊天室
-    var charId=window._csCurrentCharId||null;
-    if(!charId){ try{ charId=localStorage.getItem('cs_active_char'); }catch(e){} }
-    if(!charId && typeof csGetCurrentCharId==='function'){ charId=await csGetCurrentCharId(); }
-    if(charId){
-      // 先切换到该char的聊天室
-      if(typeof window._csCurrentCharId!=='undefined') window._csCurrentCharId=charId;
-      try{ localStorage.setItem('cs_active_char',charId); }catch(e){}
-      // 切换聊天室（和情侣空间进入聊天的方式一样）
-      if(typeof currentChatId!=='undefined') window.currentChatId=charId;
-      if(typeof loadChat==='function') loadChat(charId);
-    }
+  window.diaryGoUnlock=function(){
+    var charId=window._csCurrentCharId||(typeof localStorage!=='undefined'?localStorage.getItem('cs_active_char'):null);
     if(typeof showScreen==='function') showScreen('scrRoom');
     setTimeout(function(){
       var inp=document.getElementById('iptMsg');
-      if(inp){
-        inp.value='我想看你锁着的日记，能帮我解开吗？💕';
-        inp.focus();
-        if(typeof _autoResizeIptMsg==='function') _autoResizeIptMsg();
-      }
-    },500);
+      if(inp){inp.value='我想看你锁着的日记，能帮我解开吗？💕';inp.focus();if(typeof _autoResizeIptMsg==='function')_autoResizeIptMsg();}
+    },400);
   };
 
-  window.diaryAskChar=async function(){
+  window.diaryAskChar=function(){
     var entry=_entries.find(function(e){return e.id===_curId;});
     if(!entry) return;
-
-    // ── 获取正确的charId（情侣空间绑定的那个）──
-    var charId=window._csCurrentCharId||null;
-    if(!charId){ try{ charId=localStorage.getItem('cs_active_char'); }catch(e){} }
-    if(!charId && typeof csGetCurrentCharId==='function'){ charId=await csGetCurrentCharId(); }
+    var charId=window._csCurrentCharId||(typeof localStorage!=='undefined'?localStorage.getItem('cs_active_char'):null);
     var charName=charId?(localStorage.getItem('cN_'+charId)||'TA'):'TA';
-
-    // ── 读API配置（和主聊天一样的方式）──
     var pxy='',key='',mod='',tp=0.85;
     try{
       pxy=(typeof originalGetItem==='function'?originalGetItem.call(localStorage,'pxy'):localStorage.getItem('pxy'))||'';
       key=(typeof originalGetItem==='function'?originalGetItem.call(localStorage,'key'):localStorage.getItem('key'))||'';
-      mod=(typeof originalGetItem==='function'?originalGetItem.call(localStorage,'mod'):localStorage.getItem('mod'))||'';
-      tp=parseFloat((typeof originalGetItem==='function'?originalGetItem.call(localStorage,'temp'):localStorage.getItem('temp'))||'0.85')||0.85;
+      mod=(typeof originalGetItem==='function'?originalGetItem.call(localStorage,'mod'):localStorage.getItem('mod'))||'claude-sonnet-4-20250514';
+      var tpRaw=(typeof originalGetItem==='function'?originalGetItem.call(localStorage,'tp'):localStorage.getItem('tp'));
+      if(tpRaw) tp=parseFloat(tpRaw)||0.85;
     }catch(e){}
-    if(!pxy||!key){
-      try{ pxy=await localforage.getItem('pxy')||pxy; }catch(e){}
-      try{ key=await localforage.getItem('key')||key; }catch(e){}
-      try{ mod=await localforage.getItem('mod')||mod; }catch(e){}
-    }
-    if(!pxy||!key){ diaryToast('请先配置API ⚙️'); return; }
-    if(!pxy.includes('chat/completions')) pxy=pxy.replace(/\/$/,'')+'/chat/completions';
-    if(!mod) mod='claude-sonnet-4-20250514';
-
-    // ── 读char人设 ──
+    if(!pxy||!key){ diaryToast('请先配置API'); return; }
     var charSys='';
-    try{
-      charSys=(typeof originalGetItem==='function'?originalGetItem.call(localStorage,'sys_'+charId):localStorage.getItem('sys_'+charId))||'';
-      if(!charSys) charSys=await localforage.getItem('sys_'+charId)||'';
-    }catch(e){}
-
-    // ── 构建已有内容上下文 ──
-    var ctx=entry.content.filter(function(b){return b.type==='text'&&!b.striked;})
-      .map(function(b){return (b.author==='user'?'我':'你')+': '+b.text;}).join('\n');
-
-    // ── 显示打字动画 ──
+    try{charSys=(typeof originalGetItem==='function'?originalGetItem.call(localStorage,'sys_'+charId):localStorage.getItem('sys_'+charId))||'';}catch(e){}
+    var ctx=entry.content.filter(function(b){return b.type==='text';}).map(function(b){return (b.author==='user'?'我':'TA')+': '+b.text;}).join('\n');
     var container=document.getElementById('diaryContent');
     var typingDiv=document.createElement('div');
     typingDiv.className='diary-ai-typing';typingDiv.innerHTML='<span></span><span></span><span></span>';
     if(container) container.appendChild(typingDiv);
-    var scroll=document.getElementById('diaryPaperScroll');
-    if(scroll) scroll.scrollTop=scroll.scrollHeight;
-
-    var sys=(charSys?charSys+'\n\n':'')+
-      '今天是'+entry.dateStr+'。你正在和用户共用一本情侣日记本。'+
-      '请用温柔、亲密、带一点撒娇的语气，写一段今天的日记（2-4句话）。'+
-      (ctx?'\n\n日记目前的内容：\n'+ctx+'\n\n请接着写，或回应上面的内容。':'')+
-      '\n\n注意：直接输出日记内容，不要加任何前缀、引号或说明。';
-
-    try{
-      var res=await fetch(pxy,{
-        method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-        body:JSON.stringify({model:mod,max_tokens:300,temperature:tp,
-          messages:[{role:'user',content:sys}]})
-      });
-      var data=await res.json();
+    var sys=(charSys?charSys+'\n\n':'')+'今天是'+entry.dateStr+'。你是'+charName+'，正在和用户共用一本情侣日记。请用温柔亲密带一点撒娇的语气写今天的日记（2-4句话）。'+(ctx?'\n\n现有内容：\n'+ctx+'\n\n请接着写或回应。':'')+'\n\n直接输出日记内容，不加任何前缀。';
+    fetch(pxy,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+      body:JSON.stringify({model:mod,max_tokens:300,temperature:tp,messages:[{role:'user',content:sys}]})
+    }).then(function(r){return r.json();}).then(function(data){
       typingDiv.remove();
       var text='';
       if(data.content&&data.content[0]) text=data.content[0].text||'';
-      else if(data.choices&&data.choices[0]) text=(data.choices[0].message&&data.choices[0].message.content)||'';
+      else if(data.choices&&data.choices[0]) text=data.choices[0].message.content||'';
       text=text.trim();
-      if(!text){
-        var err=data.error?data.error.message:JSON.stringify(data).slice(0,80);
-        diaryToast('生成失败：'+err); return;
-      }
+      if(!text){ diaryToast('生成失败，请重试'); return; }
       entry.content.push({type:'text',author:'char',text:text,ts:Date.now(),striked:false});
-      if(!entry.stamps.char){
-        var cs=['🥰','💕','🌸','😌','💗'];
-        entry.stamps.char=cs[Math.floor(Math.random()*cs.length)];
-      }
-      await diarySaveAll();
-      diaryRenderContent(entry);
-      diaryRenderList();
-      diaryToast(charName+' 写好啦 💕');
-    }catch(err){
-      typingDiv.remove();
-      diaryToast('网络错误：'+err.message);
-    }
+      if(!entry.stamps.char){var cs=['🥰','💕','🌸','😌','💗'];entry.stamps.char=cs[Math.floor(Math.random()*cs.length)];}
+      diarySaveAll();diaryRenderContent(entry);diaryRenderList();diaryToast(charName+'写好啦 💕');
+    }).catch(function(){typingDiv.remove();diaryToast('网络错误，请重试');});
   };
 
   window.diaryOpenStampPicker=function(who){
@@ -21448,7 +21389,7 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     STAMPS.forEach(function(s){
       var item=document.createElement('span');
       item.className='stamp-picker-item'+(s===cur?' chosen':'');item.textContent=s;
-      item.onclick=function(){if(entry){entry.stamps[who]=s;diarySaveAll().then(function(){renderStampArea(entry);});}picker.style.display='none';diaryToast('印章已更新 '+s);};
+      item.onclick=function(){if(entry){entry.stamps[who]=s;diarySaveAll();renderStampArea(entry);}picker.style.display='none';diaryToast('印章已更新 '+s);};
       grid.appendChild(item);
     });
     picker.style.display=picker.style.display==='block'?'none':'block';
