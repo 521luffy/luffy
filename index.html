@@ -21561,20 +21561,38 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
   };
   window.diaryToggleLock=window.diaryRequestLock;
 
-  window.diaryGoUnlock=async function(){
+    window.diaryGoUnlock=async function(){
     var charId=window._csCurrentCharId||null;
-    if(!charId){ try{ charId=localStorage.getItem('cs_active_char'); }catch(e){} }
-    if(!charId&&typeof csGetCurrentCharId==='function'){ charId=await csGetCurrentCharId(); }
-    if(charId){
-      if(typeof window._csCurrentCharId!=='undefined') window._csCurrentCharId=charId;
-      try{ localStorage.setItem('cs_active_char',charId); }catch(e){}
-      if(typeof window.currentChatId!=='undefined') window.currentChatId=charId;
-      if(typeof loadChat==='function') loadChat(charId);
-    }
-    if(typeof showScreen==='function') showScreen('scrRoom');
+    if(!charId){try{charId=localStorage.getItem("cs_active_char");}catch(e){}}
+    if(!charId&&typeof csGetCurrentCharId==="function"){charId=await csGetCurrentCharId();}
+    if(!charId){diaryToast("找不到绑定的伴侣");return;}
+    // 保存当前状态
+    if(typeof window._saveCurrentOfflineState==="function")window._saveCurrentOfflineState();
+    // 切换 currentChatId
+    if(typeof window.currentChatId!=="undefined")window.currentChatId=charId;
+    try{localStorage.setItem("currentChatId",charId);}catch(e){}
+    // 恢复该 char 状态
+    if(typeof window._restoreOfflineState==="function")window._restoreOfflineState(charId);
+    window._storyCurrentTimeMs=null;
+    // 先跳到聊天列表，找到该 char 的内容并点击
+    if(typeof showScreen==="function")showScreen("scrRoom");
+    // 尝试点击 chat-item
+    var clicked=false;
+    var charName=localStorage.getItem("cN_"+charId)||"";
+    document.querySelectorAll(".chat-item").forEach(function(el){
+      if(clicked)return;
+      var nameEl=el.querySelector(".chat-name");
+      if(nameEl&&charName&&nameEl.textContent.includes(charName)){
+        el.click();clicked=true;
+      }
+    });
     setTimeout(function(){
-      var inp=document.getElementById('iptMsg');
-      if(inp){inp.value='我想看你锁着的日记，能帮我解开吗？💕';inp.focus();if(typeof _autoResizeIptMsg==='function')_autoResizeIptMsg();}
+      var inp=document.getElementById("iptMsg");
+      if(inp){
+        inp.value="我想看你锁着的日记，能帮我解开吗？💕";
+        inp.focus();
+        if(typeof _autoResizeIptMsg==="function")_autoResizeIptMsg();
+      }
     },500);
   };
 
