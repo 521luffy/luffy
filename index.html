@@ -1172,275 +1172,366 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 <!-- ═══════════════════════════════════════════════
      我的宠物 (scrPet)
      ═══════════════════════════════════════════════ -->
-<div id="scrPet" style="display:none;flex-direction:column;position:absolute;top:0;width:100%;height:100%;z-index:42;overflow:hidden;background:#f0f8ff;">
+<div id="scrPet" style="display:none;flex-direction:column;position:absolute;top:0;width:100%;height:100%;z-index:42;overflow:hidden;">
 <style>
-/* ── 宠物页样式 ── */
+#scrPet { background:#7ec850; }
+
+/* ── 顶栏 ── */
 #petTopBar{
   display:flex;align-items:center;justify-content:space-between;
   padding:14px 14px 10px;padding-top:65px;
-  background:linear-gradient(135deg,#e0f0ff,#d0e8ff);
+  background:linear-gradient(180deg,rgba(0,0,0,.18) 0%,rgba(0,0,0,0) 100%);
   flex-shrink:0;z-index:3;position:relative;
-  box-shadow:0 2px 8px rgba(80,160,240,.1);
 }
-#petBack{font-size:22px;color:#4a8fd4;cursor:pointer;width:34px;}
-#petTitle{font-size:16px;font-weight:700;color:#2a6db5;flex:1;text-align:center;}
-#petShopBtn{font-size:22px;cursor:pointer;width:34px;text-align:right;color:#2a6db5;}
+#petBack{font-size:22px;color:white;cursor:pointer;width:34px;text-shadow:0 1px 3px rgba(0,0,0,.4);}
+#petTitle{font-size:16px;font-weight:700;color:white;flex:1;text-align:center;text-shadow:0 1px 3px rgba(0,0,0,.4);}
+#petShopBtn{font-size:22px;cursor:pointer;width:34px;text-align:right;}
+#petProfileBtn{font-size:20px;cursor:pointer;width:30px;text-align:right;}
 
-/* 标签栏 */
-#petTabs{
-  display:flex;background:#d0e8ff;flex-shrink:0;
-  border-bottom:2px solid #a8d0f0;
+/* ── 草地场景区 ── */
+#petScene{
+  position:relative;height:340px;flex-shrink:0;overflow:hidden;
+  background:linear-gradient(180deg,#87ceeb 0%,#a8e063 55%,#7ec850 100%);
 }
-.pet-tab{
-  flex:1;padding:10px 0;text-align:center;font-size:13px;font-weight:600;
-  color:#5a9fd4;cursor:pointer;border-bottom:3px solid transparent;
-  transition:all .2s;-webkit-tap-highlight-color:transparent;
-}
-.pet-tab.active{color:#1a5fa0;border-bottom-color:#2a6db5;background:rgba(255,255,255,.3);}
+/* 云朵 */
+#petCloud1,#petCloud2{position:absolute;top:18px;font-size:36px;animation:cloudFloat 8s ease-in-out infinite;opacity:.85;}
+#petCloud1{left:10%;animation-delay:0s;}
+#petCloud2{right:8%;animation-delay:3s;font-size:28px;}
+@keyframes cloudFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-6px);}}
 
-/* ── 宠物主界面 ── */
-#petMain{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;display:none;flex-direction:column;}
+/* 樱花树（用CSS画） */
+#petTree{position:absolute;left:-10px;bottom:80px;width:120px;height:160px;}
+.tree-trunk{position:absolute;bottom:0;left:50px;width:20px;height:70px;background:linear-gradient(90deg,#a0784a,#8b6035);border-radius:3px;}
+.tree-branch{position:absolute;background:radial-gradient(circle,#ffb7c5 0%,#ff8fab 40%,rgba(255,143,171,0) 70%);border-radius:50%;}
 
-/* 宠物房间 */
-#petRoom{
-  margin:12px;border-radius:20px;overflow:hidden;
-  background:linear-gradient(160deg,#e8f4ff,#f0faff);
-  box-shadow:0 4px 16px rgba(80,160,240,.15);
-  border:1.5px solid #c0dff5;
-  flex-shrink:0;
+/* 地面 */
+#petGround{
+  position:absolute;bottom:0;left:0;right:0;height:90px;
+  background:linear-gradient(180deg,#90c040 0%,#7ab030 100%);
 }
-#petRoomScene{
-  height:180px;position:relative;
-  background:linear-gradient(180deg,#cce8ff 0%,#e8f4ff 60%,#d4c8a8 100%);
-  overflow:hidden;
+/* 草地花纹 */
+#petGround::before{
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,.05) 0px,rgba(255,255,255,.05) 2px,transparent 2px,transparent 20px);
 }
-/* 地板 */
-#petRoomScene::after{
-  content:'';position:absolute;bottom:0;left:0;right:0;height:40px;
-  background:repeating-linear-gradient(90deg,#c8b890,#c8b890 40px,#b8a880 40px,#b8a880 80px);
-  border-top:2px solid #a89870;
+
+/* 猫咪垫子 */
+#petCushion{
+  position:absolute;bottom:70px;left:50%;transform:translateX(-50%);
+  width:120px;height:32px;
+  background:radial-gradient(ellipse,#e8c87a 60%,#c8a050 100%);
+  border-radius:50%;box-shadow:0 4px 12px rgba(0,0,0,.2);
 }
-/* 宠物主体 */
-#petAnimal{
-  position:absolute;bottom:36px;left:50%;transform:translateX(-50%);
-  font-size:64px;cursor:pointer;
-  transition:transform .2s;
-  -webkit-tap-highlight-color:transparent;
-  animation:petIdle 3s ease-in-out infinite;
+
+/* 猫咪/狗狗 SVG */
+#petAnimalWrap{
+  position:absolute;bottom:90px;left:50%;transform:translateX(-50%);
+  width:110px;height:110px;
+  animation:petIdle 2.5s ease-in-out infinite;
+  cursor:pointer;-webkit-tap-highlight-color:transparent;
   user-select:none;
 }
-@keyframes petIdle{0%,100%{transform:translateX(-50%) translateY(0);}50%{transform:translateX(-50%) translateY(-6px);}}
-#petAnimal.happy{animation:petHappy .4s ease-in-out 3;}
-@keyframes petHappy{0%,100%{transform:translateX(-50%) scale(1);}50%{transform:translateX(-50%) scale(1.2) rotate(10deg);}}
-#petAnimal.eating{animation:petEat .3s ease-in-out 4;}
-@keyframes petEat{0%,100%{transform:translateX(-50%) scale(1);}50%{transform:translateX(-50%) scale(0.9);}};
-/* 状态气泡 */
+@keyframes petIdle{0%,100%{transform:translateX(-50%) translateY(0) rotate(-1deg);}50%{transform:translateX(-50%) translateY(-8px) rotate(1deg);}}
+#petAnimalWrap.eating{animation:petEat .25s ease-in-out 5 !important;}
+@keyframes petEat{0%,100%{transform:translateX(-50%) scale(1);}50%{transform:translateX(-50%) scale(.88) translateY(4px);}}
+#petAnimalWrap.happy{animation:petHappy .3s ease-in-out 5 !important;}
+@keyframes petHappy{0%,100%{transform:translateX(-50%) scale(1) rotate(0deg);}25%{transform:translateX(-50%) scale(1.15) rotate(-8deg);}75%{transform:translateX(-50%) scale(1.15) rotate(8deg);}}
+#petAnimalWrap.bathing{animation:petBath .4s ease-in-out 4 !important;}
+@keyframes petBath{0%,100%{transform:translateX(-50%) translateY(0);}50%{transform:translateX(-50%) translateY(-12px) scale(1.05);}}
+
+/* 猫咪SVG */
+#petSvg{width:110px;height:110px;}
+
+/* 对话气泡 */
 #petBubble{
-  position:absolute;top:12px;left:50%;transform:translateX(-50%);
-  background:rgba(255,255,255,.92);border-radius:16px;padding:4px 12px;
+  position:absolute;bottom:205px;left:50%;transform:translateX(-50%);
+  background:white;border-radius:16px;padding:5px 14px;
   font-size:12px;color:#555;white-space:nowrap;
-  box-shadow:0 2px 8px rgba(0,0,0,.1);
-  transition:opacity .3s;
+  box-shadow:0 3px 10px rgba(0,0,0,.15);
+  transition:all .3s;
 }
-/* 宠物名字和类型 */
-#petNameBar{
-  padding:10px 16px 6px;display:flex;align-items:center;gap:8px;
+#petBubble::after{
+  content:'';position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);
+  border:5px solid transparent;border-top-color:white;
 }
-#petNameDisplay{font-size:16px;font-weight:700;color:#2a6db5;}
-#petTypeTag{font-size:11px;background:#e0f0ff;color:#4a8fd4;border-radius:10px;padding:2px 8px;font-weight:600;}
+
+/* 食碗 */
+#petBowl{
+  position:absolute;bottom:74px;right:18%;
+  font-size:32px;
+  transition:all .3s;
+  cursor:pointer;-webkit-tap-highlight-color:transparent;
+}
+/* 玩具 */
+#petToy{
+  position:absolute;bottom:80px;left:14%;
+  font-size:28px;
+  animation:toyBounce 3s ease-in-out infinite;
+}
+@keyframes toyBounce{0%,100%{transform:translateY(0) rotate(0deg);}50%{transform:translateY(-4px) rotate(15deg);}}
+
+/* 心情粒子 */
+.pet-particle{
+  position:absolute;pointer-events:none;font-size:20px;
+  animation:particleFly .8s ease-out forwards;
+}
+@keyframes particleFly{0%{opacity:1;transform:translateY(0) scale(1);}100%{opacity:0;transform:translateY(-60px) scale(.5);}}
+
+/* ── 状态面板 ── */
+#petPanel{
+  flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  background:linear-gradient(180deg,#7ec850 0%,#f5faf0 60px);
+  padding:0 12px 16px;
+}
+
+/* 宠物名字卡 */
+#petNameCard{
+  background:white;border-radius:18px;padding:12px 16px;
+  margin:8px 0 10px;
+  box-shadow:0 3px 12px rgba(0,0,0,.08);
+  display:flex;align-items:center;gap:10px;
+}
+#petNameDisplay{font-size:17px;font-weight:800;color:#333;}
+#petTypeTag{background:#e8f8e0;color:#5a9030;border-radius:10px;padding:3px 10px;font-size:11px;font-weight:700;}
+#petLvTag{background:#fff3e0;color:#e07030;border-radius:10px;padding:3px 10px;font-size:11px;font-weight:700;margin-left:auto;}
 
 /* 状态条 */
-#petStats{padding:0 16px 12px;display:flex;flex-direction:column;gap:6px;}
-.pet-stat-row{display:flex;align-items:center;gap:8px;}
-.pet-stat-icon{font-size:14px;width:20px;text-align:center;}
+#petStats{
+  background:white;border-radius:18px;padding:14px 16px;
+  box-shadow:0 3px 12px rgba(0,0,0,.08);margin-bottom:10px;
+}
+.pet-stat-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.pet-stat-row:last-child{margin-bottom:0;}
+.pet-stat-icon{font-size:15px;width:20px;text-align:center;}
 .pet-stat-label{font-size:11px;color:#888;width:28px;flex-shrink:0;}
-.pet-stat-bar{flex:1;height:8px;background:#e0eeff;border-radius:4px;overflow:hidden;}
-.pet-stat-fill{height:100%;border-radius:4px;transition:width .5s ease;}
+.pet-stat-bar{flex:1;height:10px;background:#f0f0f0;border-radius:5px;overflow:hidden;}
+.pet-stat-fill{height:100%;border-radius:5px;transition:width .6s ease;}
 .pet-stat-fill.food{background:linear-gradient(90deg,#ff9a6c,#ff6b35);}
 .pet-stat-fill.water{background:linear-gradient(90deg,#6cc0ff,#2196f3);}
 .pet-stat-fill.mood{background:linear-gradient(90deg,#ff8fca,#e040fb);}
 .pet-stat-fill.clean{background:linear-gradient(90deg,#b0e0a0,#4caf50);}
+.pet-stat-val{font-size:10px;color:#aaa;width:26px;text-align:right;}
 
 /* 操作按钮 */
 #petActions{
-  padding:8px 12px 12px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;
+  display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px;
 }
 .pet-act{
-  display:flex;flex-direction:column;align-items:center;gap:3px;
-  background:rgba(255,255,255,.8);border-radius:14px;padding:10px 4px;
-  cursor:pointer;border:1.5px solid #c0dff5;
-  transition:all .15s;-webkit-tap-highlight-color:transparent;
-  box-shadow:0 2px 6px rgba(80,160,.05);
+  background:white;border-radius:16px;padding:12px 4px 8px;
+  text-align:center;cursor:pointer;
+  box-shadow:0 3px 10px rgba(0,0,0,.07);
+  transition:transform .12s;-webkit-tap-highlight-color:transparent;
+  border:none;
 }
-.pet-act:active{transform:scale(.95);background:#e0f0ff;}
-.pet-act-icon{font-size:24px;}
-.pet-act-label{font-size:10px;color:#5a9fd4;font-weight:600;}
+.pet-act:active{transform:scale(.93);}
+.pet-act-icon{font-size:28px;display:block;margin-bottom:4px;}
+.pet-act-label{font-size:10px;color:#666;font-weight:600;}
 
-/* char互动区 */
+/* char互动 */
 #petCharZone{
-  margin:0 12px 12px;background:rgba(255,255,255,.8);
-  border-radius:16px;padding:12px;border:1.5px solid #c0dff5;
+  background:white;border-radius:18px;padding:14px 16px;
+  box-shadow:0 3px 12px rgba(0,0,0,.08);margin-bottom:10px;
 }
-#petCharZoneTitle{font-size:12px;color:#4a8fd4;font-weight:700;margin-bottom:8px;}
+#petCharZoneTitle{font-size:13px;font-weight:700;color:#5a9030;margin-bottom:10px;}
 #petCharActions{display:flex;gap:8px;flex-wrap:wrap;}
 .pet-char-btn{
-  background:linear-gradient(135deg,#a0d0ff,#60a8e0);
+  background:linear-gradient(135deg,#90d060,#5a9030);
   color:white;border:none;border-radius:20px;
-  padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;
+  padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;
   -webkit-tap-highlight-color:transparent;
 }
 
-/* ── 宠物设置界面 ── */
-#petSetup{flex:1;overflow-y:auto;display:none;flex-direction:column;padding:20px 16px;}
-.pet-setup-title{font-size:18px;font-weight:700;color:#2a6db5;text-align:center;margin-bottom:20px;}
-.pet-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
-.pet-type-card{
-  background:white;border-radius:16px;padding:20px;text-align:center;
-  border:2.5px solid #c0dff5;cursor:pointer;transition:all .2s;
+/* ── 库存标签 ── */
+#petTabs{display:flex;background:transparent;flex-shrink:0;padding:0 12px;}
+.pet-tab{
+  flex:1;padding:10px 0;text-align:center;font-size:12px;font-weight:700;
+  color:rgba(255,255,255,.7);cursor:pointer;border-bottom:3px solid transparent;
+  transition:all .2s;
 }
-.pet-type-card.selected{border-color:#2a6db5;background:#e8f4ff;}
-.pet-type-card:active{transform:scale(.97);}
-.pet-type-emoji{font-size:48px;display:block;margin-bottom:8px;}
-.pet-type-name{font-size:14px;font-weight:700;color:#2a6db5;}
-.pet-name-input{
-  width:100%;box-sizing:border-box;padding:12px 16px;
-  border:1.5px solid #c0dff5;border-radius:14px;
-  font-size:15px;color:#333;outline:none;font-family:inherit;
-  background:#f8fbff;margin-bottom:16px;
-}
-.pet-name-input:focus{border-color:#2a6db5;}
-.pet-confirm-btn{
-  width:100%;padding:14px;border:none;
-  background:linear-gradient(135deg,#60b8ff,#2a6db5);
-  color:white;border-radius:16px;font-size:15px;font-weight:700;cursor:pointer;
-}
+.pet-tab.active{color:white;border-bottom-color:white;}
 
-/* ── 宠物商城 ── */
-#petShopModal{
+/* ── 库存 ── */
+#petBagPanel{display:none;flex:1;overflow-y:auto;padding:12px;background:#f5faf0;}
+.bag-item{background:white;border-radius:14px;padding:10px;text-align:center;border:1.5px solid #d8f0c8;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+
+/* ── 宠物资料 ── */
+#petProfileModal{
   display:none;position:absolute;top:0;left:0;width:100%;height:100%;
-  z-index:200;flex-direction:column;
-  background:#f0f8ff;
+  z-index:200;background:rgba(0,0,0,.4);justify-content:center;align-items:center;
 }
-#petShopTopBar{
-  display:flex;align-items:center;padding:14px 14px 10px;padding-top:65px;
-  background:linear-gradient(135deg,#e0f0ff,#d0e8ff);flex-shrink:0;
-  box-shadow:0 2px 8px rgba(80,160,240,.1);
+#petProfileBox{
+  width:88%;max-height:80vh;overflow-y:auto;
+  background:white;border-radius:20px;padding:20px 18px;
+  box-shadow:0 10px 30px rgba(0,0,0,.2);
 }
-#petShopClose{font-size:22px;color:#4a8fd4;cursor:pointer;width:34px;}
-#petShopTitle2{font-size:16px;font-weight:700;color:#2a6db5;flex:1;text-align:center;}
-#petShopBalance{font-size:13px;color:#4a8fd4;font-weight:600;}
+.pp-title{font-size:16px;font-weight:700;color:#5a9030;text-align:center;margin-bottom:14px;}
+.pp-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.pp-label{font-size:13px;color:#888;width:52px;flex-shrink:0;}
+.pp-input{flex:1;padding:8px 12px;border:1.5px solid #d0e8c0;border-radius:10px;font-size:13px;outline:none;font-family:inherit;}
+.pp-input:focus{border-color:#5a9030;}
+.pp-gender-row{display:flex;gap:8px;}
+.pp-gender-btn{flex:1;padding:8px;border:1.5px solid #d0e8c0;border-radius:10px;font-size:13px;text-align:center;cursor:pointer;background:white;color:#666;}
+.pp-gender-btn.selected{background:#e8f8e0;border-color:#5a9030;color:#5a9030;font-weight:700;}
+.pp-save{width:100%;padding:12px;border:none;background:linear-gradient(135deg,#90d060,#5a9030);color:white;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px;}
+
+/* ── 宠物设置 ── */
+#petSetup{
+  flex:1;overflow-y:auto;padding:20px 16px;
+  background:linear-gradient(180deg,#7ec850,#f5faf0 200px);
+}
+.pet-setup-title{font-size:20px;font-weight:800;color:white;text-align:center;margin-bottom:6px;text-shadow:0 2px 6px rgba(0,0,0,.2);}
+.pet-setup-sub{font-size:13px;color:rgba(255,255,255,.85);text-align:center;margin-bottom:20px;}
+.pet-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+.pet-type-card{background:white;border-radius:18px;padding:20px;text-align:center;border:3px solid transparent;cursor:pointer;transition:all .2s;box-shadow:0 4px 12px rgba(0,0,0,.08);}
+.pet-type-card.selected{border-color:#5a9030;background:#f0fae8;}
+.pet-type-emoji{font-size:52px;display:block;margin-bottom:8px;}
+.pet-type-name{font-size:14px;font-weight:700;color:#333;}
+.pet-name-input{width:100%;box-sizing:border-box;padding:12px 16px;border:1.5px solid #d0e8c0;border-radius:14px;font-size:15px;color:#333;outline:none;font-family:inherit;background:white;margin-bottom:12px;}
+.pet-confirm-btn{width:100%;padding:14px;border:none;background:linear-gradient(135deg,#90d060,#5a9030);color:white;border-radius:16px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(90,144,48,.3);}
+
+/* ── 商城 ── */
+#petShopModal{display:none;position:absolute;top:0;left:0;width:100%;height:100%;z-index:200;flex-direction:column;background:#f0fae8;}
+#petShopTopBar{display:flex;align-items:center;padding:14px 14px 10px;padding-top:65px;background:linear-gradient(135deg,#90d060,#5a9030);flex-shrink:0;}
+#petShopClose{font-size:22px;color:white;cursor:pointer;width:34px;}
+#petShopTitle2{font-size:16px;font-weight:700;color:white;flex:1;text-align:center;}
+#petShopBalance{font-size:13px;color:rgba(255,255,255,.9);font-weight:600;}
 #petShopBody{flex:1;overflow-y:auto;padding:12px;}
-.shop-section-title{font-size:13px;font-weight:700;color:#4a8fd4;margin:12px 0 8px;padding-left:4px;}
+.shop-section-title{font-size:13px;font-weight:700;color:#5a9030;margin:12px 0 8px;padding-left:4px;}
 .shop-items{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px;}
-.shop-item{
-  background:white;border-radius:14px;padding:12px;
-  border:1.5px solid #c0dff5;text-align:center;
-  box-shadow:0 2px 8px rgba(80,160,240,.07);
-}
+.shop-item{background:white;border-radius:14px;padding:12px;border:1.5px solid #d0e8c0;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.06);}
 .shop-item-emoji{font-size:32px;display:block;margin-bottom:4px;}
 .shop-item-name{font-size:13px;font-weight:600;color:#333;margin-bottom:2px;}
-.shop-item-desc{font-size:10px;color:#888;margin-bottom:8px;line-height:1.4;}
-.shop-item-price{font-size:12px;color:#e07030;font-weight:700;margin-bottom:6px;}
-.shop-buy-user{
-  background:linear-gradient(135deg,#60b8ff,#2a6db5);
-  color:white;border:none;border-radius:10px;
-  padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;margin:2px;
-}
-.shop-buy-char{
-  background:linear-gradient(135deg,#ffb060,#e07030);
-  color:white;border:none;border-radius:10px;
-  padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;margin:2px;
-}
-.shop-add-btn{
-  width:100%;margin-top:8px;padding:12px;
-  border:2px dashed #a0c8e8;background:rgba(255,255,255,.6);
-  border-radius:14px;font-size:13px;color:#4a8fd4;cursor:pointer;
-  font-family:inherit;font-weight:600;
-}
-
-/* 消息提示 */
-.pet-toast{
-  position:fixed;bottom:100px;left:50%;transform:translateX(-50%);
-  background:rgba(40,100,180,.85);color:white;
-  padding:8px 18px;border-radius:20px;font-size:13px;
-  z-index:9999;pointer-events:none;white-space:nowrap;
-}
+.shop-item-desc{font-size:10px;color:#888;margin-bottom:6px;line-height:1.4;}
+.shop-item-price{font-size:13px;color:#e07030;font-weight:700;margin-bottom:6px;}
+.shop-buy-user{background:linear-gradient(135deg,#90d060,#5a9030);color:white;border:none;border-radius:10px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;margin:2px;}
+.shop-buy-char{background:linear-gradient(135deg,#ffb060,#e07030);color:white;border:none;border-radius:10px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;margin:2px;}
+.shop-add-btn{width:100%;margin-top:8px;padding:12px;border:2px dashed #b0d890;background:rgba(255,255,255,.6);border-radius:14px;font-size:13px;color:#5a9030;cursor:pointer;font-family:inherit;font-weight:600;}
+.pet-toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(40,100,40,.85);color:white;padding:8px 18px;border-radius:20px;font-size:13px;z-index:9999;pointer-events:none;white-space:nowrap;}
 </style>
 
 <!-- 顶栏 -->
 <div id="petTopBar">
   <span id="petBack">＜</span>
   <span id="petTitle">🐾 我的宠物</span>
-  <span id="petShopBtn" title="宠物商城">🛒</span>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <span id="petProfileBtn" title="宠物资料" onclick="openPetProfile()">📋</span>
+    <span id="petShopBtn" title="商城">🛒</span>
+  </div>
 </div>
 
-<!-- 标签栏 -->
-<div id="petTabs">
-  <div class="pet-tab active" id="petTabMain" onclick="petSwitchTab('main')">🏠 宠物房间</div>
-  <div class="pet-tab" id="petTabBag" onclick="petSwitchTab('bag')">🎒 我的库存</div>
-</div>
+<!-- ── 草地场景（有宠物才显示） ── -->
+<div id="petSceneWrap" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
+  <!-- 标签 -->
+  <div id="petTabs">
+    <div class="pet-tab active" id="petTabMain" onclick="petSwitchTab('main')">🏠 宠物房间</div>
+    <div class="pet-tab" id="petTabBag" onclick="petSwitchTab('bag')">🎒 我的库存</div>
+  </div>
 
-<!-- 宠物主界面 -->
-<div id="petMain">
-  <!-- 宠物房间场景 -->
-  <div id="petRoom">
-    <div id="petRoomScene">
+  <!-- 房间主视图 -->
+  <div id="petMain" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
+    <div id="petScene">
+      <!-- 天空装饰 -->
+      <div id="petCloud1">☁️</div>
+      <div id="petCloud2">☁️</div>
+      <!-- 树 -->
+      <div id="petTree">
+        <div class="tree-trunk"></div>
+        <div class="tree-branch" style="width:90px;height:90px;top:10px;left:10px;"></div>
+        <div class="tree-branch" style="width:70px;height:70px;top:0;left:25px;opacity:.8;"></div>
+        <div class="tree-branch" style="width:60px;height:60px;top:20px;left:35px;opacity:.9;"></div>
+      </div>
+      <!-- 地面 -->
+      <div id="petGround"></div>
+      <!-- 垫子 -->
+      <div id="petCushion"></div>
+      <!-- 食碗+玩具 -->
+      <div id="petBowl" onclick="petDo('feed')">🍚</div>
+      <div id="petToy">🧶</div>
+      <!-- 宠物 -->
+      <div id="petAnimalWrap" onclick="petPet()">
+        <svg id="petSvg" viewBox="0 0 110 110" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+      <!-- 气泡 -->
       <div id="petBubble">😸 喵～</div>
-      <div id="petAnimal">🐱</div>
     </div>
-    <div id="petNameBar">
-      <span id="petNameDisplay">未命名</span>
-      <span id="petTypeTag">猫咪</span>
-    </div>
-    <div id="petStats">
-      <div class="pet-stat-row"><span class="pet-stat-icon">🍚</span><span class="pet-stat-label">饱食</span><div class="pet-stat-bar"><div class="pet-stat-fill food" id="statFood" style="width:80%"></div></div></div>
-      <div class="pet-stat-row"><span class="pet-stat-icon">💧</span><span class="pet-stat-label">饮水</span><div class="pet-stat-bar"><div class="pet-stat-fill water" id="statWater" style="width:70%"></div></div></div>
-      <div class="pet-stat-row"><span class="pet-stat-icon">😊</span><span class="pet-stat-label">心情</span><div class="pet-stat-bar"><div class="pet-stat-fill mood" id="statMood" style="width:90%"></div></div></div>
-      <div class="pet-stat-row"><span class="pet-stat-icon">✨</span><span class="pet-stat-label">清洁</span><div class="pet-stat-bar"><div class="pet-stat-fill clean" id="statClean" style="width:60%"></div></div></div>
-    </div>
-    <div id="petActions">
-      <div class="pet-act" onclick="petDo('feed')"><span class="pet-act-icon">🍚</span><span class="pet-act-label">喂粮</span></div>
-      <div class="pet-act" onclick="petDo('water')"><span class="pet-act-icon">💧</span><span class="pet-act-label">喂水</span></div>
-      <div class="pet-act" onclick="petDo('play')"><span class="pet-act-icon">🎾</span><span class="pet-act-label">玩耍</span></div>
-      <div class="pet-act" onclick="petDo('bath')"><span class="pet-act-icon">🛁</span><span class="pet-act-label">洗澡</span></div>
+
+    <!-- 滚动面板 -->
+    <div id="petPanel">
+      <div id="petNameCard">
+        <span id="petNameDisplay">小喵</span>
+        <span id="petTypeTag">猫咪</span>
+        <span id="petLvTag">Lv.1</span>
+      </div>
+      <div id="petStats">
+        <div class="pet-stat-row"><span class="pet-stat-icon">🍚</span><span class="pet-stat-label">饱食</span><div class="pet-stat-bar"><div class="pet-stat-fill food" id="statFood" style="width:80%"></div></div><span class="pet-stat-val" id="statFoodVal">80</span></div>
+        <div class="pet-stat-row"><span class="pet-stat-icon">💧</span><span class="pet-stat-label">饮水</span><div class="pet-stat-bar"><div class="pet-stat-fill water" id="statWater" style="width:70%"></div></div><span class="pet-stat-val" id="statWaterVal">70</span></div>
+        <div class="pet-stat-row"><span class="pet-stat-icon">😊</span><span class="pet-stat-label">心情</span><div class="pet-stat-bar"><div class="pet-stat-fill mood" id="statMood" style="width:90%"></div></div><span class="pet-stat-val" id="statMoodVal">90</span></div>
+        <div class="pet-stat-row"><span class="pet-stat-icon">✨</span><span class="pet-stat-label">清洁</span><div class="pet-stat-bar"><div class="pet-stat-fill clean" id="statClean" style="width:60%"></div></div><span class="pet-stat-val" id="statCleanVal">60</span></div>
+      </div>
+      <div id="petActions">
+        <button class="pet-act" onclick="petDo('feed')"><span class="pet-act-icon">🍚</span><span class="pet-act-label">喂粮</span></button>
+        <button class="pet-act" onclick="petDo('water')"><span class="pet-act-icon">💧</span><span class="pet-act-label">喂水</span></button>
+        <button class="pet-act" onclick="petDo('play')"><span class="pet-act-icon">🎾</span><span class="pet-act-label">玩耍</span></button>
+        <button class="pet-act" onclick="petDo('bath')"><span class="pet-act-icon">🛁</span><span class="pet-act-label">洗澡</span></button>
+      </div>
+      <div id="petCharZone">
+        <div id="petCharZoneTitle">💬 让他来陪宠物</div>
+        <div id="petCharActions">
+          <button class="pet-char-btn" onclick="petCallChar('feed')">🍚 喊他来喂食</button>
+          <button class="pet-char-btn" onclick="petCallChar('play')">🎾 喊他来玩</button>
+          <button class="pet-char-btn" onclick="petCallChar('check')">👀 请他来看看</button>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- char互动区 -->
-  <div id="petCharZone">
-    <div id="petCharZoneTitle">💬 让他来陪宠物</div>
-    <div id="petCharActions">
-      <button class="pet-char-btn" onclick="petCallChar('feed')">📨 喊他来喂食</button>
-      <button class="pet-char-btn" onclick="petCallChar('play')">📨 喊他来玩</button>
-      <button class="pet-char-btn" onclick="petCallChar('check')">📨 请他来看看</button>
-    </div>
+  <!-- 库存 -->
+  <div id="petBagPanel" style="display:none;flex:1;overflow-y:auto;padding:12px;background:#f5faf0;">
+    <div id="petBagEmpty" style="text-align:center;padding:40px 20px;color:#aaa;font-size:14px;">库存空空如也<br>去商城购买一些物品吧！</div>
+    <div id="petBagItems" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;"></div>
   </div>
-</div>
-
-<!-- 库存界面 -->
-<div id="petBagPanel" style="display:none;flex:1;overflow-y:auto;padding:12px;">
-  <div id="petBagEmpty" style="text-align:center;padding:40px 20px;color:#a0c0e0;font-size:14px;">库存空空如也<br>去商城购买一些物品吧！</div>
-  <div id="petBagItems" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;"></div>
 </div>
 
 <!-- 宠物设置（初次使用） -->
-<div id="petSetup">
+<div id="petSetup" style="display:flex;flex-direction:column;">
   <div class="pet-setup-title">🐾 迎接你的小宝贝</div>
+  <div class="pet-setup-sub">选择你的宠物类型</div>
   <div class="pet-type-grid">
     <div class="pet-type-card selected" id="ptCat" onclick="petSelectType('cat')">
-      <span class="pet-type-emoji">🐱</span>
-      <span class="pet-type-name">猫咪</span>
+      <span class="pet-type-emoji">🐱</span><span class="pet-type-name">猫咪</span>
     </div>
     <div class="pet-type-card" id="ptDog" onclick="petSelectType('dog')">
-      <span class="pet-type-emoji">🐶</span>
-      <span class="pet-type-name">狗狗</span>
+      <span class="pet-type-emoji">🐶</span><span class="pet-type-name">狗狗</span>
     </div>
   </div>
   <input type="text" class="pet-name-input" id="petNameInput" placeholder="给它取个名字…" maxlength="10">
   <button class="pet-confirm-btn" onclick="petConfirmCreate()">🏠 带它回家</button>
 </div>
 
-<!-- 宠物商城弹窗 -->
+<!-- 宠物资料弹窗 -->
+<div id="petProfileModal">
+  <div id="petProfileBox">
+    <div class="pp-title">📋 宠物资料</div>
+    <div class="pp-row"><span class="pp-label">名字</span><input class="pp-input" id="ppName" placeholder="宠物名字" maxlength="10"></div>
+    <div class="pp-row"><span class="pp-label">性别</span>
+      <div class="pp-gender-row" style="flex:1;">
+        <div class="pp-gender-btn" id="ppGenderM" onclick="ppSelectGender('male')">♂️ 男生</div>
+        <div class="pp-gender-btn" id="ppGenderF" onclick="ppSelectGender('female')">♀️ 女生</div>
+        <div class="pp-gender-btn" id="ppGenderN" onclick="ppSelectGender('unknown')">🤍 不明</div>
+      </div>
+    </div>
+    <div class="pp-row"><span class="pp-label">生日</span><input class="pp-input" id="ppBirthday" type="date"></div>
+    <div class="pp-row"><span class="pp-label">年龄</span><input class="pp-input" id="ppAge" type="number" min="0" max="30" placeholder="岁" style="max-width:80px;"></div>
+    <div class="pp-row"><span class="pp-label">等级</span><input class="pp-input" id="ppLevel" type="number" min="1" max="99" placeholder="1" style="max-width:80px;"></div>
+    <div class="pp-row"><span class="pp-label">备注</span><input class="pp-input" id="ppNote" placeholder="关于它的小故事…" maxlength="30"></div>
+    <div style="display:flex;gap:10px;margin-top:4px;">
+      <button onclick="document.getElementById('petProfileModal').style.display='none'" style="flex:1;padding:11px;border:1.5px solid #ddd;background:#f8f8f8;color:#999;border-radius:12px;font-size:14px;cursor:pointer;font-weight:600;">取消</button>
+      <button class="pp-save" onclick="savePetProfile()">保存资料</button>
+    </div>
+  </div>
+</div>
+
+<!-- 商城弹窗 -->
 <div id="petShopModal">
   <div id="petShopTopBar">
     <span id="petShopClose" onclick="closePetShop()">＜</span>
@@ -1448,45 +1539,32 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
     <span id="petShopBalance">¥0.00</span>
   </div>
   <div id="petShopBody">
-    <!-- 食品类 -->
-    <div class="shop-section-title">🍽️ 食品饮水</div>
-    <div class="shop-items" id="shopFoodItems"></div>
-    <!-- 玩具类 -->
-    <div class="shop-section-title">🎮 玩具娱乐</div>
-    <div class="shop-items" id="shopToyItems"></div>
-    <!-- 护理类 -->
-    <div class="shop-section-title">🛁 护理清洁</div>
-    <div class="shop-items" id="shopCareItems"></div>
-    <!-- 自定义 -->
-    <div class="shop-section-title">📦 我的货架</div>
-    <div class="shop-items" id="shopCustomItems"></div>
+    <div class="shop-section-title">🍽️ 食品饮水</div><div class="shop-items" id="shopFoodItems"></div>
+    <div class="shop-section-title">🎮 玩具娱乐</div><div class="shop-items" id="shopToyItems"></div>
+    <div class="shop-section-title">🛁 护理清洁</div><div class="shop-items" id="shopCareItems"></div>
+    <div class="shop-section-title">📦 我的货架</div><div class="shop-items" id="shopCustomItems"></div>
     <button class="shop-add-btn" onclick="openAddCustomItem()">＋ 添加自定义商品</button>
   </div>
 </div>
 
-<!-- 添加自定义商品弹窗 -->
+<!-- 添加自定义商品 -->
 <div id="petAddItemModal" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;z-index:300;background:rgba(0,0,0,.4);justify-content:center;align-items:center;">
   <div style="width:84%;background:white;border-radius:20px;padding:20px 18px;box-shadow:0 10px 30px rgba(0,0,0,.2);">
-    <div style="font-size:15px;font-weight:700;color:#2a6db5;margin-bottom:14px;text-align:center;">📦 添加商品</div>
-    <input type="text" id="addItemEmoji" placeholder="图标（如🎀）" maxlength="4" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid #c0dff5;border-radius:12px;font-size:14px;outline:none;margin-bottom:8px;">
-    <input type="text" id="addItemName" placeholder="商品名称" maxlength="12" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid #c0dff5;border-radius:12px;font-size:14px;outline:none;margin-bottom:8px;">
-    <input type="text" id="addItemDesc" placeholder="描述（选填）" maxlength="20" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid #c0dff5;border-radius:12px;font-size:14px;outline:none;margin-bottom:8px;">
-    <input type="number" id="addItemPrice" placeholder="价格（元）" min="0" step="0.01" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid #c0dff5;border-radius:12px;font-size:14px;outline:none;margin-bottom:8px;">
-    <input type="text" id="addItemEffect" placeholder="效果标签（如feed/water/play/clean）" maxlength="10" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid #c0dff5;border-radius:12px;font-size:14px;outline:none;margin-bottom:12px;">
+    <div style="font-size:15px;font-weight:700;color:#5a9030;margin-bottom:14px;text-align:center;">📦 添加商品</div>
+    <input id="addItemEmoji" placeholder="图标（如🎀）" maxlength="4" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid #d0e8c0;border-radius:12px;font-size:14px;outline:none;margin-bottom:8px;">
+    <input id="addItemName" placeholder="商品名称" maxlength="12" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid #d0e8c0;border-radius:12px;font-size:14px;outline:none;margin-bottom:8px;">
+    <input id="addItemDesc" placeholder="描述（选填）" maxlength="20" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid #d0e8c0;border-radius:12px;font-size:14px;outline:none;margin-bottom:8px;">
+    <input id="addItemPrice" type="number" placeholder="价格（元）" min="0" step="0.01" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid #d0e8c0;border-radius:12px;font-size:14px;outline:none;margin-bottom:8px;">
+    <input id="addItemEffect" placeholder="效果(feed/water/play/clean)" maxlength="10" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid #d0e8c0;border-radius:12px;font-size:14px;outline:none;margin-bottom:12px;">
     <div style="display:flex;gap:10px;">
       <button onclick="document.getElementById('petAddItemModal').style.display='none'" style="flex:1;padding:11px;border:1.5px solid #ddd;background:#f8f8f8;color:#999;border-radius:12px;font-size:14px;cursor:pointer;font-weight:600;">取消</button>
-      <button onclick="confirmAddCustomItem()" style="flex:1;padding:11px;border:none;background:linear-gradient(135deg,#60b8ff,#2a6db5);color:white;border-radius:12px;font-size:14px;cursor:pointer;font-weight:700;">添加</button>
+      <button onclick="confirmAddCustomItem()" style="flex:1;padding:11px;border:none;background:linear-gradient(135deg,#90d060,#5a9030);color:white;border-radius:12px;font-size:14px;cursor:pointer;font-weight:700;">添加</button>
     </div>
   </div>
 </div>
 </div>
 
 
-
-
-<!-- ═══════════════════════════════════════════════
-     大姨妈 - 经期追踪 (scrPeriod)
-     ══════════════════════════════════════════════ -->
 <div id="scrPeriod" style="display:none;flex-direction:column;position:absolute;top:0;width:100%;height:100%;z-index:40;background:#fffbe6;overflow:hidden;">
 <style>
   /* ── 大姨妈页样式 ── */
@@ -15475,12 +15553,12 @@ function buildMomentCard(post) {
                 <div style="font-size:14px;color:#333;line-height:1.55;word-break:break-all;">${escHtml(post.text)}</div>
                 ${imgBlock}
                 <div style="font-size:11px;color:#bbb;margin-top:6px;">${post.time}</div>
-                <!-- 操作按钮 -->
+                
                 <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
                     <button class="momentSummonBtn" data-id="${post.id}" style="font-size:11px;background:#fff0f3;border:1px solid #ffd6e0;border-radius:14px;padding:3px 10px;cursor:pointer;color:#e75480;">💬 召唤评论</button>
                     <button class="momentUserCommentBtn" data-id="${post.id}" style="font-size:11px;background:#fff0f3;border:1px solid #ffd6e0;border-radius:14px;padding:3px 10px;cursor:pointer;color:#e75480;">✏️ 写评论</button>
                 </div>
-                <!-- 内联写评论输入框（点击"写评论"展开） -->
+                
                 <div class="momentWriteBox" data-id="${post.id}" style="display:none;margin-top:6px;display:none;">
                     <div style="display:flex;gap:6px;align-items:center;">
                         <input type=text class="momentWriteInput" data-id="${post.id}" style="flex:1;padding:7px 12px;border:1.5px solid #ffd6e0;border-radius:16px;font-size:13px;outline:none;" placeholder="写下你的评论...">
@@ -21104,119 +21182,176 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
 // 我的宠物 (scrPet) 逻辑
 // ═══════════════════════════════════════════════
 (function initPet(){
-  var PET_KEY = 'myPet';
-  var BAG_KEY = 'petBag';
-  var SHOP_CUSTOM_KEY = 'petShopCustom';
+  var PET_KEY='myPet', BAG_KEY='petBag', SHOP_CUSTOM_KEY='petShopCustom';
+  var _pet=null, _bag=[], _ppGender='unknown';
 
-  // 宠物数据结构
-  var _pet = null;
-  // { type:'cat'|'dog', name:'', food:80, water:80, mood:80, clean:80, lastUpdate:ts }
-
-  // 库存
-  var _bag = []; // [{id, name, emoji, effect, qty}]
-
-  // 预设商品
-  var SHOP_ITEMS = {
-    food: [
-      {id:'f1', emoji:'🍚', name:'猫粮/狗粮', desc:'日常口粮，填饱肚子', price:12.9, effect:'feed', val:30},
-      {id:'f2', emoji:'🥩', name:'鲜肉罐头', desc:'高蛋白美味，宠物最爱', price:28.8, effect:'feed', val:50},
-      {id:'f3', emoji:'🐟', name:'冻干零食', desc:'香脆可口，适合当奖励', price:35.0, effect:'feed', val:25},
-      {id:'f4', emoji:'💧', name:'宠物纯净水', desc:'补充水分，一次一瓶', price:5.9, effect:'water', val:40},
+  var SHOP_ITEMS={
+    food:[
+      {id:'f1',emoji:'🍚',name:'猫粮/狗粮',desc:'日常口粮，填饱肚子',price:12.9,effect:'feed',val:30},
+      {id:'f2',emoji:'🥩',name:'鲜肉罐头',desc:'高蛋白美味，宠物最爱',price:28.8,effect:'feed',val:50},
+      {id:'f3',emoji:'🐟',name:'冻干零食',desc:'香脆可口，适合奖励',price:35.0,effect:'feed',val:25},
+      {id:'f4',emoji:'💧',name:'宠物纯净水',desc:'补充水分，一次一瓶',price:5.9,effect:'water',val:40},
     ],
-    toy: [
-      {id:'t1', emoji:'🎾', name:'橡皮小球', desc:'简单耐玩，增进感情', price:9.9, effect:'play', val:25},
-      {id:'t2', emoji:'🪃', name:'羽毛逗猫棒', desc:'猫咪专属，超级活跃', price:18.8, effect:'play', val:35},
-      {id:'t3', emoji:'🦴', name:'磨牙洁齿骨', desc:'狗狗专属，玩耍+洁齿', price:22.0, effect:'play', val:30},
-      {id:'t4', emoji:'🪆', name:'益智玩具球', desc:'藏食玩具，解闷又健脑', price:45.0, effect:'play', val:40},
+    toy:[
+      {id:'t1',emoji:'🎾',name:'橡皮小球',desc:'简单耐玩，增进感情',price:9.9,effect:'play',val:25},
+      {id:'t2',emoji:'🪃',name:'羽毛逗猫棒',desc:'猫咪专属，超级活跃',price:18.8,effect:'play',val:35},
+      {id:'t3',emoji:'🦴',name:'磨牙洁齿骨',desc:'狗狗专属，玩耍+洁齿',price:22.0,effect:'play',val:30},
+      {id:'t4',emoji:'🧶',name:'毛线球',desc:'猫咪最爱，百玩不厌',price:8.8,effect:'play',val:20},
     ],
-    care: [
-      {id:'c1', emoji:'🛁', name:'宠物沐浴露', desc:'温和无刺激，毛发柔顺', price:25.0, effect:'clean', val:40},
-      {id:'c2', emoji:'✂️', name:'美容修剪套装', desc:'在家轻松修毛', price:58.0, effect:'clean', val:60},
-      {id:'c3', emoji:'💊', name:'营养保健品', desc:'全面营养，身体棒棒', price:88.0, effect:'mood', val:20},
+    care:[
+      {id:'c1',emoji:'🛁',name:'宠物沐浴露',desc:'温和无刺激，毛发柔顺',price:25.0,effect:'clean',val:40},
+      {id:'c2',emoji:'✂️',name:'美容修剪套装',desc:'在家轻松修毛',price:58.0,effect:'clean',val:60},
+      {id:'c3',emoji:'💊',name:'营养保健品',desc:'全面营养，身体棒棒',price:88.0,effect:'mood',val:20},
     ]
   };
 
-  /* ── 加载宠物数据 ── */
+  // ── SVG猫咪/狗狗 ──
+  function drawPetSvg(type, mood){
+    var svg = document.getElementById('petSvg'); if(!svg) return;
+    var happy = mood > 60;
+    var NS = 'http://www.w3.org/2000/svg';
+    function el(tag, attrs){
+      var e = document.createElementNS(NS, tag);
+      for(var k in attrs) e.setAttribute(k, attrs[k]);
+      return e;
+    }
+    while(svg.firstChild) svg.removeChild(svg.firstChild);
+    if(type==='cat'){
+      var eyeRy = happy ? '8' : '6';
+      var mouthD = happy ? 'M51 61 Q55 66 59 61' : 'M51 62 Q55 60 59 62';
+      svg.appendChild(el('path',{d:'M75 90 Q95 70 90 55 Q85 45 80 55',fill:'none',stroke:'#f4a460','stroke-width':'7','stroke-linecap':'round'}));
+      svg.appendChild(el('ellipse',{cx:'55',cy:'80',rx:'30',ry:'26',fill:'#f4a460'}));
+      svg.appendChild(el('ellipse',{cx:'55',cy:'84',rx:'18',ry:'16',fill:'#fde8c8'}));
+      svg.appendChild(el('circle',{cx:'55',cy:'50',r:'28',fill:'#f4a460'}));
+      svg.appendChild(el('polygon',{points:'30,28 22,10 42,24',fill:'#f4a460'}));
+      svg.appendChild(el('polygon',{points:'80,28 88,10 68,24',fill:'#f4a460'}));
+      svg.appendChild(el('polygon',{points:'32,27 26,14 40,25',fill:'#ffb6c1'}));
+      svg.appendChild(el('polygon',{points:'78,27 84,14 70,25',fill:'#ffb6c1'}));
+      svg.appendChild(el('ellipse',{cx:'44',cy:'48',rx:'7',ry:eyeRy,fill:'#2c1810'}));
+      svg.appendChild(el('ellipse',{cx:'66',cy:'48',rx:'7',ry:eyeRy,fill:'#2c1810'}));
+      svg.appendChild(el('circle',{cx:'46',cy:'46',r:'2.5',fill:'white'}));
+      svg.appendChild(el('circle',{cx:'68',cy:'46',r:'2.5',fill:'white'}));
+      svg.appendChild(el('ellipse',{cx:'55',cy:'57',rx:'4',ry:'3',fill:'#ff9eb5'}));
+      svg.appendChild(el('path',{d:mouthD,fill:'none',stroke:'#c07070','stroke-width':'2','stroke-linecap':'round'}));
+      svg.appendChild(el('line',{x1:'26',y1:'56',x2:'46',y2:'58',stroke:'#888','stroke-width':'1.5','stroke-linecap':'round'}));
+      svg.appendChild(el('line',{x1:'26',y1:'61',x2:'46',y2:'61',stroke:'#888','stroke-width':'1.5','stroke-linecap':'round'}));
+      svg.appendChild(el('line',{x1:'64',y1:'58',x2:'84',y2:'56',stroke:'#888','stroke-width':'1.5','stroke-linecap':'round'}));
+      svg.appendChild(el('line',{x1:'64',y1:'61',x2:'84',y2:'61',stroke:'#888','stroke-width':'1.5','stroke-linecap':'round'}));
+      svg.appendChild(el('ellipse',{cx:'42',cy:'102',rx:'10',ry:'7',fill:'#f4a460'}));
+      svg.appendChild(el('ellipse',{cx:'68',cy:'102',rx:'10',ry:'7',fill:'#f4a460'}));
+      svg.appendChild(el('path',{d:'M47 72 Q55 76 63 72 Q55 80 47 72Z',fill:'#ffb6c1',opacity:'.9'}));
+    } else {
+      var eyeRy2 = happy ? '7' : '5';
+      var mouthD2 = happy ? 'M47 63 Q54 70 61 63' : 'M47 64 Q54 61 61 64';
+      svg.appendChild(el('path',{d:'M75 88 Q98 72 92 58',fill:'none',stroke:'#c8a060','stroke-width':'8','stroke-linecap':'round'}));
+      svg.appendChild(el('ellipse',{cx:'54',cy:'80',rx:'32',ry:'25',fill:'#c8a060'}));
+      svg.appendChild(el('ellipse',{cx:'54',cy:'84',rx:'20',ry:'14',fill:'#f0d8a0'}));
+      svg.appendChild(el('circle',{cx:'54',cy:'50',r:'26',fill:'#c8a060'}));
+      svg.appendChild(el('ellipse',{cx:'34',cy:'30',rx:'10',ry:'13',fill:'#c8a060',transform:'rotate(-15,34,30)'}));
+      svg.appendChild(el('ellipse',{cx:'74',cy:'30',rx:'10',ry:'13',fill:'#c8a060',transform:'rotate(15,74,30)'}));
+      svg.appendChild(el('ellipse',{cx:'34',cy:'30',rx:'6',ry:'9',fill:'#e8b890',transform:'rotate(-15,34,30)'}));
+      svg.appendChild(el('ellipse',{cx:'74',cy:'30',rx:'6',ry:'9',fill:'#e8b890',transform:'rotate(15,74,30)'}));
+      svg.appendChild(el('ellipse',{cx:'44',cy:'48',rx:'7',ry:eyeRy2,fill:'#4a3020'}));
+      svg.appendChild(el('ellipse',{cx:'64',cy:'48',rx:'7',ry:eyeRy2,fill:'#4a3020'}));
+      svg.appendChild(el('circle',{cx:'46',cy:'46',r:'2',fill:'white'}));
+      svg.appendChild(el('circle',{cx:'66',cy:'46',r:'2',fill:'white'}));
+      svg.appendChild(el('ellipse',{cx:'54',cy:'56',rx:'7',ry:'5',fill:'#e8a090'}));
+      svg.appendChild(el('path',{d:mouthD2,fill:'none',stroke:'#a06050','stroke-width':'2.5','stroke-linecap':'round'}));
+      svg.appendChild(el('line',{x1:'24',y1:'56',x2:'44',y2:'58',stroke:'#888','stroke-width':'1.5'}));
+      svg.appendChild(el('line',{x1:'24',y1:'62',x2:'44',y2:'62',stroke:'#888','stroke-width':'1.5'}));
+      svg.appendChild(el('line',{x1:'64',y1:'58',x2:'84',y2:'56',stroke:'#888','stroke-width':'1.5'}));
+      svg.appendChild(el('line',{x1:'64',y1:'62',x2:'84',y2:'62',stroke:'#888','stroke-width':'1.5'}));
+      svg.appendChild(el('ellipse',{cx:'40',cy:'102',rx:'11',ry:'7',fill:'#c8a060'}));
+      svg.appendChild(el('ellipse',{cx:'68',cy:'102',rx:'11',ry:'7',fill:'#c8a060'}));
+      svg.appendChild(el('path',{d:'M34 68 Q54 76 74 68',fill:'none',stroke:'#5a9030','stroke-width':'5','stroke-linecap':'round'}));
+      svg.appendChild(el('circle',{cx:'54',cy:'72',r:'4',fill:'#90d060'}));
+    }
+  }
+
+  // ── 加载 ──
   async function petLoad(){
-    var d = null;
-    try{ d = await localforage.getItem(PET_KEY); }catch(e){}
-    if(!d){ try{ var r=localStorage.getItem(PET_KEY); d=r?JSON.parse(r):null; }catch(e){} }
-    else if(typeof d==='string'){ try{d=JSON.parse(d);}catch(e){d=null;} }
-    _pet = d;
-    // 加载库存
-    var b = null;
-    try{ b = await localforage.getItem(BAG_KEY); }catch(e){}
-    if(!b){ try{ var br=localStorage.getItem(BAG_KEY); b=br?JSON.parse(br):null; }catch(e){} }
-    _bag = Array.isArray(b)?b:[];
-    // 计算状态自然衰减
-    if(_pet && _pet.lastUpdate){
-      var hours = (Date.now()-_pet.lastUpdate)/3600000;
-      _pet.food  = Math.max(0, _pet.food  - hours*4);
-      _pet.water = Math.max(0, _pet.water - hours*5);
-      _pet.mood  = Math.max(0, _pet.mood  - hours*3);
-      _pet.clean = Math.max(0, _pet.clean - hours*2);
-      _pet.lastUpdate = Date.now();
+    var d=null;
+    try{d=await localforage.getItem(PET_KEY);}catch(e){}
+    if(!d){try{var r=localStorage.getItem(PET_KEY);d=r?JSON.parse(r):null;}catch(e){}}
+    else if(typeof d==='string'){try{d=JSON.parse(d);}catch(e){d=null;}}
+    _pet=d;
+    var b=null;
+    try{b=await localforage.getItem(BAG_KEY);}catch(e){}
+    if(!b){try{var br=localStorage.getItem(BAG_KEY);b=br?JSON.parse(br):null;}catch(e){}}
+    _bag=Array.isArray(b)?b:[];
+    if(_pet&&_pet.lastUpdate){
+      var hours=(Date.now()-_pet.lastUpdate)/3600000;
+      _pet.food=Math.max(0,_pet.food-hours*4);
+      _pet.water=Math.max(0,_pet.water-hours*5);
+      _pet.mood=Math.max(0,_pet.mood-hours*3);
+      _pet.clean=Math.max(0,_pet.clean-hours*2);
+      _pet.lastUpdate=Date.now();
       await petSave();
     }
   }
 
   async function petSave(){
-    if(_pet) _pet.lastUpdate = Date.now();
-    localforage.setItem(PET_KEY, _pet).catch(function(){});
-    try{ localStorage.setItem(PET_KEY, JSON.stringify(_pet)); }catch(e){}
-    localforage.setItem(BAG_KEY, _bag).catch(function(){});
-    try{ localStorage.setItem(BAG_KEY, JSON.stringify(_bag)); }catch(e){}
-    // 注入聊天上下文记忆
+    if(_pet) _pet.lastUpdate=Date.now();
+    localforage.setItem(PET_KEY,_pet).catch(function(){});
+    try{localStorage.setItem(PET_KEY,JSON.stringify(_pet));}catch(e){}
+    localforage.setItem(BAG_KEY,_bag).catch(function(){});
+    try{localStorage.setItem(BAG_KEY,JSON.stringify(_bag));}catch(e){}
     injectPetMemory();
   }
 
-  /* ── 注入宠物记忆到聊天上下文 ── */
   function injectPetMemory(){
     if(!_pet) return;
-    var petDesc = '你们有一只' + (_pet.type==='cat'?'猫咪':'狗狗') + '叫「' + _pet.name + '」。';
-    var mood = _pet.mood>70?'心情很好':_pet.mood>40?'状态一般':'有点不开心';
-    petDesc += '它今天' + mood + '，';
-    if(_pet.food<30) petDesc += '有点饿了，';
-    if(_pet.water<30) petDesc += '需要喝水，';
-    if(_pet.clean<30) petDesc += '该洗澡了，';
-    petDesc += '请在对话中自然提到它。';
-    window._petContextHint = petDesc;
+    var t=_pet.type==='cat'?'猫咪':'狗狗';
+    var n=_pet.name||'它';
+    var mood=_pet.mood>70?'心情很好':_pet.mood>40?'状态一般':'有点不开心';
+    var hint='你们有一只'+t+'叫「'+n+'」，今天'+mood;
+    if(_pet.food<30) hint+='，它有点饿了';
+    if(_pet.water<30) hint+='，需要喝水';
+    if(_pet.clean<30) hint+='，该洗澡了';
+    hint+='。请在对话中自然提到它。';
+    window._petContextHint=hint;
   }
 
-  /* ── 渲染界面 ── */
+  // ── 渲染 ──
   function petRender(){
     if(!_pet){
       document.getElementById('petSetup').style.display='flex';
-      document.getElementById('petMain').style.display='none';
-      document.getElementById('petBagPanel').style.display='none';
-      document.getElementById('petTabs').style.display='none';
+      document.getElementById('petSceneWrap').style.display='none';
       return;
     }
     document.getElementById('petSetup').style.display='none';
-    document.getElementById('petTabs').style.display='flex';
-    // 更新宠物显示
-    var iscat = _pet.type==='cat';
-    document.getElementById('petAnimal').textContent = iscat?'🐱':'🐶';
-    document.getElementById('petNameDisplay').textContent = _pet.name||'未命名';
-    document.getElementById('petTypeTag').textContent = iscat?'猫咪':'狗狗';
-    // 更新状态条
-    document.getElementById('statFood').style.width = _pet.food+'%';
-    document.getElementById('statWater').style.width = _pet.water+'%';
-    document.getElementById('statMood').style.width = _pet.mood+'%';
-    document.getElementById('statClean').style.width = _pet.clean+'%';
-    // 状态气泡
-    var bubble = '';
-    if(_pet.food<30) bubble='😿 好饿…';
-    else if(_pet.water<30) bubble='💧 渴了…';
+    document.getElementById('petSceneWrap').style.display='flex';
+    var iscat=_pet.type==='cat';
+    document.getElementById('petNameDisplay').textContent=_pet.name||'未命名';
+    document.getElementById('petTypeTag').textContent=iscat?'猫咪':'狗狗';
+    document.getElementById('petLvTag').textContent='Lv.'+((_pet.level)||1);
+    document.getElementById('petBowl').textContent=iscat?'🍚':'🦴';
+    document.getElementById('petToy').textContent=iscat?'🧶':'🎾';
+    // 状态条
+    var f=Math.round(_pet.food),w=Math.round(_pet.water),m=Math.round(_pet.mood),c=Math.round(_pet.clean);
+    document.getElementById('statFood').style.width=f+'%';
+    document.getElementById('statWater').style.width=w+'%';
+    document.getElementById('statMood').style.width=m+'%';
+    document.getElementById('statClean').style.width=c+'%';
+    document.getElementById('statFoodVal').textContent=f;
+    document.getElementById('statWaterVal').textContent=w;
+    document.getElementById('statMoodVal').textContent=m;
+    document.getElementById('statCleanVal').textContent=c;
+    // 气泡
+    var bubble='';
+    if(_pet.food<30) bubble=iscat?'😿 好饿…':'🐶 肚子饿～';
+    else if(_pet.water<30) bubble='💧 好渴呀…';
     else if(_pet.clean<30) bubble='🛁 脏脏的…';
-    else if(_pet.mood>80) bubble=iscat?'😸 喵～':'🐶 汪！';
-    else bubble=iscat?'😺 摸摸我':'🐕 玩玩我';
-    document.getElementById('petBubble').textContent = bubble;
+    else if(_pet.mood>80) bubble=iscat?'😸 喵～':'🐕 汪！';
+    else bubble=iscat?'😺 摸摸我～':'🐕 陪我玩！';
+    document.getElementById('petBubble').textContent=bubble;
+    // SVG
+    drawPetSvg(_pet.type, _pet.mood);
     petSwitchTab('main');
   }
 
-  /* ── 标签切换 ── */
-  window.petSwitchTab = function(tab){
+  // ── 标签切换 ──
+  window.petSwitchTab=function(tab){
     document.querySelectorAll('.pet-tab').forEach(function(t){t.classList.remove('active');});
     if(tab==='main'){
       document.getElementById('petTabMain').classList.add('active');
@@ -21230,60 +21365,73 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     }
   };
 
-  /* ── 渲染库存 ── */
-  function renderBag(){
-    var el = document.getElementById('petBagItems');
-    var empty = document.getElementById('petBagEmpty');
-    if(!_bag.length){ if(empty)empty.style.display='block'; if(el)el.innerHTML=''; return; }
-    if(empty)empty.style.display='none';
-    el.innerHTML='';
-    _bag.forEach(function(item){
-      var div=document.createElement('div');
-      div.style.cssText='background:white;border-radius:14px;padding:10px;text-align:center;border:1.5px solid #c0dff5;';
-      div.innerHTML='<div style="font-size:28px">'+item.emoji+'</div><div style="font-size:12px;font-weight:600;color:#333;margin:4px 0">'+item.name+'</div><div style="font-size:10px;color:#888;margin-bottom:6px">×'+item.qty+'</div><button style="background:linear-gradient(135deg,#60b8ff,#2a6db5);color:white;border:none;border-radius:10px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;" onclick="petUseItem(\''+item.id+'\')">使用</button>';
-      el.appendChild(div);
-    });
+  // ── 操作宠物 ──
+  window.petDo=function(action){
+    if(!_pet){petToast('还没有宠物哦');return;}
+    var hasItem=_bag.find(function(b){return b.effect===action&&b.qty>0;});
+    if(hasItem){petUseItem(hasItem.id);return;}
+    applyEffect(action,15);
+    petSave();
+    var aw=document.getElementById('petAnimalWrap');
+    if(aw){
+      aw.className='';void aw.offsetWidth;
+      aw.className=action==='feed'||action==='water'?'eating':action==='bath'?'bathing':'happy';
+      setTimeout(function(){aw.className='';},1600);
+    }
+    // 粒子特效
+    spawnParticles(action);
+    // 刷新状态条和SVG
+    var f=Math.round(_pet.food),w=Math.round(_pet.water),m=Math.round(_pet.mood),c=Math.round(_pet.clean);
+    document.getElementById('statFood').style.width=f+'%'; document.getElementById('statFoodVal').textContent=f;
+    document.getElementById('statWater').style.width=w+'%'; document.getElementById('statWaterVal').textContent=w;
+    document.getElementById('statMood').style.width=m+'%'; document.getElementById('statMoodVal').textContent=m;
+    document.getElementById('statClean').style.width=c+'%'; document.getElementById('statCleanVal').textContent=c;
+    drawPetSvg(_pet.type,_pet.mood);
+    var msgs={feed:'喂了饭！🍚',water:'喂了水！💧',play:'玩耍啦！🎾',bath:'洗了澡！🛁'};
+    petToast(msgs[action]||'');
+  };
+
+  // ── 摸宠物 ──
+  window.petPet=function(){petDo('play');};
+
+  // ── 粒子特效 ──
+  function spawnParticles(action){
+    var scene=document.getElementById('petScene'); if(!scene) return;
+    var emojis={feed:['✨','🍚','⭐'],water:['💧','✨','🫧'],play:['💗','✨','⭐','🎉'],bath:['🫧','✨','💙']};
+    var list=emojis[action]||['✨'];
+    for(var i=0;i<5;i++){
+      (function(idx){
+        setTimeout(function(){
+          var p=document.createElement('div');
+          p.className='pet-particle';
+          p.textContent=list[idx%list.length];
+          p.style.left=(35+Math.random()*40)+'%';
+          p.style.bottom='130px';
+          scene.appendChild(p);
+          setTimeout(function(){p.remove();},900);
+        },idx*100);
+      })(i);
+    }
   }
 
-  /* ── 使用库存道具 ── */
-  window.petUseItem = function(itemId){
-    var idx = _bag.findIndex(function(b){return b.id===itemId;});
+  // ── 使用道具 ──
+  window.petUseItem=function(itemId){
+    var idx=_bag.findIndex(function(b){return b.id===itemId;});
     if(idx===-1||!_pet) return;
     var item=_bag[idx];
-    applyEffect(item.effect, item.val||25);
+    applyEffect(item.effect,item.val||25);
     _bag[idx].qty--;
     if(_bag[idx].qty<=0) _bag.splice(idx,1);
     petSave();
-    petRender();
-    renderBag();
+    var aw=document.getElementById('petAnimalWrap');
+    if(aw){aw.className='';void aw.offsetWidth;aw.className='happy';setTimeout(function(){aw.className='';},1600);}
+    spawnParticles(item.effect||'play');
+    petRender();renderBag();
     petToast(item.emoji+' 使用了「'+item.name+'」！');
   };
 
-  /* ── 操作宠物 ── */
-  window.petDo = function(action){
-    if(!_pet){ petToast('还没有宠物哦，先去设置吧'); return; }
-    // 检查库存里有没有对应道具
-    var hasItem = _bag.find(function(b){return b.effect===action&&b.qty>0;});
-    if(hasItem){
-      petUseItem(hasItem.id);
-      return;
-    }
-    // 没有道具用默认效果（较小）
-    applyEffect(action, 15);
-    petSave();
-    var animal=document.getElementById('petAnimal');
-    if(animal){ animal.className=''; void animal.offsetWidth;
-      animal.className = action==='feed'?'eating':'happy';
-      setTimeout(function(){animal.className='';},1500);
-    }
-    var msgs={'feed':'喂了饭！','water':'喂了水！','play':'玩了一会儿！','bath':'洗了澡！'};
-    petToast('🐾 '+msgs[action]);
-    petRender();
-  };
-
-  function applyEffect(effect, val){
-    if(!_pet) return;
-    val = val||20;
+  function applyEffect(effect,val){
+    if(!_pet) return; val=val||20;
     if(effect==='feed') _pet.food=Math.min(100,_pet.food+val);
     else if(effect==='water') _pet.water=Math.min(100,_pet.water+val);
     else if(effect==='play') _pet.mood=Math.min(100,_pet.mood+val);
@@ -21291,19 +21439,43 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     else if(effect==='mood') _pet.mood=Math.min(100,_pet.mood+val);
   }
 
-  /* ── 喊char来 ── */
-  window.petCallChar = function(type){
-    if(!_pet){ petToast('还没有宠物哦'); return; }
-    var charName = (typeof currentChatId!=='undefined'&&currentChatId!=='default')
-      ? localStorage.getItem('cN_'+currentChatId)||'他'
-      : '他';
+  // ── 喊char来（修复：使用情侣空间当前charId）──
+  window.petCallChar=function(type){
+    if(!_pet){petToast('还没有宠物哦');return;}
+    // 获取情侣空间绑定的char，或当前聊天的char
+    var cid = window._csCurrentCharId ||
+      (typeof localStorage!=='undefined'?localStorage.getItem('cs_active_char'):null) ||
+      (typeof currentChatId!=='undefined'&&currentChatId!=='default'?currentChatId:null);
+    var charName = cid ? (localStorage.getItem('cN_'+cid)||'他') : '他';
     var msgs={
       feed:'「'+_pet.name+'」好像饿了，你能来喂它一下吗？',
-      play:'「'+_pet.name+'」一直在门口转，你有空来陪它玩会儿吗？',
+      play:'「'+_pet.name+'」一直在门口转圈，你有空来陪它玩会儿吗？',
       check:'「'+_pet.name+'」今天有点蔫蔫的，你过来看看它？'
     };
     var txt=msgs[type]||msgs.check;
-    // 跳到聊天室并填入输入框
+    // 如果有绑定char，切换到他的聊天室
+    if(cid&&cid!=='default'&&typeof contacts!=='undefined'){
+      var tc=null;
+      for(var i=0;i<contacts.length;i++){if(contacts[i].id===cid){tc=contacts[i];break;}}
+      if(tc){
+        if(typeof showScreen==='function') showScreen('scrList');
+        setTimeout(function(){
+          var items=document.querySelectorAll('#scrList .chat-item');
+          var clicked=false;
+          items.forEach(function(el){
+            if(clicked) return;
+            var ne=el.querySelector('.chat-name');
+            if(ne&&ne.textContent.includes(charName)){el.click();clicked=true;}
+          });
+          if(!clicked){if(typeof currentChatId!=='undefined')currentChatId=cid;if(typeof showScreen==='function')showScreen('scrRoom');}
+          setTimeout(function(){
+            var inp=document.getElementById('iptMsg');
+            if(inp){inp.value=txt;inp.focus();if(typeof _autoResizeIptMsg==='function')_autoResizeIptMsg();}
+          },800);
+        },400);
+        return;
+      }
+    }
     if(typeof showScreen==='function') showScreen('scrRoom');
     setTimeout(function(){
       var inp=document.getElementById('iptMsg');
@@ -21311,172 +21483,201 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     },400);
   };
 
-  /* ── 初次创建宠物 ── */
-  var _selectedType = 'cat';
-  window.petSelectType = function(type){
+  // ── 初次创建 ──
+  var _selectedType='cat';
+  window.petSelectType=function(type){
     _selectedType=type;
     document.getElementById('ptCat').classList.toggle('selected',type==='cat');
     document.getElementById('ptDog').classList.toggle('selected',type==='dog');
   };
-  window.petConfirmCreate = function(){
+  window.petConfirmCreate=function(){
     var name=(document.getElementById('petNameInput')||{}).value||'';
     name=name.trim();
-    if(!name){ petToast('请给宠物起个名字！'); return; }
-    _pet={type:_selectedType,name:name,food:80,water:80,mood:80,clean:80,lastUpdate:Date.now()};
-    petSave();
-    petRender();
+    if(!name){petToast('请给宠物起个名字！');return;}
+    _pet={type:_selectedType,name:name,food:80,water:80,mood:80,clean:80,level:1,gender:'unknown',lastUpdate:Date.now()};
+    petSave();petRender();
     petToast('🎉 欢迎「'+name+'」来到新家！');
   };
 
-  /* ── 商城 ── */
-  window.openPetShop = function(){
-    var modal=document.getElementById('petShopModal');
-    if(modal){ modal.style.display='flex'; modal.style.flexDirection='column'; }
-    // 更新余额显示
-    var balEl=document.getElementById('petShopBalance');
-    if(balEl&&typeof myWallet!=='undefined') balEl.textContent='¥'+(myWallet.balance||0).toFixed(2);
-    renderShop();
+  // ── 宠物资料 ──
+  window.openPetProfile=function(){
+    if(!_pet){petToast('还没有宠物哦');return;}
+    document.getElementById('ppName').value=_pet.name||'';
+    document.getElementById('ppBirthday').value=_pet.birthday||'';
+    document.getElementById('ppAge').value=_pet.age||'';
+    document.getElementById('ppLevel').value=_pet.level||1;
+    document.getElementById('ppNote').value=_pet.note||'';
+    _ppGender=_pet.gender||'unknown';
+    ppUpdateGender();
+    document.getElementById('petProfileModal').style.display='flex';
   };
-  window.closePetShop = function(){
-    var modal=document.getElementById('petShopModal');
-    if(modal) modal.style.display='none';
-  };
-
-  function renderShop(){
-    renderShopSection('shopFoodItems', SHOP_ITEMS.food);
-    renderShopSection('shopToyItems', SHOP_ITEMS.toy);
-    renderShopSection('shopCareItems', SHOP_ITEMS.care);
-    // 自定义
-    var customKey = SHOP_CUSTOM_KEY;
-    var custom=[];
-    try{ var cr=localStorage.getItem(customKey); custom=cr?JSON.parse(cr):[]; }catch(e){}
-    renderShopSection('shopCustomItems', custom, true);
+  window.ppSelectGender=function(g){_ppGender=g;ppUpdateGender();};
+  function ppUpdateGender(){
+    ['male','female','unknown'].forEach(function(g){
+      var el=document.getElementById('ppGender'+g.charAt(0).toUpperCase()+g.slice(1));
+      if(el) el.className='pp-gender-btn'+(g===_ppGender?' selected':'');
+    });
+    // fix for 'unknown' -> element id 'ppGenderUnknown' -> 'N'
+    document.getElementById('ppGenderM').className='pp-gender-btn'+(_ppGender==='male'?' selected':'');
+    document.getElementById('ppGenderF').className='pp-gender-btn'+(_ppGender==='female'?' selected':'');
+    document.getElementById('ppGenderN').className='pp-gender-btn'+(_ppGender==='unknown'?' selected':'');
   }
+  window.savePetProfile=function(){
+    if(!_pet) return;
+    _pet.name=(document.getElementById('ppName').value||'').trim()||_pet.name;
+    _pet.gender=_ppGender;
+    _pet.birthday=document.getElementById('ppBirthday').value||'';
+    _pet.age=parseInt(document.getElementById('ppAge').value)||0;
+    _pet.level=parseInt(document.getElementById('ppLevel').value)||1;
+    _pet.note=document.getElementById('ppNote').value||'';
+    petSave();petRender();
+    document.getElementById('petProfileModal').style.display='none';
+    petToast('✅ 资料已保存！');
+  };
 
-  function renderShopSection(elId, items, isCustom){
-    var el=document.getElementById(elId); if(!el) return;
+  // ── 库存 ──
+  function renderBag(){
+    var el=document.getElementById('petBagItems');
+    var empty=document.getElementById('petBagEmpty');
+    if(!_bag.length){if(empty)empty.style.display='block';if(el)el.innerHTML='';return;}
+    if(empty)empty.style.display='none';
     el.innerHTML='';
-    items.forEach(function(item){
+    _bag.forEach(function(item){
       var div=document.createElement('div');
-      div.className='shop-item';
-      div.innerHTML=
-        '<span class="shop-item-emoji">'+item.emoji+'</span>'+
-        '<div class="shop-item-name">'+item.name+'</div>'+
-        '<div class="shop-item-desc">'+(item.desc||'')+'</div>'+
-        '<div class="shop-item-price">¥'+item.price.toFixed(2)+'</div>'+
-        '<button class="shop-buy-user" onclick="petBuyItem(\''+item.id+'\',false)">💙 我买</button>'+
-        '<button class="shop-buy-char" onclick="petBuyItem(\''+item.id+'\',true)">🧡 让他买</button>'+
-        (isCustom?'<button onclick="petDeleteCustom(\''+item.id+'\')" style="background:none;border:none;color:#ccc;font-size:11px;cursor:pointer;margin-top:2px;">删除</button>':'');
+      div.className='bag-item';
+      var e1=document.createElement('div');e1.style.fontSize='28px';e1.textContent=item.emoji;
+      var e2=document.createElement('div');e2.style.cssText='font-size:12px;font-weight:600;color:#333;margin:4px 0';e2.textContent=item.name;
+      var e3=document.createElement('div');e3.style.cssText='font-size:10px;color:#888;margin-bottom:6px';e3.textContent='×'+item.qty;
+      var btn=document.createElement('button');
+      btn.style.cssText='background:linear-gradient(135deg,#90d060,#5a9030);color:white;border:none;border-radius:10px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;';
+      btn.textContent='使用';
+      (function(id){btn.onclick=function(){petUseItem(id);};})(item.id);
+      div.appendChild(e1);div.appendChild(e2);div.appendChild(e3);div.appendChild(btn);
       el.appendChild(div);
     });
   }
 
-  window.petBuyItem = function(itemId, isChar){
-    // 从所有货架找商品
-    var allItems = SHOP_ITEMS.food.concat(SHOP_ITEMS.toy).concat(SHOP_ITEMS.care);
-    try{ var cr=localStorage.getItem(SHOP_CUSTOM_KEY); if(cr) allItems=allItems.concat(JSON.parse(cr)); }catch(e){}
-    var item=allItems.find(function(x){return x.id===itemId;});
-    if(!item) return;
+  // ── 商城 ──
+  window.openPetShop=function(){
+    var m=document.getElementById('petShopModal');
+    if(m){m.style.display='flex';m.style.flexDirection='column';}
+    var balEl=document.getElementById('petShopBalance');
+    if(balEl&&typeof myWallet!=='undefined') balEl.textContent='¥'+(myWallet.balance||0).toFixed(2);
+    renderShop();
+  };
+  window.closePetShop=function(){var m=document.getElementById('petShopModal');if(m)m.style.display='none';};
+
+  function renderShop(){
+    renderShopSection('shopFoodItems',SHOP_ITEMS.food,false);
+    renderShopSection('shopToyItems',SHOP_ITEMS.toy,false);
+    renderShopSection('shopCareItems',SHOP_ITEMS.care,false);
+    var custom=[];try{var cr=localStorage.getItem(SHOP_CUSTOM_KEY);custom=cr?JSON.parse(cr):[];}catch(e){}
+    renderShopSection('shopCustomItems',custom,true);
+  }
+  function renderShopSection(elId,items,isCustom){
+    var el=document.getElementById(elId);if(!el)return;el.innerHTML='';
+    items.forEach(function(item){
+      var div=document.createElement('div');div.className='shop-item';
+      var s1=document.createElement('span');s1.className='shop-item-emoji';s1.textContent=item.emoji;
+      var s2=document.createElement('div');s2.className='shop-item-name';s2.textContent=item.name;
+      var s3=document.createElement('div');s3.className='shop-item-desc';s3.textContent=item.desc||'';
+      var s4=document.createElement('div');s4.className='shop-item-price';s4.textContent='¥'+item.price.toFixed(2);
+      var bu=document.createElement('button');bu.className='shop-buy-user';bu.textContent='我买';
+      var bc=document.createElement('button');bc.className='shop-buy-char';bc.textContent='让他买';
+      (function(id){bu.onclick=function(){petBuyItem(id,false);};bc.onclick=function(){petBuyItem(id,true);};})(item.id);
+      div.appendChild(s1);div.appendChild(s2);div.appendChild(s3);div.appendChild(s4);div.appendChild(bu);div.appendChild(bc);
+      if(isCustom){
+        var db=document.createElement('button');
+        db.style.cssText='background:none;border:none;color:#ccc;font-size:11px;cursor:pointer;margin-top:2px;display:block;';
+        db.textContent='删除';
+        (function(id){db.onclick=function(){petDeleteCustom(id);};})(item.id);
+        div.appendChild(db);
+      }
+      el.appendChild(div);
+    });
+  }
+
+  window.petBuyItem=function(itemId,isChar){
+    var all=SHOP_ITEMS.food.concat(SHOP_ITEMS.toy).concat(SHOP_ITEMS.care);
+    try{var cr=localStorage.getItem(SHOP_CUSTOM_KEY);if(cr)all=all.concat(JSON.parse(cr));}catch(e){}
+    var item=all.find(function(x){return x.id===itemId;});if(!item)return;
     if(isChar){
-      // char购买：发消息到聊天
-      var charName=(typeof currentChatId!=='undefined'&&currentChatId!=='default')?localStorage.getItem('cN_'+currentChatId)||'他':'他';
+      var cid=window._csCurrentCharId||(typeof localStorage!=='undefined'?localStorage.getItem('cs_active_char'):null)||(typeof currentChatId!=='undefined'&&currentChatId!=='default'?currentChatId:null);
+      var charName=cid?(localStorage.getItem('cN_'+cid)||'他'):'他';
       if(typeof showScreen==='function') showScreen('scrRoom');
       closePetShop();
       setTimeout(function(){
         var inp=document.getElementById('iptMsg');
-        if(inp){inp.value=_pet?'「'+_pet.name+'」需要「'+item.name+'」（¥'+item.price.toFixed(2)+'），你能帮它买一个吗？':'帮我买一个「'+item.name+'」（¥'+item.price.toFixed(2)+'）吧？';inp.focus();if(typeof _autoResizeIptMsg==='function')_autoResizeIptMsg();}
+        if(inp){inp.value=(_pet?'「'+_pet.name+'」需要「'+item.name+'」（¥'+item.price.toFixed(2)+'），你能帮它买一个吗？':'帮我买一个「'+item.name+'」（¥'+item.price.toFixed(2)+'）吧？');inp.focus();if(typeof _autoResizeIptMsg==='function')_autoResizeIptMsg();}
       },400);
       return;
     }
-    // user购买：扣钱包
-    if(typeof myWallet==='undefined'){ petToast('钱包功能未启用'); return; }
-    if(myWallet.balance<item.price){ petToast('余额不足！当前余额¥'+myWallet.balance.toFixed(2)); return; }
+    if(typeof myWallet==='undefined'){petToast('钱包功能未启用');return;}
+    if(myWallet.balance<item.price){petToast('余额不足！当前¥'+myWallet.balance.toFixed(2));return;}
     myWallet.balance-=item.price;
     myWallet.bills.push({title:'宠物商城：'+item.name,time:new Date().toLocaleString(),amount:-item.price,type:'transfer'});
     if(typeof ls!=='undefined') ls.setItem('myWallet',JSON.stringify(myWallet));
-    // 加入库存
-    var existing=_bag.find(function(b){return b.id===item.id;});
-    if(existing){ existing.qty++; }
-    else{ _bag.push({id:item.id,name:item.name,emoji:item.emoji,effect:item.effect,val:item.val||25,qty:1}); }
+    var ex=_bag.find(function(b){return b.id===item.id;});
+    if(ex){ex.qty++;}else{_bag.push({id:item.id,name:item.name,emoji:item.emoji,effect:item.effect,val:item.val||25,qty:1});}
     petSave();
-    // 更新余额显示
-    var balEl=document.getElementById('petShopBalance');
-    if(balEl) balEl.textContent='¥'+myWallet.balance.toFixed(2);
+    var balEl=document.getElementById('petShopBalance');if(balEl)balEl.textContent='¥'+myWallet.balance.toFixed(2);
     petToast('✅ 购买成功！「'+item.name+'」已入库');
   };
 
-  window.openAddCustomItem = function(){
-    document.getElementById('petAddItemModal').style.display='flex';
-  };
-  window.confirmAddCustomItem = function(){
+  window.openAddCustomItem=function(){document.getElementById('petAddItemModal').style.display='flex';};
+  window.confirmAddCustomItem=function(){
     var emoji=(document.getElementById('addItemEmoji')||{}).value||'📦';
     var name=(document.getElementById('addItemName')||{}).value||'';
     var desc=(document.getElementById('addItemDesc')||{}).value||'';
     var price=parseFloat((document.getElementById('addItemPrice')||{}).value||'0')||0;
     var effect=(document.getElementById('addItemEffect')||{}).value||'play';
-    if(!name.trim()){ petToast('请填写商品名称'); return; }
-    var custom=[];
-    try{ var cr=localStorage.getItem(SHOP_CUSTOM_KEY); custom=cr?JSON.parse(cr):[]; }catch(e){}
-    var id='custom_'+Date.now();
-    custom.push({id:id,emoji:emoji.trim()||'📦',name:name.trim(),desc:desc,price:price,effect:effect.trim()||'play',val:25});
+    if(!name.trim()){petToast('请填写商品名称');return;}
+    var custom=[];try{var cr=localStorage.getItem(SHOP_CUSTOM_KEY);custom=cr?JSON.parse(cr):[];}catch(e){}
+    custom.push({id:'custom_'+Date.now(),emoji:emoji.trim()||'📦',name:name.trim(),desc:desc,price:price,effect:effect.trim()||'play',val:25});
     localStorage.setItem(SHOP_CUSTOM_KEY,JSON.stringify(custom));
     document.getElementById('petAddItemModal').style.display='none';
-    renderShop();
-    petToast('✅ 商品已添加！');
+    renderShop();petToast('✅ 商品已添加！');
   };
-  window.petDeleteCustom = function(itemId){
-    var custom=[];
-    try{ var cr=localStorage.getItem(SHOP_CUSTOM_KEY); custom=cr?JSON.parse(cr):[]; }catch(e){}
+  window.petDeleteCustom=function(itemId){
+    var custom=[];try{var cr=localStorage.getItem(SHOP_CUSTOM_KEY);custom=cr?JSON.parse(cr):[];}catch(e){}
     custom=custom.filter(function(x){return x.id!==itemId;});
     localStorage.setItem(SHOP_CUSTOM_KEY,JSON.stringify(custom));
     renderShop();
   };
 
-  /* ── Toast提示 ── */
   function petToast(msg){
-    var t=document.createElement('div');
-    t.className='pet-toast';
-    t.textContent=msg;
-    document.body.appendChild(t);
-    setTimeout(function(){t.remove();},2000);
+    var t=document.createElement('div');t.className='pet-toast';t.textContent=msg;
+    document.body.appendChild(t);setTimeout(function(){t.remove();},2000);
   }
 
-  /* ── 绑定按钮 ── */
-  var backBtn=document.getElementById('petBack');
-  if(backBtn) backBtn.onclick=function(){showScreen('scrCoupleSpace');};
-  var shopBtn=document.getElementById('petShopBtn');
-  if(shopBtn) shopBtn.onclick=openPetShop;
+  // ── 绑定 ──
+  var backBtn=document.getElementById('petBack');if(backBtn)backBtn.onclick=function(){showScreen('scrCoupleSpace');};
+  var shopBtn=document.getElementById('petShopBtn');if(shopBtn)shopBtn.onclick=openPetShop;
 
-  /* ── showScreen patch ── */
+  // ── showScreen patch ──
   var _origPetShow=window.showScreen;
   window.showScreen=function(id){
     _origPetShow(id);
     if(id==='scrPet'){
       petLoad().then(function(){
-        petFitTopBar();
-        petRender();
+        petFitTopBar();petRender();
       });
     }
   };
 
-  /* ── 顶栏高度适配 ── */
   function petFitTopBar(){
-    var bar=document.getElementById('petTopBar');if(!bar)return;
-    var safeTop=0;
-    try{var tmp=document.createElement('div');tmp.style.cssText='position:fixed;top:env(safe-area-inset-top,0px);height:0;visibility:hidden;';document.body.appendChild(tmp);safeTop=parseInt(window.getComputedStyle(tmp).top)||0;document.body.removeChild(tmp);}catch(e){}
-    if(safeTop<10&&window.visualViewport){var sh=window.screen.height,vph=window.visualViewport.height||window.innerHeight;if(sh>vph&&window.innerWidth<window.innerHeight)safeTop=Math.min(Math.max(sh-vph,0),60);}
-    bar.style.paddingTop=Math.max(safeTop+15,52)+'px';
-    var shopBar=document.getElementById('petShopTopBar');
-    if(shopBar) shopBar.style.paddingTop=Math.max(safeTop+15,52)+'px';
+    ['petTopBar','petShopTopBar'].forEach(function(barId){
+      var bar=document.getElementById(barId);if(!bar)return;
+      var safeTop=0;
+      try{var tmp=document.createElement('div');tmp.style.cssText='position:fixed;top:env(safe-area-inset-top,0px);height:0;visibility:hidden;';document.body.appendChild(tmp);safeTop=parseInt(window.getComputedStyle(tmp).top)||0;document.body.removeChild(tmp);}catch(e){}
+      if(safeTop<10&&window.visualViewport){var sh=window.screen.height,vph=window.visualViewport.height||window.innerHeight;if(sh>vph&&window.innerWidth<window.innerHeight)safeTop=Math.min(Math.max(sh-vph,0),60);}
+      bar.style.paddingTop=Math.max(safeTop+15,52)+'px';
+    });
   }
   petFitTopBar();
   window.addEventListener('resize',petFitTopBar,{passive:true});
-
-  // 初次加载
-  petLoad().then(function(){
-    injectPetMemory();
-  });
-
+  petLoad().then(function(){injectPetMemory();});
 })();
 </script>
+
 
