@@ -931,7 +931,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         </div>
         <div class="cs-func" id="csFuncChallenge">
           <div class="cs-func-icon" style="background:linear-gradient(135deg,#fd79a8,#e84393);">💑</div>
-          <span class="cs-func-lbl">情侣挑战</span>
+          <span class="cs-func-lbl">匿名问答</span>
         </div>
       </div>
 
@@ -5335,6 +5335,73 @@ if(typeof localforage === 'undefined') {
 .astro-planet-tbl td { color:#c8a8ff;padding:6px 4px;text-align:center;border-bottom:1px solid rgba(40,15,80,0.4); }
 .astro-planet-tbl tr:nth-child(even) td { background:rgba(30,10,60,0.2); }
 
+
+/* 日期滚轮 */
+.astro-wheel-row{display:flex;gap:8px;margin-bottom:4px;}
+.astro-wheel-wrap{flex:1;display:flex;flex-direction:column;align-items:center;}
+.astro-wheel-lbl{font-size:10px;color:#a070ff;margin-bottom:4px;letter-spacing:1px;}
+.astro-wheel{height:120px;overflow:hidden;position:relative;width:100%;border-radius:10px;background:rgba(15,3,35,0.9);border:1px solid rgba(80,30,160,0.4);}
+.astro-wheel::before,.astro-wheel::after{content:'';position:absolute;left:0;right:0;height:38px;z-index:2;pointer-events:none;}
+.astro-wheel::before{top:0;background:linear-gradient(to bottom,rgba(13,6,24,0.9),transparent);}
+.astro-wheel::after{bottom:0;background:linear-gradient(to top,rgba(13,6,24,0.9),transparent);}
+.astro-wheel-inner{display:flex;flex-direction:column;transition:transform 0.2s cubic-bezier(.4,0,.2,1);cursor:grab;user-select:none;touch-action:none;}
+.astro-wheel-item{height:40px;display:flex;align-items:center;justify-content:center;font-size:15px;color:rgba(180,140,255,0.5);transition:color .15s,font-size .15s;flex-shrink:0;}
+.astro-wheel-item.selected{color:#e8d5ff;font-size:17px;font-weight:bold;}
+.astro-wheel-selector{position:absolute;top:50%;left:4px;right:4px;height:40px;transform:translateY(-50%);border-top:1px solid rgba(160,100,255,0.4);border-bottom:1px solid rgba(160,100,255,0.4);pointer-events:none;z-index:1;border-radius:6px;background:rgba(100,40,200,0.12);}
+
+/* ══════════════════════════════════════
+   匿名问答 (scrAnon) 样式
+══════════════════════════════════════ */
+#scrAnon{background:linear-gradient(160deg,#1a0530 0%,#0d0820 60%,#180a30 100%);color:#f0e6ff;}
+.anon-topbar{display:flex;align-items:center;justify-content:space-between;padding:max(calc(env(safe-area-inset-top,0px)+12px),28px) 15px 12px;flex-shrink:0;background:linear-gradient(180deg,rgba(26,5,48,0.98),transparent);}
+.anon-back{font-size:22px;color:#c084fc;cursor:pointer;width:30px;}
+.anon-title{font-size:17px;font-weight:700;color:#f0e6ff;letter-spacing:2px;}
+.anon-tabs{display:flex;background:rgba(15,5,30,0.9);border-bottom:1px solid rgba(140,60,220,0.25);flex-shrink:0;}
+.anon-tab{flex:1;text-align:center;padding:11px 0;font-size:12px;color:rgba(180,140,230,0.45);cursor:pointer;transition:.2s;}
+.anon-tab.active{color:#f0e6ff;border-bottom:2px solid #c084fc;font-weight:bold;}
+.anon-page{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px 30px;display:flex;flex-direction:column;gap:12px;}
+.anon-mode-card{background:rgba(30,8,60,0.8);border:1px solid rgba(120,50,200,0.3);border-radius:16px;padding:14px;cursor:pointer;transition:.15s;display:flex;align-items:flex-start;gap:12px;}
+.anon-mode-card:active{transform:scale(.98);}
+.anon-mode-card.active{border-color:#c084fc;background:rgba(80,20,160,0.35);box-shadow:0 0 16px rgba(192,132,252,0.2);}
+.anon-mode-icon{font-size:30px;flex-shrink:0;line-height:1;}
+.anon-mode-info{}
+.anon-mode-name{font-size:14px;font-weight:700;color:#e8d5ff;margin-bottom:3px;}
+.anon-mode-desc{font-size:11px;color:rgba(180,140,230,0.6);line-height:1.5;}
+.anon-section{background:rgba(20,5,42,0.8);border:1px solid rgba(100,40,180,0.25);border-radius:14px;padding:12px;}
+.anon-sec-title{font-size:11px;color:#c084fc;letter-spacing:1.5px;margin-bottom:10px;font-weight:bold;}
+.anon-identity-grid{display:flex;flex-wrap:wrap;gap:7px;}
+.anon-id-chip{padding:6px 12px;border-radius:20px;font-size:12px;color:rgba(200,160,255,0.6);background:rgba(30,8,60,0.6);border:1px solid rgba(100,40,180,0.25);cursor:pointer;transition:.15s;}
+.anon-id-chip.selected{background:rgba(100,30,200,0.5);border-color:#c084fc;color:#f0e6ff;}
+.anon-custom-inp{width:100%;padding:9px 12px;background:rgba(10,2,22,0.9);border:1px solid rgba(100,40,180,0.3);border-radius:10px;color:#f0e6ff;font-size:13px;box-sizing:border-box;outline:none;margin-top:8px;}
+.anon-custom-inp:focus{border-color:#c084fc;}
+.anon-custom-inp::placeholder{color:rgba(160,120,220,0.3);}
+.anon-q-pool{display:flex;flex-direction:column;gap:7px;}
+.anon-q-item{padding:10px 12px;background:rgba(30,8,60,0.5);border:1px solid rgba(100,40,180,0.2);border-radius:10px;font-size:12px;color:#c8a8ff;cursor:pointer;transition:.15s;line-height:1.5;}
+.anon-q-item.selected{background:rgba(80,20,160,0.4);border-color:#c084fc;color:#f0e6ff;}
+.anon-go-btn{width:100%;padding:14px;background:linear-gradient(135deg,#5b21b6,#9333ea);color:white;border:none;border-radius:14px;font-size:15px;font-weight:bold;cursor:pointer;letter-spacing:1px;box-shadow:0 4px 18px rgba(147,51,234,0.35);transition:.2s;flex-shrink:0;}
+.anon-go-btn:active{transform:scale(.98);}
+.anon-go-btn:disabled{opacity:.5;}
+.anon-result-card{background:rgba(20,5,42,0.9);border:1px solid rgba(120,50,200,0.3);border-radius:16px;padding:14px;margin-bottom:10px;}
+.anon-rc-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.anon-rc-from{font-size:11px;color:rgba(180,140,230,0.5);background:rgba(80,20,160,0.3);padding:3px 8px;border-radius:10px;}
+.anon-rc-time{font-size:10px;color:rgba(150,110,200,0.4);}
+.anon-rc-q{font-size:13px;color:#e8d5ff;margin-bottom:8px;line-height:1.6;font-weight:500;}
+.anon-rc-a{font-size:12px;color:#c8a8ff;line-height:1.7;font-style:italic;padding-left:10px;border-left:2px solid rgba(160,100,255,0.4);}
+.anon-rc-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:10px;}
+.anon-btn-sm{padding:5px 12px;border-radius:20px;font-size:11px;border:none;cursor:pointer;font-weight:500;}
+.anon-btn-send{background:rgba(80,20,160,0.6);color:#e8d5ff;border:1px solid rgba(160,100,255,0.3);}
+.anon-btn-del{background:rgba(60,10,10,0.5);color:rgba(255,100,100,0.7);border:1px solid rgba(200,50,50,0.2);}
+.anon-empty{text-align:center;padding:50px 20px;color:rgba(150,110,200,0.35);font-size:13px;line-height:2.2;font-style:italic;}
+.anon-typing{display:flex;gap:5px;align-items:center;padding:8px 0;}
+.anon-typing span{width:7px;height:7px;border-radius:50%;background:#c084fc;animation:anonPulse 1.2s infinite;}
+.anon-typing span:nth-child(2){animation-delay:.2s;}
+.anon-typing span:nth-child(3){animation-delay:.4s;}
+@keyframes anonPulse{0%,100%{opacity:.2;transform:scale(1)}50%{opacity:1;transform:scale(1.3)}}
+.anon-user-inp-wrap{display:flex;gap:8px;align-items:flex-end;margin-top:4px;}
+.anon-user-inp{flex:1;padding:10px 12px;background:rgba(10,2,22,0.9);border:1px solid rgba(100,40,180,0.3);border-radius:10px;color:#f0e6ff;font-size:13px;resize:none;outline:none;line-height:1.5;max-height:100px;overflow-y:auto;}
+.anon-user-inp:focus{border-color:#c084fc;}
+.anon-send-sm{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#9333ea);border:none;color:white;font-size:18px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+
 </style>
 
 <script>
@@ -5584,7 +5651,7 @@ let pressTimer = null;
 let selEl = null;
 let currentQuote ="";
 function showScreen(showId) {
-    [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrSpace, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet"), $("scrContact"), $("scrSetFont"), $("scrCharPhone"), $("scrSpyDiary"), $("scrSpyZhihu"), $("scrSpySecret"), $("scrSpyMeituan"), $("scrSpyFootprint"), $("scrSpyWallet"), $("scrSpyShop"), $("scrSpyIqiyi"), $("scrSpySettings"), $("scrMoment"), $("scrGroupRoom"), $("scrGroupSettings"), $("scrOurSongs"), $("scrHomeSettings"), $("scrCoupleSpace"), $("scrPeriod"), $("scrPastMemory"), $("scrDiary"), $("scrAstro")].forEach(s => { if(s) s.style.display = "none"; });
+    [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrSpace, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet"), $("scrContact"), $("scrSetFont"), $("scrCharPhone"), $("scrSpyDiary"), $("scrSpyZhihu"), $("scrSpySecret"), $("scrSpyMeituan"), $("scrSpyFootprint"), $("scrSpyWallet"), $("scrSpyShop"), $("scrSpyIqiyi"), $("scrSpySettings"), $("scrMoment"), $("scrGroupRoom"), $("scrGroupSettings"), $("scrOurSongs"), $("scrHomeSettings"), $("scrCoupleSpace"), $("scrPeriod"), $("scrPastMemory"), $("scrDiary"), $("scrAstro"), $("scrAnon")].forEach(s => { if(s) s.style.display = "none"; });
 
     let target = $(showId);
     if(showId === "scrRoom") {
@@ -5592,7 +5659,7 @@ function showScreen(showId) {
         if(_im){ _im.style.height="34px"; _im.style.overflowY="hidden"; }
     }
     if(target) {
-        if(showId === "scrRoom" || showId === "scrList" || showId === "scrSetApi" || showId === "scrSetChat" || showId === "scrWb" || showId === "scrWbEdit" || showId === "scrMe" || showId === "scrCharSticker" || showId === "scrSpace" || showId === "scrLogList" || showId === "scrLogEdit" || showId === "scrFav" || showId === "scrWallet" || showId === "scrContact" || showId === "scrSetFont" || showId === "scrSpyDiary" || showId === "scrSpyZhihu" || showId === "scrSpySecret" || showId === "scrSpyMeituan" || showId === "scrSpyFootprint" || showId === "scrSpyWallet" || showId === "scrSpyShop" || showId === "scrSpyIqiyi" || showId === "scrSpySettings" || showId === "scrMoment" || showId === "scrGroupRoom" || showId === "scrGroupSettings" || showId === "scrOurSongs" || showId === "scrHomeSettings" || showId === "scrPeriod" || showId === "scrPastMemory" || showId === "scrDiary" || showId === "scrAstro") {
+        if(showId === "scrRoom" || showId === "scrList" || showId === "scrSetApi" || showId === "scrSetChat" || showId === "scrWb" || showId === "scrWbEdit" || showId === "scrMe" || showId === "scrCharSticker" || showId === "scrSpace" || showId === "scrLogList" || showId === "scrLogEdit" || showId === "scrFav" || showId === "scrWallet" || showId === "scrContact" || showId === "scrSetFont" || showId === "scrSpyDiary" || showId === "scrSpyZhihu" || showId === "scrSpySecret" || showId === "scrSpyMeituan" || showId === "scrSpyFootprint" || showId === "scrSpyWallet" || showId === "scrSpyShop" || showId === "scrSpyIqiyi" || showId === "scrSpySettings" || showId === "scrMoment" || showId === "scrGroupRoom" || showId === "scrGroupSettings" || showId === "scrOurSongs" || showId === "scrHomeSettings" || showId === "scrPeriod" || showId === "scrPastMemory" || showId === "scrDiary" || showId === "scrAstro" || showId === "scrAnon") {
             target.style.display = "flex";
         } else if (showId === "scrCharPhone") {
             target.style.display = "flex";
@@ -20547,9 +20614,8 @@ if(document.getElementById('offlineModePanel')) {
   if(petFuncBtn)petFuncBtn.onclick=function(){showScreen('scrDiary');};
   var horoscopeBtn=document.getElementById('csFuncHoroscope');
   if(horoscopeBtn)horoscopeBtn.onclick=function(){if(typeof window._openAstro==='function')window._openAstro();};
-  ['csFuncChallenge,情侣挑战'].forEach(function(s){
-    var p=s.split(',');bindFuncToast(p[0],p[1]);
-  });
+  var anonBtn=document.getElementById('csFuncChallenge');
+  if(anonBtn)anonBtn.onclick=function(){if(typeof window._openAnon==='function')window._openAnon();};
   // TA的过去入口
   var loveListBtn=document.getElementById('csFuncLoveList');
   if(loveListBtn)loveListBtn.onclick=function(){
@@ -22218,15 +22284,23 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
   <div id="astroPage3" class="astro-page" style="display:none;">
     <div class="astro-input-sec">
       <div class="astro-input-title">🌙 我的出生信息</div>
-      <input class="astro-input" id="astroUserDate" type="date" placeholder="出生日期">
-      <input class="astro-input" id="astroUserTime" type="time" placeholder="出生时间（可选，用于算上升星座）">
+      <div class="astro-wheel-row" id="astroUserDateWheels">
+        <div class="astro-wheel-wrap"><div class="astro-wheel-lbl">年</div><div class="astro-wheel" id="astroUserY"></div></div>
+        <div class="astro-wheel-wrap"><div class="astro-wheel-lbl">月</div><div class="astro-wheel" id="astroUserM"></div></div>
+        <div class="astro-wheel-wrap"><div class="astro-wheel-lbl">日</div><div class="astro-wheel" id="astroUserD"></div></div>
+      </div>
+      <input class="astro-input" id="astroUserTime" type="time" placeholder="出生时间（可选，用于算上升星座）" style="margin-top:6px;">
       <input class="astro-input" id="astroUserCity" list="astroCityList1" placeholder="出生城市（可选）">
       <datalist id="astroCityList1"></datalist>
     </div>
     <div class="astro-input-sec">
       <div class="astro-input-title">💕 TA的出生信息</div>
-      <input class="astro-input" id="astroCharDate" type="date" placeholder="出生日期">
-      <input class="astro-input" id="astroCharTime" type="time" placeholder="出生时间（可选）">
+      <div class="astro-wheel-row" id="astroCharDateWheels">
+        <div class="astro-wheel-wrap"><div class="astro-wheel-lbl">年</div><div class="astro-wheel" id="astroCharY"></div></div>
+        <div class="astro-wheel-wrap"><div class="astro-wheel-lbl">月</div><div class="astro-wheel" id="astroCharM"></div></div>
+        <div class="astro-wheel-wrap"><div class="astro-wheel-lbl">日</div><div class="astro-wheel" id="astroCharD"></div></div>
+      </div>
+      <input class="astro-input" id="astroCharTime" type="time" placeholder="出生时间（可选）" style="margin-top:6px;">
       <input class="astro-input" id="astroCharCity" list="astroCityList2" placeholder="出生城市（可选）">
       <datalist id="astroCityList2"></datalist>
     </div>
@@ -22541,31 +22615,102 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     if(btn){btn.disabled=false;btn.textContent='🔮 重新占卜';}
   };
 
-  // ── Tab3: 星盘 ──
+  // ── Tab3: 星盘 + 滚轮日期选择器 ──
+  // 滚轮构建
+  function _buildWheel(id, items, initVal, onChange){
+    var el=document.getElementById(id); if(!el) return;
+    el.innerHTML='<div class="astro-wheel-selector"></div><div class="astro-wheel-inner"></div>';
+    var inner=el.querySelector('.astro-wheel-inner');
+    // 补两个空白使第一项居中
+    [null,null].forEach(function(){var p=document.createElement('div');p.className='astro-wheel-item';p.style.height='40px';inner.appendChild(p);});
+    items.forEach(function(v){
+      var d=document.createElement('div');d.className='astro-wheel-item';d.textContent=String(v);d.dataset.val=String(v);inner.appendChild(d);
+    });
+    [null,null].forEach(function(){var p=document.createElement('div');p.className='astro-wheel-item';p.style.height='40px';inner.appendChild(p);});
+    var ITEM_H=40, _idx=Math.max(0,items.indexOf(initVal));
+    function _setIdx(i,animate){
+      _idx=Math.max(0,Math.min(items.length-1,i));
+      if(!animate){var s=inner.style.transition;inner.style.transition='none';inner.style.transform='translateY('+((-_idx)*ITEM_H)+'px)';void inner.offsetHeight;inner.style.transition=s;}
+      else inner.style.transform='translateY('+((-_idx)*ITEM_H)+'px)';
+      inner.querySelectorAll('.astro-wheel-item').forEach(function(it,ii){it.classList.toggle('selected',ii-2===_idx);});
+      if(onChange)onChange(items[_idx]);
+    }
+    _setIdx(_idx,false);
+    // Touch
+    var _ty=0,_by=0,_startIdx=_idx;
+    el.addEventListener('touchstart',function(e){_ty=e.touches[0].clientY;_startIdx=_idx;inner.style.transition='none';},{passive:true});
+    el.addEventListener('touchmove',function(e){
+      var dy=e.touches[0].clientY-_ty;
+      var ni=Math.round(_startIdx-dy/ITEM_H);
+      _setIdx(ni,false);
+    },{passive:true});
+    el.addEventListener('touchend',function(e){
+      var dy=e.changedTouches[0].clientY-_ty;
+      var ni=Math.round(_startIdx-dy/ITEM_H);
+      inner.style.transition='';
+      _setIdx(ni,true);
+    });
+    // Mouse
+    var _my=0,_dragging=false;
+    el.addEventListener('mousedown',function(e){_my=e.clientY;_startIdx=_idx;_dragging=true;inner.style.transition='none';e.preventDefault();});
+    window.addEventListener('mousemove',function(e){
+      if(!_dragging)return;
+      var dy=e.clientY-_my;
+      _setIdx(Math.round(_startIdx-dy/ITEM_H),false);
+    });
+    window.addEventListener('mouseup',function(e){
+      if(!_dragging)return; _dragging=false;
+      var dy=e.clientY-_my;
+      inner.style.transition='';
+      _setIdx(Math.round(_startIdx-dy/ITEM_H),true);
+    });
+    return {getVal:function(){return items[_idx];},setVal:function(v){_setIdx(Math.max(0,items.indexOf(v)),false);}};
+  }
+  var _wheels={};
+  function _initWheels(){
+    var years=[]; for(var y=2010;y>=1920;y--) years.push(y);
+    var months=[1,2,3,4,5,6,7,8,9,10,11,12];
+    var days=[]; for(var d=1;d<=31;d++) days.push(d);
+    var ub=_uBirth||{date:''},cb=_cBirth||{date:''};
+    var up=_parseDate(ub.date),cp=_parseDate(cb.date);
+    _wheels.uY=_buildWheel('astroUserY',years,up.y,function(){});
+    _wheels.uM=_buildWheel('astroUserM',months,up.m,function(){});
+    _wheels.uD=_buildWheel('astroUserD',days,up.d,function(){});
+    _wheels.cY=_buildWheel('astroCharY',years,cp.y,function(){});
+    _wheels.cM=_buildWheel('astroCharM',months,cp.m,function(){});
+    _wheels.cD=_buildWheel('astroCharD',days,cp.d,function(){});
+  }
+  function _parseDate(s){
+    var p=(s||'').split('-');
+    return {y:parseInt(p[0])||1995,m:parseInt(p[1])||1,d:parseInt(p[2])||1};
+  }
+  function _wheelsToDate(prefix){
+    if(!_wheels[prefix+'Y'])return '';
+    var y=_wheels[prefix+'Y'].getVal(),m=_wheels[prefix+'M'].getVal(),d=_wheels[prefix+'D'].getVal();
+    return y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+  }
   function updateChartInputs(){
     var g=function(id){return document.getElementById(id);};
-    if(g('astroUserDate'))g('astroUserDate').value=_uBirth.date||'';
     if(g('astroUserTime'))g('astroUserTime').value=_uBirth.time||'';
     if(g('astroUserCity'))g('astroUserCity').value=_uBirth.city||'';
-    if(g('astroCharDate'))g('astroCharDate').value=_cBirth.date||'';
     if(g('astroCharTime'))g('astroCharTime').value=_cBirth.time||'';
     if(g('astroCharCity'))g('astroCharCity').value=_cBirth.city||'';
+    _initWheels();
   }
   window.astroCalculateChart=function(){
     var g=function(id){return document.getElementById(id);};
-    var uDate=g('astroUserDate')&&g('astroUserDate').value||'';
+    var uDate=_wheelsToDate('u');
+    var cDate=_wheelsToDate('c');
     var uTime=g('astroUserTime')&&g('astroUserTime').value||'';
     var uCity=g('astroUserCity')&&g('astroUserCity').value||'';
-    var cDate=g('astroCharDate')&&g('astroCharDate').value||'';
     var cTime=g('astroCharTime')&&g('astroCharTime').value||'';
     var cCity=g('astroCharCity')&&g('astroCharCity').value||'';
-    if(!uDate||!cDate){astroToast('请输入双方出生日期');return;}
+    if(!uDate||!cDate){astroToast('请选择双方出生日期');return;}
     _uBirth={date:uDate,time:uTime,city:uCity}; _save('user_birth',_uBirth);
     _cBirth={date:cDate,time:cTime,city:cCity}; _save('char_birth',_cBirth);
     var uP=calcPlanets(uDate,uTime,uCity);
     var cP=calcPlanets(cDate,cTime,cCity);
-    if(!uP||!cP){astroToast('日期格式错误，请用 YYYY-MM-DD');return;}
-    // 更新太阳星座选择
+    if(!uP||!cP){astroToast('日期解析失败，请重新选择');return;}
     _uSign=lonToSign(uP.sun); _cSign=lonToSign(cP.sun);
     _save('user_sign',_uSign); _save('char_sign',_cSign);
     drawChart(uP,cP);
@@ -22692,6 +22837,424 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
   window.showScreen=function(id){
     _origAstroShow(id);
     if(id==='scrAstro') astroInit();
+  };
+})();
+</script>
+
+<!-- ══════════════════════════════════════
+     匿名问答 (scrAnon)
+══════════════════════════════════════ -->
+<div id="scrAnon" style="display:none;flex-direction:column;position:absolute;top:0;width:100%;height:100%;z-index:41;overflow:hidden;">
+  <div class="anon-topbar">
+    <div class="anon-back" onclick="showScreen('scrCoupleSpace')">〈</div>
+    <div class="anon-title">🎭 匿名问答</div>
+    <div style="width:30px;font-size:13px;color:#c084fc;cursor:pointer;" onclick="switchAnonTab(3)">记录</div>
+  </div>
+  <div class="anon-tabs">
+    <div class="anon-tab active" id="anonTab1" onclick="switchAnonTab(1)">👁 偷看</div>
+    <div class="anon-tab" id="anonTab2" onclick="switchAnonTab(2)">🎭 伪装</div>
+    <div class="anon-tab" id="anonTab3" onclick="switchAnonTab(3)">💌 被问</div>
+    <div class="anon-tab" id="anonTab4" onclick="switchAnonTab(4)">📜 记录</div>
+  </div>
+
+  <!-- Page1: 偷看 -->
+  <div id="anonPage1" class="anon-page">
+    <div style="font-size:12px;color:rgba(180,140,230,0.5);line-height:1.8;text-align:center;padding:4px 0 8px;">有人匿名问了TA一个问题<br>TA完全不知道你在偷看 👀</div>
+    <div class="anon-section">
+      <div class="anon-sec-title">匿名者身份</div>
+      <div class="anon-identity-grid" id="anonPeekIdGrid"></div>
+      <input class="anon-custom-inp" id="anonPeekIdCustom" placeholder="或输入自定义身份…">
+    </div>
+    <div class="anon-section">
+      <div class="anon-sec-title">问题来源</div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <button class="anon-btn-sm" id="anonPeekRandBtn" onclick="anonPickRandQ('peek')" style="background:rgba(80,20,160,0.5);color:#e8d5ff;border:1px solid rgba(160,100,255,0.3);padding:8px 14px;border-radius:20px;font-size:12px;cursor:pointer;">🎲 随机抽题</button>
+        <button class="anon-btn-sm" id="anonPeekClearQ" onclick="anonClearQ('peek')" style="background:rgba(40,10,80,0.4);color:rgba(180,130,230,0.5);border:1px solid rgba(100,40,180,0.2);padding:8px 14px;border-radius:20px;font-size:12px;cursor:pointer;">清空</button>
+      </div>
+      <textarea class="anon-custom-inp" id="anonPeekQ" rows="3" placeholder="或在这里输入问题…" style="resize:none;"></textarea>
+    </div>
+    <button class="anon-go-btn" id="anonPeekGoBtn" onclick="anonGo('peek')">👁 开始偷看</button>
+    <div id="anonPeekResult"></div>
+  </div>
+
+  <!-- Page2: 伪装 -->
+  <div id="anonPage2" class="anon-page" style="display:none;">
+    <div style="font-size:12px;color:rgba(180,140,230,0.5);line-height:1.8;text-align:center;padding:4px 0 8px;">你藏在身份背后向TA提问<br>TA不知道那个人就是你 🎭</div>
+    <div class="anon-section">
+      <div class="anon-sec-title">你扮演的身份</div>
+      <div class="anon-identity-grid" id="anonMaskIdGrid"></div>
+      <input class="anon-custom-inp" id="anonMaskIdCustom" placeholder="或输入自定义身份…">
+    </div>
+    <div class="anon-section">
+      <div class="anon-sec-title">你想问TA什么</div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <button class="anon-btn-sm" onclick="anonPickRandQ('mask')" style="background:rgba(80,20,160,0.5);color:#e8d5ff;border:1px solid rgba(160,100,255,0.3);padding:8px 14px;border-radius:20px;font-size:12px;cursor:pointer;">🎲 随机抽题</button>
+        <button class="anon-btn-sm" onclick="anonClearQ('mask')" style="background:rgba(40,10,80,0.4);color:rgba(180,130,230,0.5);border:1px solid rgba(100,40,180,0.2);padding:8px 14px;border-radius:20px;font-size:12px;cursor:pointer;">清空</button>
+      </div>
+      <textarea class="anon-custom-inp" id="anonMaskQ" rows="3" placeholder="你想问他/她的问题…" style="resize:none;"></textarea>
+    </div>
+    <button class="anon-go-btn" id="anonMaskGoBtn" onclick="anonGo('mask')">🎭 以此身份提问</button>
+    <div id="anonMaskResult"></div>
+  </div>
+
+  <!-- Page3: 被问 -->
+  <div id="anonPage3" class="anon-page" style="display:none;">
+    <div style="font-size:12px;color:rgba(180,140,230,0.5);line-height:1.8;text-align:center;padding:4px 0 8px;">TA化身匿名者来问你<br>回答后TA会揭开身份看你的反应 💌</div>
+    <div class="anon-section">
+      <div class="anon-sec-title">TA扮演的身份</div>
+      <div class="anon-identity-grid" id="anonBeIdGrid"></div>
+      <input class="anon-custom-inp" id="anonBeIdCustom" placeholder="或输入自定义身份…">
+    </div>
+    <div class="anon-section">
+      <div class="anon-sec-title">问题来源</div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <button class="anon-btn-sm" onclick="anonPickRandQ('be')" style="background:rgba(80,20,160,0.5);color:#e8d5ff;border:1px solid rgba(160,100,255,0.3);padding:8px 14px;border-radius:20px;font-size:12px;cursor:pointer;">🎲 随机抽题</button>
+        <button class="anon-btn-sm" onclick="anonClearQ('be')" style="background:rgba(40,10,80,0.4);color:rgba(180,130,230,0.5);border:1px solid rgba(100,40,180,0.2);padding:8px 14px;border-radius:20px;font-size:12px;cursor:pointer;">清空</button>
+      </div>
+      <div id="anonBeQDisplay" style="font-size:13px;color:#e8d5ff;min-height:36px;padding:8px;background:rgba(10,2,22,0.6);border-radius:10px;border:1px solid rgba(100,40,180,0.2);display:none;margin-bottom:6px;"></div>
+    </div>
+    <button class="anon-go-btn" id="anonBeAskBtn" onclick="anonBeAsk()">💌 让TA来问我</button>
+    <div id="anonBeQuestionArea" style="display:none;">
+      <div class="anon-result-card">
+        <div class="anon-rc-from">匿名</div>
+        <div class="anon-rc-q" id="anonBeQ">…</div>
+        <div class="anon-rc-a" style="display:none;" id="anonBeAPreview"></div>
+      </div>
+      <div class="anon-user-inp-wrap">
+        <textarea class="anon-user-inp" id="anonBeAnswer" placeholder="写下你的回答…" rows="2"></textarea>
+        <button class="anon-send-sm" onclick="anonBeSubmit()">↑</button>
+      </div>
+    </div>
+    <div id="anonBeResult"></div>
+  </div>
+
+  <!-- Page4: 记录 -->
+  <div id="anonPage4" class="anon-page" style="display:none;">
+    <div id="anonHistoryList"></div>
+  </div>
+</div>
+<script>
+// ═══════════════════════════════════════════════════════
+// 匿名问答 (scrAnon)
+// ═══════════════════════════════════════════════════════
+(function initAnon(){
+  var ANON_KEY_BASE = 'anonQA_v1';
+  function _cid(){ return window._csCurrentCharId||(function(){try{return localStorage.getItem('cs_active_char');}catch(e){}return '';})()||''; }
+  function _anonKey(){ var c=_cid(); return ANON_KEY_BASE+(c?'_'+c:''); }
+  async function _saveRecords(arr){ var k=_anonKey(); try{await localforage.setItem(k,arr);}catch(e){} try{localStorage.setItem(k,JSON.stringify(arr));}catch(e){} }
+  async function _loadRecords(){ var k=_anonKey(),d=null; try{d=await localforage.getItem(k);}catch(e){} if(!d){try{var r=localStorage.getItem(k);if(r)d=JSON.parse(r);}catch(e){}} return Array.isArray(d)?d:[]; }
+
+  var IDENTITIES = [
+    {label:'前任',emoji:'💔'},{label:'暗恋者',emoji:'😳'},{label:'闺蜜/死党',emoji:'👯'},
+    {label:'死对头',emoji:'😤'},{label:'网友',emoji:'🌐'},{label:'路人',emoji:'🚶'},
+    {label:'前同事',emoji:'💼'},{label:'小学同学',emoji:'🏫'}
+  ];
+  var QUESTIONS = {
+    love:['你现在喜欢的人知道你喜欢TA吗？','如果可以和一个人重来，你会选谁？','你有没有喜欢过不该喜欢的人？','你对ta动心的第一刻是什么时候？','你谈过最难忘的一段感情是什么？'],
+    dark:['你做过最对不起别人的事是什么？','你有过最不道德的想法是什么？','你有没有秘密一直瞒着最亲近的人？','你最后悔的一件事是什么？','你有没有骗过你在乎的人？'],
+    sweet:['你上次哭是因为什么？','你最近在偷偷想谁？','你觉得自己值得被爱吗？','你有没有为某人改变过自己？','你觉得完美的一天是怎样的？'],
+    random:['你最近睡前在想什么？','如果只能留下一段记忆，你留哪一段？','你有没有做梦梦到过某人后不想醒来？','你有多久没有真正开心过了？','你最想对一个人说但一直没说的话是什么？']
+  };
+  var ALL_Q = [].concat(QUESTIONS.love, QUESTIONS.dark, QUESTIONS.sweet, QUESTIONS.random);
+
+  var _curMode = 'peek';
+  var _beCurrentQ = '';
+  var _beCurrentId = '';
+
+  // ── 身份选择器 ──
+  function renderIdGrid(gridId, inputId){
+    var grid = document.getElementById(gridId); if(!grid) return;
+    grid.innerHTML = '';
+    IDENTITIES.forEach(function(id){
+      var chip = document.createElement('div');
+      chip.className = 'anon-id-chip';
+      chip.textContent = id.emoji+' '+id.label;
+      chip.onclick = function(){
+        grid.querySelectorAll('.anon-id-chip').forEach(function(c){c.classList.remove('selected');});
+        chip.classList.add('selected');
+        var inp = document.getElementById(inputId);
+        if(inp) inp.value = '';
+      };
+      grid.appendChild(chip);
+    });
+  }
+  function getSelectedId(gridId, inputId){
+    var custom = document.getElementById(inputId); if(custom&&custom.value.trim()) return custom.value.trim();
+    var grid = document.getElementById(gridId); if(!grid) return '匿名者';
+    var sel = grid.querySelector('.anon-id-chip.selected');
+    return sel ? sel.textContent.trim() : '匿名者';
+  }
+
+  // ── 随机题库 ──
+  window.anonPickRandQ = function(mode){
+    var q = ALL_Q[Math.floor(Math.random()*ALL_Q.length)];
+    if(mode==='peek'){ var el=document.getElementById('anonPeekQ'); if(el)el.value=q; }
+    else if(mode==='mask'){ var el=document.getElementById('anonMaskQ'); if(el)el.value=q; }
+    else if(mode==='be'){
+      _beCurrentQ = q;
+      var el=document.getElementById('anonBeQDisplay');
+      if(el){el.textContent=q;el.style.display='block';}
+    }
+  };
+  window.anonClearQ = function(mode){
+    if(mode==='peek'){ var el=document.getElementById('anonPeekQ'); if(el)el.value=''; }
+    else if(mode==='mask'){ var el=document.getElementById('anonMaskQ'); if(el)el.value=''; }
+    else if(mode==='be'){
+      _beCurrentQ='';
+      var el=document.getElementById('anonBeQDisplay');
+      if(el){el.textContent='';el.style.display='none';}
+    }
+  };
+
+  // ── API ──
+  async function getApiCfg(){
+    var pxy='',key='',mod='';
+    try{pxy=originalGetItem.call(localStorage,'pxy')||'';}catch(e){}
+    try{key=originalGetItem.call(localStorage,'key')||'';}catch(e){}
+    try{mod=originalGetItem.call(localStorage,'mod')||'';}catch(e){}
+    if(!pxy){try{pxy=await localforage.getItem('pxy')||'';}catch(e){}}
+    if(!key){try{key=await localforage.getItem('key')||'';}catch(e){}}
+    if(!pxy||!key){anonToast('请先配置 API');return null;}
+    if(!pxy.includes('chat/completions'))pxy=pxy.replace(/\/$/,'')+'/chat/completions';
+    if(!mod)mod='claude-sonnet-4-20250514';
+    return {pxy:pxy,key:key,mod:mod};
+  }
+  async function callApi(cfg, prompt, maxTokens){
+    var res = await fetch(cfg.pxy,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+cfg.key},
+      body:JSON.stringify({model:cfg.mod,max_tokens:maxTokens||400,temperature:0.92,messages:[{role:'user',content:prompt}]})});
+    var data = await res.json();
+    var txt='';
+    if(data.content&&data.content[0])txt=data.content[0].text||'';
+    else if(data.choices&&data.choices[0])txt=(data.choices[0].message&&data.choices[0].message.content)||'';
+    return txt.trim();
+  }
+  function getCharCtx(){
+    var cid=_cid();
+    var name=cid?(localStorage.getItem('cN_'+cid)||'TA'):'TA';
+    var sys=''; try{sys=originalGetItem.call(localStorage,'cAP_'+cid)||'';}catch(e){}
+    var rel=''; try{rel=originalGetItem.call(localStorage,'cR_'+cid)||'';}catch(e){}
+    var myName=''; try{myName=originalGetItem.call(localStorage,'cMyN_'+cid)||'';}catch(e){}
+    return {name:name,sys:sys,rel:rel,myName:myName||'对方'};
+  }
+
+  // ── 模式一：偷看 ──
+  window.anonGo = async function(mode){
+    var btnId = mode==='peek'?'anonPeekGoBtn':'anonMaskGoBtn';
+    var resultId = mode==='peek'?'anonPeekResult':'anonMaskResult';
+    var q = '';
+    var identity = '';
+    if(mode==='peek'){
+      q = (document.getElementById('anonPeekQ')||{}).value||'';
+      identity = getSelectedId('anonPeekIdGrid','anonPeekIdCustom');
+    } else {
+      q = (document.getElementById('anonMaskQ')||{}).value||'';
+      identity = getSelectedId('anonMaskIdGrid','anonMaskIdCustom');
+    }
+    if(!q.trim()){anonToast('请先输入或抽取问题');return;}
+    var btn = document.getElementById(btnId);
+    if(btn){btn.disabled=true; btn.textContent='生成中…';}
+    var resEl = document.getElementById(resultId);
+    if(resEl){ resEl.innerHTML='<div class="anon-typing"><span></span><span></span><span></span></div>'; }
+    var cfg = await getApiCfg();
+    if(!cfg){if(btn){btn.disabled=false;btn.textContent=mode==='peek'?'👁 开始偷看':'🎭 以此身份提问';}return;}
+    var cc = getCharCtx();
+    var prompt = '';
+    if(mode==='peek'){
+      prompt = (cc.sys?'【'+cc.name+'的人设，必须严格遵守】\n'+cc.sys+'\n\n':'')+
+        (cc.rel?'【关系背景】\n'+cc.rel+'\n\n':'')+
+        '有一个身份是「'+identity+'」的人，匿名向'+cc.name+'发送了一个问题，'+cc.name+'不知道对方是谁。\n'+
+        '问题是：「'+q+'」\n\n'+
+        '请模拟这段真实的匿名问答互动，严格按照'+cc.name+'的人设来回答。输出格式：\n'+
+        '【匿名者】：（用符合「'+identity+'」身份的口吻提问，30字内）\n'+
+        '【'+cc.name+'】：（严格按人设作答，50-100字，真实自然）';
+    } else {
+      prompt = (cc.sys?'【'+cc.name+'的人设，必须严格遵守】\n'+cc.sys+'\n\n':'')+
+        (cc.rel?'【关系背景】\n'+cc.rel+'\n\n':'')+
+        '你（用户）现在伪装成「'+identity+'」，匿名向'+cc.name+'提问。'+cc.name+'不知道提问者是用户。\n'+
+        '用户的问题是：「'+q+'」\n\n'+
+        '请模拟'+cc.name+'收到这个匿名问题后的真实回应，严格按照'+cc.name+'的人设。\n'+
+        '输出格式：\n'+
+        '【'+cc.name+'】：（严格按人设作答，50-100字，真实自然，不知道提问者是谁）';
+    }
+    try{
+      var reply = await callApi(cfg, prompt, 350);
+      var ts = Date.now();
+      var record = {id:ts,mode:mode,identity:identity,question:q,answer:reply,charName:cc.name,ts:ts};
+      var records = await _loadRecords();
+      records.unshift(record);
+      await _saveRecords(records);
+      renderSingleResult(resEl, record, true);
+      anonToast('完成 ✨');
+    }catch(e){
+      if(resEl)resEl.innerHTML='<div style="color:rgba(255,100,100,0.7);font-size:12px;padding:10px;">生成失败：'+e.message+'</div>';
+    }
+    if(btn){btn.disabled=false;btn.textContent=mode==='peek'?'👁 再偷看一次':'🎭 再问一次';}
+  };
+
+  // ── 模式三：被问 ──
+  window.anonBeAsk = async function(){
+    var q = _beCurrentQ || ALL_Q[Math.floor(Math.random()*ALL_Q.length)];
+    _beCurrentId = getSelectedId('anonBeIdGrid','anonBeIdCustom');
+    var cfg = await getApiCfg(); if(!cfg) return;
+    var cc = getCharCtx();
+    var btn = document.getElementById('anonBeAskBtn');
+    if(btn){btn.disabled=true;btn.textContent='生成问题…';}
+    var prompt = (cc.sys?'【'+cc.name+'的人设，必须严格遵守】\n'+cc.sys+'\n\n':'')+
+      '你现在伪装成「'+_beCurrentId+'」的身份，匿名向'+cc.myName+'（用户）提问。\n'+
+      '请将以下问题改写成符合「'+_beCurrentId+'」身份口吻的表达（20-40字，第一人称，自然流露，不要暴露真实身份）：\n'+
+      '原始问题：'+q+'\n只输出改写后的问题，不加任何前缀。';
+    try{
+      var rewrittenQ = await callApi(cfg, prompt, 100);
+      _beCurrentQ = rewrittenQ;
+      var qEl = document.getElementById('anonBeQ'); if(qEl)qEl.textContent=rewrittenQ;
+      var area = document.getElementById('anonBeQuestionArea'); if(area)area.style.display='block';
+      var askBtn = document.getElementById('anonBeAskBtn'); if(askBtn)askBtn.style.display='none';
+    }catch(e){ anonToast('生成失败：'+e.message); }
+    if(btn){btn.disabled=false;btn.textContent='💌 让TA来问我';}
+  };
+
+  window.anonBeSubmit = async function(){
+    var ansEl = document.getElementById('anonBeAnswer');
+    var ans = ansEl?ansEl.value.trim():'';
+    if(!ans){anonToast('请写下你的回答');return;}
+    var cfg = await getApiCfg(); if(!cfg) return;
+    var cc = getCharCtx();
+    var resEl = document.getElementById('anonBeResult');
+    if(resEl)resEl.innerHTML='<div class="anon-typing"><span></span><span></span><span></span></div>';
+    var prompt = (cc.sys?'【'+cc.name+'的人设，必须严格遵守】\n'+cc.sys+'\n\n':'')+
+      (cc.rel?'【关系背景】\n'+cc.rel+'\n\n':'')+
+      '你（'+cc.name+'）刚才伪装成「'+_beCurrentId+'」，匿名问了'+cc.myName+'一个问题：\n'+
+      '「'+_beCurrentQ+'」\n\n'+
+      cc.myName+'的回答是：「'+ans+'」\n\n'+
+      '现在你决定揭开身份，以'+cc.name+'的真实人设，对这个回答做出反应。\n'+
+      '（可以吃醋/惊讶/满意/嘲讽/感动，完全取决于你的人设和回答内容，60-100字，真实自然）\n'+
+      '输出格式：\n'+
+      '【揭开身份】：（'+cc.name+'以真实身份的反应）';
+    try{
+      var reply = await callApi(cfg, prompt, 250);
+      var ts = Date.now();
+      var record = {id:ts,mode:'be',identity:_beCurrentId,question:_beCurrentQ,userAnswer:ans,answer:reply,charName:cc.name,ts:ts};
+      var records = await _loadRecords();
+      records.unshift(record);
+      await _saveRecords(records);
+      renderBeResult(resEl, record, true);
+      // 重置
+      var area = document.getElementById('anonBeQuestionArea'); if(area)area.style.display='none';
+      var askBtn = document.getElementById('anonBeAskBtn'); if(askBtn){askBtn.style.display='';askBtn.textContent='💌 再被问一次';}
+      if(ansEl)ansEl.value='';
+      _beCurrentQ=''; _beCurrentId='';
+      anonToast('身份揭穿！✨');
+    }catch(e){
+      if(resEl)resEl.innerHTML='<div style="color:rgba(255,100,100,0.7);font-size:12px;padding:10px;">生成失败：'+e.message+'</div>';
+    }
+  };
+
+  // ── 渲染 ──
+  function renderSingleResult(container, rec, isNew){
+    if(!container) return;
+    var card = buildCard(rec);
+    if(isNew) container.innerHTML='';
+    container.appendChild(card);
+  }
+  function renderBeResult(container, rec, isNew){
+    if(!container) return;
+    if(isNew) container.innerHTML='';
+    var card = buildCard(rec);
+    container.appendChild(card);
+  }
+  function buildCard(rec){
+    var card = document.createElement('div');
+    card.className = 'anon-result-card';
+    var d = new Date(rec.ts);
+    var tstr = (d.getMonth()+1)+'/'+d.getDate()+' '+d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes();
+    var modeLabel = rec.mode==='peek'?'偷看':rec.mode==='mask'?'伪装':'被问';
+    var inner = '<div class="anon-rc-header"><span class="anon-rc-from">'+modeLabel+' · '+rec.identity+'</span><span class="anon-rc-time">'+tstr+'</span></div>';
+    inner += '<div class="anon-rc-q">Q: '+rec.question+'</div>';
+    if(rec.userAnswer) inner += '<div class="anon-rc-a" style="color:#e8d5ff;margin-bottom:6px;">我: '+rec.userAnswer+'</div>';
+    inner += '<div class="anon-rc-a">'+rec.answer+'</div>';
+    inner += '<div class="anon-rc-footer"><button class="anon-btn-sm anon-btn-send" onclick="anonSendCard(\''+rec.id+'\')">💬 发到聊天</button><button class="anon-btn-sm anon-btn-del" onclick="anonDeleteRecord(\''+rec.id+'\')">🗑 删除</button></div>';
+    card.innerHTML = inner;
+    return card;
+  }
+
+  // ── 记录页 ──
+  async function renderHistory(){
+    var el = document.getElementById('anonHistoryList'); if(!el) return;
+    var records = await _loadRecords();
+    if(!records.length){
+      el.innerHTML='<div class="anon-empty">还没有任何匿名问答记录<br>去试试三种模式吧 🎭</div>';
+      return;
+    }
+    el.innerHTML='';
+    records.forEach(function(rec){
+      el.appendChild(buildCard(rec));
+    });
+  }
+
+  window.anonDeleteRecord = async function(id){
+    var records = await _loadRecords();
+    records = records.filter(function(r){return String(r.id)!==String(id);});
+    await _saveRecords(records);
+    renderHistory();
+    anonToast('已删除');
+  };
+
+  window.anonSendCard = async function(id){
+    var records = await _loadRecords();
+    var rec = records.find(function(r){return String(r.id)===String(id);});
+    if(!rec){anonToast('记录不存在');return;}
+    var cid=_cid();
+    var modeLabel=rec.mode==='peek'?'偷看':rec.mode==='mask'?'伪装':'被问';
+    var cardText='[匿名问答·'+modeLabel+']\n'+
+      '🎭 身份：'+rec.identity+'\n'+
+      '❓ 问：'+rec.question+'\n'+
+      (rec.userAnswer?'🙋 我的回答：'+rec.userAnswer+'\n':'')+
+      '💬 '+rec.charName+'：'+rec.answer.replace(/【[^】]+】：/g,'');
+    // 跳到聊天并填入
+    if(typeof currentChatId!=='undefined'&&currentChatId===cid){
+      if(typeof showScreen==='function')showScreen('scrRoom');
+    } else {
+      if(typeof showScreen==='function')showScreen('scrList');
+    }
+    setTimeout(function(){
+      var inp=document.getElementById('iptMsg');
+      if(inp){inp.value=cardText;inp.focus();if(typeof _autoResizeIptMsg==='function')_autoResizeIptMsg();}
+    }, 400);
+    anonToast('已填入聊天输入框，发送即可 💬');
+  };
+
+  // ── Tab切换 ──
+  window.switchAnonTab = function(n){
+    [1,2,3,4].forEach(function(i){
+      var t=document.getElementById('anonTab'+i),p=document.getElementById('anonPage'+i);
+      if(t)t.classList.toggle('active',i===n);
+      if(p)p.style.display=i===n?'flex':'none';
+    });
+    if(n===4)renderHistory();
+  };
+
+  function anonToast(msg){
+    var t=document.createElement('div');
+    t.style.cssText='position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(50,10,90,0.95);color:#f0e6ff;padding:8px 18px;border-radius:20px;font-size:13px;z-index:9999;pointer-events:none;border:1px solid rgba(180,100,255,0.35);white-space:nowrap;';
+    t.textContent=msg;document.body.appendChild(t);setTimeout(function(){t.remove();},2300);
+  }
+
+  window._openAnon = async function(){
+    if(typeof showScreen==='function')showScreen('scrAnon');
+    renderIdGrid('anonPeekIdGrid','anonPeekIdCustom');
+    renderIdGrid('anonMaskIdGrid','anonMaskIdCustom');
+    renderIdGrid('anonBeIdGrid','anonBeIdCustom');
+    switchAnonTab(1);
+  };
+
+  var _origAnonShow = window.showScreen;
+  window.showScreen = function(id){
+    _origAnonShow(id);
+    if(id==='scrAnon'){
+      renderIdGrid('anonPeekIdGrid','anonPeekIdCustom');
+      renderIdGrid('anonMaskIdGrid','anonMaskIdCustom');
+      renderIdGrid('anonBeIdGrid','anonBeIdCustom');
+    }
   };
 })();
 </script>
