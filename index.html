@@ -5277,7 +5277,65 @@ if(typeof localforage === 'undefined') {
     </div>
 </div>
 </div>
-<style>@keyframes _olShimmer{0%{left:-60%}60%,100%{left:120%}}</style>
+<style>@keyframes _olShimmer{0%{left:-60%}60%,100%{left:120%}}
+/* ══════════════════════════════════════
+   每日星运 (scrAstro) 样式
+══════════════════════════════════════ */
+#scrAstro { background:#0d0618; color:#e8d5ff; }
+.astro-starfield { position:absolute;top:0;left:0;width:100%;height:100%;overflow:hidden;pointer-events:none;z-index:0; }
+.astro-star { position:absolute;border-radius:50%;background:white;animation:astroTwinkle 3s infinite; }
+@keyframes astroTwinkle { 0%,100%{opacity:0.2;transform:scale(1)} 50%{opacity:1;transform:scale(1.4)} }
+.astro-topbar { position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;padding:max(calc(env(safe-area-inset-top,0px) + 12px),28px) 15px 12px;background:linear-gradient(180deg,rgba(13,6,24,0.98),rgba(13,6,24,0));flex-shrink:0; }
+.astro-back { font-size:22px;color:#b89aff;cursor:pointer;width:30px; }
+.astro-title { font-size:17px;font-weight:700;color:#e8d5ff;letter-spacing:3px;text-shadow:0 0 12px rgba(180,120,255,0.7); }
+.astro-tabs { display:flex;background:rgba(20,5,45,0.9);border-bottom:1px solid rgba(100,50,200,0.3);flex-shrink:0;position:relative;z-index:1; }
+.astro-tab { flex:1;text-align:center;padding:11px 0;font-size:12px;color:rgba(180,150,220,0.5);cursor:pointer;transition:0.2s; }
+.astro-tab.active { color:#e8d5ff;border-bottom:2px solid #a070ff;font-weight:bold; }
+.astro-page { flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px 30px;position:relative;z-index:1; }
+.astro-sec-title { font-size:11px;color:rgba(180,150,220,0.6);letter-spacing:2px;margin:14px 0 8px; }
+.astro-sign-grid { display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin-bottom:6px; }
+.astro-sign-item { display:flex;flex-direction:column;align-items:center;padding:7px 2px;border-radius:10px;cursor:pointer;transition:0.15s;border:1px solid rgba(100,50,200,0.2);background:rgba(30,10,60,0.4); }
+.astro-sign-item.selected { background:rgba(100,40,200,0.5);border-color:#a070ff;box-shadow:0 0 10px rgba(160,112,255,0.4); }
+.astro-sign-glyph { font-size:17px;line-height:1; }
+.astro-sign-label { font-size:9px;color:#c8a8ff;margin-top:3px; }
+.astro-compat-card { background:rgba(25,8,55,0.8);border:1px solid rgba(100,50,200,0.35);border-radius:16px;padding:16px;margin:10px 0;backdrop-filter:blur(10px); }
+.astro-score-row { display:flex;justify-content:space-between;align-items:center;margin-bottom:10px; }
+.astro-score-lbl { font-size:11px;color:rgba(180,150,220,0.6);letter-spacing:1px; }
+.astro-score-num { font-size:30px;font-weight:800;color:#ffd700;text-shadow:0 0 12px rgba(255,215,0,0.5); }
+.astro-bar-bg { height:4px;background:rgba(80,30,150,0.3);border-radius:2px;margin-bottom:10px;overflow:hidden; }
+.astro-bar { height:100%;border-radius:2px;transition:width 1s cubic-bezier(.4,0,.2,1); }
+.astro-compat-msg { font-size:12px;color:#c8a8ff;line-height:1.7;font-style:italic; }
+.astro-elem-line { font-size:11px;color:rgba(180,150,220,0.55);margin-top:8px;padding-top:8px;border-top:1px solid rgba(100,50,200,0.2);line-height:1.5; }
+.astro-ai-card { background:rgba(15,3,35,0.9);border:1px solid rgba(80,30,160,0.3);border-radius:16px;padding:14px;margin:8px 0;min-height:50px; }
+.astro-ai-summary { font-size:14px;color:#e8d5ff;font-style:italic;margin-bottom:10px;line-height:1.7;text-align:center; }
+.astro-ai-detail { font-size:12px;color:#c8a8ff;line-height:1.8;margin-bottom:8px; }
+.astro-ai-row { display:flex;align-items:flex-start;gap:8px;margin-top:7px;font-size:12px;color:#c8a8ff;line-height:1.6; }
+.astro-ai-lbl { color:#a070ff;font-weight:bold;white-space:nowrap;min-width:50px; }
+.astro-gen-btn { width:100%;padding:14px;background:linear-gradient(135deg,#4c1d95,#7c3aed);color:white;border:none;border-radius:14px;font-size:14px;font-weight:bold;cursor:pointer;margin:10px 0 4px;letter-spacing:1px;box-shadow:0 4px 18px rgba(120,60,255,0.35);transition:0.2s; }
+.astro-gen-btn:active { transform:scale(0.98); }
+.astro-gen-btn:disabled { opacity:0.5; }
+.astro-date-banner { text-align:center;font-size:12px;color:rgba(180,150,220,0.55);letter-spacing:2px;margin-bottom:14px;padding:8px;background:rgba(30,10,60,0.4);border-radius:10px; }
+.astro-fortune-hint { text-align:center;color:rgba(160,120,220,0.4);font-size:12px;padding:30px 0;font-style:italic;line-height:2; }
+.astro-fortune-card { background:rgba(25,8,55,0.8);border:1px solid rgba(100,50,200,0.3);border-radius:14px;padding:14px;margin-bottom:10px; }
+.astro-fc-hdr { display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#e8d5ff;margin-bottom:7px;font-weight:bold; }
+.astro-fc-txt { font-size:12px;color:#c8a8ff;line-height:1.8;font-style:italic; }
+.astro-stars { color:#ffd700;letter-spacing:1px;font-size:11px; }
+.astro-lucky-row { display:flex;justify-content:space-around;margin-top:12px;padding:12px 8px;background:rgba(15,3,35,0.8);border-radius:12px;border:1px solid rgba(80,30,160,0.2); }
+.astro-lucky-item { text-align:center; }
+.astro-lucky-lbl { font-size:10px;color:rgba(160,130,200,0.6);margin-bottom:5px; }
+.astro-lucky-val { font-size:17px;font-weight:bold;color:#ffd700; }
+.astro-input-sec { background:rgba(25,8,55,0.7);border:1px solid rgba(80,30,160,0.3);border-radius:14px;padding:14px;margin-bottom:12px; }
+.astro-input-title { font-size:11px;color:#a070ff;margin-bottom:10px;letter-spacing:1px;font-weight:bold; }
+.astro-input { width:100%;padding:10px 12px;background:rgba(15,3,35,0.9);border:1px solid rgba(80,30,160,0.4);border-radius:10px;color:#e8d5ff;font-size:13px;box-sizing:border-box;margin-bottom:8px;outline:none;transition:0.2s; }
+.astro-input:focus { border-color:#a070ff; }
+.astro-input::placeholder { color:rgba(160,130,200,0.35); }
+.astro-chart-wrap { background:rgba(8,1,18,0.9);border-radius:16px;padding:10px;margin:10px 0;text-align:center;border:1px solid rgba(60,20,120,0.4); }
+.astro-planet-tbl { width:100%;border-collapse:collapse;font-size:12px;margin-top:10px; }
+.astro-planet-tbl th { color:#a070ff;padding:7px 4px;text-align:center;border-bottom:1px solid rgba(80,30,160,0.3);font-size:11px; }
+.astro-planet-tbl td { color:#c8a8ff;padding:6px 4px;text-align:center;border-bottom:1px solid rgba(40,15,80,0.4); }
+.astro-planet-tbl tr:nth-child(even) td { background:rgba(30,10,60,0.2); }
+
+</style>
 
 <script>
 
@@ -5526,7 +5584,7 @@ let pressTimer = null;
 let selEl = null;
 let currentQuote ="";
 function showScreen(showId) {
-    [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrSpace, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet"), $("scrContact"), $("scrSetFont"), $("scrCharPhone"), $("scrSpyDiary"), $("scrSpyZhihu"), $("scrSpySecret"), $("scrSpyMeituan"), $("scrSpyFootprint"), $("scrSpyWallet"), $("scrSpyShop"), $("scrSpyIqiyi"), $("scrSpySettings"), $("scrMoment"), $("scrGroupRoom"), $("scrGroupSettings"), $("scrOurSongs"), $("scrHomeSettings"), $("scrCoupleSpace"), $("scrPeriod"), $("scrPastMemory"), $("scrDiary")].forEach(s => { if(s) s.style.display = "none"; });
+    [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrSpace, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet"), $("scrContact"), $("scrSetFont"), $("scrCharPhone"), $("scrSpyDiary"), $("scrSpyZhihu"), $("scrSpySecret"), $("scrSpyMeituan"), $("scrSpyFootprint"), $("scrSpyWallet"), $("scrSpyShop"), $("scrSpyIqiyi"), $("scrSpySettings"), $("scrMoment"), $("scrGroupRoom"), $("scrGroupSettings"), $("scrOurSongs"), $("scrHomeSettings"), $("scrCoupleSpace"), $("scrPeriod"), $("scrPastMemory"), $("scrDiary"), $("scrAstro")].forEach(s => { if(s) s.style.display = "none"; });
 
     let target = $(showId);
     if(showId === "scrRoom") {
@@ -5534,7 +5592,7 @@ function showScreen(showId) {
         if(_im){ _im.style.height="34px"; _im.style.overflowY="hidden"; }
     }
     if(target) {
-        if(showId === "scrRoom" || showId === "scrList" || showId === "scrSetApi" || showId === "scrSetChat" || showId === "scrWb" || showId === "scrWbEdit" || showId === "scrMe" || showId === "scrCharSticker" || showId === "scrSpace" || showId === "scrLogList" || showId === "scrLogEdit" || showId === "scrFav" || showId === "scrWallet" || showId === "scrContact" || showId === "scrSetFont" || showId === "scrSpyDiary" || showId === "scrSpyZhihu" || showId === "scrSpySecret" || showId === "scrSpyMeituan" || showId === "scrSpyFootprint" || showId === "scrSpyWallet" || showId === "scrSpyShop" || showId === "scrSpyIqiyi" || showId === "scrSpySettings" || showId === "scrMoment" || showId === "scrGroupRoom" || showId === "scrGroupSettings" || showId === "scrOurSongs" || showId === "scrHomeSettings" || showId === "scrPeriod" || showId === "scrPastMemory" || showId === "scrDiary") {
+        if(showId === "scrRoom" || showId === "scrList" || showId === "scrSetApi" || showId === "scrSetChat" || showId === "scrWb" || showId === "scrWbEdit" || showId === "scrMe" || showId === "scrCharSticker" || showId === "scrSpace" || showId === "scrLogList" || showId === "scrLogEdit" || showId === "scrFav" || showId === "scrWallet" || showId === "scrContact" || showId === "scrSetFont" || showId === "scrSpyDiary" || showId === "scrSpyZhihu" || showId === "scrSpySecret" || showId === "scrSpyMeituan" || showId === "scrSpyFootprint" || showId === "scrSpyWallet" || showId === "scrSpyShop" || showId === "scrSpyIqiyi" || showId === "scrSpySettings" || showId === "scrMoment" || showId === "scrGroupRoom" || showId === "scrGroupSettings" || showId === "scrOurSongs" || showId === "scrHomeSettings" || showId === "scrPeriod" || showId === "scrPastMemory" || showId === "scrDiary" || showId === "scrAstro") {
             target.style.display = "flex";
         } else if (showId === "scrCharPhone") {
             target.style.display = "flex";
@@ -20487,7 +20545,9 @@ if(document.getElementById('offlineModePanel')) {
   // 宠物按钮绑定
   var petFuncBtn=document.getElementById('csFuncDiary');
   if(petFuncBtn)petFuncBtn.onclick=function(){showScreen('scrDiary');};
-  ['csFuncHoroscope,每日星运','csFuncChallenge,情侣挑战'].forEach(function(s){
+  var horoscopeBtn=document.getElementById('csFuncHoroscope');
+  if(horoscopeBtn)horoscopeBtn.onclick=function(){if(typeof window._openAstro==='function')window._openAstro();};
+  ['csFuncChallenge,情侣挑战'].forEach(function(s){
     var p=s.split(',');bindFuncToast(p[0],p[1]);
   });
   // TA的过去入口
@@ -21752,7 +21812,7 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     window.diaryInsertNote=async function(){
     var entry=_entries.find(function(e){return e.id===_curId;});
     if(!entry) return;
-    diaryPrompt('💌 插入小纸条','写下想夹给TA看的悄悄话…',async function(text){
+    diaryPrompt('💌 插入小纸条','写下想夹给TA看的丛小话…',async function(text){
       if(!text) return;
       entry.content.push({type:'note',author:'user',text:text,ts:Date.now()});
       await diarySaveAll();diaryRenderContent(entry);diaryToast('小纸条已夹入 💌');
@@ -21949,14 +22009,7 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     // 构建带改动记录的上下文：让char看到所有划掉和改写的痕迹
     var ctxLines=[];
     entry.content.forEach(function(b){
-      if(b.isError) return;
-      // 纸条也纳入上下文，让char能看见
-      if(b.type==="note"){
-        var noteWho=b.author==="user"?"我":"你";
-        ctxLines.push("【"+noteWho+"夹的小纸条】"+b.text);
-        return;
-      }
-      if(b.type!=="text") return;
+      if(b.type!=="text"||b.isError) return;
       var who=b.author==="user"?"我":"你";
       if(b.striked){
         // 有划掉：区分是谁划掉了谁的
@@ -21999,7 +22052,7 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     var _myN=myName||"对方";
     sysparts.push("今天是"+entry.dateStr+"。你正在和"+_myN+"共用一本情侣日记本，在上面手写留言。\n【重要】写日记时必须完全符合你上方的人设性格，用你平时说话的口吻和语气，不要变成温柔撒娇的风格，除非你的人设本就如此。");
     if(ctx)sysparts.push("日记目前的内容和改动记录如下：\n"+ctx);
-    sysparts.push("请根据上面的内容接着写2-4句，完全用你平时说话的语气和风格，自然地回应或接续。直接输出日记正文，不加任何前缀、引号或说明。");
+    sysparts.push("请根据上面的内容接着写2-4句。可以顺着改动后的内容继续，也可以用符合你人设的语气回应或吐槽对方的改动。直接输出日记正文，不加任何前缀、引号或说明。");
     var sys=sysparts.join("\n\n");
     // Bug3修复：只请求续写，不同时判断锁定（用户主动让ta续写，不应该被锁）
     try{
@@ -22116,3 +22169,529 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
 </script>
 
 
+<!-- ══════════════════════════════════════
+     每日星运 (scrAstro)
+══════════════════════════════════════ -->
+<div id="scrAstro" style="display:none;flex-direction:column;position:absolute;top:0;width:100%;height:100%;z-index:41;overflow:hidden;">
+  <div class="astro-starfield" id="astroStarfield"></div>
+  <!-- 顶栏 -->
+  <div class="astro-topbar">
+    <div class="astro-back" onclick="showScreen('scrCoupleSpace')">〈</div>
+    <div class="astro-title">✦ 每日星运 ✦</div>
+    <div style="width:30px"></div>
+  </div>
+  <!-- 标签栏 -->
+  <div class="astro-tabs">
+    <div class="astro-tab active" id="astroTab1" onclick="switchAstroTab(1)">🔮 配对</div>
+    <div class="astro-tab" id="astroTab2" onclick="switchAstroTab(2)">🌙 今日运势</div>
+    <div class="astro-tab" id="astroTab3" onclick="switchAstroTab(3)">✨ 星盘</div>
+  </div>
+  <!-- Page1: 配对 -->
+  <div id="astroPage1" class="astro-page">
+    <div class="astro-sec-title">我的星座</div>
+    <div class="astro-sign-grid" id="astroUserSignGrid"></div>
+    <div class="astro-sec-title">TA的星座</div>
+    <div class="astro-sign-grid" id="astroCharSignGrid"></div>
+    <div class="astro-compat-card">
+      <div class="astro-score-row">
+        <div class="astro-score-lbl">灵魂契合度</div>
+        <div class="astro-score-num" id="astroCompatScore">?</div>
+      </div>
+      <div class="astro-bar-bg"><div class="astro-bar" id="astroCompatBar" style="width:0%"></div></div>
+      <div class="astro-compat-msg" id="astroCompatMsg">请先选择双方星座…</div>
+      <div class="astro-elem-line" id="astroElemLine"></div>
+    </div>
+    <div class="astro-ai-card" id="astroCompatAI">
+      <div class="astro-fortune-hint">选好星座后，点击星象解读获取配对分析…</div>
+    </div>
+    <button class="astro-gen-btn" id="astroCompatBtn" onclick="astroGenerateCompat()">✦ 星象解读</button>
+  </div>
+  <!-- Page2: 今日运势 -->
+  <div id="astroPage2" class="astro-page" style="display:none;">
+    <div class="astro-date-banner" id="astroFortuneDate"></div>
+    <div id="astroFortuneResult">
+      <div class="astro-fortune-hint">🌙 星象正在排列中<br>点击下方按钮，让命运之光为你指引今日…</div>
+    </div>
+    <button class="astro-gen-btn" id="astroFortuneBtn" onclick="astroGenerateFortune()">🔮 今日占卜</button>
+  </div>
+  <!-- Page3: 星盘 -->
+  <div id="astroPage3" class="astro-page" style="display:none;">
+    <div class="astro-input-sec">
+      <div class="astro-input-title">🌙 我的出生信息</div>
+      <input class="astro-input" id="astroUserDate" type="date" placeholder="出生日期">
+      <input class="astro-input" id="astroUserTime" type="time" placeholder="出生时间（可选，用于算上升星座）">
+      <input class="astro-input" id="astroUserCity" list="astroCityList1" placeholder="出生城市（可选）">
+      <datalist id="astroCityList1"></datalist>
+    </div>
+    <div class="astro-input-sec">
+      <div class="astro-input-title">💕 TA的出生信息</div>
+      <input class="astro-input" id="astroCharDate" type="date" placeholder="出生日期">
+      <input class="astro-input" id="astroCharTime" type="time" placeholder="出生时间（可选）">
+      <input class="astro-input" id="astroCharCity" list="astroCityList2" placeholder="出生城市（可选）">
+      <datalist id="astroCityList2"></datalist>
+    </div>
+    <button class="astro-gen-btn" onclick="astroCalculateChart()">✦ 计算双人星盘</button>
+    <div id="astroChartResult" style="display:none;">
+      <div class="astro-chart-wrap">
+        <svg id="astroChartSVG" width="100%" viewBox="0 0 280 280" style="max-width:280px;display:block;margin:0 auto;"></svg>
+      </div>
+      <div id="astroPlanetTable"></div>
+    </div>
+  </div>
+</div>
+
+
+
+<script>
+// ═══════════════════════════════════════════════════════
+// 每日星运 (scrAstro) — 天文计算 + AI 占星
+// ═══════════════════════════════════════════════════════
+(function initAstro(){
+  'use strict';
+  var D2R=Math.PI/180;
+  var SIGN_NAMES=['白羊','金牛','双子','巨蟹','狮子','处女','天秤','天蝎','射手','摩羯','水瓶','双鱼'];
+  var SIGN_EMOJI=['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓'];
+  var SIGN_ELEM=['火','土','风','水','火','土','风','水','火','土','风','水'];
+  var ELEM_COMPAT={
+    '火火':'同元素的你们热情如炬，彼此点燃。',
+    '火风':'风助火势，灵魂共鸣，充满活力与想象。',
+    '火土':'激情碰上沉稳，冰火交融，张力十足。',
+    '火水':'水与火的相遇，深情与热烈缠绕成谜。',
+    '土土':'脚踏实地，携手共筑，细水长流。',
+    '土风':'实际与理想间的拉扯，构成独特的和声。',
+    '土水':'土地滋养流水，包容与稳定是你们的底色。',
+    '风风':'灵魂的共鸣，言语便是你们最深情的缱绻。',
+    '风水':'轻盈遇见深邃，思想与情感交织出诗。',
+    '水水':'情感的深海，你们都能感知彼此最细微的涟漪。'
+  };
+  var COMPAT=[
+    [85,45,75,55,95,60,80,50,90,40,70,65],
+    [45,80,50,85,55,90,60,75,45,95,50,70],
+    [75,50,80,45,70,55,90,40,85,55,95,60],
+    [55,85,45,80,50,70,55,95,60,85,50,90],
+    [95,55,70,50,85,45,75,65,90,55,70,50],
+    [60,90,55,70,45,80,50,85,55,90,60,75],
+    [80,60,90,55,75,50,85,45,80,60,95,55],
+    [50,75,40,95,65,85,45,80,55,75,60,90],
+    [90,45,85,60,90,55,80,55,85,45,75,60],
+    [40,95,55,85,55,90,60,75,45,85,55,80],
+    [70,50,95,50,70,60,95,60,75,55,80,45],
+    [65,70,60,90,50,75,55,90,60,80,45,80]
+  ];
+  var CITIES={
+    '北京':[39.90,116.41],'上海':[31.23,121.47],'广州':[23.13,113.26],'深圳':[22.54,114.06],
+    '成都':[30.57,104.07],'杭州':[30.27,120.16],'武汉':[30.59,114.31],'重庆':[29.56,106.55],
+    '西安':[34.34,108.94],'南京':[32.06,118.80],'天津':[39.13,117.20],'苏州':[31.30,120.62],
+    '郑州':[34.75,113.65],'长沙':[28.23,112.94],'沈阳':[41.81,123.43],'青岛':[36.07,120.38],
+    '宁波':[29.87,121.55],'昆明':[25.05,102.71],'大连':[38.91,121.62],'厦门':[24.48,118.09],
+    '哈尔滨':[45.75,126.64],'济南':[36.68,116.99],'合肥':[31.82,117.23],'福州':[26.07,119.30],
+    '太原':[37.87,112.55],'长春':[43.82,125.32],'石家庄':[38.04,114.51],'南昌':[28.68,115.88],
+    '贵阳':[26.65,106.63],'南宁':[22.82,108.37],'乌鲁木齐':[43.83,87.62],'兰州':[36.06,103.79],
+    '呼和浩特':[40.84,111.75],'海口':[20.04,110.32],'银川':[38.47,106.27],'西宁':[36.62,101.77],
+    '拉萨':[29.65,91.12],'香港':[22.32,114.17],'澳门':[22.20,113.55],'台北':[25.05,121.53],
+    '东京':[35.69,139.69],'首尔':[37.57,126.98],'新加坡':[1.35,103.82],'纽约':[40.71,-74.01],
+    '伦敦':[51.51,-0.13],'巴黎':[48.85,2.35],'悉尼':[-33.87,151.21],'洛杉矶':[34.05,-118.24]
+  };
+
+  // ── Storage (per charId) ──
+  function _cid(){ return window._csCurrentCharId||(function(){try{return localStorage.getItem('cs_active_char');}catch(e){}return '';})(); }
+  function _sk(k){ var c=_cid(); return 'astro_'+k+(c?('_'+c):''); }
+  function _save(k,v){ var key=_sk(k); try{localforage.setItem(key,JSON.stringify(v)).catch(function(){});}catch(e){} try{localStorage.setItem(key,JSON.stringify(v));}catch(e){} }
+  async function _load(k,def){
+    var key=_sk(k),v=null;
+    try{v=await localforage.getItem(key);}catch(e){}
+    if(v===null||v===undefined){try{v=localStorage.getItem(key);}catch(e){}}
+    if(v===null||v===undefined) return def;
+    try{return JSON.parse(v);}catch(e){return v||def;}
+  }
+
+  // ── 天文计算 ──
+  function toJD(y,m,d,h){
+    if(h===undefined)h=12;
+    if(m<=2){y--;m+=12;}
+    var A=Math.floor(y/100),B=2-A+Math.floor(A/4);
+    return Math.floor(365.25*(y+4716))+Math.floor(30.6001*(m+1))+d+h/24+B-1524.5;
+  }
+  function norm360(x){return ((x%360)+360)%360;}
+  function sunLon(jd){
+    var T=(jd-2451545)/36525;
+    var L0=norm360(280.46646+36000.76983*T+0.0003032*T*T);
+    var M=norm360(357.52911+35999.05029*T-0.0001537*T*T)*D2R;
+    var C=(1.914602-0.004817*T)*Math.sin(M)+(0.019993-0.000101*T)*Math.sin(2*M)+0.000289*Math.sin(3*M);
+    return norm360(L0+C);
+  }
+  function moonLon(jd){
+    var T=(jd-2451545)/36525;
+    var L1=(218.3164477+481267.88123421*T)*D2R;
+    var D=(297.8501921+445267.1114034*T)*D2R;
+    var M=(357.5291092+35999.0502909*T)*D2R;
+    var M1=(134.9633964+477198.8675055*T)*D2R;
+    var F=(93.2720950+483202.0175233*T)*D2R;
+    var dL=6288774*Math.sin(M1)+1274027*Math.sin(2*D-M1)+658314*Math.sin(2*D)
+          +213618*Math.sin(2*M1)-185116*Math.sin(M)-114332*Math.sin(2*F)
+          +58793*Math.sin(2*D-2*M1)+57066*Math.sin(2*D-M-M1)
+          +53322*Math.sin(2*D+M1)+45758*Math.sin(2*D-M);
+    return norm360(L1/D2R+dL/1000000);
+  }
+  function planetLon(name,jd){
+    var T=(jd-2451545)/36525;
+    var tb={
+      mercury:[252.250906,149474.0722491],
+      venus:[181.979801,58519.2130302],
+      mars:[355.433275,19141.6964746],
+      jupiter:[34.351519,3036.3027748],
+      saturn:[50.077444,1223.5110686]
+    };
+    var e=tb[name]; if(!e) return 0;
+    return norm360(e[0]+e[1]*T);
+  }
+  function calcAsc(jd,lat,lon){
+    var T=(jd-2451545)/36525;
+    var GMST=norm360(280.46061837+360.98564736629*(jd-2451545)+0.000387933*T*T);
+    var LST=norm360(GMST+lon);
+    var eps=(23.439291-0.013004*T)*D2R;
+    var RAMC=LST*D2R, latR=lat*D2R;
+    var asc=Math.atan2(Math.cos(RAMC),-(Math.sin(RAMC)*Math.cos(eps)+Math.tan(latR)*Math.sin(eps)));
+    return norm360(asc/D2R);
+  }
+  function lonToSign(lon){return Math.floor(norm360(lon)/30);}
+  function lonToSignStr(lon){var i=lonToSign(lon);return SIGN_NAMES[i]+SIGN_EMOJI[i];}
+
+  function calcPlanets(dateStr,timeStr,cityName){
+    var p=(dateStr||'').split('-');
+    if(p.length<3)return null;
+    var y=parseInt(p[0]),m=parseInt(p[1]),d=parseInt(p[2]);
+    if(!y||!m||!d)return null;
+    var tp=(timeStr||'12:00').split(':');
+    var h=parseInt(tp[0]||12),min=parseInt(tp[1]||0);
+    var hUtc=h-8+min/60; // CST→UTC
+    var jd=toJD(y,m,d,hUtc);
+    var city=CITIES[cityName]||null;
+    var lat=city?city[0]:35, lon=city?city[1]:116;
+    return {
+      jd:jd,
+      sun:sunLon(jd),moon:moonLon(jd),
+      mercury:planetLon('mercury',jd),venus:planetLon('venus',jd),
+      mars:planetLon('mars',jd),jupiter:planetLon('jupiter',jd),saturn:planetLon('saturn',jd),
+      asc:(timeStr&&cityName&&city)?calcAsc(jd,lat,lon):null
+    };
+  }
+
+  // ── State ──
+  var _uSign=null,_cSign=null;
+  var _uBirth={date:'',time:'',city:''},_cBirth={date:'',time:'',city:''};
+  var _fortuneCache=null;
+
+  // ── 初始化 ──
+  async function astroInit(){
+    _uSign=await _load('user_sign',null);
+    _cSign=await _load('char_sign',null);
+    _uBirth=await _load('user_birth',{date:'',time:'',city:''});
+    _cBirth=await _load('char_birth',{date:'',time:'',city:''});
+    _fortuneCache=await _load('fortune_cache',null);
+    // 生成星空背景
+    var sf=document.getElementById('astroStarfield');
+    if(sf&&!sf.dataset.built){
+      sf.dataset.built='1';
+      for(var i=0;i<90;i++){
+        var s=document.createElement('div');
+        var sz=Math.random()*2.5+0.5;
+        s.className='astro-star';
+        s.style.cssText='width:'+sz+'px;height:'+sz+'px;left:'+Math.random()*100+'%;top:'+Math.random()*100+'%;animation-delay:'+Math.random()*4+'s;animation-duration:'+(2+Math.random()*4)+'s;opacity:'+((Math.random()*0.5+0.1));
+        sf.appendChild(s);
+      }
+    }
+    // 城市datalist
+    ['astroCityList1','astroCityList2'].forEach(function(id){
+      var dl=document.getElementById(id);
+      if(!dl||dl.dataset.built) return;
+      dl.dataset.built='1';
+      Object.keys(CITIES).forEach(function(c){
+        var o=document.createElement('option');o.value=c;dl.appendChild(o);
+      });
+    });
+    renderCompatTab();
+    renderFortuneDate();
+    if(_fortuneCache) renderFortuneResult(_fortuneCache);
+    updateChartInputs();
+  }
+
+  // ── Tab1: 配对 ──
+  function renderCompatTab(){
+    renderSignPicker('astroUserSignGrid',_uSign,function(i){_uSign=i;_save('user_sign',i);renderCompatTab();});
+    renderSignPicker('astroCharSignGrid',_cSign,function(i){_cSign=i;_save('char_sign',i);renderCompatTab();});
+    updateCompatDisplay();
+  }
+  function renderSignPicker(id,sel,onSel){
+    var el=document.getElementById(id); if(!el) return;
+    el.innerHTML='';
+    SIGN_NAMES.forEach(function(name,i){
+      var item=document.createElement('div');
+      item.className='astro-sign-item'+(sel===i?' selected':'');
+      item.innerHTML='<div class="astro-sign-glyph">'+SIGN_EMOJI[i]+'</div><div class="astro-sign-label">'+name+'</div>';
+      item.onclick=function(){onSel(i);};
+      el.appendChild(item);
+    });
+  }
+  function updateCompatDisplay(){
+    var scoreEl=document.getElementById('astroCompatScore');
+    var barEl=document.getElementById('astroCompatBar');
+    var msgEl=document.getElementById('astroCompatMsg');
+    var elemEl=document.getElementById('astroElemLine');
+    if(!scoreEl) return;
+    if(_uSign===null||_cSign===null){
+      scoreEl.textContent='?';
+      if(barEl)barEl.style.width='0%';
+      if(msgEl)msgEl.textContent='请先选择双方星座…';
+      if(elemEl)elemEl.textContent='';
+      return;
+    }
+    var score=COMPAT[_uSign][_cSign];
+    scoreEl.textContent=score+'%';
+    var barColor=score>=80?'linear-gradient(90deg,#ffd700,#ffaa00)':score>=60?'linear-gradient(90deg,#b8a9f0,#7c3aed)':'linear-gradient(90deg,#6b7280,#4b5563)';
+    if(barEl){barEl.style.width=score+'%';barEl.style.background=barColor;}
+    if(msgEl){
+      var msgs=['✨ 天命般的相遇，星盘之间存在罕见的共鸣。命运的红线在冥冥中已将你们紧紧相连。',
+                '🌙 各有棱角的你们，需要时间与耐心磨合。正是这种张力，让感情更有深度与韵味。',
+                '🌑 星盘频率差异较大，然而星辰只是参考，真正的羁绊从来都超越星象。'];
+      msgEl.textContent=score>=75?msgs[0]:score>=55?msgs[1]:msgs[2];
+    }
+    if(elemEl){
+      var ue=SIGN_ELEM[_uSign],ce=SIGN_ELEM[_cSign];
+      var key=ue+ce,key2=ce+ue;
+      var etext=ELEM_COMPAT[key]||ELEM_COMPAT[key2]||'两种元素相遇，创造独特的化学反应。';
+      elemEl.textContent='🜂 '+ue+'象 × '+ce+'象 — '+etext;
+    }
+  }
+
+  window.astroGenerateCompat=async function(){
+    if(_uSign===null||_cSign===null){astroToast('请先选择双方星座');return;}
+    var btn=document.getElementById('astroCompatBtn');
+    if(btn){btn.disabled=true;btn.textContent='占星中…';}
+    var cfg=await getApiCfg(); if(!cfg){if(btn){btn.disabled=false;btn.textContent='✦ 星象解读';}return;}
+    var cid=_cid();
+    var charName=cid?(localStorage.getItem('cN_'+cid)||'TA'):'TA';
+    var uSign=SIGN_NAMES[_uSign]+SIGN_EMOJI[_uSign];
+    var cSign=SIGN_NAMES[_cSign]+SIGN_EMOJI[_cSign];
+    var charSys=''; try{charSys=originalGetItem.call(localStorage,'cAP_'+cid)||'';}catch(e){}
+    var prompt=[(charSys?'【角色设定参考】'+charSys:''),'你是一位神秘的占星师，以塔罗牌般诗意深邃的语言，为'+uSign+'座（我）和'+cSign+'座（'+charName+'）进行星盘配对解读。请严格用JSON格式回复：{"summary":"30字内总结神秘诗意","detail":"80字内详细分析有画面感","challenge":"25字内最大挑战","strength":"25字内最大优势"} 只输出JSON。'].filter(Boolean).join(' ');
+    try{
+      var res=await fetch(cfg.pxy,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+cfg.key},
+        body:JSON.stringify({model:cfg.mod,max_tokens:400,temperature:0.9,messages:[{role:'user',content:prompt}]})});
+      var data=await res.json();
+      var txt=''; if(data.content&&data.content[0])txt=data.content[0].text||''; else if(data.choices&&data.choices[0])txt=(data.choices[0].message&&data.choices[0].message.content)||'';
+      txt=txt.replace(/```json|```/g,'').trim();
+      var r=JSON.parse(txt);
+      var el=document.getElementById('astroCompatAI');
+      if(el) el.innerHTML='<div class="astro-ai-summary">'+r.summary+'</div><div class="astro-ai-detail">'+r.detail+'</div>'+
+        '<div class="astro-ai-row"><span class="astro-ai-lbl">⚔️ 挑战</span><span>'+r.challenge+'</span></div>'+
+        '<div class="astro-ai-row"><span class="astro-ai-lbl">✨ 优势</span><span>'+r.strength+'</span></div>';
+    }catch(e){astroToast('解读失败：'+e.message);}
+    if(btn){btn.disabled=false;btn.textContent='✦ 星象解读';}
+  };
+
+  // ── Tab2: 今日运势 ──
+  function getTodayStr(){
+    var cid=_cid();
+    if(cid){
+      var sfx='_'+cid;
+      try{
+        if(localStorage.getItem('cCTon'+sfx)==='true'){
+          var y=localStorage.getItem('cCTy'+sfx)||new Date().getFullYear();
+          var m=localStorage.getItem('cCTm'+sfx)||(new Date().getMonth()+1);
+          var d=localStorage.getItem('cCTd'+sfx)||new Date().getDate();
+          return y+'年'+m+'月'+d+'日';
+        }
+      }catch(e){}
+    }
+    var n=new Date(); return n.getFullYear()+'年'+(n.getMonth()+1)+'月'+n.getDate()+'日';
+  }
+  function renderFortuneDate(){
+    var el=document.getElementById('astroFortuneDate'); if(el) el.textContent='✦ '+getTodayStr()+' 星象 ✦';
+  }
+  function renderFortuneResult(data){
+    var el=document.getElementById('astroFortuneResult'); if(!el||!data) return;
+    var stars=function(n){return '★'.repeat(Math.min(5,Math.max(1,n)))+'☆'.repeat(5-Math.min(5,Math.max(1,n)));};
+    el.innerHTML='<div class="astro-fortune-card"><div class="astro-fc-hdr">💕 爱情运势<span class="astro-stars">'+stars(data.loveStars||3)+'</span></div><div class="astro-fc-txt">'+data.love+'</div></div>'+
+      '<div class="astro-fortune-card"><div class="astro-fc-hdr">⚡ 事业运势<span class="astro-stars">'+stars(data.workStars||3)+'</span></div><div class="astro-fc-txt">'+data.work+'</div></div>'+
+      '<div class="astro-fortune-card"><div class="astro-fc-hdr">💰 财运<span class="astro-stars">'+stars(data.moneyStars||3)+'</span></div><div class="astro-fc-txt">'+data.money+'</div></div>'+
+      '<div class="astro-lucky-row"><div class="astro-lucky-item"><div class="astro-lucky-lbl">幸运色</div><div class="astro-lucky-val" style="color:'+(data.luckyColorHex||'#ffd700')+'">'+data.luckyColor+'</div></div>'+
+      '<div class="astro-lucky-item"><div class="astro-lucky-lbl">幸运数</div><div class="astro-lucky-val">'+data.luckyNum+'</div></div>'+
+      '<div class="astro-lucky-item"><div class="astro-lucky-lbl">关键词</div><div class="astro-lucky-val" style="font-size:13px;color:#e8d5ff;">'+data.keyword+'</div></div></div>';
+  }
+  window.astroGenerateFortune=async function(){
+    if(_uSign===null){astroToast('请先在"配对"页选择你的星座');return;}
+    var btn=document.getElementById('astroFortuneBtn');
+    if(btn){btn.disabled=true;btn.textContent='占卜中…';}
+    var cfg=await getApiCfg(); if(!cfg){if(btn){btn.disabled=false;btn.textContent='🔮 今日占卜';}return;}
+    var sign=SIGN_NAMES[_uSign]+SIGN_EMOJI[_uSign];
+    var cid=_cid();
+    var charSys=''; try{charSys=originalGetItem.call(localStorage,'cAP_'+cid)||'';}catch(e){}
+    var prompt=['你是一位神秘的占星塔罗师，以深邃诗意语言占卜。今日是'+getTodayStr()+'，请为'+sign+'座占卜今日星运。',(charSys?'【角色设定参考】'+charSys.slice(0,80):''),'请严格用JSON格式回复：{"loveStars":1到5的整数,"love":"爱情运势25字","workStars":1到5的整数,"work":"事业运势25字","moneyStars":1到5的整数,"money":"财运25字","luckyColor":"幸运色2字","luckyColorHex":"#十六进制","luckyNum":个位或两位数字,"keyword":"今日关键词4字以内"} 只输出JSON。'].filter(Boolean).join(' ');
+    try{
+      var res=await fetch(cfg.pxy,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+cfg.key},
+        body:JSON.stringify({model:cfg.mod,max_tokens:300,temperature:0.95,messages:[{role:'user',content:prompt}]})});
+      var data=await res.json();
+      var txt=''; if(data.content&&data.content[0])txt=data.content[0].text||''; else if(data.choices&&data.choices[0])txt=(data.choices[0].message&&data.choices[0].message.content)||'';
+      txt=txt.replace(/```json|```/g,'').trim();
+      var r=JSON.parse(txt);
+      _fortuneCache=r; _save('fortune_cache',r);
+      renderFortuneResult(r);
+    }catch(e){astroToast('占卜失败：'+e.message);}
+    if(btn){btn.disabled=false;btn.textContent='🔮 重新占卜';}
+  };
+
+  // ── Tab3: 星盘 ──
+  function updateChartInputs(){
+    var g=function(id){return document.getElementById(id);};
+    if(g('astroUserDate'))g('astroUserDate').value=_uBirth.date||'';
+    if(g('astroUserTime'))g('astroUserTime').value=_uBirth.time||'';
+    if(g('astroUserCity'))g('astroUserCity').value=_uBirth.city||'';
+    if(g('astroCharDate'))g('astroCharDate').value=_cBirth.date||'';
+    if(g('astroCharTime'))g('astroCharTime').value=_cBirth.time||'';
+    if(g('astroCharCity'))g('astroCharCity').value=_cBirth.city||'';
+  }
+  window.astroCalculateChart=function(){
+    var g=function(id){return document.getElementById(id);};
+    var uDate=g('astroUserDate')&&g('astroUserDate').value||'';
+    var uTime=g('astroUserTime')&&g('astroUserTime').value||'';
+    var uCity=g('astroUserCity')&&g('astroUserCity').value||'';
+    var cDate=g('astroCharDate')&&g('astroCharDate').value||'';
+    var cTime=g('astroCharTime')&&g('astroCharTime').value||'';
+    var cCity=g('astroCharCity')&&g('astroCharCity').value||'';
+    if(!uDate||!cDate){astroToast('请输入双方出生日期');return;}
+    _uBirth={date:uDate,time:uTime,city:uCity}; _save('user_birth',_uBirth);
+    _cBirth={date:cDate,time:cTime,city:cCity}; _save('char_birth',_cBirth);
+    var uP=calcPlanets(uDate,uTime,uCity);
+    var cP=calcPlanets(cDate,cTime,cCity);
+    if(!uP||!cP){astroToast('日期格式错误，请用 YYYY-MM-DD');return;}
+    // 更新太阳星座选择
+    _uSign=lonToSign(uP.sun); _cSign=lonToSign(cP.sun);
+    _save('user_sign',_uSign); _save('char_sign',_cSign);
+    drawChart(uP,cP);
+    renderPlanetTable(uP,cP);
+    var res=g('astroChartResult'); if(res)res.style.display='block';
+    astroToast('星盘计算完成 ✨');
+  };
+
+  function drawChart(uP,cP){
+    var svg=document.getElementById('astroChartSVG'); if(!svg) return;
+    var CX=140,CY=140,ZR=120,PR_OUT=98,PR_IN=76;
+    var h='';
+    h+='<defs><radialGradient id="cBg" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#1a0a2e"/><stop offset="100%" stop-color="#080112"/></radialGradient></defs>';
+    h+='<circle cx="'+CX+'" cy="'+CY+'" r="145" fill="url(#cBg)"/>';
+    // Zodiac ring
+    for(var i=0;i<12;i++){
+      var sa=(i*30-90)*D2R, ea=((i+1)*30-90)*D2R;
+      var x1=CX+ZR*Math.cos(sa),y1=CY+ZR*Math.sin(sa);
+      var x2=CX+ZR*Math.cos(ea),y2=CY+ZR*Math.sin(ea);
+      var ir=ZR-16;
+      var ix1=CX+ir*Math.cos(sa),iy1=CY+ir*Math.sin(sa);
+      var ix2=CX+ir*Math.cos(ea),iy2=CY+ir*Math.sin(ea);
+      var elemColors={'火':'rgba(255,80,50,0.18)','土':'rgba(180,140,60,0.18)','风':'rgba(100,220,160,0.18)','水':'rgba(60,120,220,0.18)'};
+      var fc=elemColors[SIGN_ELEM[i]]||'rgba(100,50,200,0.1)';
+      h+='<path d="M '+ix1+' '+iy1+' L '+x1+' '+y1+' A '+ZR+' '+ZR+' 0 0 1 '+x2+' '+y2+' L '+ix2+' '+iy2+' A '+ir+' '+ir+' 0 0 0 '+ix1+' '+iy1+'" fill="'+fc+'" stroke="rgba(160,120,255,0.25)" stroke-width="0.5"/>';
+      var ma=((i*30+15)-90)*D2R;
+      h+='<text x="'+(CX+(ZR-8)*Math.cos(ma))+'" y="'+(CY+(ZR-8)*Math.sin(ma))+'" text-anchor="middle" dominant-baseline="middle" font-size="9" fill="rgba(200,180,255,0.85)">'+SIGN_EMOJI[i]+'</text>';
+      h+='<line x1="'+(CX+ir*Math.cos(sa))+'" y1="'+(CY+ir*Math.sin(sa))+'" x2="'+(CX+ZR*Math.cos(sa))+'" y2="'+(CY+ZR*Math.sin(sa))+'" stroke="rgba(150,100,255,0.3)" stroke-width="0.5"/>';
+    }
+    h+='<circle cx="'+CX+'" cy="'+CY+'" r="'+(ZR-16)+'" fill="none" stroke="rgba(150,100,255,0.2)" stroke-width="0.5"/>';
+    h+='<circle cx="'+CX+'" cy="'+CY+'" r="'+(PR_IN-8)+'" fill="none" stroke="rgba(150,100,255,0.15)" stroke-width="0.5"/>';
+    h+='<circle cx="'+CX+'" cy="'+CY+'" r="28" fill="rgba(80,30,160,0.4)" stroke="rgba(160,120,255,0.4)" stroke-width="1"/>';
+    h+='<text x="'+CX+'" y="'+CY+'" text-anchor="middle" dominant-baseline="middle" font-size="14" fill="rgba(255,220,100,0.9)">✦</text>';
+    var PKEYS=['sun','moon','mercury','venus','mars','jupiter','saturn'];
+    var PGLYPHS=['☉','☽','☿','♀','♂','♃','♄'];
+    // char外环（紫色）
+    PKEYS.forEach(function(k,i){
+      var lon=cP[k]; if(lon===undefined||lon===null) return;
+      var a=(lon-90)*D2R;
+      var px=CX+PR_OUT*Math.cos(a),py=CY+PR_OUT*Math.sin(a);
+      h+='<circle cx="'+px+'" cy="'+py+'" r="9" fill="rgba(180,80,255,0.75)" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>';
+      h+='<text x="'+px+'" y="'+py+'" text-anchor="middle" dominant-baseline="middle" font-size="8" fill="white">'+PGLYPHS[i]+'</text>';
+    });
+    // user内环（蓝色）
+    PKEYS.forEach(function(k,i){
+      var lon=uP[k]; if(lon===undefined||lon===null) return;
+      var a=(lon-90)*D2R;
+      var px=CX+PR_IN*Math.cos(a),py=CY+PR_IN*Math.sin(a);
+      h+='<circle cx="'+px+'" cy="'+py+'" r="9" fill="rgba(80,180,255,0.75)" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>';
+      h+='<text x="'+px+'" y="'+py+'" text-anchor="middle" dominant-baseline="middle" font-size="8" fill="white">'+PGLYPHS[i]+'</text>';
+    });
+    // 上升星座
+    if(cP.asc!==null&&cP.asc!==undefined){
+      var a=(cP.asc-90)*D2R,px=CX+PR_OUT*Math.cos(a),py=CY+PR_OUT*Math.sin(a);
+      h+='<circle cx="'+px+'" cy="'+py+'" r="8" fill="rgba(255,140,80,0.75)" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>';
+      h+='<text x="'+px+'" y="'+py+'" text-anchor="middle" dominant-baseline="middle" font-size="9" fill="white">↑</text>';
+    }
+    if(uP.asc!==null&&uP.asc!==undefined){
+      var a2=(uP.asc-90)*D2R,px2=CX+PR_IN*Math.cos(a2),py2=CY+PR_IN*Math.sin(a2);
+      h+='<circle cx="'+px2+'" cy="'+py2+'" r="8" fill="rgba(255,220,80,0.75)" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>';
+      h+='<text x="'+px2+'" y="'+py2+'" text-anchor="middle" dominant-baseline="middle" font-size="9" fill="white">↑</text>';
+    }
+    // Legend
+    h+='<circle cx="12" cy="268" r="5" fill="rgba(180,80,255,0.8)"/><text x="20" y="272" font-size="9" fill="rgba(200,180,255,0.8)">TA</text>';
+    h+='<circle cx="40" cy="268" r="5" fill="rgba(80,180,255,0.8)"/><text x="48" y="272" font-size="9" fill="rgba(200,180,255,0.8)">我</text>';
+    h+='<circle cx="68" cy="268" r="5" fill="rgba(255,140,80,0.8)"/><text x="76" y="272" font-size="9" fill="rgba(200,180,255,0.8)">上升↑</text>';
+    svg.innerHTML=h;
+  }
+
+  function renderPlanetTable(uP,cP){
+    var el=document.getElementById('astroPlanetTable'); if(!el) return;
+    var cid=_cid();
+    var charName=cid?(localStorage.getItem('cN_'+cid)||'TA'):'TA';
+    var keys=['sun','moon','mercury','venus','mars','jupiter','saturn','asc'];
+    var names=['太阳','月亮','水星','金星','火星','木星','土星','上升'];
+    var glyphs=['☉','☽','☿','♀','♂','♃','♄','↑'];
+    var h='<table class="astro-planet-tbl"><tr><th>星体</th><th>我</th><th>'+charName+'</th></tr>';
+    keys.forEach(function(k,i){
+      var u=(uP&&uP[k]!=null)?lonToSignStr(uP[k]):'—';
+      var c=(cP&&cP[k]!=null)?lonToSignStr(cP[k]):'—';
+      h+='<tr><td>'+glyphs[i]+' '+names[i]+'</td><td>'+u+'</td><td>'+c+'</td></tr>';
+    });
+    h+='</table>';
+    el.innerHTML=h;
+  }
+
+  // ── API 配置 ──
+  async function getApiCfg(){
+    var pxy='',key='',mod='';
+    try{pxy=originalGetItem.call(localStorage,'pxy')||'';}catch(e){}
+    try{key=originalGetItem.call(localStorage,'key')||'';}catch(e){}
+    try{mod=originalGetItem.call(localStorage,'mod')||'';}catch(e){}
+    if(!pxy){try{pxy=await localforage.getItem('pxy')||'';}catch(e){}}
+    if(!key){try{key=await localforage.getItem('key')||'';}catch(e){}}
+    if(!pxy||!key){astroToast('请先配置 API');return null;}
+    if(!pxy.includes('chat/completions'))pxy=pxy.replace(/\/$/,'')+'/chat/completions';
+    if(!mod)mod='claude-sonnet-4-20250514';
+    return {pxy:pxy,key:key,mod:mod};
+  }
+
+  window.switchAstroTab=function(n){
+    [1,2,3].forEach(function(i){
+      var t=document.getElementById('astroTab'+i),p=document.getElementById('astroPage'+i);
+      if(t)t.classList.toggle('active',i===n);
+      if(p)p.style.display=i===n?'block':'none';
+    });
+    if(n===2){renderFortuneDate();if(_fortuneCache)renderFortuneResult(_fortuneCache);}
+  };
+
+  function astroToast(msg){
+    var t=document.createElement('div');
+    t.style.cssText='position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(60,15,100,0.95);color:#e8d5ff;padding:8px 18px;border-radius:20px;font-size:13px;z-index:9999;pointer-events:none;border:1px solid rgba(160,100,255,0.4);white-space:nowrap;';
+    t.textContent=msg;document.body.appendChild(t);setTimeout(function(){t.remove();},2400);
+  }
+
+  window._openAstro=async function(){
+    if(typeof showScreen==='function')showScreen('scrAstro');
+    await astroInit();
+    switchAstroTab(1);
+  };
+
+  // showScreen patch
+  var _origAstroShow=window.showScreen;
+  window.showScreen=function(id){
+    _origAstroShow(id);
+    if(id==='scrAstro') astroInit();
+  };
+})();
+</script>
