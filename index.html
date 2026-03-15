@@ -1494,9 +1494,11 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
       <div id="petBowl" onclick="petDo('feed')">🍚</div>
       <div id="petToy" onclick="petDo('play')">🧶</div>
       <!-- 宠物 -->
-      <div id="petAnimalWrap" class="idle" onclick="petPet()">
+      <div id="petAnimalWrap" class="idle" onclick="petPet()" style="position:relative;">
         <svg id="petSvg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"></svg>
-      </div>
+        <img id="petImg" src="" alt="" style="display:none;width:120px;height:120px;object-fit:contain;border-radius:8px;">
+        <button id="petChangeImgBtn" onclick="triggerPetImgUpload(event)" style="position:absolute;top:-4px;right:-4px;background:white;border:none;border-radius:50%;width:26px;height:26px;font-size:15px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.2);-webkit-tap-highlight-color:transparent;">📷</button>
+        <input type="file" id="petImgInput" accept="image/*" style="display:none">
       <!-- 气泡 -->
       <div id="petBubble">😸 喵～</div>
     </div>
@@ -21631,6 +21633,49 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     }
   }
 
+  // 宠物图片上传
+  var PET_IMG_KEY = 'petCustomImg';
+  function loadPetImg(){
+    localforage.getItem(PET_IMG_KEY).then(function(d){
+      if(!d){ try{ d=localStorage.getItem(PET_IMG_KEY); }catch(e){} }
+      applyPetImg(d);
+    }).catch(function(){ applyPetImg(null); });
+  }
+  function applyPetImg(dataUrl){
+    var imgEl=document.getElementById('petImg');
+    var svgEl=document.getElementById('petSvg');
+    if(dataUrl&&dataUrl.length>50){
+      if(imgEl){imgEl.src=dataUrl;imgEl.style.display='block';}
+      if(svgEl){svgEl.style.display='none';}
+    } else {
+      if(imgEl){imgEl.style.display='none';}
+      if(svgEl){svgEl.style.display='block';}
+    }
+  }
+  window.triggerPetImgUpload=function(e){
+    if(e){e.stopPropagation();e.preventDefault();}
+    var inp=document.getElementById('petImgInput');
+    if(inp) inp.click();
+  };
+  setTimeout(function(){
+    var inp=document.getElementById('petImgInput');
+    if(!inp) return;
+    inp.onchange=function(ev){
+      var file=ev.target.files&&ev.target.files[0];
+      if(!file) return;
+      var reader=new FileReader();
+      reader.onload=function(e2){
+        var data=e2.target.result;
+        localforage.setItem(PET_IMG_KEY,data).catch(function(){});
+        try{localStorage.setItem(PET_IMG_KEY,data);}catch(ex){}
+        applyPetImg(data);
+        petToast('头像已更换！');
+      };
+      reader.readAsDataURL(file);
+    };
+  },800);
+
+
   // ── 喊char来（修复：使用情侣空间当前charId）──
   window.petCallChar=function(type){
     if(!_pet){petToast('还没有宠物哦');return;}
@@ -21852,7 +21897,7 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     _origPetShow(id);
     if(id==='scrPet'){
       petLoad().then(function(){
-        petFitTopBar();petRender();
+        petFitTopBar();petRender();loadPetImg();
       });
     }
   };
@@ -21868,7 +21913,7 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
   }
   petFitTopBar();
   window.addEventListener('resize',petFitTopBar,{passive:true});
-  petLoad().then(function(){injectPetMemory();});
+  petLoad().then(function(){injectPetMemory();setTimeout(loadPetImg,200);});
 })();
 </script>
 
