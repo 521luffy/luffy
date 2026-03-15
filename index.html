@@ -1334,7 +1334,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 .diary-para {
   margin-bottom:12px;line-height:2;position:relative;
   word-wrap:break-word;overflow-wrap:break-word;word-break:break-word;
-  overflow:hidden;max-width:100%;
+  overflow:hidden;width:100%;max-width:100%;box-sizing:border-box;
 }
 .diary-para-user {
   font-family:'Georgia',serif;
@@ -1348,13 +1348,14 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 }
 .diary-para-header {
   display:flex;align-items:center;gap:6px;margin-bottom:4px;
+  width:100%;box-sizing:border-box;min-width:0;
 }
 .diary-para-avatar {
   width:20px;height:20px;border-radius:50%;font-size:10px;
   display:flex;align-items:center;justify-content:center;
   flex-shrink:0;
 }
-.diary-para-name {font-size:10px;font-weight:700;opacity:.7;}
+.diary-para-name {font-size:10px;font-weight:700;opacity:.7;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .diary-para-time {font-size:9px;opacity:.5;margin-left:auto;}
 
 /* 划掉内容 */
@@ -21186,7 +21187,25 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
   function diaryFmt(ts){
     var d=new Date(ts);
     var days=['日','一','二','三','四','五','六'];
-    return d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日 星期'+days[d.getDay()];
+    // 读取自定义时间设定（和聊天室一致）
+    var useCustom=false;
+    try{ useCustom=(localStorage.getItem('cCTon')==='true'); }catch(e){}
+    var year=d.getFullYear();
+    var month=d.getMonth()+1;
+    var day=d.getDate();
+    if(useCustom){
+      try{
+        var cy=parseInt(localStorage.getItem('cCTy'))||year;
+        var cm=parseInt(localStorage.getItem('cCTm'))||month;
+        var cd=parseInt(localStorage.getItem('cCTd'))||day;
+        // 以自定义日期为基准，只保留时分秒的偏移（当天）
+        year=cy; month=cm; day=cd;
+      }catch(e){}
+    }
+    // 计算星期（基于实际日期）
+    var refDate=useCustom?new Date(year,month-1,day):d;
+    var weekday=days[refDate.getDay()];
+    return year+'年'+month+'月'+day+'日 星期'+weekday;
   }
   function diaryFmtTime(ts){
     var d=new Date(ts);
@@ -21268,7 +21287,7 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
         header.innerHTML='<span class="diary-para-avatar" style="background:'+avatarColor+';color:'+textColor+'">'+(block.author==='char'?'💕':'🌙')+'</span>'+
           '<span class="diary-para-name" style="color:'+textColor+'">'+authorName+'</span>'+
           '<span class="diary-para-time">'+diaryFmtTime(block.ts)+'</span>';
-        var textEl=document.createElement('div');textEl.style.cssText='padding-left:26px;word-wrap:break-word;overflow-wrap:break-word;word-break:break-word;white-space:pre-wrap;max-width:100%;';
+        var textEl=document.createElement('div');textEl.style.cssText='padding-left:26px;word-wrap:break-word;overflow-wrap:break-word;word-break:break-word;white-space:pre-wrap;width:100%;max-width:100%;box-sizing:border-box;';
         if(block.striked){
           textEl.innerHTML='<span class="diary-strikethrough">'+block.text+'</span>'+
             (block.rewrite?'<br><span style="color:#880e4f;font-style:italic;">↳ '+block.rewrite+'</span>':'');
@@ -21286,7 +21305,8 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
 
   window.diaryNewEntry=async function(){
     var now=Date.now();
-    var entry={id:now,dateStr:diaryFmt(now),content:[],stamps:{user:'',char:''},locked:false};
+    var dateStr=diaryFmt(now);
+    var entry={id:now,dateStr:dateStr,content:[],stamps:{user:'',char:''},locked:false};
     _entries.push(entry);await diarySaveAll();diaryOpenEntry(now);
   };
 
