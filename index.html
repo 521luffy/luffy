@@ -23315,17 +23315,17 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     var records = await _loadRecords();
     var rec = records.find(function(r){return String(r.id)===String(id);});
     if(!rec){anonToast('记录不存在，请稍后重试');return;}
-    var modeLabel=rec.mode==='peek'?'偷看':rec.mode==='mask'?'伪装':'被问';
     var charN=rec.charName||'TA';
-    // Fix2: 彻底清洗线下模式特征——去掉状态栏格式|xx|、动作描写块
-    var cleanAnswer=(rec.answer||"").replace(/\n{3,}/g,"\n").trim();
+    var _myN=''; try{_myN=localStorage.getItem('cMyN_'+_cid())||'';}catch(e){} _myN=_myN||'我';
+    var cleanAnswer=(rec.answer||'').split('\n').join(' ').trim();
+    var _vs='%%'+'%'+'[视角]你='+charN+'，对方='+_myN+'，不要搞反。用'+charN+'的身份正常回复。';
     var cardText='';
     if(rec.mode==='be'){
-      cardText='【匿名问答·被问】刚才有个「'+(rec.identity||'匿名')+'」匿名问了我："'+(rec.question||'')+'" 我回答了："'+(rec.userAnswer||'')+'" 然后对方揭开了身份：'+cleanAnswer;
+      cardText='（匿名问答·被问）有人匿名问'+_myN+'："'+(rec.question||'')+'" '+_myN+'答："'+(rec.userAnswer||'')+'" 匿名者揭开了：'+cleanAnswer+'\n\n'+_vs;
     } else if(rec.mode==='mask'){
-      cardText='【匿名问答·伪装】我刚才伪装成「'+(rec.identity||'匿名')+'」偷偷问了你："'+(rec.question||'')+'" 你当时说："'+cleanAnswer+'"（提问的人其实是我）';
+      cardText='（匿名问答·伪装）'+_myN+'伪装成「'+(rec.identity||'匿名')+'」问了你："'+(rec.question||'')+'" 你答："'+cleanAnswer+'" 提问的其实是'+_myN+'。\n\n'+_vs;
     } else {
-      cardText='【匿名问答·偷看】有个「'+(rec.identity||'匿名')+'」匿名问了你："'+(rec.question||'')+'" 你回答了："'+cleanAnswer+'"（我偷看到了这段）';
+      cardText='（匿名问答·偷看）「'+(rec.identity||'匿名')+'」问了你："'+(rec.question||'')+'" 你答："'+cleanAnswer+'" '+_myN+'偷看到了。\n\n'+_vs;
     }
     var cid=_cid();
     if(typeof currentChatId!=='undefined'&&currentChatId===cid){
