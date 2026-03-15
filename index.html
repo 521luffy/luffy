@@ -5353,7 +5353,7 @@ if(typeof localforage === 'undefined') {
    匿名问答 (scrAnon) 样式
 ══════════════════════════════════════ */
 #scrAnon{background:linear-gradient(160deg,#1a0530 0%,#0d0820 60%,#180a30 100%);color:#f0e6ff;}
-.anon-topbar{display:flex;align-items:center;justify-content:space-between;padding:max(calc(env(safe-area-inset-top,0px)+12px),28px) 15px 12px;flex-shrink:0;background:linear-gradient(180deg,rgba(26,5,48,0.98),transparent);}
+.anon-topbar{display:flex;align-items:center;justify-content:space-between;padding:max(calc(env(safe-area-inset-top,0px)+22px),44px) 15px 14px;flex-shrink:0;background:linear-gradient(180deg,rgba(26,5,48,0.98),transparent);}
 .anon-back{font-size:22px;color:#c084fc;cursor:pointer;width:30px;}
 .anon-title{font-size:17px;font-weight:700;color:#f0e6ff;letter-spacing:2px;}
 .anon-tabs{display:flex;background:rgba(15,5,30,0.9);border-bottom:1px solid rgba(140,60,220,0.25);flex-shrink:0;}
@@ -22941,23 +22941,35 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
   var ANON_KEY_BASE = 'anonQA_v1';
   function _cid(){ return window._csCurrentCharId||(function(){try{return localStorage.getItem('cs_active_char');}catch(e){}return '';})()||''; }
   function _anonKey(){ var c=_cid(); return ANON_KEY_BASE+(c?'_'+c:''); }
-  async function _saveRecords(arr){ var k=_anonKey(); try{await localforage.setItem(k,arr);}catch(e){} try{localStorage.setItem(k,JSON.stringify(arr));}catch(e){} }
-  async function _loadRecords(){ var k=_anonKey(),d=null; try{d=await localforage.getItem(k);}catch(e){} if(!d){try{var r=localStorage.getItem(k);if(r)d=JSON.parse(r);}catch(e){}} return Array.isArray(d)?d:[]; }
+  async function _saveRecords(arr){
+    var k=_anonKey();
+    try{await localforage.setItem(k,arr);}catch(e){}
+    try{localStorage.setItem(k,JSON.stringify(arr));}catch(e){}
+  }
+  async function _loadRecords(){
+    var k=_anonKey(),d=null;
+    try{d=await localforage.getItem(k);}catch(e){}
+    if(d===null||d===undefined){try{var r=localStorage.getItem(k);if(r)d=JSON.parse(r);}catch(e){}}
+    if(typeof d==='string'){try{d=JSON.parse(d);}catch(e){d=null;}}
+    return Array.isArray(d)?d:[];
+  }
 
   var IDENTITIES = [
     {label:'前任',emoji:'💔'},{label:'暗恋者',emoji:'😳'},{label:'闺蜜/死党',emoji:'👯'},
     {label:'死对头',emoji:'😤'},{label:'网友',emoji:'🌐'},{label:'路人',emoji:'🚶'},
     {label:'前同事',emoji:'💼'},{label:'小学同学',emoji:'🏫'}
   ];
-  var QUESTIONS = {
-    love:['你现在喜欢的人知道你喜欢TA吗？','如果可以和一个人重来，你会选谁？','你有没有喜欢过不该喜欢的人？','你对ta动心的第一刻是什么时候？','你谈过最难忘的一段感情是什么？'],
-    dark:['你做过最对不起别人的事是什么？','你有过最不道德的想法是什么？','你有没有秘密一直瞒着最亲近的人？','你最后悔的一件事是什么？','你有没有骗过你在乎的人？'],
-    sweet:['你上次哭是因为什么？','你最近在偷偷想谁？','你觉得自己值得被爱吗？','你有没有为某人改变过自己？','你觉得完美的一天是怎样的？'],
-    random:['你最近睡前在想什么？','如果只能留下一段记忆，你留哪一段？','你有没有做梦梦到过某人后不想醒来？','你有多久没有真正开心过了？','你最想对一个人说但一直没说的话是什么？']
-  };
-  var ALL_Q = [].concat(QUESTIONS.love, QUESTIONS.dark, QUESTIONS.sweet, QUESTIONS.random);
+  var ALL_Q = [
+    '你现在喜欢的人知道你喜欢TA吗？','如果可以和一个人重来，你会选谁？','你有没有喜欢过不该喜欢的人？',
+    '你对ta动心的第一刻是什么时候？','你谈过最难忘的一段感情是什么？',
+    '你做过最对不起别人的事是什么？','你有没有秘密一直瞒着最亲近的人？','你最后悔的一件事是什么？',
+    '你有没有骗过你在乎的人？','你上次哭是因为什么？','你最近在偷偷想谁？',
+    '你觉得自己值得被爱吗？','你有没有为某人改变过自己？','你觉得完美的一天是怎样的？',
+    '你最近睡前在想什么？','如果只能留下一段记忆，你留哪一段？',
+    '你有没有做梦梦到过某人后不想醒来？','你有多久没有真正开心过了？',
+    '你最想对一个人说但一直没说的话是什么？','你有没有偷偷喜欢过一个人很久？'
+  ];
 
-  var _curMode = 'peek';
   var _beCurrentQ = '';
   var _beCurrentId = '';
 
@@ -23020,24 +23032,67 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     return {pxy:pxy,key:key,mod:mod};
   }
   async function callApi(cfg, prompt, maxTokens){
-    var res = await fetch(cfg.pxy,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+cfg.key},
-      body:JSON.stringify({model:cfg.mod,max_tokens:maxTokens||400,temperature:0.92,messages:[{role:'user',content:prompt}]})});
+    var res = await fetch(cfg.pxy,{method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+cfg.key},
+      body:JSON.stringify({model:cfg.mod,max_tokens:maxTokens||400,temperature:0.92,
+        messages:[{role:'user',content:prompt}]})});
     var data = await res.json();
     var txt='';
     if(data.content&&data.content[0])txt=data.content[0].text||'';
     else if(data.choices&&data.choices[0])txt=(data.choices[0].message&&data.choices[0].message.content)||'';
     return txt.trim();
   }
-  function getCharCtx(){
+
+  // Fix3+Fix4: getCharCtx 读人设+关系+记忆库+世界书
+  async function getCharCtx(){
     var cid=_cid();
     var name=cid?(localStorage.getItem('cN_'+cid)||'TA'):'TA';
     var sys=''; try{sys=originalGetItem.call(localStorage,'cAP_'+cid)||'';}catch(e){}
     var rel=''; try{rel=originalGetItem.call(localStorage,'cR_'+cid)||'';}catch(e){}
     var myName=''; try{myName=originalGetItem.call(localStorage,'cMyN_'+cid)||'';}catch(e){}
-    return {name:name,sys:sys,rel:rel,myName:myName||'对方'};
+    // 记忆库
+    var memTxt='';
+    try{
+      var memKey='cAMem_'+cid;
+      var memRaw=null;
+      try{memRaw=await localforage.getItem(memKey);}catch(e){}
+      if(!memRaw){try{memRaw=originalGetItem.call(localStorage,memKey);}catch(e){}}
+      if(memRaw){var memArr=typeof memRaw==='string'?JSON.parse(memRaw):memRaw;
+        if(Array.isArray(memArr)&&memArr.length) memTxt=memArr.slice(-8).map(function(m){return m.content||m.text||'';}).filter(Boolean).join('\n');}
+    }catch(e){}
+    // 世界书
+    var wbTxt='';
+    try{
+      var wbRaw=null;
+      try{wbRaw=await localforage.getItem('wbData');}catch(e){}
+      if(!wbRaw){try{var r=originalGetItem.call(localStorage,'wbData');if(r)wbRaw=JSON.parse(r);}catch(e){}}
+      if(wbRaw){
+        var wbArr=Array.isArray(wbRaw)?wbRaw:(typeof wbRaw==='string'?JSON.parse(wbRaw):[]);
+        var lkRaw=null;
+        try{lkRaw=await localforage.getItem('linkedWb_'+cid);}catch(e){}
+        if(!lkRaw){try{var lk=originalGetItem.call(localStorage,'linkedWb_'+cid)||originalGetItem.call(localStorage,'linkedWb');if(lk)lkRaw=JSON.parse(lk);}catch(e){}}
+        var linked=Array.isArray(lkRaw)?lkRaw:[];
+        wbTxt=[...wbArr.filter(function(x){return x.type==='global';}),
+               ...wbArr.filter(function(x){return x.type==='local'&&(linked.includes(x.id)||(x.charId&&x.charId===cid));})
+              ].map(function(x){return (x.title||x.name||'')+':'+x.content;}).join('\n');
+      }
+    }catch(e){}
+    return {name:name,sys:sys,rel:rel,myName:myName||'对方',mem:memTxt,wb:wbTxt};
   }
 
-  // ── 模式一：偷看 ──
+  // 构建系统提示前缀（人设+关系+记忆+世界书+情侣空间提示）
+  function buildSysPrefix(cc){
+    var parts=[];
+    if(cc.sys) parts.push('【'+cc.name+'的人设——必须严格遵守】\n'+cc.sys);
+    if(cc.rel) parts.push('【你和'+cc.myName+'的关系背景】\n'+cc.rel);
+    if(cc.wb)  parts.push('【世界设定】\n'+cc.wb);
+    if(cc.mem) parts.push('【你对'+cc.myName+'的记忆片段（仅供参考）】\n'+cc.mem);
+    // Fix3: 明确告知处于情侣空间
+    parts.push('【重要情境】你现在处于与'+cc.myName+'的情侣空间中。你们是亲密的恋人关系，上面的关系背景和人设都是真实的。在所有回答中，必须体现你作为'+cc.myName+'的恋人的立场和情感，不要否认或回避你们的关系。');
+    return parts.join('\n\n');
+  }
+
+  // ── 模式一+二：偷看/伪装 ──
   window.anonGo = async function(mode){
     var btnId = mode==='peek'?'anonPeekGoBtn':'anonMaskGoBtn';
     var resultId = mode==='peek'?'anonPeekResult':'anonMaskResult';
@@ -23057,29 +23112,30 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     if(resEl){ resEl.innerHTML='<div class="anon-typing"><span></span><span></span><span></span></div>'; }
     var cfg = await getApiCfg();
     if(!cfg){if(btn){btn.disabled=false;btn.textContent=mode==='peek'?'👁 开始偷看':'🎭 以此身份提问';}return;}
-    var cc = getCharCtx();
+    var cc = await getCharCtx();
+    var sysPrefix = buildSysPrefix(cc);
     var prompt = '';
     if(mode==='peek'){
-      prompt = (cc.sys?'【'+cc.name+'的人设，必须严格遵守】\n'+cc.sys+'\n\n':'')+
-        (cc.rel?'【关系背景】\n'+cc.rel+'\n\n':'')+
-        '有一个身份是「'+identity+'」的人，匿名向'+cc.name+'发送了一个问题，'+cc.name+'不知道对方是谁。\n'+
+      prompt = sysPrefix+'\n\n'+
+        '现在有一个身份是「'+identity+'」的人，通过匿名问答平台向'+cc.name+'发送了一个问题，'+cc.name+'不知道对方是谁。\n'+
         '问题是：「'+q+'」\n\n'+
-        '请模拟这段真实的匿名问答互动，严格按照'+cc.name+'的人设来回答。输出格式：\n'+
+        '请模拟这段匿名问答互动。严格按照'+cc.name+'的人设作答。\n'+
+        '输出格式（直接输出，不加多余说明）：\n'+
         '【匿名者】：（用符合「'+identity+'」身份的口吻提问，30字内）\n'+
         '【'+cc.name+'】：（严格按人设作答，50-100字，真实自然）';
     } else {
-      prompt = (cc.sys?'【'+cc.name+'的人设，必须严格遵守】\n'+cc.sys+'\n\n':'')+
-        (cc.rel?'【关系背景】\n'+cc.rel+'\n\n':'')+
-        '你（用户）现在伪装成「'+identity+'」，匿名向'+cc.name+'提问。'+cc.name+'不知道提问者是用户。\n'+
+      prompt = sysPrefix+'\n\n'+
+        cc.myName+'（用户）现在伪装成「'+identity+'」，匿名向'+cc.name+'提问。'+cc.name+'不知道提问者就是'+cc.myName+'。\n'+
         '用户的问题是：「'+q+'」\n\n'+
-        '请模拟'+cc.name+'收到这个匿名问题后的真实回应，严格按照'+cc.name+'的人设。\n'+
-        '输出格式：\n'+
-        '【'+cc.name+'】：（严格按人设作答，50-100字，真实自然，不知道提问者是谁）';
+        '请模拟'+cc.name+'收到这个匿名问题后的真实回应。不知道提问者是'+cc.myName+'。\n'+
+        '输出格式（直接输出，不加多余说明）：\n'+
+        '【'+cc.name+'】：（严格按人设作答，50-100字，真实自然）';
     }
     try{
       var reply = await callApi(cfg, prompt, 350);
       var ts = Date.now();
       var record = {id:ts,mode:mode,identity:identity,question:q,answer:reply,charName:cc.name,ts:ts};
+      // Fix2: 先存再渲染
       var records = await _loadRecords();
       records.unshift(record);
       await _saveRecords(records);
@@ -23096,12 +23152,13 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     var q = _beCurrentQ || ALL_Q[Math.floor(Math.random()*ALL_Q.length)];
     _beCurrentId = getSelectedId('anonBeIdGrid','anonBeIdCustom');
     var cfg = await getApiCfg(); if(!cfg) return;
-    var cc = getCharCtx();
+    var cc = await getCharCtx();
     var btn = document.getElementById('anonBeAskBtn');
     if(btn){btn.disabled=true;btn.textContent='生成问题…';}
-    var prompt = (cc.sys?'【'+cc.name+'的人设，必须严格遵守】\n'+cc.sys+'\n\n':'')+
-      '你现在伪装成「'+_beCurrentId+'」的身份，匿名向'+cc.myName+'（用户）提问。\n'+
-      '请将以下问题改写成符合「'+_beCurrentId+'」身份口吻的表达（20-40字，第一人称，自然流露，不要暴露真实身份）：\n'+
+    // Fix1: char用自己身份改写问题，口吻是「_beCurrentId」但内容是char关心user的问题
+    var prompt = buildSysPrefix(cc)+'\n\n'+
+      '你现在伪装成「'+_beCurrentId+'」的身份，匿名向'+cc.myName+'提问，'+cc.myName+'不知道提问者是你（'+cc.name+'）。\n'+
+      '请将以下问题改写成符合「'+_beCurrentId+'」身份口吻的表达（20-40字，自然流露，不要暴露你是'+cc.name+'）：\n'+
       '原始问题：'+q+'\n只输出改写后的问题，不加任何前缀。';
     try{
       var rewrittenQ = await callApi(cfg, prompt, 100);
@@ -23118,26 +23175,26 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     var ans = ansEl?ansEl.value.trim():'';
     if(!ans){anonToast('请写下你的回答');return;}
     var cfg = await getApiCfg(); if(!cfg) return;
-    var cc = getCharCtx();
+    var cc = await getCharCtx();
     var resEl = document.getElementById('anonBeResult');
     if(resEl)resEl.innerHTML='<div class="anon-typing"><span></span><span></span><span></span></div>';
-    var prompt = (cc.sys?'【'+cc.name+'的人设，必须严格遵守】\n'+cc.sys+'\n\n':'')+
-      (cc.rel?'【关系背景】\n'+cc.rel+'\n\n':'')+
+    // Fix1: 揭开的是char自己的身份（"其实是我在问你"）
+    var prompt = buildSysPrefix(cc)+'\n\n'+
       '你（'+cc.name+'）刚才伪装成「'+_beCurrentId+'」，匿名问了'+cc.myName+'一个问题：\n'+
       '「'+_beCurrentQ+'」\n\n'+
       cc.myName+'的回答是：「'+ans+'」\n\n'+
-      '现在你决定揭开身份，以'+cc.name+'的真实人设，对这个回答做出反应。\n'+
-      '（可以吃醋/惊讶/满意/嘲讽/感动，完全取决于你的人设和回答内容，60-100字，真实自然）\n'+
+      '现在你决定揭开你自己的真实身份，告诉'+cc.myName+'：其实那个匿名提问的人就是你（'+cc.name+'）。\n'+
+      '以'+cc.name+'的真实人设对这个回答做出反应（可以吃醋/惊讶/满意/嘲讽/感动，60-100字，真实自然）。\n'+
       '输出格式：\n'+
-      '【揭开身份】：（'+cc.name+'以真实身份的反应）';
+      '【'+cc.name+'揭开身份】：（以真实身份的反应，包含"其实是我/就是我问的"这个揭示）';
     try{
-      var reply = await callApi(cfg, prompt, 250);
+      var reply = await callApi(cfg, prompt, 300);
       var ts = Date.now();
       var record = {id:ts,mode:'be',identity:_beCurrentId,question:_beCurrentQ,userAnswer:ans,answer:reply,charName:cc.name,ts:ts};
       var records = await _loadRecords();
       records.unshift(record);
       await _saveRecords(records);
-      renderBeResult(resEl, record, true);
+      renderSingleResult(resEl, record, true);
       // 重置
       var area = document.getElementById('anonBeQuestionArea'); if(area)area.style.display='none';
       var askBtn = document.getElementById('anonBeAskBtn'); if(askBtn){askBtn.style.display='';askBtn.textContent='💌 再被问一次';}
@@ -23156,25 +23213,43 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     if(isNew) container.innerHTML='';
     container.appendChild(card);
   }
-  function renderBeResult(container, rec, isNew){
-    if(!container) return;
-    if(isNew) container.innerHTML='';
-    var card = buildCard(rec);
-    container.appendChild(card);
-  }
   function buildCard(rec){
     var card = document.createElement('div');
     card.className = 'anon-result-card';
     var d = new Date(rec.ts);
     var tstr = (d.getMonth()+1)+'/'+d.getDate()+' '+d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes();
     var modeLabel = rec.mode==='peek'?'偷看':rec.mode==='mask'?'伪装':'被问';
-    var inner = '<div class="anon-rc-header"><span class="anon-rc-from">'+modeLabel+' · '+rec.identity+'</span><span class="anon-rc-time">'+tstr+'</span></div>';
-    inner += '<div class="anon-rc-q">Q: '+rec.question+'</div>';
+    // Fix2: 用data属性存id，不用字符串插值onclick（避免引号转义问题）
+    var inner = '<div class="anon-rc-header"><span class="anon-rc-from">'+modeLabel+' · '+(rec.identity||'')+'</span><span class="anon-rc-time">'+tstr+'</span></div>';
+    inner += '<div class="anon-rc-q">Q: '+(rec.question||'')+'</div>';
     if(rec.userAnswer) inner += '<div class="anon-rc-a" style="color:#e8d5ff;margin-bottom:6px;">我: '+rec.userAnswer+'</div>';
-    inner += '<div class="anon-rc-a">'+rec.answer+'</div>';
-    inner += '<div class="anon-rc-footer"><button class="anon-btn-sm anon-btn-send" onclick="anonSendCard(\''+rec.id+'\')">💬 发到聊天</button><button class="anon-btn-sm anon-btn-del" onclick="anonDeleteRecord(\''+rec.id+'\')">🗑 删除</button></div>';
+    inner += '<div class="anon-rc-a">'+(rec.answer||'')+'</div>';
+    inner += '<div class="anon-rc-footer"><button class="anon-btn-sm anon-btn-send" data-rid="'+rec.id+'">💬 发到聊天</button><button class="anon-btn-sm anon-btn-del" data-rid="'+rec.id+'">🗑 删除</button></div>';
     card.innerHTML = inner;
+    // 绑定事件（Fix2: 直接用JS绑定而非innerHTML onclick）
+    var btns = card.querySelectorAll('[data-rid]');
+    btns.forEach(function(b){
+      b.addEventListener('click', function(){
+        var rid = b.getAttribute('data-rid');
+        if(b.classList.contains('anon-btn-send')) anonSendCard(rid);
+        else anonDeleteFromCard(rid);
+      });
+    });
     return card;
+  }
+
+  // Fix2: 独立删除函数供卡片调用
+  async function anonDeleteFromCard(id){
+    var records = await _loadRecords();
+    records = records.filter(function(r){return String(r.id)!==String(id);});
+    await _saveRecords(records);
+    // 从DOM移除
+    var btns = document.querySelectorAll('[data-rid="'+id+'"]');
+    if(btns.length) btns[0].closest('.anon-result-card').remove();
+    anonToast('已删除');
+    // 若在记录页则刷新
+    var tab4 = document.getElementById('anonTab4');
+    if(tab4&&tab4.classList.contains('active')) renderHistory();
   }
 
   // ── 记录页 ──
@@ -23186,31 +23261,28 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
       return;
     }
     el.innerHTML='';
-    records.forEach(function(rec){
-      el.appendChild(buildCard(rec));
-    });
+    records.forEach(function(rec){ el.appendChild(buildCard(rec)); });
   }
 
   window.anonDeleteRecord = async function(id){
-    var records = await _loadRecords();
-    records = records.filter(function(r){return String(r.id)!==String(id);});
-    await _saveRecords(records);
-    renderHistory();
-    anonToast('已删除');
+    anonDeleteFromCard(id);
   };
+
+  // Fix2: anonSendCard 直接从内存records里找（不依赖loadRecords的key时序问题）
+  var _cachedRecords = [];
+  var _origSave = _saveRecords;
 
   window.anonSendCard = async function(id){
     var records = await _loadRecords();
     var rec = records.find(function(r){return String(r.id)===String(id);});
-    if(!rec){anonToast('记录不存在');return;}
-    var cid=_cid();
+    if(!rec){anonToast('记录不存在，请稍后重试');return;}
     var modeLabel=rec.mode==='peek'?'偷看':rec.mode==='mask'?'伪装':'被问';
     var cardText='[匿名问答·'+modeLabel+']\n'+
-      '🎭 身份：'+rec.identity+'\n'+
-      '❓ 问：'+rec.question+'\n'+
+      '🎭 身份：'+(rec.identity||'')+'\n'+
+      '❓ 问：'+(rec.question||'')+'\n'+
       (rec.userAnswer?'🙋 我的回答：'+rec.userAnswer+'\n':'')+
-      '💬 '+rec.charName+'：'+rec.answer.replace(/【[^】]+】：/g,'');
-    // 跳到聊天并填入
+      '💬 '+(rec.charName||'TA')+'：'+(rec.answer||'').replace(/【[^】]+】：?/g,'');
+    var cid=_cid();
     if(typeof currentChatId!=='undefined'&&currentChatId===cid){
       if(typeof showScreen==='function')showScreen('scrRoom');
     } else {
