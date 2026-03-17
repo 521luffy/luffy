@@ -24151,22 +24151,73 @@ window.hp2EditCdLabel=function(){
 
 window.hp2EditCdDate=function(){
   var el=document.getElementById('hp2CdDate');if(!el)return;
+  var saved=el.dataset.date||'';
+  var initY=2026,initM=1,initD=1;
+  if(saved){var pts=saved.split('-');initY=parseInt(pts[0])||2026;initM=parseInt(pts[1])||1;initD=parseInt(pts[2])||1;}
+
   var ov=document.createElement('div');
-  ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;';
+  ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.4);display:flex;align-items:flex-end;justify-content:center;';
+
+  // 生成选项HTML
+  function colHtml(id,items,curVal){
+    var html='<div style="flex:1;display:flex;flex-direction:column;align-items:center;"><div style="font-size:12px;color:#bbb;margin-bottom:6px;">'+{y:'年',m:'月',d:'日'}[id]+'</div>'+
+      '<div id="_hp2col_'+id+'" style="height:180px;overflow-y:scroll;scroll-snap-type:y mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;">';
+    items.forEach(function(v){
+      html+='<div data-v="'+v+'" style="height:44px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;color:#555;scroll-snap-align:center;cursor:pointer;flex-shrink:0;">'+v+'</div>';
+    });
+    html+='</div></div>';
+    return html;
+  }
+
+  var years=[];for(var y=1950;y<=2060;y++)years.push(y);
+  var months=[];for(var mo=1;mo<=12;mo++)months.push(mo);
+  var days=[];for(var dd=1;dd<=31;dd++)days.push(dd);
+
   var box=document.createElement('div');
-  box.style.cssText='background:white;border-radius:18px;padding:18px 16px 14px;width:80vw;max-width:300px;box-shadow:0 8px 28px rgba(0,0,0,0.18);';
-  var savedDate=el.dataset.date||'';
-  box.innerHTML='<div style="font-size:13px;color:#999;margin-bottom:10px;">选择目标日期</div>'+
-    '<input type="date" id="_hp2dateInp" value="'+savedDate+'" style="width:100%;padding:10px;border:1.5px solid #f5b8d4;border-radius:12px;font-size:14px;box-sizing:border-box;outline:none;color:#555;">'+
-    '<div style="display:flex;gap:8px;margin-top:12px;">'+
-    '<button id="_hp2dateCan" style="flex:1;padding:9px;border:1.5px solid #eee;border-radius:12px;background:white;font-size:13px;cursor:pointer;color:#999;">取消</button>'+
-    '<button id="_hp2dateOk" style="flex:2;padding:9px;background:#e87090;color:white;border:none;border-radius:12px;font-size:13px;cursor:pointer;font-weight:bold;">确定</button>'+
+  box.style.cssText='background:white;border-radius:20px 20px 0 0;padding:16px 16px 24px;width:100%;max-width:480px;box-shadow:0 -4px 24px rgba(0,0,0,0.15);';
+  box.innerHTML='<div style="font-size:14px;font-weight:bold;color:#555;text-align:center;margin-bottom:12px;">选择日期</div>'+
+    '<div style="position:relative;">'+
+      '<div style="position:absolute;top:50%;left:0;right:0;height:44px;transform:translateY(-50%);background:rgba(240,100,130,0.08);border-radius:10px;pointer-events:none;"></div>'+
+      '<div style="display:flex;gap:4px;">'+
+        colHtml('y',years,initY)+
+        colHtml('m',months,initM)+
+        colHtml('d',days,initD)+
+      '</div>'+
+    '</div>'+
+    '<div style="display:flex;gap:8px;margin-top:14px;">'+
+    '<button id="_hp2dateCan" style="flex:1;padding:11px;border:1.5px solid #eee;border-radius:12px;background:white;font-size:14px;cursor:pointer;color:#999;">取消</button>'+
+    '<button id="_hp2dateOk" style="flex:2;padding:11px;background:#e87090;color:white;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:bold;">确定</button>'+
     '</div>';
+
   ov.appendChild(box);document.body.appendChild(ov);
+
+  // 滚动到当前值
+  function scrollToVal(colId,val){
+    var col=document.getElementById('_hp2col_'+colId);if(!col)return;
+    var items=col.querySelectorAll('[data-v]');
+    for(var i=0;i<items.length;i++){
+      if(parseInt(items[i].getAttribute('data-v'))===val){
+        col.scrollTo({top:i*44,behavior:'instant'});
+        break;
+      }
+    }
+  }
+  setTimeout(function(){scrollToVal('y',initY);scrollToVal('m',initM);scrollToVal('d',initD);},50);
+
+  // 获取当前选中值
+  function getColVal(colId){
+    var col=document.getElementById('_hp2col_'+colId);if(!col)return 1;
+    var idx=Math.round(col.scrollTop/44);
+    var items=col.querySelectorAll('[data-v]');
+    return parseInt((items[idx]||items[0]).getAttribute('data-v'));
+  }
+
   box.querySelector('#_hp2dateCan').onclick=function(){ov.remove();};
   box.querySelector('#_hp2dateOk').onclick=function(){
-    var v=box.querySelector('#_hp2dateInp').value;
-    ov.remove();if(!v)return;
+    var y=getColVal('y'),m=getColVal('m'),d=getColVal('d');
+    var ms=String(m).padStart(2,'0'),ds=String(d).padStart(2,'0');
+    var v=y+'-'+ms+'-'+ds;
+    ov.remove();
     hp2S('cdDate',v);
     el.dataset.date=v;
     hp2UpdateCd(v);
@@ -24182,9 +24233,10 @@ function hp2UpdateCd(dateStr){
   var now=new Date();now.setHours(0,0,0,0);
   var diff=Math.round((target-now)/(1000*60*60*24));
   numEl.textContent=Math.abs(diff);
-  numEl.style.color=diff>=0?'#c05080':'#aaa';
+  numEl.style.color=diff>=0?'#c05080':'#bbb';
   var y=target.getFullYear(),m=String(target.getMonth()+1).padStart(2,'0'),d=String(target.getDate()).padStart(2,'0');
-  dateEl.textContent=y+'.'+m+'.'+d+(diff>=0?' 还有'+diff+'天':' 已过'+Math.abs(diff)+'天');
+  // 只显示日期，不显示"已过/还有"
+  dateEl.textContent=y+'.'+m+'.'+d;
   dateEl.dataset.date=dateStr;
 }
 
