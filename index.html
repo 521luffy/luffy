@@ -24792,126 +24792,161 @@ window.forumSaveSettings=async function(){
 // ── 构建UI（动态创建，避免HTML丢失白屏）──
 function forumBuildUI(){
   var wrap=document.getElementById('scrForum');
-  if(!wrap||wrap.querySelector('#forumTopBar'))return; // 已建过则跳过
-  wrap.style.cssText='display:none;flex-direction:column;position:absolute;top:0;width:100%;height:100%;z-index:40;overflow:hidden;background:var(--forum-bg,#f5f6fa);';
-  wrap.innerHTML=`
-<style>
-#scrForum{--forum-bg:#f5f6fa;--forum-accent:#6c5ce7;--forum-card:#fff;--forum-text:#333;--forum-sub:#888;}
-#forumTopBar{display:flex;align-items:center;justify-content:space-between;padding:56px 14px 10px;background:var(--forum-card);flex-shrink:0;box-shadow:0 1px 6px rgba(0,0,0,0.06);position:relative;z-index:10;}
-#forumMenuBtn,#forumSearchBtn{font-size:22px;cursor:pointer;padding:4px 6px;color:var(--forum-text);}
-#forumTitle{font-size:17px;font-weight:bold;color:var(--forum-text);}
-#forumHotBar{display:flex;align-items:center;overflow-x:auto;padding:6px 12px;background:var(--forum-card);border-bottom:1px solid rgba(0,0,0,0.05);flex-shrink:0;scrollbar-width:none;}
-#forumHotBar::-webkit-scrollbar{display:none;}
-.fhot{flex-shrink:0;padding:3px 9px;margin-right:5px;border-radius:20px;font-size:11px;cursor:pointer;background:rgba(108,92,231,0.08);color:var(--forum-accent);white-space:nowrap;}
-.fhot.h1{background:rgba(231,76,60,0.1);color:#e74c3c;}.fhot.h2{background:rgba(230,126,34,0.1);color:#e67e22;}.fhot.h3{background:rgba(243,156,18,0.1);color:#f39c12;}
-#forumTabWrap{display:flex;overflow-x:auto;padding:0 10px;background:var(--forum-card);border-bottom:2px solid rgba(0,0,0,0.04);flex-shrink:0;scrollbar-width:none;}
-#forumTabWrap::-webkit-scrollbar{display:none;}
-.ftab{flex-shrink:0;padding:8px 14px;font-size:13px;font-weight:600;color:var(--forum-sub);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:.2s;}
-.ftab.active{color:var(--forum-accent);border-bottom-color:var(--forum-accent);}
-#forumPostList{flex:1;overflow-y:auto;padding:10px 12px;background:var(--forum-bg);display:flex;flex-direction:column;gap:8px;}
-.fcard{background:var(--forum-card);border-radius:14px;padding:12px 14px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.04);}
-.fcard:active{transform:scale(.99);}
-.fcard-hdr{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
-.fava{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:bold;color:white;overflow:hidden;background-size:cover;background-position:center;}
-.fname{font-size:13px;font-weight:600;color:var(--forum-text);}
-.ftime{font-size:11px;color:var(--forum-sub);margin-left:auto;}
-.ftitle{font-size:14px;font-weight:700;color:var(--forum-text);margin-bottom:4px;line-height:1.5;}
-.fprev{font-size:12px;color:var(--forum-sub);line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
-.ffooter{display:flex;align-items:center;gap:10px;margin-top:8px;}
-.fstat{font-size:11px;color:var(--forum-sub);}
-.ftag{font-size:10px;padding:2px 7px;border-radius:10px;background:rgba(108,92,231,0.08);color:var(--forum-accent);}
-.ftag.hot{background:rgba(231,76,60,0.1);color:#e74c3c;}
-#forumFab{position:absolute;right:16px;bottom:20px;width:50px;height:50px;border-radius:50%;background:var(--forum-accent);color:white;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;box-shadow:0 4px 16px rgba(108,92,231,0.35);z-index:10;}
-#forumFab:active{transform:scale(.92);}
-#forumDrawer{position:absolute;top:0;left:0;width:78%;max-width:280px;height:100%;background:var(--forum-card);z-index:50;transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow-y:auto;box-shadow:4px 0 20px rgba(0,0,0,0.12);}
-#forumDrawer.open{transform:translateX(0);}
-#forumDrOv{position:absolute;inset:0;background:rgba(0,0,0,0.3);z-index:49;display:none;}
-#forumDrOv.open{display:block;}
-.fdr-hdr{padding:52px 18px 14px;font-size:18px;font-weight:bold;color:var(--forum-text);border-bottom:1px solid rgba(0,0,0,0.06);flex-shrink:0;}
-.fdr-sec{padding:12px 18px 4px;font-size:11px;color:var(--forum-sub);font-weight:700;letter-spacing:.5px;}
-.fdr-item{display:flex;align-items:center;gap:10px;padding:11px 18px;font-size:14px;color:var(--forum-text);cursor:pointer;}
-.fdr-item:active{background:rgba(108,92,231,0.06);}
-.fdr-ico{width:30px;height:30px;border-radius:9px;background:rgba(108,92,231,0.08);display:flex;align-items:center;justify-content:center;font-size:15px;}
-.ftheme-row{display:flex;gap:8px;padding:8px 18px 12px;flex-wrap:wrap;}
-.ftheme-dot{width:26px;height:26px;border-radius:50%;cursor:pointer;border:3px solid transparent;}
-.ftheme-dot.active{border-color:#222;}
-#forumPostDetail{display:none;flex-direction:column;position:absolute;top:0;width:100%;height:100%;z-index:55;background:var(--forum-bg);}
-#fDetailBar{display:flex;align-items:center;gap:10px;padding:52px 14px 10px;background:var(--forum-card);flex-shrink:0;box-shadow:0 1px 6px rgba(0,0,0,0.06);}
-#fDetailBack{font-size:22px;cursor:pointer;color:var(--forum-text);}
-#fDetailTitle{font-size:15px;font-weight:bold;color:var(--forum-text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-#fDetailBody{flex:1;overflow-y:auto;padding:12px;}
-.fd-post{background:var(--forum-card);border-radius:14px;padding:14px;margin-bottom:10px;}
-.fd-post-title{font-size:16px;font-weight:bold;color:var(--forum-text);margin-bottom:8px;line-height:1.5;}
-.fd-post-content{font-size:14px;color:var(--forum-text);line-height:1.7;}
-.fd-cmts-lbl{font-size:12px;color:var(--forum-sub);font-weight:600;padding:6px 0 8px;}
-.fcmt{background:var(--forum-card);border-radius:12px;padding:10px 12px;margin-bottom:7px;}
-.fcmt-hdr{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
-.fcmt-ava{width:26px;height:26px;border-radius:50%;background:#ddd;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:bold;color:white;flex-shrink:0;overflow:hidden;background-size:cover;background-position:center;}
-.fcmt-name{font-size:12px;font-weight:600;color:var(--forum-text);}
-.fcmt-time{font-size:10px;color:var(--forum-sub);margin-left:auto;}
-.fcmt-txt{font-size:13px;color:var(--forum-text);line-height:1.6;}
-.fcmt-likes{font-size:11px;color:var(--forum-sub);margin-top:4px;display:flex;align-items:center;gap:4px;}
-.freply{background:rgba(0,0,0,0.025);border-radius:8px;padding:7px 10px;margin-top:5px;margin-left:34px;}
-#forumReplyBar{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--forum-card);border-top:1px solid rgba(0,0,0,0.06);flex-shrink:0;}
-#forumReplyInp{flex:1;padding:8px 12px;border:1.5px solid rgba(108,92,231,0.2);border-radius:20px;font-size:13px;outline:none;background:var(--forum-bg);font-family:inherit;color:var(--forum-text);}
-#forumReplySend{padding:8px 16px;background:var(--forum-accent);color:white;border:none;border-radius:20px;font-size:13px;cursor:pointer;font-weight:bold;flex-shrink:0;}
-</style>
-<div id="forumTopBar">
-  <span id="forumMenuBtn" onclick="forumToggleDrawer()">☰</span>
-  <span id="forumTitle">📋 论坛</span>
-  <span id="forumSearchBtn" onclick="forumRefresh()">🔄</span>
-</div>
-<div id="forumHotBar">
-  <span style="font-size:11px;color:#e74c3c;font-weight:700;flex-shrink:0;margin-right:6px;">🔥</span>
-  <div id="forumHotTags" style="display:flex;"></div>
-</div>
-<div id="forumTabWrap">
-  <div class="ftab active" data-board="all" onclick="forumSwitchBoard(this,'all')">全部</div>
-  <div id="forumBoardTabs" style="display:contents;"></div>
-</div>
-<div id="forumPostList"></div>
-<div id="forumFab" onclick="forumNewPost()">＋</div>
-<div id="forumDrOv" onclick="forumToggleDrawer()"></div>
-<div id="forumDrawer">
-  <div class="fdr-hdr">📋 论坛设置</div>
-  <div class="fdr-sec">世界观 & 提示词</div>
-  <div style="padding:6px 18px 10px;">
-    <textarea id="forumWorldView" placeholder="论坛世界观（时代/地点/背景…）" style="width:100%;height:72px;padding:8px 10px;border:1.5px solid rgba(108,92,231,0.18);border-radius:10px;font-size:12px;resize:none;box-sizing:border-box;outline:none;font-family:inherit;line-height:1.6;"></textarea>
-    <textarea id="forumPrompt" placeholder="额外提示词（影响帖子和评论风格）" style="width:100%;height:52px;padding:8px 10px;border:1.5px solid rgba(108,92,231,0.18);border-radius:10px;font-size:12px;resize:none;box-sizing:border-box;outline:none;font-family:inherit;line-height:1.6;margin-top:6px;"></textarea>
-  </div>
-  <div class="fdr-sec">时间设定</div>
-  <div style="padding:4px 18px 10px;">
-    <input id="forumDateSet" type="text" placeholder="如：2008年北京（留空=当下）" style="width:100%;padding:8px 10px;border:1.5px solid rgba(108,92,231,0.18);border-radius:10px;font-size:13px;box-sizing:border-box;outline:none;font-family:inherit;">
-  </div>
-  <div class="fdr-sec">版块管理</div>
-  <div id="forumBoardList" style="padding:0 18px 4px;"></div>
-  <div style="padding:4px 18px 10px;display:flex;gap:6px;">
-    <input id="forumNewBoardInp" placeholder="新版块名称" style="flex:1;padding:7px 10px;border:1.5px solid rgba(108,92,231,0.18);border-radius:10px;font-size:12px;outline:none;font-family:inherit;">
-    <button onclick="forumAddBoard()" style="padding:7px 12px;background:var(--forum-accent);color:white;border:none;border-radius:10px;font-size:12px;cursor:pointer;font-weight:bold;">添加</button>
-  </div>
-  <div class="fdr-sec">主题色</div>
-  <div class="ftheme-row" id="forumThemeRow"></div>
-  <div class="fdr-sec">字体大小</div>
-  <div style="padding:4px 18px 12px;display:flex;align-items:center;gap:10px;">
-    <span style="font-size:11px;color:var(--forum-sub);">小</span>
-    <input type="range" id="forumFontSize" min="12" max="17" value="14" oninput="forumApplyFont(this.value)" style="flex:1;accent-color:var(--forum-accent);">
-    <span style="font-size:11px;color:var(--forum-sub);">大</span>
-  </div>
-  <div class="fdr-item" onclick="forumSaveSettings();forumToggleDrawer();"><div class="fdr-ico">💾</div><span>保存并刷新</span></div>
-  <div class="fdr-item" onclick="forumToggleDrawer();"><div class="fdr-ico">✕</div><span>收起</span></div>
-</div>
-<div id="forumPostDetail">
-  <div id="fDetailBar">
-    <span id="fDetailBack" onclick="forumCloseDetail()">＜</span>
-    <span id="fDetailTitle">帖子详情</span>
-    <span id="fDetailRefresh" style="font-size:16px;cursor:pointer;color:var(--forum-sub);margin-left:auto;" onclick="forumLoadMoreComments()">＋评论</span>
-  </div>
-  <div id="fDetailBody"></div>
-  <div id="forumReplyBar">
-    <input id="forumReplyInp" placeholder="写下你的评论…">
-    <button id="forumReplySend" onclick="forumSendReply()">发送</button>
-  </div>
-</div>`;
+  if(!wrap)return;
+  if(wrap.querySelector('#forumTopBar'))return; // 已建过
+
+  // CSS 注入 head（避免innerHTML里含style崩溃）
+  if(!document.getElementById('forumCSS')){
+    var st=document.createElement('style');
+    st.id='forumCSS';
+    st.textContent=[
+      '#scrForum{--fb:#f5f6fa;--fa:#6c5ce7;--fc:#fff;--ft:#333;--fs:#888;}',
+      '#forumTopBar{display:flex;align-items:center;justify-content:space-between;padding:56px 14px 10px;background:var(--fc);flex-shrink:0;box-shadow:0 1px 6px rgba(0,0,0,.06);position:relative;z-index:10;}',
+      '#forumMenuBtn,#forumSearchBtn{font-size:22px;cursor:pointer;padding:4px 6px;color:var(--ft);}',
+      '#forumTitle{font-size:17px;font-weight:bold;color:var(--ft);}',
+      '#forumHotBar{display:flex;align-items:center;overflow-x:auto;padding:6px 12px;background:var(--fc);border-bottom:1px solid rgba(0,0,0,.05);flex-shrink:0;scrollbar-width:none;}',
+      '#forumHotBar::-webkit-scrollbar{display:none;}',
+      '.fhot{flex-shrink:0;padding:3px 9px;margin-right:5px;border-radius:20px;font-size:11px;cursor:pointer;background:rgba(108,92,231,.08);color:var(--fa);white-space:nowrap;}',
+      '.fhot.h1{background:rgba(231,76,60,.1);color:#e74c3c;}.fhot.h2{background:rgba(230,126,34,.1);color:#e67e22;}.fhot.h3{background:rgba(243,156,18,.1);color:#f39c12;}',
+      '#forumTabWrap{display:flex;overflow-x:auto;padding:0 10px;background:var(--fc);border-bottom:2px solid rgba(0,0,0,.04);flex-shrink:0;scrollbar-width:none;}',
+      '#forumTabWrap::-webkit-scrollbar{display:none;}',
+      '.ftab{flex-shrink:0;padding:8px 14px;font-size:13px;font-weight:600;color:var(--fs);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;}',
+      '.ftab.active{color:var(--fa);border-bottom-color:var(--fa);}',
+      '#forumPostList{flex:1;overflow-y:auto;padding:10px 12px;background:var(--fb);display:flex;flex-direction:column;gap:8px;}',
+      '.fcard{background:var(--fc);border-radius:14px;padding:12px 14px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.04);}',
+      '.fcard-hdr{display:flex;align-items:center;gap:8px;margin-bottom:7px;}',
+      '.fava{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:bold;color:white;overflow:hidden;background-size:cover;background-position:center;}',
+      '.fname{font-size:13px;font-weight:600;color:var(--ft);}.ftime{font-size:11px;color:var(--fs);margin-left:auto;}',
+      '.ftitle{font-size:14px;font-weight:700;color:var(--ft);margin-bottom:4px;line-height:1.5;}',
+      '.fprev{font-size:12px;color:var(--fs);line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}',
+      '.ffooter{display:flex;align-items:center;gap:10px;margin-top:8px;}.fstat{font-size:11px;color:var(--fs);}',
+      '.ftag{font-size:10px;padding:2px 7px;border-radius:10px;background:rgba(108,92,231,.08);color:var(--fa);}.ftag.hot{background:rgba(231,76,60,.1);color:#e74c3c;}',
+      '#forumFab{position:absolute;right:16px;bottom:20px;width:50px;height:50px;border-radius:50%;background:var(--fa);color:white;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;box-shadow:0 4px 16px rgba(108,92,231,.35);z-index:10;}',
+      '#forumDrawer{position:absolute;top:0;left:0;width:78%;max-width:280px;height:100%;background:var(--fc);z-index:50;transform:translateX(-100%);transition:transform .28s;display:flex;flex-direction:column;overflow-y:auto;box-shadow:4px 0 20px rgba(0,0,0,.12);}',
+      '#forumDrawer.open{transform:translateX(0);}',
+      '#forumDrOv{position:absolute;inset:0;background:rgba(0,0,0,.3);z-index:49;display:none;}',
+      '#forumDrOv.open{display:block;}',
+      '.fdr-hdr{padding:52px 18px 14px;font-size:18px;font-weight:bold;color:var(--ft);border-bottom:1px solid rgba(0,0,0,.06);flex-shrink:0;}',
+      '.fdr-sec{padding:12px 18px 4px;font-size:11px;color:var(--fs);font-weight:700;letter-spacing:.5px;}',
+      '.fdr-item{display:flex;align-items:center;gap:10px;padding:11px 18px;font-size:14px;color:var(--ft);cursor:pointer;}',
+      '.fdr-ico{width:30px;height:30px;border-radius:9px;background:rgba(108,92,231,.08);display:flex;align-items:center;justify-content:center;font-size:15px;}',
+      '.ftheme-dot{width:26px;height:26px;border-radius:50%;cursor:pointer;border:3px solid transparent;}',
+      '.ftheme-dot.active{border-color:#222;}',
+      '#forumPostDetail{display:none;flex-direction:column;position:absolute;top:0;width:100%;height:100%;z-index:55;background:var(--fb);}',
+      '#fDetailBar{display:flex;align-items:center;gap:10px;padding:52px 14px 10px;background:var(--fc);flex-shrink:0;box-shadow:0 1px 6px rgba(0,0,0,.06);}',
+      '#fDetailBack{font-size:22px;cursor:pointer;color:var(--ft);}',
+      '#fDetailTitle{font-size:15px;font-weight:bold;color:var(--ft);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}',
+      '#fDetailBody{flex:1;overflow-y:auto;padding:12px;}',
+      '.fd-post{background:var(--fc);border-radius:14px;padding:14px;margin-bottom:10px;}',
+      '.fd-post-title{font-size:16px;font-weight:bold;color:var(--ft);margin-bottom:8px;line-height:1.5;}',
+      '.fd-post-content{font-size:14px;color:var(--ft);line-height:1.7;}',
+      '.fcmt{background:var(--fc);border-radius:12px;padding:10px 12px;margin-bottom:7px;}',
+      '.fcmt-hdr{display:flex;align-items:center;gap:8px;margin-bottom:4px;}',
+      '.fcmt-ava{width:26px;height:26px;border-radius:50%;background:#ddd;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:bold;color:white;flex-shrink:0;}',
+      '.fcmt-name{font-size:12px;font-weight:600;color:var(--ft);}.fcmt-time{font-size:10px;color:var(--fs);margin-left:auto;}',
+      '.fcmt-txt{font-size:13px;color:var(--ft);line-height:1.6;}',
+      '.fcmt-likes{font-size:11px;color:var(--fs);margin-top:4px;display:flex;align-items:center;gap:4px;}',
+      '.freply{background:rgba(0,0,0,.025);border-radius:8px;padding:7px 10px;margin-top:5px;margin-left:34px;}',
+      '#forumReplyBar{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--fc);border-top:1px solid rgba(0,0,0,.06);flex-shrink:0;}',
+      '#forumReplyInp{flex:1;padding:8px 12px;border:1.5px solid rgba(108,92,231,.2);border-radius:20px;font-size:13px;outline:none;background:var(--fb);font-family:inherit;}',
+      '#forumReplySend{padding:8px 16px;background:var(--fa);color:white;border:none;border-radius:20px;font-size:13px;cursor:pointer;font-weight:bold;flex-shrink:0;}'
+    ].join('');
+    document.head.appendChild(st);
+  }
+
+  // 用createElement构建HTML，不用innerHTML注入style
+  function mk(tag,attr,txt){
+    var el=document.createElement(tag);
+    if(attr)Object.keys(attr).forEach(function(k){
+      if(k==='style')el.style.cssText=attr[k];
+      else if(k==='onclick')el.onclick=attr[k];
+      else el.setAttribute(k,attr[k]);
+    });
+    if(txt!==undefined)el.textContent=txt;
+    return el;
+  }
+  function mkDiv(id,txt){var d=document.createElement('div');if(id)d.id=id;if(txt!==undefined)d.textContent=txt;return d;}
+
+  // 顶栏
+  var topBar=mkDiv('forumTopBar');
+  var menuBtn=mkDiv('forumMenuBtn','☰');menuBtn.onclick=forumToggleDrawer;
+  var title=mkDiv('forumTitle','📋 论坛');
+  var searchBtn=mkDiv('forumSearchBtn','🔄');searchBtn.onclick=forumRefresh;
+  topBar.appendChild(menuBtn);topBar.appendChild(title);topBar.appendChild(searchBtn);
+
+  // 热搜条
+  var hotBar=mkDiv('forumHotBar');
+  var hotLbl=document.createElement('span');hotLbl.style.cssText='font-size:11px;color:#e74c3c;font-weight:700;flex-shrink:0;margin-right:6px;';hotLbl.textContent='🔥';
+  var hotTags=mkDiv('forumHotTags');hotTags.style.display='flex';
+  hotBar.appendChild(hotLbl);hotBar.appendChild(hotTags);
+
+  // 版块Tab
+  var tabWrap=mkDiv('forumTabWrap');
+  var allTab=document.createElement('div');allTab.className='ftab active';allTab.dataset.board='all';allTab.textContent='全部';
+  allTab.onclick=function(){forumSwitchBoard(allTab,'all');};
+  var boardTabs=mkDiv('forumBoardTabs');boardTabs.style.display='contents';
+  tabWrap.appendChild(allTab);tabWrap.appendChild(boardTabs);
+
+  // 帖子列表
+  var postList=mkDiv('forumPostList');
+
+  // FAB
+  var fab=mkDiv('forumFab','＋');fab.onclick=forumNewPost;
+
+  // 遮罩+抽屉
+  var drOv=mkDiv('forumDrOv');drOv.onclick=forumToggleDrawer;
+  var drawer=forumBuildDrawer();
+
+  // 帖子详情
+  var detail=forumBuildDetail();
+
+  wrap.appendChild(topBar);
+  wrap.appendChild(hotBar);
+  wrap.appendChild(tabWrap);
+  wrap.appendChild(postList);
+  wrap.appendChild(fab);
+  wrap.appendChild(drOv);
+  wrap.appendChild(drawer);
+  wrap.appendChild(detail);
+}
+
+function forumBuildDrawer(){
+  var dr=document.createElement('div');dr.id='forumDrawer';
+  function sec(txt){var d=document.createElement('div');d.className='fdr-sec';d.textContent=txt;return d;}
+  function pad(html){var d=document.createElement('div');d.style.padding='6px 18px 10px';d.innerHTML=html;return d;}
+  function item(ico,txt,fn){var d=document.createElement('div');d.className='fdr-item';d.innerHTML='<div class="fdr-ico">'+ico+'</div><span>'+txt+'</span>';d.onclick=fn;return d;}
+  var hdr=document.createElement('div');hdr.className='fdr-hdr';hdr.textContent='📋 论坛设置';
+  dr.appendChild(hdr);
+  dr.appendChild(sec('世界观 & 提示词'));
+  dr.appendChild(pad('<textarea id="forumWorldView" placeholder="论坛世界观（时代/地点/背景…）" style="width:100%;height:72px;padding:8px 10px;border:1.5px solid rgba(108,92,231,.18);border-radius:10px;font-size:12px;resize:none;box-sizing:border-box;outline:none;font-family:inherit;line-height:1.6;"></textarea><textarea id="forumPrompt" placeholder="额外提示词" style="width:100%;height:52px;padding:8px 10px;border:1.5px solid rgba(108,92,231,.18);border-radius:10px;font-size:12px;resize:none;box-sizing:border-box;outline:none;font-family:inherit;line-height:1.6;margin-top:6px;"></textarea>'));
+  dr.appendChild(sec('时间设定'));
+  dr.appendChild(pad('<input id="forumDateSet" type="text" placeholder="如：2008年北京（留空=当下）" style="width:100%;padding:8px 10px;border:1.5px solid rgba(108,92,231,.18);border-radius:10px;font-size:13px;box-sizing:border-box;outline:none;font-family:inherit;">'));
+  dr.appendChild(sec('版块管理'));
+  var blDiv=document.createElement('div');blDiv.id='forumBoardList';blDiv.style.padding='0 18px 4px';dr.appendChild(blDiv);
+  dr.appendChild(pad('<div style="display:flex;gap:6px;"><input id="forumNewBoardInp" placeholder="新版块名称" style="flex:1;padding:7px 10px;border:1.5px solid rgba(108,92,231,.18);border-radius:10px;font-size:12px;outline:none;font-family:inherit;"><button onclick="forumAddBoard()" style="padding:7px 12px;background:#6c5ce7;color:white;border:none;border-radius:10px;font-size:12px;cursor:pointer;font-weight:bold;">添加</button></div>'));
+  dr.appendChild(sec('主题色'));
+  var tr=document.createElement('div');tr.style.cssText='display:flex;gap:8px;padding:8px 18px 12px;flex-wrap:wrap;';tr.id='forumThemeRow';dr.appendChild(tr);
+  dr.appendChild(sec('字体大小'));
+  dr.appendChild(pad('<div style="display:flex;align-items:center;gap:10px;"><span style="font-size:11px;color:#888;">小</span><input type="range" id="forumFontSize" min="12" max="17" value="14" oninput="forumApplyFont(this.value)" style="flex:1;accent-color:#6c5ce7;"><span style="font-size:11px;color:#888;">大</span></div>'));
+  dr.appendChild(item('💾','保存并刷新',function(){forumSaveSettings();forumToggleDrawer();}));
+  dr.appendChild(item('✕','收起',forumToggleDrawer));
+  return dr;
+}
+
+function forumBuildDetail(){
+  var det=document.createElement('div');det.id='forumPostDetail';det.style.display='none';
+  var bar=document.createElement('div');bar.id='fDetailBar';
+  var back=document.createElement('span');back.id='fDetailBack';back.textContent='＜';back.onclick=forumCloseDetail;
+  var t=document.createElement('span');t.id='fDetailTitle';t.textContent='帖子详情';
+  var ref=document.createElement('span');ref.id='fDetailRefresh';ref.style.cssText='font-size:16px;cursor:pointer;color:#888;margin-left:auto;';ref.textContent='＋评论';ref.onclick=forumLoadMoreComments;
+  bar.appendChild(back);bar.appendChild(t);bar.appendChild(ref);
+  var body=document.createElement('div');body.id='fDetailBody';
+  var replyBar=document.createElement('div');replyBar.id='forumReplyBar';
+  var inp=document.createElement('input');inp.id='forumReplyInp';inp.placeholder='写下你的评论…';
+  var btn=document.createElement('button');btn.id='forumReplySend';btn.textContent='发送';btn.onclick=forumSendReply;
+  replyBar.appendChild(inp);replyBar.appendChild(btn);
+  det.appendChild(bar);det.appendChild(body);det.appendChild(replyBar);
+  return det;
 }
 
 // ── Toast ──
