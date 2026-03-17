@@ -2886,9 +2886,13 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 
         <!-- ══ 数据卡片行 ══ -->
         <div class="me-stats-row">
-          <div class="me-stat-card">
-            <div class="me-stat-num" id="meStatDays">—</div>
-            <div class="me-stat-label">聊天天数</div>
+          <div class="me-stat-card" style="cursor:text;" onclick="document.getElementById('meStatLikes').focus()">
+            <div class="me-stat-num" style="position:relative;">
+              <input id="meStatLikes" type="number" inputmode="numeric"
+                style="width:100%;text-align:center;font-size:22px;font-weight:bold;color:#6c5ce7;border:none;outline:none;background:transparent;padding:0;-moz-appearance:textfield;"
+                placeholder="0" oninput="meLikesSave(this.value)" onfocus="this.select()">
+            </div>
+            <div class="me-stat-label">👍 获赞</div>
           </div>
           <div class="me-stat-card">
             <div class="me-stat-num" id="meStatLogs">—</div>
@@ -2905,42 +2909,42 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
           <!-- 原有功能 -->
           <div class="me-section-label">🗂 常用功能</div>
           <div id=btnGoCharSticker class=me-menu-item>
-            <div class=me-menu-left><div class=me-menu-title>角色表情包库</div><div class=me-menu-sub>让对方随时发送表情包</div></div>
+            <div class=me-menu-left><div class=me-menu-title>角色表情包库</div><div class=me-menu-sub>设定专属表情，让他随时懂你</div></div>
             <div class=me-menu-right>＞</div>
           </div>
           <div id=btnGoFav class=me-menu-item>
-            <div class=me-menu-left><div class=me-menu-title>我的收藏</div><div class=me-menu-sub>收藏的精彩消息</div></div>
+            <div class=me-menu-left><div class=me-menu-title>我的收藏</div><div class=me-menu-sub>那些舍不得删的瞬间</div></div>
             <div class=me-menu-right>＞</div>
           </div>
           <div id=btnGoOurSongs class=me-menu-item>
-            <div class=me-menu-left><div class=me-menu-title>🎵 我们的歌</div><div class=me-menu-sub>听歌记录与收藏的聊天片段</div></div>
+            <div class=me-menu-left><div class=me-menu-title>🎵 我们的歌</div><div class=me-menu-sub>一起听过的歌，说过的那些话</div></div>
             <div class=me-menu-right>＞</div>
           </div>
           <div id=btnOpenWallet class=me-menu-item>
-            <div class=me-menu-left><div class=me-menu-title>我的钱包</div><div class=me-menu-sub>管理你的双核资产与转账记录</div></div>
+            <div class=me-menu-left><div class=me-menu-title>我的钱包</div><div class=me-menu-sub>存着你们之间流转的每一分心意</div></div>
             <div class=me-menu-right>＞</div>
           </div>
           <div id=btnMeLogs class=me-menu-item>
-            <div class=me-menu-left><div class=me-menu-title>📝 我的日志</div><div class=me-menu-sub>写下心情故事，对外公开</div></div>
+            <div class=me-menu-left><div class=me-menu-title>📝 我的日志</div><div class=me-menu-sub>空间日志，他看得见</div></div>
             <div class=me-menu-right>＞</div>
           </div>
 
           <!-- 新功能 -->
           <div class="me-section-label">✨ 特色功能</div>
           <div id=btnMeMoodCal class=me-menu-item>
-            <div class=me-menu-left><div class=me-menu-title>📅 情绪日历</div><div class=me-menu-sub>记录每天的心情，点亮你的月历</div></div>
+            <div class=me-menu-left><div class=me-menu-title>📅 情绪日历</div><div class=me-menu-sub>今天是什么心情？</div></div>
             <div class=me-menu-right>＞</div>
           </div>
           <div id=btnMeAchieve class=me-menu-item>
-            <div class=me-menu-left><div class=me-menu-title>🌟 成就墙</div><div class=me-menu-sub>解锁你们之间的独家里程碑</div></div>
+            <div class=me-menu-left><div class=me-menu-title>🌟 成就墙</div><div class=me-menu-sub>你们独有的专属印记</div></div>
             <div class=me-menu-right>＞</div>
           </div>
           <div id=btnMeCapsule class=me-menu-item>
-            <div class=me-menu-left><div class=me-menu-title>💌 时光胶囊</div><div class=me-menu-sub>写一封信，等待某天被打开</div></div>
+            <div class=me-menu-left><div class=me-menu-title>💌 时光胶囊</div><div class=me-menu-sub>藏一句话，等他来拆</div></div>
             <div class=me-menu-right>＞</div>
           </div>
           <div id=btnMeLabels class=me-menu-item>
-            <div class=me-menu-left><div class=me-menu-title>🪞 我的标签</div><div class=me-menu-sub>给自己贴标签，影响互动风格</div></div>
+            <div class=me-menu-left><div class=me-menu-title>🪞 我的标签</div><div class=me-menu-sub>你是什么样的人，你最清楚</div></div>
             <div class=me-menu-right>＞</div>
           </div>
         </div>
@@ -9695,6 +9699,13 @@ if(charStickers.length > 0) {
     if(window._anonVisionHint){
         sys += '\n\n' + window._anonVisionHint;
         window._anonVisionHint = null;
+    }
+    // ===== 成就墙进度注入（让char知道当前进行中的成就）=====
+    if(window._meAchieveProgress){
+      var _ap=window._meAchieveProgress;
+      if(_ap.charName===($(`cfgName`)?.value||'对方')&&_ap.inProgress&&_ap.inProgress.length){
+        sys+='\n【成就进度提示-请自然配合】你和'+_ap.charName+'目前有'+_ap.inProgress.join('、')+'等成就正在进行中，可以在合适的时机自然地配合完成，不要刻意提及"成就"这个词。';
+      }
     }
     // ===== 强制状态栏注入（紧贴AI调用之前，执行优先级最高）=====
     // 只从DOM读取（已加入isolatedKeys，自动按char隔离）
@@ -23509,39 +23520,64 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
 (function initMeNew(){
 
 async function meSave(k,v){try{await localforage.setItem(k,v);}catch(e){}try{if(v==null)localStorage.removeItem(k);else localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
-async function meLoad(k,def){var d=null;try{d=await localforage.getItem(k);}catch(e){}if(d===null||d===undefined){try{var r=localStorage.getItem(k);if(r!=null)d=JSON.parse(r);}catch(e){}}return(d===null||d===undefined)?def:d;}
+async function meLoad(k,def){var d=null;try{d=await localforage.getItem(k);}catch(e){}if(d===null||d===undefined){try{var r=localStorage.getItem(k);if(r!=null)d=JSON.parse(r);}catch(e){}}if(typeof d==='string'){try{d=JSON.parse(d);}catch(e){}}return(d===null||d===undefined)?def:d;}
+// 点赞数：保存 + 自动增长
+window.meLikesSave=async function(v){
+  var n=parseInt(v)||0;
+  await meSave('me_likes',n);
+};
+// 每次进入"我"页面，随机+0或+1（低概率），模拟缓慢增长
+async function meLikesAutoGrow(){
+  var raw=await meLoad('me_likes',null);
+  if(raw===null||raw===undefined)return; // 还没设置初始值，不自动增长
+  var n=parseInt(raw)||0;
+  var lastDate=await meLoad('me_likes_date','');
+  var today=new Date().toDateString();
+  if(lastDate!==today){
+    // 每天有30%概率+1，有5%概率+2
+    var r=Math.random();
+    var inc=r<0.05?2:r<0.35?1:0;
+    if(inc>0){
+      n+=inc;
+      await meSave('me_likes',n);
+      await meSave('me_likes_date',today);
+      var inp=document.getElementById('meStatLikes');
+      if(inp)inp.value=n;
+    } else {
+      await meSave('me_likes_date',today);
+    }
+  }
+}
+
 function meToast(msg){var t=document.createElement('div');t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:rgba(50,50,80,0.9);color:white;padding:8px 18px;border-radius:20px;font-size:13px;z-index:9999;pointer-events:none;white-space:nowrap;';t.textContent=msg;document.body.appendChild(t);setTimeout(function(){t.remove();},2200);}
 
 // ── 数据统计 ──
 async function meRefreshStats(){
-  // 聊天天数：从chatHistory读取不重复的日期数
-  var days=0;
+  // 点赞数：读取存储值并填入输入框
   try{
-    var cid=localStorage.getItem('cs_active_char')||'';
-    var hist=null;
-    try{hist=await localforage.getItem('chatHistory_'+cid);}catch(e){}
-    if(!hist){try{var r=localStorage.getItem('chatHistory_'+cid)||localStorage.getItem('chatHistory');if(r)hist=JSON.parse(r);}catch(e){}}
-    if(Array.isArray(hist)){
-      var dates=new Set();
-      hist.forEach(function(m){if(m.ts){var d=new Date(m.ts);dates.add(d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate());}});
-      days=dates.size||1;
+    var likesRaw=await meLoad('me_likes',null);
+    var inp=document.getElementById('meStatLikes');
+    if(inp){
+      if(likesRaw!==null&&likesRaw!==undefined){inp.value=likesRaw;}
+      else{inp.value='';}
     }
   }catch(e){}
-  var el1=document.getElementById('meStatDays');if(el1)el1.textContent=days||'—';
 
   // 日志篇数
   var logCount=0;
-  try{var logs=null;try{logs=await localforage.getItem('myLogs');}catch(e){}if(!logs){try{var r=localStorage.getItem('myLogs');if(r)logs=JSON.parse(r);}catch(e){}}logCount=Array.isArray(logs)?logs.length:0;}catch(e){}
+  try{var logs=null;try{logs=await localforage.getItem('myLogs');}catch(e){}if(!logs){try{var r=localStorage.getItem('myLogs');if(r)logs=JSON.parse(r);}catch(e){}}if(typeof logs==='string'){try{logs=JSON.parse(logs);}catch(e){logs=null;}}logCount=Array.isArray(logs)?logs.length:0;}catch(e){}
   var el2=document.getElementById('meStatLogs');if(el2)el2.textContent=logCount;
 
-  // 标签数
+  // Fix: 标签数——正确读取已保存的标签数组长度
   var labels=await meLoad('me_labels',[]);
-  var el3=document.getElementById('meStatTags');if(el3)el3.textContent=labels.length||'—';
+  var labelArr=Array.isArray(labels)?labels:[];
+  var el3=document.getElementById('meStatTags');if(el3)el3.textContent=labelArr.length||'—';
 
   // 今日心情标签
   var moods=await meLoad('me_moods',{});
+  var moodObj=typeof moods==='object'&&moods!==null&&!Array.isArray(moods)?moods:{};
   var todayKey=_moodDateKey(new Date());
-  var todayMood=moods[todayKey];
+  var todayMood=moodObj[todayKey];
   var moodTag=document.getElementById('meMoodTag');
   if(moodTag){
     if(todayMood){moodTag.style.display='inline-block';moodTag.textContent=todayMood+' 今天';}
@@ -23555,83 +23591,138 @@ var _moodPickTarget=null;
 function _moodDateKey(d){return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
 window.moodCalPrev=function(){_moodMonth--;if(_moodMonth<0){_moodMonth=11;_moodYear--;}renderMoodCal();}
 window.moodCalNext=function(){_moodMonth++;if(_moodMonth>11){_moodMonth=0;_moodYear++;}renderMoodCal();}
+
+// Fix2: renderMoodCal改为同步渲染（先load完再渲染，不用async内部循环）
 async function renderMoodCal(){
-  var moods=await meLoad('me_moods',{});
+  // 先把moods读完
+  var rawMoods=await meLoad('me_moods',{});
+  var moods=typeof rawMoods==='object'&&rawMoods!==null&&!Array.isArray(rawMoods)?rawMoods:{};
+
   var title=document.getElementById('moodCalTitle');
   var MONTHS=['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
   if(title)title.textContent=_moodYear+'年 '+MONTHS[_moodMonth];
   var grid=document.getElementById('moodCalGrid');if(!grid)return;
   grid.innerHTML='';
   var first=new Date(_moodYear,_moodMonth,1).getDay();
-  var days=new Date(_moodYear,_moodMonth+1,0).getDate();
+  var daysInMonth=new Date(_moodYear,_moodMonth+1,0).getDate();
   var today=new Date();
-  // 空格
+
   for(var i=0;i<first;i++){var e=document.createElement('div');e.className='mood-cal-day empty';grid.appendChild(e);}
-  for(var d=1;d<=days;d++){
+  for(var d=1;d<=daysInMonth;d++){
     var cell=document.createElement('div');cell.className='mood-cal-day';
     var key=_moodYear+'-'+(_moodMonth+1)+'-'+d;
     var isToday=today.getFullYear()===_moodYear&&today.getMonth()===_moodMonth&&today.getDate()===d;
     if(isToday)cell.classList.add('today');
-    cell.textContent=moods[key]||d;
-    if(moods[key])cell.style.background='linear-gradient(135deg,#fff8f0,#fff0f8)';
+    var emoji=moods[key]||null;
+    if(emoji){
+      cell.textContent=emoji;
+      cell.style.background='linear-gradient(135deg,#fff8f0,#fff0f8)';
+      cell.style.fontSize='18px';
+    } else {
+      cell.textContent=d;
+      cell.style.fontSize='13px';
+      cell.style.color='#555';
+    }
     var isFuture=new Date(_moodYear,_moodMonth,d)>today;
-    if(isFuture){cell.style.opacity='.4';cell.style.cursor='default';}
+    if(isFuture){cell.style.opacity='.35';cell.style.cursor='default';}
     else{
       (function(dk,dd){
         cell.onclick=function(){
           _moodPickTarget=dk;
-          var pDate=document.getElementById('moodPickDate');if(pDate)pDate.textContent=_moodYear+'年'+(_moodMonth+1)+'月'+dd+'日';
-          document.getElementById('moodPickModal').style.display='flex';
+          var pDate=document.getElementById('moodPickDate');
+          if(pDate)pDate.textContent=_moodYear+'年'+(_moodMonth+1)+'月'+dd+'日';
+          var modal=document.getElementById('moodPickModal');
+          if(modal)modal.style.display='flex';
         };
       })(key,d);
     }
     grid.appendChild(cell);
   }
 }
+
 window.moodPickSel=async function(emoji){
   if(!_moodPickTarget)return;
-  var moods=await meLoad('me_moods',{});
+  var rawMoods=await meLoad('me_moods',{});
+  var moods=typeof rawMoods==='object'&&rawMoods!==null&&!Array.isArray(rawMoods)?rawMoods:{};
   moods[_moodPickTarget]=emoji;
   await meSave('me_moods',moods);
-  document.getElementById('moodPickModal').style.display='none';
-  renderMoodCal();
-  meRefreshStats();
+  var modal=document.getElementById('moodPickModal');if(modal)modal.style.display='none';
+  await renderMoodCal();
+  await meRefreshStats();
   meToast('心情已记录 '+emoji);
 };
 
-// ── 成就墙 ──
+// ── 成就墙（绑定单char + 提升难度 + char知道进度）──
+// 成就定义：更严格的条件
 var ACHIEVEMENTS=[
-  {id:'a1',icon:'💬',name:'初次相遇',desc:'发出第一条消息',color:'#fff8e6',check:function(h){return h.length>=1;}},
-  {id:'a2',icon:'🌙',name:'深夜守候',desc:'深夜12点后还在聊天',color:'#f0e6ff',check:function(h){return h.some(function(m){var d=new Date(m.ts||0);return d.getHours()>=0&&d.getHours()<4;});}},
-  {id:'a3',icon:'💌',name:'写信达人',desc:'写下第一篇日志',color:'#ffe6f0',check:async function(){var logs=null;try{logs=await localforage.getItem('myLogs');}catch(e){}if(!logs){try{var r=localStorage.getItem('myLogs');if(r)logs=JSON.parse(r);}catch(e){}}return Array.isArray(logs)&&logs.length>=1;}},
-  {id:'a4',icon:'💰',name:'初尝甜头',desc:'收到第一笔红包或转账',color:'#fff0e6',check:function(h){return h.some(function(m){return m.content&&(m.content.includes('红包消息')||m.content.includes('转账'));});}},
-  {id:'a5',icon:'🎵',name:'音乐灵魂',desc:'收藏第一首歌',color:'#e6f0ff',check:function(){return false;}},
-  {id:'a6',icon:'🌟',name:'百日情缘',desc:'聊天超过100条消息',color:'#f5ffe6',check:function(h){return h.length>=100;}},
-  {id:'a7',icon:'📞',name:'声音陪伴',desc:'打过一次语音通话',color:'#e6fff5',check:function(h){return h.some(function(m){return m.content&&m.content.includes('语音通话结束');});}},
-  {id:'a8',icon:'💌',name:'时光旅人',desc:'封存第一个时光胶囊',color:'#ffe6f8',check:async function(){var c=await meLoad('me_capsules',[]);return c.length>=1;}},
+  {id:'a1',icon:'💬',name:'初次相遇',desc:'发出第1条消息',color:'#fff8e6',
+   check:function(h){return h.filter(function(m){return m.role==='user';}).length>=1;},
+   progress:function(h){return Math.min(1,h.filter(function(m){return m.role==='user';}).length)+'/1';}},
+  {id:'a2',icon:'🌙',name:'深夜守候',desc:'深夜0-4点聊天3次',color:'#f0e6ff',
+   check:function(h){return h.filter(function(m){var hr=new Date(m.ts||0).getHours();return hr>=0&&hr<4&&m.ts;}).length>=3;},
+   progress:function(h){var n=Math.min(3,h.filter(function(m){var hr=new Date(m.ts||0).getHours();return hr>=0&&hr<4&&m.ts;}).length);return n+'/3';}},
+  {id:'a3',icon:'📝',name:'倾诉欲望',desc:'写下5篇日志',color:'#ffe6f0',
+   check:async function(){var logs=null;try{logs=await localforage.getItem('myLogs');}catch(e){}if(!logs){try{var r=localStorage.getItem('myLogs');if(r)logs=JSON.parse(r);}catch(e){}}if(typeof logs==='string'){try{logs=JSON.parse(logs);}catch(e){logs=null;}}return Array.isArray(logs)&&logs.length>=5;},
+   progress:async function(){var logs=null;try{logs=await localforage.getItem('myLogs');}catch(e){}if(!logs){try{var r=localStorage.getItem('myLogs');if(r)logs=JSON.parse(r);}catch(e){}}if(typeof logs==='string'){try{logs=JSON.parse(logs);}catch(e){logs=null;}}var n=Array.isArray(logs)?logs.length:0;return Math.min(n,5)+'/5';}},
+  {id:'a4',icon:'💰',name:'财富密码',desc:'收到3笔红包或转账',color:'#fff0e6',
+   check:function(h){return h.filter(function(m){return m.content&&(m.content.includes('红包消息')||m.content.includes('转账'));}).length>=3;},
+   progress:function(h){var n=Math.min(3,h.filter(function(m){return m.content&&(m.content.includes('红包消息')||m.content.includes('转账'));}).length);return n+'/3';}},
+  {id:'a5',icon:'📞',name:'声音陪伴',desc:'打过5次语音通话',color:'#e6fff5',
+   check:function(h){return h.filter(function(m){return m.content&&m.content.includes('语音通话结束');}).length>=5;},
+   progress:function(h){var n=Math.min(5,h.filter(function(m){return m.content&&m.content.includes('语音通话结束');}).length);return n+'/5';}},
+  {id:'a6',icon:'🌟',name:'千言万语',desc:'聊天消息超过500条',color:'#f5ffe6',
+   check:function(h){return h.length>=500;},
+   progress:function(h){return Math.min(h.length,500)+'/500';}},
+  {id:'a7',icon:'💌',name:'时光信使',desc:'封存3个时光胶囊',color:'#ffe6f8',
+   check:async function(){var c=await meLoad('me_capsules',[]);return Array.isArray(c)&&c.length>=3;},
+   progress:async function(){var c=await meLoad('me_capsules',[]);var n=Array.isArray(c)?c.length:0;return Math.min(n,3)+'/3';}},
+  {id:'a8',icon:'🎭',name:'情绪观测者',desc:'连续7天记录心情',color:'#e6f0ff',
+   check:async function(){
+     var rawMoods=await meLoad('me_moods',{});
+     var moods=typeof rawMoods==='object'&&rawMoods!==null?rawMoods:{};
+     var today=new Date();var streak=0;
+     for(var i=0;i<30;i++){var d=new Date(today.getTime()-i*86400000);var k=d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();if(moods[k])streak++;else if(i>0)break;}
+     return streak>=7;
+   },
+   progress:async function(){
+     var rawMoods=await meLoad('me_moods',{});
+     var moods=typeof rawMoods==='object'&&rawMoods!==null?rawMoods:{};
+     var today=new Date();var streak=0;
+     for(var i=0;i<30;i++){var d=new Date(today.getTime()-i*86400000);var k=d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();if(moods[k])streak++;else if(i>0)break;}
+     return Math.min(streak,7)+'/7天';
+   }},
 ];
+
 async function renderAchieve(){
   var container=document.getElementById('achieveList');if(!container)return;
   container.innerHTML='';
   var cid=localStorage.getItem('cs_active_char')||'';
+  var charName=localStorage.getItem('cN_'+cid)||'TA';
   var hist=null;
   try{hist=await localforage.getItem('chatHistory_'+cid);}catch(e){}
   if(!hist){try{var r=localStorage.getItem('chatHistory_'+cid)||localStorage.getItem('chatHistory');if(r)hist=JSON.parse(r);}catch(e){}}
+  if(typeof hist==='string'){try{hist=JSON.parse(hist);}catch(e){hist=null;}}
   hist=Array.isArray(hist)?hist:[];
   var unlocked=0;
+  var progressArr=[];
   for(var i=0;i<ACHIEVEMENTS.length;i++){
     var a=ACHIEVEMENTS[i];
-    var ok=false;
+    var ok=false;var prog='';
     try{ok=typeof a.check==='function'?await a.check(hist):false;}catch(e){}
+    try{prog=typeof a.progress==='function'?await a.progress(hist):'';}catch(e){}
     unlocked+=ok?1:0;
+    if(!ok&&prog)progressArr.push(a.name+'('+prog+')');
     var item=document.createElement('div');item.className='achieve-item'+(ok?'':' achieve-locked');
     item.innerHTML='<div class="achieve-icon" style="background:'+a.color+';">'+a.icon+'</div>'+
-      '<div style="flex:1;"><div style="font-size:14px;font-weight:bold;color:'+(ok?'#333':'#bbb')+';">'+a.name+'</div><div style="font-size:12px;color:#bbb;margin-top:2px;">'+a.desc+'</div></div>'+
+      '<div style="flex:1;"><div style="font-size:14px;font-weight:bold;color:'+(ok?'#333':'#bbb')+';">'+a.name+'</div>'+
+      '<div style="font-size:12px;color:'+(ok?'#999':'#ccc')+';margin-top:2px;">'+a.desc+(prog&&!ok?' <span style="color:#a29bfe;">'+prog+'</span>':'')+'</div></div>'+
       (ok?'<div style="font-size:12px;color:#6c5ce7;font-weight:bold;">已解锁 ✓</div>':'<div style="font-size:20px;color:#ddd;">🔒</div>');
     container.appendChild(item);
   }
   var hdr=document.querySelector('#scrMeAchieve .room-header .header-center');
   if(hdr)hdr.textContent='🌟 成就墙 '+unlocked+'/'+ACHIEVEMENTS.length;
+  // 把进度信息存起来供sys prompt注入
+  window._meAchieveProgress={charName:charName,unlocked:unlocked,total:ACHIEVEMENTS.length,inProgress:progressArr.slice(0,3)};
 }
 
 // ── 时光胶囊 ──
@@ -23644,24 +23735,33 @@ window.capsuleNew=function(){
   if(m)m.style.display='flex';
 };
 window.capsuleSave=async function(){
-  var content=(document.getElementById('capsuleContent')||{}).value||'';
+  var cont=(document.getElementById('capsuleContent')||{}).value||'';
   var date=(document.getElementById('capsuleDate')||{}).value||'';
-  if(!content.trim()){meToast('请写点什么');return;}
+  if(!cont.trim()){meToast('请写点什么');return;}
   if(!date){meToast('请选择开封日期');return;}
+  // Fix3: 确保list是数组
   var list=await meLoad('me_capsules',[]);
-  list.push({id:Date.now(),content:content,date:date,created:new Date().toISOString().slice(0,10),opened:false});
+  if(!Array.isArray(list))list=[];
+  list.push({id:Date.now(),content:cont,date:date,created:new Date().toISOString().slice(0,10),opened:false});
   await meSave('me_capsules',list);
-  document.getElementById('capsuleWriteModal').style.display='none';
-  renderCapsule();
+  var modal=document.getElementById('capsuleWriteModal');if(modal)modal.style.display='none';
+  await renderCapsule();
   meToast('胶囊已封存 💌');
 };
 async function renderCapsule(){
-  var list=await meLoad('me_capsules',[]);
+  var raw=await meLoad('me_capsules',[]);
+  // Fix3: 确保list是数组
+  var list=Array.isArray(raw)?raw:[];
   var container=document.getElementById('capsuleList');if(!container)return;
   container.innerHTML='';
-  if(!list.length){container.innerHTML='<div style="text-align:center;padding:40px;color:#ccc;">还没有时光胶囊<br>点右上角新建一个吧~</div>';return;}
+  if(!list.length){
+    container.innerHTML='<div style="text-align:center;padding:50px 20px;color:#ccc;line-height:2;">还没有时光胶囊<br><span style="font-size:30px;">💌</span><br>点右上角新建一个吧~</div>';
+    return;
+  }
   var today=new Date().toISOString().slice(0,10);
-  list.sort(function(a,b){return a.date<b.date?1:-1;}).forEach(function(c,idx){
+  var sorted=list.slice().sort(function(a,b){return a.date<b.date?1:-1;});
+  sorted.forEach(function(c,idx){
+    var realIdx=list.indexOf(c);
     var canOpen=c.date<=today;
     var card=document.createElement('div');
     card.className='capsule-card'+(canOpen?'':' capsule-sealed');
@@ -23671,17 +23771,20 @@ async function renderCapsule(){
       '</div>'+
       (canOpen?'<div style="font-size:13px;color:#555;line-height:1.7;white-space:pre-wrap;">'+c.content+'</div>':
        '<div style="font-size:13px;color:#ccc;font-style:italic;">信件已封存，等待开封日…</div>')+
-      '<div style="margin-top:10px;text-align:right;"><span style="font-size:11px;color:#ff7675;cursor:pointer;" data-idx="'+idx+'">删除</span></div>';
-    card.querySelector('[data-idx]').onclick=async function(){
-      var i=parseInt(this.getAttribute('data-idx'));
-      var l=await meLoad('me_capsules',[]);l.splice(i,1);
-      await meSave('me_capsules',l);renderCapsule();
+      '<div style="margin-top:10px;text-align:right;"><span style="font-size:11px;color:#ff7675;cursor:pointer;" data-realidx="'+realIdx+'">删除</span></div>';
+    card.querySelector('[data-realidx]').onclick=async function(){
+      var ri=parseInt(this.getAttribute('data-realidx'));
+      var l=await meLoad('me_capsules',[]);
+      if(!Array.isArray(l))l=[];
+      l.splice(ri,1);
+      await meSave('me_capsules',l);
+      await renderCapsule();
     };
     container.appendChild(card);
   });
 }
 
-// ── 我的标签 ──
+// ── 我的标签（纯自我认知，不注入sys）──
 var ALL_LABELS=[
   {emoji:'🌙',text:'夜猫子'},{emoji:'🗣️',text:'话痨'},{emoji:'🍋',text:'柠檬精'},
   {emoji:'🐰',text:'粘人精'},{emoji:'😤',text:'醋坛子'},{emoji:'🧊',text:'冷淡脸'},
@@ -23691,26 +23794,62 @@ var ALL_LABELS=[
   {emoji:'🫶',text:'暗中关心'},{emoji:'🔥',text:'容易上头'},{emoji:'🌸',text:'软萌本体'},
 ];
 async function renderLabels(){
-  var saved=await meLoad('me_labels',[]);
+  var raw=await meLoad('me_labels',[]);
+  var saved=Array.isArray(raw)?raw:[];
   var grid=document.getElementById('labelGrid');if(!grid)return;
   grid.innerHTML='';
   ALL_LABELS.forEach(function(lb){
     var chip=document.createElement('span');chip.className='label-chip'+(saved.includes(lb.text)?' selected':'');
     chip.textContent=lb.emoji+' '+lb.text;
     chip.onclick=function(){
-      var s=Array.from(grid.querySelectorAll('.label-chip.selected'));
+      var sel=Array.from(grid.querySelectorAll('.label-chip.selected'));
       if(chip.classList.contains('selected')){chip.classList.remove('selected');}
-      else if(s.length>=6){meToast('最多选6个标签');}
+      else if(sel.length>=6){meToast('最多选6个标签');}
       else{chip.classList.add('selected');}
     };
     grid.appendChild(chip);
   });
+  // 自定义标签输入
+  var customRow=document.createElement('div');
+  customRow.style.cssText='display:flex;gap:8px;margin-top:10px;width:100%;';
+  customRow.innerHTML='<input id="labelCustomInput" placeholder="自定义标签…" style="flex:1;padding:8px 12px;border:1.5px solid #ddd;border-radius:20px;font-size:13px;outline:none;">'+
+    '<button onclick="labelAddCustom()" style="padding:8px 14px;background:#6c5ce7;color:white;border:none;border-radius:20px;font-size:13px;cursor:pointer;">添加</button>';
+  grid.after(customRow);
+  // 已有自定义标签（已选中不在ALL_LABELS里的）
+  var customSaved=saved.filter(function(s){return!ALL_LABELS.find(function(l){return l.text===s;});});
+  customSaved.forEach(function(ct){
+    var chip=document.createElement('span');chip.className='label-chip selected';
+    chip.textContent='✏️ '+ct;
+    chip.onclick=function(){chip.classList.toggle('selected');};
+    grid.appendChild(chip);
+  });
 }
+window.labelAddCustom=function(){
+  var inp=document.getElementById('labelCustomInput');
+  if(!inp||!inp.value.trim())return;
+  var txt=inp.value.trim().slice(0,8);
+  var grid=document.getElementById('labelGrid');
+  var existing=Array.from(grid.querySelectorAll('.label-chip'));
+  if(existing.some(function(c){return c.textContent.includes(txt);})){meToast('已有这个标签');return;}
+  var sel=grid.querySelectorAll('.label-chip.selected');
+  if(sel.length>=6){meToast('最多选6个标签');return;}
+  var chip=document.createElement('span');chip.className='label-chip selected';
+  chip.textContent='✏️ '+txt;
+  chip.onclick=function(){chip.classList.toggle('selected');};
+  grid.appendChild(chip);
+  inp.value='';
+  meToast('已添加 ✏️ '+txt);
+};
 window.labelSave=async function(){
-  var selected=Array.from(document.querySelectorAll('#labelGrid .label-chip.selected')).map(function(c){return c.textContent.slice(2).trim();});
+  var chips=Array.from(document.querySelectorAll('#labelGrid .label-chip.selected'));
+  var selected=chips.map(function(c){
+    var t=c.textContent.trim();
+    // 去掉emoji前缀
+    return t.replace(/^.{1,2}\s/,'');
+  });
   await meSave('me_labels',selected);
-  meRefreshStats();
-  meToast('标签已保存 ✨ ('+selected.length+'个)');
+  await meRefreshStats();
+  meToast('标签已保存 ('+selected.length+'个)');
   showScreen('scrMe');
 };
 
@@ -23718,15 +23857,13 @@ window.labelSave=async function(){
 var _origMeNew=window.showScreen;
 window.showScreen=function(id){
   _origMeNew(id);
-  if(id==='scrMe')meRefreshStats();
+  if(id==='scrMe'){meRefreshStats();meLikesAutoGrow();}
   if(id==='scrMoodCal'){_moodYear=new Date().getFullYear();_moodMonth=new Date().getMonth();renderMoodCal();}
   if(id==='scrMeAchieve')renderAchieve();
   if(id==='scrMeCapsule')renderCapsule();
   if(id==='scrMeLabels')renderLabels();
 };
 
-// ── 注册新屏幕到showScreen白名单 ──
-// （已在showScreen条件里处理，这里只做按钮绑定）
 setTimeout(function(){
   var b1=document.getElementById('btnMeLogs');if(b1)b1.onclick=function(){showScreen('scrLogList');};
   var b2=document.getElementById('btnMeMoodCal');if(b2)b2.onclick=function(){showScreen('scrMoodCal');};
