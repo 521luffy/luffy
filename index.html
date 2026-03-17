@@ -11849,7 +11849,7 @@ function renderLogs() {
     let container = $(`logListContainer`);
     if(!container) return;
     container.innerHTML = ``;
-    let tipHtml = `<div style="text-align:center; padding:8px 15px; background:#fff9e6; color:#d35400; font-size:12px; margin-bottom:10px; cursor:pointer; border-bottom:1px solid #fdebd0;" onclick="showCustomText('【玩法提示】\\n这里的日志相当于发在公开空间的动态哦！\\n角色们都会披着社交马甲，保持自己的人设伪装，不会把最深层的心里话直接说出来。\\n\\n真正的【私密日记】功能正在全力开发中，敬请期待！')">❓ 这里的日志和私密日记有什么区别？(点击查看)</div>`;
+    let tipHtml = `<div style="text-align:center; padding:8px 15px; background:#fff9e6; color:#d35400; font-size:12px; margin-bottom:10px; cursor:pointer; border-bottom:1px solid #fdebd0;" onclick="showCustomText('【玩法提示】\\n这里的日志相当于发在公开空间的动态哦！\\n角色们都会披着社交马甲，保持自己的人设伪装，不会把最深层的心里话直接说出来。')">❓ 这里的日志和私密日记有什么区别？(点击查看)</div>`;
 
     container.innerHTML += tipHtml;
     
@@ -23498,8 +23498,22 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
 // ══════════════════════════════════════════════
 (function initMySpace(){
 
-async function spSave(k,v){try{await localforage.setItem(k,v);}catch(e){}try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
-async function spLoad(k,def){var d=null;try{d=await localforage.getItem(k);}catch(e){}if(d===null||d===undefined){try{var r=localStorage.getItem(k);if(r)d=JSON.parse(r);}catch(e){}}return(d===null||d===undefined)?def:d;}
+// ══ 存储（Fix4：localforage优先，localStorage备份）══
+async function spSave(k,v){
+  try{await localforage.setItem(k,v);}catch(e){}
+  try{
+    if(v===null||v===undefined){localStorage.removeItem(k);}
+    else{localStorage.setItem(k,JSON.stringify(v));}
+  }catch(e){}
+}
+async function spLoad(k,def){
+  var d=null;
+  try{d=await localforage.getItem(k);}catch(e){}
+  if(d===null||d===undefined){
+    try{var r=localStorage.getItem(k);if(r!=null)d=JSON.parse(r);}catch(e){}
+  }
+  return(d===null||d===undefined)?def:d;
+}
 
 async function spApi(){
   var pxy='',key='',mod='';
@@ -23513,9 +23527,9 @@ async function spApi(){
   if(!mod)mod='claude-sonnet-4-20250514';
   return{pxy:pxy,key:key,mod:mod};
 }
-async function spCallApi(cfg,prompt,maxTokens){
+async function spCallApi(cfg,pr,maxTokens){
   var res=await fetch(cfg.pxy,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+cfg.key},
-    body:JSON.stringify({model:cfg.mod,max_tokens:maxTokens||300,temperature:0.9,messages:[{role:'user',content:prompt}]})});
+    body:JSON.stringify({model:cfg.mod,max_tokens:maxTokens||300,temperature:0.9,messages:[{role:'user',content:pr}]})});
   var d=await res.json();
   var t='';if(d.content&&d.content[0])t=d.content[0].text||'';else if(d.choices&&d.choices[0])t=(d.choices[0].message&&d.choices[0].message.content)||'';
   return t.trim();
@@ -23533,8 +23547,45 @@ function getAllCharNames(){
   }catch(e){}
   return names;
 }
-function getMyName(){try{return localStorage.getItem('cMyN_'+(localStorage.getItem('cs_active_char')||''))||'我';}catch(e){}return'我';}
+function getMyName(){
+  try{return localStorage.getItem('cMyN_'+(localStorage.getItem('cs_active_char')||''))||'我';}catch(e){}
+  return '我';
+}
 
+// ══ Fix1: 自定义弹窗替代 prompt/confirm ══
+function spPrompt(msg,def,cb){
+  var overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;';
+  var box=document.createElement('div');
+  box.style.cssText='background:white;border-radius:20px;padding:24px 20px 16px;width:82vw;max-width:320px;box-shadow:0 8px 32px rgba(0,0,0,0.18);';
+  box.innerHTML='<div style="font-size:15px;color:#333;margin-bottom:14px;line-height:1.5;">'+msg+'</div>'+
+    '<input id="_spPromptInput" type="text" value="'+(def||'')+'" style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:12px;font-size:14px;box-sizing:border-box;outline:none;margin-bottom:14px;">'+
+    '<div style="display:flex;gap:10px;">'+
+    '<button id="_spPromptCancel" style="flex:1;padding:10px;border:1.5px solid #ddd;border-radius:12px;background:white;font-size:14px;cursor:pointer;color:#666;">取消</button>'+
+    '<button id="_spPromptOk" style="flex:1;padding:10px;background:#6c5ce7;color:white;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:bold;">确定</button>'+
+    '</div>';
+  overlay.appendChild(box);document.body.appendChild(overlay);
+  var inp=box.querySelector('#_spPromptInput');inp.focus();
+  box.querySelector('#_spPromptCancel').onclick=function(){overlay.remove();cb(null);};
+  box.querySelector('#_spPromptOk').onclick=function(){var v=inp.value;overlay.remove();cb(v);};
+  inp.addEventListener('keydown',function(e){if(e.key==='Enter'){var v=inp.value;overlay.remove();cb(v);}});
+}
+function spConfirm(msg,cb){
+  var overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;';
+  var box=document.createElement('div');
+  box.style.cssText='background:white;border-radius:20px;padding:24px 20px 16px;width:78vw;max-width:300px;box-shadow:0 8px 32px rgba(0,0,0,0.18);text-align:center;';
+  box.innerHTML='<div style="font-size:15px;color:#333;margin-bottom:18px;line-height:1.5;">'+msg+'</div>'+
+    '<div style="display:flex;gap:10px;">'+
+    '<button id="_spConfirmNo" style="flex:1;padding:10px;border:1.5px solid #ddd;border-radius:12px;background:white;font-size:14px;cursor:pointer;color:#666;">取消</button>'+
+    '<button id="_spConfirmYes" style="flex:1;padding:10px;background:#ff7675;color:white;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:bold;">确认</button>'+
+    '</div>';
+  overlay.appendChild(box);document.body.appendChild(overlay);
+  box.querySelector('#_spConfirmNo').onclick=function(){overlay.remove();cb(false);};
+  box.querySelector('#_spConfirmYes').onclick=function(){overlay.remove();cb(true);};
+}
+
+// ══ 空间密码 ══
 window.spaceTogglePwd=async function(){
   var panel=document.getElementById('spacePwdPanel');if(!panel)return;
   panel.style.display=panel.style.display==='none'?'block':'none';
@@ -23554,13 +23605,51 @@ window.spaceClearPwd=async function(){
   spToast('密码已删除');
 };
 
+// ══ Fix2: 刷新首页各板块数量 ══
+async function spRefreshHomeBadges(){
+  // 日志数
+  try{
+    var logs=null;try{logs=await localforage.getItem('myLogs');}catch(e){}
+    if(!logs){try{var lr=localStorage.getItem('myLogs');if(lr)logs=JSON.parse(lr);}catch(e){}}
+    var logArr=Array.isArray(logs)?logs:[];
+    var logSub=document.querySelector('#btnSpaceLogs .sp-grid-sub');
+    if(logSub)logSub.textContent=logArr.length?logArr.length+'篇日志':'写下心情故事';
+  }catch(e){}
+  // 留言数
+  var board=await spLoad('space_board',[]);
+  var boardSub=document.querySelector('#btnSpaceBoard .sp-grid-sub');
+  if(boardSub)boardSub.textContent=board.length?board.length+'条留言':'朋友们的心意';
+  // 相册数
+  var album=await spLoad('space_album',[]);
+  var albumSub=document.getElementById('spAlbumSub');
+  if(albumSub)albumSub.textContent=album.length?album.length+'张照片':'珍藏的瞬间';
+  // 访客今日
+  var vdata=await spLoad('space_visit_data',null);
+  var visitorSub=document.getElementById('spVisitorSub');
+  if(visitorSub&&vdata)visitorSub.textContent='今日 +'+vdata.today+' 位访客';
+}
+
+// ══ Fix2: 更新页内顶部数量 ══
+function spSetBoardCount(n){
+  var el=document.getElementById('spBoardCount');if(el)el.textContent=n+'条留言';
+}
+function spSetAlbumCount(n){
+  var el=document.getElementById('spAlbumCount');if(el)el.textContent=n+'张照片';
+}
+
+// ══ 访客计数 ══
 async function spInitVisitCount(){
   var data=await spLoad('space_visit_data',null);
   if(!data){
-    var initStr=prompt('设置空间初始访问量（模拟以前积累的人气）','1234');
-    var initNum=parseInt(initStr||'1234');
-    if(isNaN(initNum))initNum=1234;
-    data={total:initNum,today:0,lastDate:''};
+    // Fix1: 用自定义弹窗
+    await new Promise(function(resolve){
+      spPrompt('设置空间初始访问量<br>（模拟以前积累的人气）','1234',function(v){
+        var initNum=parseInt(v||'1234');
+        if(isNaN(initNum))initNum=1234;
+        data={total:initNum,today:0,lastDate:''};
+        resolve();
+      });
+    });
     await spSave('space_visit_data',data);
   }
   var today=new Date().toDateString();
@@ -23584,12 +23673,10 @@ async function spLoadVisitors(){
   if(!list.length){
     var chars=getAllCharNames();var now=Date.now();
     for(var i=0;i<10;i++){
-      var isNet=Math.random()<0.5||i>=chars.length;
+      var isNet=i%2===0&&i<chars.length?false:(i>=chars.length?true:Math.random()<0.4);
       var name=isNet?VISITOR_NET_NAMES[i%VISITOR_NET_NAMES.length]:(chars[i%chars.length]||{name:'访客'}).name;
       var type=isNet?'net':(chars[i%chars.length]||{type:'net'}).type;
-      var action=VISITOR_ACTIONS[Math.floor(Math.random()*VISITOR_ACTIONS.length)];
-      var ts=now-(i*3600000+Math.floor(Math.random()*3600000));
-      list.push({name:name,type:type,action:action,ts:ts});
+      list.push({name:name,type:type,action:VISITOR_ACTIONS[Math.floor(Math.random()*VISITOR_ACTIONS.length)],ts:now-(i*3600000+Math.floor(Math.random()*3600000))});
     }
     await spSave('space_visitors',list);
   }
@@ -23616,11 +23703,13 @@ async function spRenderVisitors(){
   });
 }
 
+// ══ 留言板 ══
 async function spLoadBoard(){return await spLoad('space_board',[]);}
 async function spSaveBoard(list){await spSave('space_board',list);}
 function spRenderBoard(list){
   var container=document.getElementById('spBoardList');if(!container)return;
   container.innerHTML='';
+  spSetBoardCount(list.length);
   if(!list.length){container.innerHTML='<div style="text-align:center;padding:40px;color:#ccc;font-style:italic;">还没有留言，点右上角生成第一批吧~</div>';return;}
   list.forEach(function(msg,idx){
     var card=document.createElement('div');card.className='sp-board-card';
@@ -23637,33 +23726,47 @@ function spRenderBoard(list){
 }
 window.spBoardDel=async function(idx){
   var list=await spLoadBoard();list.splice(idx,1);
-  await spSaveBoard(list);spRenderBoard(list);spToast('已删除');
+  await spSaveBoard(list);spRenderBoard(list);spRefreshHomeBadges();spToast('已删除');
 };
+// Fix3: 确保char/npc优先出现在留言里
 window.spBoardGenMore=async function(){
   var cfg=await spApi();if(!cfg){spToast('请先配置API');return;}
   spToast('生成留言中…');
   var chars=getAllCharNames();var myName=getMyName();
-  var charNames=chars.filter(function(c){return c.type==='char';}).map(function(c){return c.name;}).join('、')||'好友';
-  var npcNames=chars.filter(function(c){return c.type==='npc';}).map(function(c){return c.name;}).join('、');
-  var prompt='为一个叫"'+myName+'"的人的QQ空间留言板生成6条留言。留言者包括好友('+charNames+')'+(npcNames?'、认识的人('+npcNames+')':'')+' 以及2-3个网友。语气真实自然，各不相同，有温柔有搞怪有神秘，字数15-40字。严格用JSON数组输出，不加任何前缀：[{"name":"留言者名字","type":"char或npc或net","text":"留言内容"}] 只输出JSON数组。';
+  var charList=chars.filter(function(c){return c.type==='char';});
+  var npcList=chars.filter(function(c){return c.type==='npc';});
+  var charNames=charList.map(function(c){return c.name;}).join('、');
+  var npcNames=npcList.map(function(c){return c.name;}).join('、');
+  // Fix3: 强制要求至少2个char/npc的留言
+  var forceNote='';
+  if(charNames)forceNote+='【强制要求】留言者中必须包含以下好友中的至少2位：'+charNames+'，他们要用符合自己性格的口吻留言。';
+  if(npcNames)forceNote+='也可以包含认识的人：'+npcNames+'。';
+  forceNote+='其余可以是1-2个网友（用网络ID风格名字）。';
+  var pr='为一个叫'+myName+'的人的QQ空间留言板生成6条留言。'+forceNote+'语气真实自然各不相同，字数15-40字。严格用JSON数组输出：[{"name":"x","type":"char或npc或net","text":"x"}] 只输出JSON数组。';
   try{
-    var raw=await spCallApi(cfg,prompt,600);
+    var raw=await spCallApi(cfg,pr,600);
     raw=raw.replace(/```json|```/g,'').trim();
     var items=JSON.parse(raw);
     var list=await spLoadBoard();var now=Date.now();
+    // Fix3: list此时是数组，Array.prototype.unshift可用
+    var newItems=[];
     items.forEach(function(item,i){
       var cObj=chars.find(function(c){return c.name===item.name;});
-      list.unshift({name:item.name,type:item.type||'net',text:item.text,avatar:(cObj&&cObj.avatar)||null,ts:now-i*3600000});
+      newItems.push({name:item.name,type:item.type||'net',text:item.text,avatar:(cObj&&cObj.avatar)||null,ts:now-i*3600000});
     });
-    await spSaveBoard(list);spRenderBoard(list);spToast('新留言已生成 💬');
+    // 新留言插到最前面
+    list=newItems.concat(list);
+    await spSaveBoard(list);spRenderBoard(list);spRefreshHomeBadges();spToast('新留言已生成 💬');
   }catch(e){spToast('生成失败：'+e.message);}
 };
 
+// ══ 相册 ══
 var _spAlbumCurIdx=-1;
 async function spLoadAlbum(){return await spLoad('space_album',[]);}
 async function spSaveAlbum(list){await spSave('space_album',list);}
 async function spRenderAlbum(){
   var list=await spLoadAlbum();
+  spSetAlbumCount(list.length);
   var grid=document.getElementById('spAlbumGrid');if(!grid)return;
   grid.innerHTML='';
   if(!list.length){grid.innerHTML='<div style="text-align:center;padding:40px;color:#ccc;grid-column:1/-1;">还没有照片，点右上角添加~</div>';return;}
@@ -23679,7 +23782,23 @@ window.spAlbumAdd=function(){var u=document.getElementById('spAlbumUpload');if(u
 window.spAlbumOpen=async function(idx){
   var list=await spLoadAlbum();var photo=list[idx];if(!photo)return;
   _spAlbumCurIdx=idx;
-  if(photo.pwd){var input=prompt('这张照片加密了，请输入密码：');if(input!==photo.pwd){spToast('密码错误 🔒');return;}}
+  if(photo.pwd){
+    // Fix1: 自定义弹窗
+    await new Promise(function(resolve){
+      spPrompt('这张照片加密了，请输入密码：','',function(v){
+        if(v===null){resolve(false);return;}
+        if(v!==photo.pwd){spToast('密码错误 🔒');resolve(false);return;}
+        resolve(true);
+      });
+    }).then(function(ok){
+      if(!ok)return;
+      _showAlbumDetail(photo);
+    });
+    return;
+  }
+  _showAlbumDetail(photo);
+};
+function _showAlbumDetail(photo){
   var detail=document.getElementById('spAlbumDetail');
   var img=document.getElementById('spAlbumDetailImg');
   var desc=document.getElementById('spAlbumDetailDesc');
@@ -23688,7 +23807,7 @@ window.spAlbumOpen=async function(idx){
   if(desc)desc.textContent=photo.desc||'';
   if(pwdBtn)pwdBtn.textContent=photo.pwd?'🔓 取消密码':'🔒 设置密码';
   if(detail)detail.style.display='flex';
-};
+}
 window.spAlbumSavePwd=async function(){
   var v=(document.getElementById('spAlbumPwdInput')||{}).value||'';
   var list=await spLoadAlbum();
@@ -23708,26 +23827,37 @@ setTimeout(function(){
     var inp=document.getElementById('spAlbumPwdInput');if(inp)inp.value='';
   };
   var delBtn=document.getElementById('spAlbumDetailDel');
-  if(delBtn)delBtn.onclick=async function(){
-    if(!confirm('确认删除？'))return;
-    var list=await spLoadAlbum();list.splice(_spAlbumCurIdx,1);
-    await spSaveAlbum(list);
-    var detail=document.getElementById('spAlbumDetail');if(detail)detail.style.display='none';
-    spRenderAlbum();spToast('已删除');
+  if(delBtn)delBtn.onclick=function(){
+    spConfirm('确认删除这张照片？',async function(ok){
+      if(!ok)return;
+      var list=await spLoadAlbum();list.splice(_spAlbumCurIdx,1);
+      await spSaveAlbum(list);
+      var detail=document.getElementById('spAlbumDetail');if(detail)detail.style.display='none';
+      spRenderAlbum();spRefreshHomeBadges();spToast('已删除');
+    });
   };
   var upEl=document.getElementById('spAlbumUpload');
   if(upEl)upEl.addEventListener('change',async function(){
     var files=Array.from(this.files);if(!files.length)return;
     var list=await spLoadAlbum();
-    var desc=prompt('给这批照片加个说明（可留空）')||'';
-    for(var i=0;i<files.length;i++){
-      await (function(file){return new Promise(function(resolve){
-        var reader=new FileReader();
-        reader.onload=async function(e){list.unshift({src:e.target.result,desc:desc,pwd:'',ts:Date.now()});resolve();};
-        reader.readAsDataURL(file);
-      });})(files[i]);
-    }
-    await spSaveAlbum(list);spRenderAlbum();spToast('已添加'+files.length+'张照片 📷');
+    // Fix1: 自定义弹窗替代prompt
+    await new Promise(function(resolve){
+      spPrompt('给这批照片加个说明（可留空）','',function(desc){
+        desc=desc||'';
+        var pending=files.length;
+        for(var i=0;i<files.length;i++){
+          (function(file){
+            var reader=new FileReader();
+            reader.onload=function(e){
+              list.unshift({src:e.target.result,desc:desc,pwd:'',ts:Date.now()});
+              pending--;if(pending===0)resolve();
+            };
+            reader.readAsDataURL(file);
+          })(files[i]);
+        }
+      });
+    });
+    await spSaveAlbum(list);spRenderAlbum();spRefreshHomeBadges();spToast('已添加'+files.length+'张照片 📷');
     upEl.value='';
   });
 },500);
@@ -23738,19 +23868,43 @@ function spToast(msg){
   t.textContent=msg;document.body.appendChild(t);setTimeout(function(){t.remove();},2200);
 }
 
+// ══ Fix2: 在留言板/相册顶部增加数量显示 ══
+function spInjectCounts(){
+  var boardHdr=document.querySelector('#scrSpaceBoard .room-header .header-center');
+  if(boardHdr&&!document.getElementById('spBoardCount')){
+    var span=document.createElement('span');span.id='spBoardCount';
+    span.style.cssText='font-size:12px;color:#a29bfe;margin-left:6px;font-weight:normal;';
+    boardHdr.appendChild(span);
+  }
+  var albumHdr=document.querySelector('#scrSpaceAlbum .room-header .header-center');
+  if(albumHdr&&!document.getElementById('spAlbumCount')){
+    var span2=document.createElement('span');span2.id='spAlbumCount';
+    span2.style.cssText='font-size:12px;color:#74b9ff;margin-left:6px;font-weight:normal;';
+    albumHdr.appendChild(span2);
+  }
+}
+
 var _origSpShow=window.showScreen;
 window.showScreen=function(id){
   _origSpShow(id);
   if(id==='scrSpace'){
     spInitVisitCount();
+    spRefreshHomeBadges();
     spLoad('space_pwd',null).then(function(pwd){var btn=document.getElementById('btnSpacePwd');if(btn)btn.textContent=pwd?'🔒 已设密码':'🔓 无密码';});
   }
-  if(id==='scrSpaceBoard')spLoadBoard().then(function(l){spRenderBoard(l);});
-  if(id==='scrSpaceAlbum')spRenderAlbum();
+  if(id==='scrSpaceBoard'){
+    spInjectCounts();
+    spLoadBoard().then(function(l){spRenderBoard(l);});
+  }
+  if(id==='scrSpaceAlbum'){
+    spInjectCounts();
+    spRenderAlbum();
+  }
   if(id==='scrSpaceVisitor')spRenderVisitors();
 };
 
 setTimeout(function(){
+  spInjectCounts();
   var b1=document.getElementById('btnSpaceLogs');if(b1)b1.onclick=function(){showScreen('scrLogList');};
   var b2=document.getElementById('btnSpaceBoard');if(b2)b2.onclick=function(){showScreen('scrSpaceBoard');};
   var b3=document.getElementById('btnSpaceAlbum');if(b3)b3.onclick=function(){showScreen('scrSpaceAlbum');};
@@ -23762,3 +23916,4 @@ setTimeout(function(){
 
 })();
 </script>
+
