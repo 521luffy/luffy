@@ -24076,12 +24076,15 @@ async function hp2L(k,def){
   if(d===null||d===undefined){
     try{
       var r=localStorage.getItem('hp2_'+k);
-      if(r!=null){
-        try{d=JSON.parse(r);}catch(e){d=r;} // 解析失败就用原始字符串
-      }
+      if(r!=null){try{d=JSON.parse(r);}catch(e){d=r;}}
     }catch(e){}
   }
-  return(d===null||d===undefined)?def:d;
+  if(d===null||d===undefined)return def;
+  // 去掉旧版错误保存的两端引号
+  if(typeof d==='string'&&d.length>=2&&d.charAt(0)==='"'&&d.charAt(d.length-1)==='"'){
+    d=d.slice(1,-1);
+  }
+  return d;
 }
 
 ['A','B','C'].forEach(function(tag){
@@ -24307,20 +24310,35 @@ async function hp2Init(){
       if(hint)hint.style.display='none';
     }
   }
+  // 去引号辅助函数
+  function unq(s){if(typeof s==='string'&&s.length>=2&&s[0]==='"'&&s[s.length-1]==='"')return s.slice(1,-1);return s;}
   for(var ei=1;ei<=4;ei++){
     var eid='hp2Emoji'+ei;
-    var esaved=await hp2L('emoji_'+eid,null);
-    if(esaved){var eel=document.getElementById(eid);if(eel)eel.textContent=esaved;}
+    var esaved=unq(await hp2L('emoji_'+eid,null));
+    if(esaved){
+      // 重新存一次（去掉引号的干净版本）
+      hp2S('emoji_'+eid,esaved);
+      var eel=document.getElementById(eid);if(eel)eel.textContent=esaved;
+    }
   }
-  var itxt1=await hp2L('inputText1',null);
+  var itxt1=unq(await hp2L('inputText1',null));
   var itxt1El=document.getElementById('hp2InputText1');
-  if(itxt1El&&itxt1!==null){itxt1El.textContent=itxt1||'点击输入一行字…';itxt1El.style.color=itxt1?'#555':'#888';}
-  var itxt2=await hp2L('inputText2',null);
+  if(itxt1El&&itxt1!==null){
+    if(itxt1)hp2S('inputText1',itxt1);
+    itxt1El.textContent=itxt1||'点击输入一行字…';itxt1El.style.color=itxt1?'#555':'#888';
+  }
+  var itxt2=unq(await hp2L('inputText2',null));
   var itxt2El=document.getElementById('hp2InputText2');
-  if(itxt2El&&itxt2!==null){itxt2El.textContent=itxt2||'点击输入一行字…';itxt2El.style.color=itxt2?'#555':'#888';}
-  var cdl=await hp2L('cdLabel',null);
+  if(itxt2El&&itxt2!==null){
+    if(itxt2)hp2S('inputText2',itxt2);
+    itxt2El.textContent=itxt2||'点击输入一行字…';itxt2El.style.color=itxt2?'#555':'#888';
+  }
+  var cdl=unq(await hp2L('cdLabel',null));
   var cdlEl=document.getElementById('hp2CdLabel');
-  if(cdlEl&&cdl)cdlEl.textContent='🎂 '+cdl;
+  if(cdlEl&&cdl){
+    hp2S('cdLabel',cdl);
+    cdlEl.textContent='🎂 '+cdl;
+  }
   var cdd=await hp2L('cdDate',null);
   if(cdd)hp2UpdateCd(cdd);
   // 倒计时背景图
