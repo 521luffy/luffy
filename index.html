@@ -663,74 +663,79 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
           <!-- ══ 第二页 ══ -->
           <div class="home-page" id="homePage2" style="width:50%;flex-shrink:0;height:100%;overflow-y:auto;overflow-x:hidden;padding:8px 8px 8px;box-sizing:border-box;-webkit-overflow-scrolling:touch;">
 
-            <!-- ▌顶部行：左大图 + 右2×2功能格 ▐ -->
-            <div style="display:flex;gap:7px;margin-bottom:7px;">
-              <!-- 左：大图A -->
-              <div id="hp2ImgA" style="flex:0 0 48%;height:150px;border-radius:16px;background:rgba(255,220,230,0.55);backdrop-filter:blur(6px);overflow:hidden;position:relative;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(200,100,140,0.12);" onclick="document.getElementById('hp2InpA').click()">
-                <img id="hp2ImgAEl" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;border-radius:16px;">
-                <div id="hp2ImgAHint" style="display:flex;flex-direction:column;align-items:center;gap:5px;color:rgba(200,150,170,0.85);font-size:11px;"><span style="font-size:26px;">🖼️</span>上传图片</div>
-                <input type="file" id="hp2InpA" accept="image/*" style="display:none;">
+            <!-- ▌顶部行：左上功能留白 + 右上大图A ▐ -->
+            <div style="display:flex;gap:7px;margin-bottom:7px;align-items:stretch;">
+              <!-- 左：2×2留白（无边框） -->
+              <div style="flex:0 0 48%;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:6px;min-height:130px;">
+                <div id="hp2SlotA1" style="border-radius:14px;"></div>
+                <div id="hp2SlotA2" style="border-radius:14px;"></div>
+                <div id="hp2SlotA3" style="border-radius:14px;"></div>
+                <div id="hp2SlotA4" style="border-radius:14px;"></div>
               </div>
-              <!-- 右：2×2空功能格 -->
-              <div style="flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:6px;">
-                <div class="hp2-slot-empty" id="hp2SlotA1">＋</div>
-                <div class="hp2-slot-empty" id="hp2SlotA2">＋</div>
-                <div class="hp2-slot-empty" id="hp2SlotA3">＋</div>
-                <div class="hp2-slot-empty" id="hp2SlotA4">＋</div>
+              <!-- 右：大图A（右上角） -->
+              <div id="hp2ImgA" style="flex:1;min-height:130px;border-radius:16px;background:rgba(255,220,230,0.45);backdrop-filter:blur(6px);overflow:hidden;position:relative;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(200,100,140,0.1);" onclick="document.getElementById('hp2InpA').click()">
+                <img id="hp2ImgAEl" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;border-radius:16px;">
+                <div id="hp2ImgAHint" style="display:flex;flex-direction:column;align-items:center;gap:4px;color:rgba(200,150,170,0.8);font-size:10px;"><span style="font-size:22px;">🖼️</span>上传</div>
+                <input type="file" id="hp2InpA" accept="image/*" style="display:none;">
               </div>
             </div>
 
             <!-- ▌emoji小格行（3个）▐ -->
-            <div style="display:flex;gap:7px;margin-bottom:7px;">
-              <div class="hp2-emoji-box" id="hp2Emoji1" onclick="hp2EditEmoji('hp2Emoji1')">🌸</div>
-              <div class="hp2-emoji-box" id="hp2Emoji2" onclick="hp2EditEmoji('hp2Emoji2')">✨</div>
-              <div class="hp2-emoji-box" id="hp2Emoji3" onclick="hp2EditEmoji('hp2Emoji3')">💫</div>
+            <div style="display:flex;gap:6px;margin-bottom:7px;">
+              <div class="hp2-emoji-sm" id="hp2Emoji1" onclick="hp2EditEmoji('hp2Emoji1')">🌸</div>
+              <div class="hp2-emoji-sm" id="hp2Emoji2" onclick="hp2EditEmoji('hp2Emoji2')">✨</div>
+              <div class="hp2-emoji-sm" id="hp2Emoji3" onclick="hp2EditEmoji('hp2Emoji3')">💫</div>
             </div>
 
-            <!-- ▌中间行：左倒计时 + 右（输入框+窄图）▐ -->
+            <!-- ▌中间行：左倒计时 + 右（两行文字+圆形头像）▐ -->
             <div style="display:flex;gap:7px;margin-bottom:7px;">
-              <!-- 左：倒计时小组件 -->
-              <div style="flex:0 0 48%;background:rgba(255,220,230,0.55);backdrop-filter:blur(6px);border-radius:16px;padding:12px 10px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;box-shadow:0 2px 12px rgba(200,100,140,0.10);">
-                <div id="hp2CdLabel" onclick="hp2EditCdLabel()" style="font-size:10px;color:rgba(180,100,130,0.9);margin-bottom:4px;cursor:pointer;font-weight:600;letter-spacing:.5px;">🎂 点击设置倒计时</div>
+              <!-- 左：倒计时 -->
+              <div style="flex:0 0 48%;background:rgba(255,220,230,0.55);backdrop-filter:blur(6px);border-radius:16px;padding:14px 12px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;box-shadow:0 2px 10px rgba(200,100,140,0.10);">
+                <div id="hp2CdLabel" onclick="hp2EditCdLabel()" style="font-size:12px;color:rgba(180,100,130,0.9);margin-bottom:6px;cursor:pointer;font-weight:700;letter-spacing:.5px;">🎂 点击设置倒计时</div>
                 <div style="display:flex;align-items:baseline;gap:3px;cursor:pointer;" onclick="hp2EditCdDate()">
-                  <span id="hp2CdNum" style="font-size:38px;font-weight:900;color:#c05080;line-height:1;">—</span>
-                  <span style="font-size:13px;color:#c05080;font-weight:600;">天</span>
+                  <span id="hp2CdNum" style="font-size:48px;font-weight:900;color:#c05080;line-height:1;">—</span>
+                  <span style="font-size:16px;color:#c05080;font-weight:700;">天</span>
                 </div>
-                <div id="hp2CdDate" style="font-size:10px;color:rgba(180,100,130,0.7);margin-top:3px;cursor:pointer;" onclick="hp2EditCdDate()">点击设置日期</div>
+                <div id="hp2CdDate" style="font-size:12px;color:rgba(180,100,130,0.75);margin-top:5px;cursor:pointer;font-weight:500;" onclick="hp2EditCdDate()">点击设置日期</div>
               </div>
-              <!-- 右：单行输入框 + 窄图 -->
+              <!-- 右：两行文字输入 + 圆形头像 -->
               <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
-                <div style="background:rgba(255,220,230,0.55);backdrop-filter:blur(6px);border-radius:14px;padding:10px 12px;box-sizing:border-box;box-shadow:0 2px 10px rgba(200,100,140,0.08);">
-                  <div id="hp2InputText" onclick="hp2EditInputText()" style="font-size:13px;color:#666;cursor:pointer;min-height:18px;line-height:1.5;word-break:break-all;">点击输入文字…</div>
+                <div style="background:rgba(255,220,230,0.55);backdrop-filter:blur(6px);border-radius:13px;padding:9px 11px;box-sizing:border-box;box-shadow:0 2px 8px rgba(200,100,140,0.08);">
+                  <div id="hp2InputText1" onclick="hp2EditInputText1()" style="font-size:13px;color:#888;cursor:pointer;min-height:17px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">点击输入一行字…</div>
                 </div>
-                <div id="hp2ImgB" style="flex:1;min-height:70px;border-radius:14px;background:rgba(255,220,230,0.55);backdrop-filter:blur(6px);overflow:hidden;position:relative;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(200,100,140,0.10);" onclick="document.getElementById('hp2InpB').click()">
-                  <img id="hp2ImgBEl" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;border-radius:14px;">
-                  <div id="hp2ImgBHint" style="color:rgba(200,150,170,0.8);font-size:10px;text-align:center;"><span style="font-size:20px;display:block;">📷</span>上传</div>
-                  <input type="file" id="hp2InpB" accept="image/*" style="display:none;">
+                <div style="background:rgba(255,220,230,0.55);backdrop-filter:blur(6px);border-radius:13px;padding:9px 11px;box-sizing:border-box;box-shadow:0 2px 8px rgba(200,100,140,0.08);">
+                  <div id="hp2InputText2" onclick="hp2EditInputText2()" style="font-size:13px;color:#888;cursor:pointer;min-height:17px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">点击输入一行字…</div>
+                </div>
+                <!-- 圆形头像 -->
+                <div style="display:flex;justify-content:center;">
+                  <div id="hp2ImgB" style="width:64px;height:64px;border-radius:50%;background:rgba(255,220,230,0.55);backdrop-filter:blur(6px);overflow:hidden;position:relative;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(200,100,140,0.15);border:2px solid rgba(255,200,215,0.6);" onclick="document.getElementById('hp2InpB').click()">
+                    <img id="hp2ImgBEl" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;">
+                    <div id="hp2ImgBHint" style="color:rgba(200,150,170,0.75);font-size:9px;text-align:center;"><span style="font-size:16px;display:block;">📷</span></div>
+                    <input type="file" id="hp2InpB" accept="image/*" style="display:none;">
+                  </div>
                 </div>
               </div>
             </div>
 
             <!-- ▌emoji小格行（1个）▐ -->
-            <div style="display:flex;gap:7px;margin-bottom:7px;">
-              <div class="hp2-emoji-box" id="hp2Emoji4" onclick="hp2EditEmoji('hp2Emoji4')">🌙</div>
-              <div style="flex:1;"></div>
+            <div style="display:flex;gap:6px;margin-bottom:7px;">
+              <div class="hp2-emoji-sm" id="hp2Emoji4" onclick="hp2EditEmoji('hp2Emoji4')">🌙</div>
             </div>
 
-            <!-- ▌底部行：左大图C + 右2×2功能格 ▐ -->
-            <div style="display:flex;gap:7px;">
-              <!-- 左：大图C -->
-              <div id="hp2ImgC" style="flex:0 0 48%;height:150px;border-radius:16px;background:rgba(255,220,230,0.55);backdrop-filter:blur(6px);overflow:hidden;position:relative;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(200,100,140,0.12);" onclick="document.getElementById('hp2InpC').click()">
+            <!-- ▌底部行：左下大图C + 右下功能留白 ▐ -->
+            <div style="display:flex;gap:7px;align-items:stretch;">
+              <!-- 左：大图C（左下角） -->
+              <div id="hp2ImgC" style="flex:1;min-height:130px;border-radius:16px;background:rgba(255,220,230,0.45);backdrop-filter:blur(6px);overflow:hidden;position:relative;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(200,100,140,0.1);" onclick="document.getElementById('hp2InpC').click()">
                 <img id="hp2ImgCEl" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;border-radius:16px;">
-                <div id="hp2ImgCHint" style="display:flex;flex-direction:column;align-items:center;gap:5px;color:rgba(200,150,170,0.85);font-size:11px;"><span style="font-size:26px;">🖼️</span>上传图片</div>
+                <div id="hp2ImgCHint" style="display:flex;flex-direction:column;align-items:center;gap:4px;color:rgba(200,150,170,0.8);font-size:10px;"><span style="font-size:22px;">🖼️</span>上传</div>
                 <input type="file" id="hp2InpC" accept="image/*" style="display:none;">
               </div>
-              <!-- 右：2×2空功能格 -->
-              <div style="flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:6px;">
-                <div class="hp2-slot-empty" id="hp2SlotB1">＋</div>
-                <div class="hp2-slot-empty" id="hp2SlotB2">＋</div>
-                <div class="hp2-slot-empty" id="hp2SlotB3">＋</div>
-                <div class="hp2-slot-empty" id="hp2SlotB4">＋</div>
+              <!-- 右：2×2留白（无边框） -->
+              <div style="flex:0 0 48%;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:6px;min-height:130px;">
+                <div id="hp2SlotB1" style="border-radius:14px;"></div>
+                <div id="hp2SlotB2" style="border-radius:14px;"></div>
+                <div id="hp2SlotB3" style="border-radius:14px;"></div>
+                <div id="hp2SlotB4" style="border-radius:14px;"></div>
               </div>
             </div>
 
@@ -5528,23 +5533,16 @@ if(typeof localforage === 'undefined') {
 
 
 /* ══ 第二页专用样式 ══ */
-.hp2-slot-empty{
-  border-radius:14px;background:rgba(255,200,215,0.3);
-  border:1.5px dashed rgba(200,130,160,0.35);
-  display:flex;align-items:center;justify-content:center;
-  font-size:18px;color:rgba(200,130,160,0.5);
-  cursor:pointer;transition:.15s;min-height:0;
-}
-.hp2-slot-empty:active{transform:scale(.94);}
-.hp2-emoji-box{
-  width:44px;height:44px;border-radius:14px;
+.hp2-slot-empty{ border-radius:14px; } /* 留白，无样式 */
+.hp2-emoji-sm{
+  width:30px;height:30px;border-radius:10px;
   background:rgba(255,220,230,0.65);backdrop-filter:blur(6px);
   display:flex;align-items:center;justify-content:center;
-  font-size:22px;cursor:pointer;box-shadow:0 2px 8px rgba(200,100,140,0.12);
+  font-size:16px;cursor:pointer;box-shadow:0 1px 6px rgba(200,100,140,0.10);
   transition:.15s;flex-shrink:0;
-  border:1px solid rgba(255,190,210,0.4);
+  border:1px solid rgba(255,190,210,0.35);
 }
-.hp2-emoji-box:active{transform:scale(.88);}
+.hp2-emoji-sm:active{transform:scale(.88);}
 
 </style>
 
@@ -24114,14 +24112,24 @@ window.hp2EditEmoji=function(id){
   });
 };
 
-window.hp2EditInputText=function(){
-  var el=document.getElementById('hp2InputText');if(!el)return;
-  var cur=el.textContent==='点击输入文字...'?'':el.textContent;
-  hp2Dialog('输入文字（最多30字）',cur,30,function(v){
+window.hp2EditInputText1=function(){
+  var el=document.getElementById('hp2InputText1');if(!el)return;
+  var cur=el.textContent.includes('点击')?'':el.textContent;
+  hp2Dialog('输入第一行文字（最多20字）',cur,20,function(v){
     if(v===null)return;
-    el.textContent=v||'点击输入文字...';
-    el.style.color=v?'#444':'#aaa';
-    hp2S('inputText',v||'');
+    el.textContent=v||'点击输入一行字…';
+    el.style.color=v?'#555':'#888';
+    hp2S('inputText1',v||'');
+  });
+};
+window.hp2EditInputText2=function(){
+  var el=document.getElementById('hp2InputText2');if(!el)return;
+  var cur=el.textContent.includes('点击')?'':el.textContent;
+  hp2Dialog('输入第二行文字（最多20字）',cur,20,function(v){
+    if(v===null)return;
+    el.textContent=v||'点击输入一行字…';
+    el.style.color=v?'#555':'#888';
+    hp2S('inputText2',v||'');
   });
 };
 
@@ -24192,9 +24200,12 @@ async function hp2Init(){
     var esaved=await hp2L('emoji_'+eid,null);
     if(esaved){var eel=document.getElementById(eid);if(eel)eel.textContent=esaved;}
   }
-  var itxt=await hp2L('inputText',null);
-  var itxtEl=document.getElementById('hp2InputText');
-  if(itxtEl&&itxt!==null){itxtEl.textContent=itxt||'点击输入文字...';itxtEl.style.color=itxt?'#444':'#aaa';}
+  var itxt1=await hp2L('inputText1',null);
+  var itxt1El=document.getElementById('hp2InputText1');
+  if(itxt1El&&itxt1!==null){itxt1El.textContent=itxt1||'点击输入一行字…';itxt1El.style.color=itxt1?'#555':'#888';}
+  var itxt2=await hp2L('inputText2',null);
+  var itxt2El=document.getElementById('hp2InputText2');
+  if(itxt2El&&itxt2!==null){itxt2El.textContent=itxt2||'点击输入一行字…';itxt2El.style.color=itxt2?'#555':'#888';}
   var cdl=await hp2L('cdLabel',null);
   var cdlEl=document.getElementById('hp2CdLabel');
   if(cdlEl&&cdl)cdlEl.textContent='🎂 '+cdl;
