@@ -24152,20 +24152,24 @@ window.hp2EditCdLabel=function(){
 window.hp2EditCdDate=function(){
   var el=document.getElementById('hp2CdDate');if(!el)return;
   var saved=el.dataset.date||'';
-  var initY=2026,initM=1,initD=1;
-  if(saved){var pts=saved.split('-');initY=parseInt(pts[0])||2026;initM=parseInt(pts[1])||1;initD=parseInt(pts[2])||1;}
+  var initY=2026,initM=6,initD=1;
+  if(saved){var pts=saved.split('-');initY=parseInt(pts[0])||2026;initM=parseInt(pts[1])||6;initD=parseInt(pts[2])||1;}
+
+  var ITEM_H=44, SHOW=4, PAD=(SHOW*ITEM_H-ITEM_H)/2; // 66px padding使第0项可居中
 
   var ov=document.createElement('div');
   ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.4);display:flex;align-items:flex-end;justify-content:center;';
 
-  // 生成选项HTML
-  function colHtml(id,items,curVal){
-    var html='<div style="flex:1;display:flex;flex-direction:column;align-items:center;"><div style="font-size:12px;color:#bbb;margin-bottom:6px;">'+{y:'年',m:'月',d:'日'}[id]+'</div>'+
-      '<div id="_hp2col_'+id+'" style="height:180px;overflow-y:scroll;scroll-snap-type:y mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;">';
+  function colHtml(id,items){
+    var pad='<div style="height:'+PAD+'px;flex-shrink:0;"></div>';
+    var html='<div style="flex:1;display:flex;flex-direction:column;align-items:center;">'+
+      '<div style="font-size:12px;color:#bbb;margin-bottom:4px;">'+(id==='y'?'年':id==='m'?'月':'日')+'</div>'+
+      '<div id="_hp2col_'+id+'" style="height:'+(SHOW*ITEM_H)+'px;overflow-y:scroll;scroll-snap-type:y mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;">'+
+      pad;
     items.forEach(function(v){
-      html+='<div data-v="'+v+'" style="height:44px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;color:#555;scroll-snap-align:center;cursor:pointer;flex-shrink:0;">'+v+'</div>';
+      html+='<div data-v="'+v+'" style="height:'+ITEM_H+'px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;color:#444;scroll-snap-align:center;flex-shrink:0;">'+v+'</div>';
     });
-    html+='</div></div>';
+    html+=pad+'</div></div>';
     return html;
   }
 
@@ -24174,42 +24178,42 @@ window.hp2EditCdDate=function(){
   var days=[];for(var dd=1;dd<=31;dd++)days.push(dd);
 
   var box=document.createElement('div');
-  box.style.cssText='background:white;border-radius:20px 20px 0 0;padding:16px 16px 24px;width:100%;max-width:480px;box-shadow:0 -4px 24px rgba(0,0,0,0.15);';
-  box.innerHTML='<div style="font-size:14px;font-weight:bold;color:#555;text-align:center;margin-bottom:12px;">选择日期</div>'+
+  box.style.cssText='background:white;border-radius:20px 20px 0 0;padding:16px 16px 28px;width:100%;max-width:480px;box-shadow:0 -4px 24px rgba(0,0,0,0.15);';
+  box.innerHTML='<div style="font-size:14px;font-weight:bold;color:#555;text-align:center;margin-bottom:10px;">选择日期</div>'+
     '<div style="position:relative;">'+
-      '<div style="position:absolute;top:50%;left:0;right:0;height:44px;transform:translateY(-50%);background:rgba(240,100,130,0.08);border-radius:10px;pointer-events:none;"></div>'+
+      '<div style="position:absolute;top:50%;left:0;right:0;height:'+ITEM_H+'px;transform:translateY(-50%);background:rgba(240,100,130,0.09);border-radius:10px;pointer-events:none;"></div>'+
       '<div style="display:flex;gap:4px;">'+
-        colHtml('y',years,initY)+
-        colHtml('m',months,initM)+
-        colHtml('d',days,initD)+
+        colHtml('y',years)+colHtml('m',months)+colHtml('d',days)+
       '</div>'+
     '</div>'+
     '<div style="display:flex;gap:8px;margin-top:14px;">'+
-    '<button id="_hp2dateCan" style="flex:1;padding:11px;border:1.5px solid #eee;border-radius:12px;background:white;font-size:14px;cursor:pointer;color:#999;">取消</button>'+
-    '<button id="_hp2dateOk" style="flex:2;padding:11px;background:#e87090;color:white;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:bold;">确定</button>'+
+    '<button id="_hp2dateCan" style="flex:1;padding:12px;border:1.5px solid #eee;border-radius:12px;background:white;font-size:14px;cursor:pointer;color:#999;">取消</button>'+
+    '<button id="_hp2dateOk" style="flex:2;padding:12px;background:#e87090;color:white;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:bold;">确定</button>'+
     '</div>';
 
   ov.appendChild(box);document.body.appendChild(ov);
 
-  // 滚动到当前值
-  function scrollToVal(colId,val){
+  // scrollTop=i*ITEM_H → 第i项居中（因为有padding偏移修正）
+  function scrollToIdx(colId,idx){
     var col=document.getElementById('_hp2col_'+colId);if(!col)return;
-    var items=col.querySelectorAll('[data-v]');
-    for(var i=0;i<items.length;i++){
-      if(parseInt(items[i].getAttribute('data-v'))===val){
-        col.scrollTo({top:i*44,behavior:'instant'});
-        break;
-      }
-    }
+    col.scrollTop=idx*ITEM_H;
   }
-  setTimeout(function(){scrollToVal('y',initY);scrollToVal('m',initM);scrollToVal('d',initD);},50);
+  function valToIdx(items,val){
+    for(var i=0;i<items.length;i++){if(items[i]===val)return i;}
+    return 0;
+  }
+  setTimeout(function(){
+    scrollToIdx('y',valToIdx(years,initY));
+    scrollToIdx('m',valToIdx(months,initM));
+    scrollToIdx('d',valToIdx(days,initD));
+  },60);
 
-  // 获取当前选中值
   function getColVal(colId){
     var col=document.getElementById('_hp2col_'+colId);if(!col)return 1;
-    var idx=Math.round(col.scrollTop/44);
+    var idx=Math.round(col.scrollTop/ITEM_H);
     var items=col.querySelectorAll('[data-v]');
-    return parseInt((items[idx]||items[0]).getAttribute('data-v'));
+    idx=Math.max(0,Math.min(idx,items.length-1));
+    return parseInt(items[idx].getAttribute('data-v'));
   }
 
   box.querySelector('#_hp2dateCan').onclick=function(){ov.remove();};
@@ -24235,8 +24239,8 @@ function hp2UpdateCd(dateStr){
   numEl.textContent=Math.abs(diff);
   numEl.style.color=diff>=0?'#c05080':'#bbb';
   var y=target.getFullYear(),m=String(target.getMonth()+1).padStart(2,'0'),d=String(target.getDate()).padStart(2,'0');
-  // 只显示日期，不显示"已过/还有"
-  dateEl.textContent=y+'.'+m+'.'+d;
+  // 未来：显示日期 + 还有X天；过去：只显示日期
+  dateEl.textContent=y+'.'+m+'.'+d+(diff>0?' 还有'+diff+'天':'');
   dateEl.dataset.date=dateStr;
 }
 
