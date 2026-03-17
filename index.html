@@ -2864,69 +2864,90 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
     </div>
 
 
-    <div id=scrMe class=scr-list>
+    <div id=scrMe class=scr-list style="background:#f7f8fc;">
         <div class=chat-header>
             <span id=btnMeBack class=back-btn>＜</span>
             <span class=header-center>我</span>
             <span class=empty-btn></span>
         </div>
-        
-        <div class=me-header>
-            <div id=meAvatar class=me-avatar></div>
-            <div class=me-info>
-                <div id=meName class=me-name>未命名</div>
-                <div id=meBio class=me-bio>请添加你的个性签名吧！</div>
+
+        <!-- ══ 顶部：头像+信息 ══ -->
+        <div class="me-header-new">
+          <div id=meAvatar class=me-avatar style="width:68px;height:68px;border-radius:50%;background:#e0e0e0;background-size:cover;background-position:center;border:3px solid white;box-shadow:0 4px 16px rgba(108,92,231,0.18);flex-shrink:0;"></div>
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div id=meName class=me-name>未命名</div>
+              <div id="meMoodTag" style="font-size:11px;padding:2px 8px;border-radius:20px;background:rgba(108,92,231,0.1);color:#6c5ce7;display:none;"></div>
             </div>
-            <div class=me-icons>
-                <span id=btnEditMe style=cursor:pointer;>📝</span>
-                <span style=color:#ff4d4f;cursor:pointer;>🗑️</span>
-            </div>
+            <div id=meBio class=me-bio style="margin-top:4px;">请添加你的个性签名吧！</div>
+          </div>
+          <span id=btnEditMe style="cursor:pointer;font-size:18px;color:#a29bfe;flex-shrink:0;">📝</span>
         </div>
 
+        <!-- ══ 数据卡片行 ══ -->
+        <div class="me-stats-row">
+          <div class="me-stat-card">
+            <div class="me-stat-num" id="meStatDays">—</div>
+            <div class="me-stat-label">聊天天数</div>
+          </div>
+          <div class="me-stat-card">
+            <div class="me-stat-num" id="meStatLogs">—</div>
+            <div class="me-stat-label">日志篇数</div>
+          </div>
+          <div class="me-stat-card">
+            <div class="me-stat-num" id="meStatTags">—</div>
+            <div class="me-stat-label">我的标签</div>
+          </div>
+        </div>
+
+        <!-- ══ 功能菜单 ══ -->
         <div class=me-menu-list>
-                        <div id=btnGoCharSticker class=me-menu-item>
-                <div class=me-menu-left>
-                    <div class=me-menu-title>角色表情包库</div>
+          <!-- 原有功能 -->
+          <div class="me-section-label">🗂 常用功能</div>
+          <div id=btnGoCharSticker class=me-menu-item>
+            <div class=me-menu-left><div class=me-menu-title>角色表情包库</div><div class=me-menu-sub>让对方随时发送表情包</div></div>
+            <div class=me-menu-right>＞</div>
+          </div>
+          <div id=btnGoFav class=me-menu-item>
+            <div class=me-menu-left><div class=me-menu-title>我的收藏</div><div class=me-menu-sub>收藏的精彩消息</div></div>
+            <div class=me-menu-right>＞</div>
+          </div>
+          <div id=btnGoOurSongs class=me-menu-item>
+            <div class=me-menu-left><div class=me-menu-title>🎵 我们的歌</div><div class=me-menu-sub>听歌记录与收藏的聊天片段</div></div>
+            <div class=me-menu-right>＞</div>
+          </div>
+          <div id=btnOpenWallet class=me-menu-item>
+            <div class=me-menu-left><div class=me-menu-title>我的钱包</div><div class=me-menu-sub>管理你的双核资产与转账记录</div></div>
+            <div class=me-menu-right>＞</div>
+          </div>
+          <div id=btnMeLogs class=me-menu-item>
+            <div class=me-menu-left><div class=me-menu-title>📝 我的日志</div><div class=me-menu-sub>写下心情故事，对外公开</div></div>
+            <div class=me-menu-right>＞</div>
+          </div>
 
-                    <div class=me-menu-sub>让对方也能随时发送表情包</div>
-                </div>
-                <div class=me-menu-right>＞</div>
-            </div>
-                        <div id=btnGoFav class=me-menu-item>
-                <div class=me-menu-left>
-                    <div class=me-menu-title>我的收藏</div>
-                    <div class=me-menu-sub>查看收藏的精彩消息</div>
-                </div>
-                <div class=me-menu-right>＞</div>
-            </div>
-            <div id=btnGoOurSongs class=me-menu-item>
-                <div class=me-menu-left>
-                    <div class=me-menu-title>🎵 我们的歌</div>
-                    <div class=me-menu-sub>听歌记录与收藏的聊天片段</div>
-                </div>
-                <div class=me-menu-right>＞</div>
-            </div>
-
-            <div id=btnOpenWallet class=me-menu-item>
-                <div class=me-menu-left>
-                    <div class=me-menu-title>我的钱包</div>
-                    <div class=me-menu-sub>管理你的双核资产与转账记录</div>
-                </div>
-                <div class=me-menu-right>＞</div>
-            </div>
-            <div id=btnMeSpace class=me-menu-item>
-                <div class=me-menu-left>
-                    <div class=me-menu-title>⭐ 我的空间</div>
-                    <div class=me-menu-sub>私密日志与记忆空间</div>
-                </div>
-                <div class=me-menu-right>＞</div>
-            </div>
+          <!-- 新功能 -->
+          <div class="me-section-label">✨ 特色功能</div>
+          <div id=btnMeMoodCal class=me-menu-item>
+            <div class=me-menu-left><div class=me-menu-title>📅 情绪日历</div><div class=me-menu-sub>记录每天的心情，点亮你的月历</div></div>
+            <div class=me-menu-right>＞</div>
+          </div>
+          <div id=btnMeAchieve class=me-menu-item>
+            <div class=me-menu-left><div class=me-menu-title>🌟 成就墙</div><div class=me-menu-sub>解锁你们之间的独家里程碑</div></div>
+            <div class=me-menu-right>＞</div>
+          </div>
+          <div id=btnMeCapsule class=me-menu-item>
+            <div class=me-menu-left><div class=me-menu-title>💌 时光胶囊</div><div class=me-menu-sub>写一封信，等待某天被打开</div></div>
+            <div class=me-menu-right>＞</div>
+          </div>
+          <div id=btnMeLabels class=me-menu-item>
+            <div class=me-menu-left><div class=me-menu-title>🪞 我的标签</div><div class=me-menu-sub>给自己贴标签，影响互动风格</div></div>
+            <div class=me-menu-right>＞</div>
+          </div>
         </div>
-        
+
         <div class=bottom-nav>
             <div id=navMeToMsg class=nav-item><div class=nav-icon>💬</div><div class=nav-text>消息</div></div>
-                        <div id=navMeToContact class=nav-item><div class=nav-icon>👥</div><div class=nav-text>联系人</div></div>
-
+            <div id=navMeToContact class=nav-item><div class=nav-icon>👥</div><div class=nav-text>联系人</div></div>
             <div id=navMeToMoment class=nav-item><div class=nav-icon>🌍</div><div class=nav-text>动态</div></div>
             <div class=nav-item-active><div class=nav-icon>👤</div><div class=nav-text>我</div></div>
         </div>
@@ -2964,126 +2985,6 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
             </div>
         </div>
     </div>
-  <div id="scrSpace" class="scr-flex" style="background:linear-gradient(160deg,#fff0f8 0%,#f0f4ff 50%,#f5fff0 100%);position:relative;overflow:hidden;">
-    <!-- 装饰背景粒子 -->
-    <div style="position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden;">
-      <div style="position:absolute;top:8%;left:5%;font-size:20px;opacity:.15;animation:spFloat 4s ease-in-out infinite;">🌸</div>
-      <div style="position:absolute;top:15%;right:8%;font-size:16px;opacity:.12;animation:spFloat 5s ease-in-out 1s infinite;">⭐</div>
-      <div style="position:absolute;top:35%;left:3%;font-size:14px;opacity:.1;animation:spFloat 3.5s ease-in-out 0.5s infinite;">💫</div>
-      <div style="position:absolute;top:55%;right:5%;font-size:18px;opacity:.12;animation:spFloat 4.5s ease-in-out 2s infinite;">🌙</div>
-      <div style="position:absolute;top:70%;left:8%;font-size:15px;opacity:.1;animation:spFloat 5s ease-in-out 1.5s infinite;">✨</div>
-      <div style="position:absolute;top:25%;right:15%;font-size:12px;opacity:.1;animation:spFloat 3.8s ease-in-out 0.8s infinite;">🎀</div>
-    </div>
-    <div class="room-header" style="background:rgba(255,255,255,0.85);backdrop-filter:blur(10px);position:relative;z-index:1;">
-        <span id="btnSpaceBack" class="back-btn" onclick="showScreen('scrMe')">＜</span>
-        <span class="header-center">✦ 我的空间 ✦</span>
-        <span class="empty-btn"></span>
-    </div>
-    <!-- 4格功能入口 -->
-    <div style="position:relative;z-index:1;padding:20px 16px;display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-      <div id="btnSpaceLogs" class="sp-grid-item" style="background:linear-gradient(135deg,#fff0f8,#ffe4ef);border:1.5px solid #ffb6c1;">
-        <div class="sp-grid-icon">📝</div>
-        <div class="sp-grid-name">我的日志</div>
-        <div class="sp-grid-sub">写下心情故事</div>
-      </div>
-      <div id="btnSpaceBoard" class="sp-grid-item" style="background:linear-gradient(135deg,#f0f4ff,#e4ecff);border:1.5px solid #b6c9ff;">
-        <div class="sp-grid-icon">💬</div>
-        <div class="sp-grid-name">留言板</div>
-        <div class="sp-grid-sub">朋友们的心意</div>
-      </div>
-      <div id="btnSpaceAlbum" class="sp-grid-item" style="background:linear-gradient(135deg,#f0fff4,#e4ffec);border:1.5px solid #b6ffce;">
-        <div class="sp-grid-icon">📷</div>
-        <div class="sp-grid-name">我的相册</div>
-        <div class="sp-grid-sub" id="spAlbumSub">珍藏的瞬间</div>
-      </div>
-      <div id="btnSpaceVisitor" class="sp-grid-item" style="background:linear-gradient(135deg,#fffaf0,#fff3e0);border:1.5px solid #ffd6b6;">
-        <div class="sp-grid-icon">👣</div>
-        <div class="sp-grid-name">访客记录</div>
-        <div class="sp-grid-sub" id="spVisitorSub">今日有人来访</div>
-      </div>
-    </div>
-    <!-- 访客总数 + 密码设置 -->
-    <div style="position:relative;z-index:1;margin:0 16px;padding:12px 16px;background:rgba(255,255,255,0.7);border-radius:14px;display:flex;align-items:center;justify-content:space-between;backdrop-filter:blur(5px);border:1px solid rgba(180,180,255,0.2);">
-      <div>
-        <span style="font-size:12px;color:#999;">总访问量</span>
-        <span id="spTotalVisit" style="font-size:22px;font-weight:bold;color:#6c5ce7;margin-left:8px;">0</span>
-        <span style="font-size:12px;color:#bbb;margin-left:4px;">次</span>
-      </div>
-      <button id="btnSpacePwd" onclick="spaceTogglePwd()" style="padding:7px 14px;border-radius:20px;border:1.5px solid #ddd;background:white;font-size:12px;cursor:pointer;color:#666;">🔓 无密码</button>
-    </div>
-    <!-- 密码输入区（初始隐藏）-->
-    <div id="spacePwdPanel" style="display:none;position:relative;z-index:1;margin:10px 16px 0;padding:12px;background:rgba(255,255,255,0.8);border-radius:12px;border:1px solid rgba(200,150,255,0.3);">
-      <div style="font-size:12px;color:#888;margin-bottom:8px;">设置空间密码（char访问时需要输入）</div>
-      <div style="display:flex;gap:8px;">
-        <input id="spacePwdInput" type="password" placeholder="输入密码" style="flex:1;padding:8px 12px;border:1px solid #ddd;border-radius:10px;font-size:13px;outline:none;">
-        <button onclick="spaceSavePwd()" style="padding:8px 14px;background:#6c5ce7;color:white;border:none;border-radius:10px;font-size:12px;cursor:pointer;">保存</button>
-      </div>
-      <button onclick="spaceClearPwd()" style="margin-top:8px;font-size:11px;color:#ff7675;background:none;border:none;cursor:pointer;padding:0;">删除密码</button>
-    </div>
-</div>
-
-<!-- ═══ 留言板 scrSpaceBoard ═══ -->
-<div id="scrSpaceBoard" style="display:none;flex-direction:column;position:absolute;top:0;width:100%;height:100%;z-index:30;background:#f5f6fa;">
-  <div class="room-header">
-    <span class="back-btn" onclick="showScreen('scrSpace')">＜</span>
-    <span class="header-center">💬 留言板</span>
-    <span style="font-size:13px;color:#6c5ce7;cursor:pointer;font-weight:bold;" onclick="spBoardGenMore()">+ 更多</span>
-  </div>
-  <div id="spBoardList" style="flex:1;overflow-y:auto;padding:12px 14px 20px;display:flex;flex-direction:column;gap:10px;"></div>
-</div>
-
-<!-- ═══ 相册 scrSpaceAlbum ═══ -->
-<div id="scrSpaceAlbum" style="display:none;flex-direction:column;position:absolute;top:0;width:100%;height:100%;z-index:30;background:#f5f6fa;">
-  <div class="room-header">
-    <span class="back-btn" onclick="showScreen('scrSpace')">＜</span>
-    <span class="header-center">📷 我的相册</span>
-    <span style="font-size:20px;cursor:pointer;" onclick="spAlbumAdd()">＋</span>
-  </div>
-  <div id="spAlbumGrid" style="flex:1;overflow-y:auto;padding:10px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;"></div>
-  <input type="file" id="spAlbumUpload" accept="image/*" multiple style="display:none;">
-  <!-- 相册详情弹窗 -->
-  <div id="spAlbumDetail" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.85);flex-direction:column;align-items:center;justify-content:center;">
-    <div style="position:absolute;top:20px;right:20px;color:white;font-size:28px;cursor:pointer;" onclick="document.getElementById('spAlbumDetail').style.display='none'">×</div>
-    <img id="spAlbumDetailImg" style="max-width:90vw;max-height:70vh;border-radius:12px;object-fit:contain;">
-    <div style="color:white;margin-top:12px;font-size:13px;text-align:center;max-width:80vw;" id="spAlbumDetailDesc"></div>
-    <div style="display:flex;gap:10px;margin-top:14px;">
-      <button id="spAlbumDetailPwd" style="padding:8px 16px;border-radius:20px;background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.3);font-size:12px;cursor:pointer;">🔒 设置密码</button>
-      <button id="spAlbumDetailDel" style="padding:8px 16px;border-radius:20px;background:rgba(255,100,100,0.4);color:white;border:none;font-size:12px;cursor:pointer;">🗑 删除</button>
-    </div>
-  </div>
-  <!-- 相册密码弹窗 -->
-  <div id="spAlbumPwdModal" style="display:none;position:fixed;inset:0;z-index:210;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;">
-    <div style="background:white;border-radius:16px;padding:20px;width:80vw;max-width:300px;">
-      <div style="font-size:15px;font-weight:bold;margin-bottom:12px;" id="spAlbumPwdTitle">设置相片密码</div>
-      <input id="spAlbumPwdInput" type="password" placeholder="输入密码（留空则取消密码）" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:10px;font-size:13px;box-sizing:border-box;outline:none;">
-      <div style="display:flex;gap:8px;margin-top:12px;">
-        <button onclick="document.getElementById('spAlbumPwdModal').style.display='none'" style="flex:1;padding:10px;border:1px solid #ddd;border-radius:10px;background:white;cursor:pointer;">取消</button>
-        <button onclick="spAlbumSavePwd()" style="flex:1;padding:10px;background:#6c5ce7;color:white;border:none;border-radius:10px;cursor:pointer;">确定</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ═══ 访客记录 scrSpaceVisitor ═══ -->
-<div id="scrSpaceVisitor" style="display:none;flex-direction:column;position:absolute;top:0;width:100%;height:100%;z-index:30;background:#f5f6fa;">
-  <div class="room-header">
-    <span class="back-btn" onclick="showScreen('scrSpace')">＜</span>
-    <span class="header-center">👣 访客记录</span>
-    <span class="empty-btn"></span>
-  </div>
-  <div style="padding:12px 14px 6px;display:flex;gap:12px;">
-    <div style="flex:1;background:white;border-radius:12px;padding:12px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
-      <div style="font-size:22px;font-weight:bold;color:#6c5ce7;" id="spVisitTodayNum">0</div>
-      <div style="font-size:11px;color:#999;margin-top:2px;">今日访客</div>
-    </div>
-    <div style="flex:1;background:white;border-radius:12px;padding:12px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
-      <div style="font-size:22px;font-weight:bold;color:#e17055;" id="spVisitTotalNum">0</div>
-      <div style="font-size:11px;color:#999;margin-top:2px;">总访问量</div>
-    </div>
-  </div>
-  <div id="spVisitorList" style="flex:1;overflow-y:auto;padding:10px 14px 20px;display:flex;flex-direction:column;gap:8px;"></div>
-</div>
-
 
 <!-- ═══════════════════════════════════════════════
      我们的歌 (scrOurSongs)
@@ -5482,13 +5383,7 @@ if(typeof localforage === 'undefined') {
 .anon-send-sm{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#9333ea);border:none;color:white;font-size:18px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
 
 
-/* ══ 我的空间 ══ */
-@keyframes spFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
-.sp-grid-item{border-radius:18px;padding:18px 14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:.15s;box-shadow:0 4px 14px rgba(0,0,0,0.06);}
-.sp-grid-item:active{transform:scale(.97);}
-.sp-grid-icon{font-size:32px;line-height:1;}
-.sp-grid-name{font-size:14px;font-weight:700;color:#333;}
-.sp-grid-sub{font-size:11px;color:#999;text-align:center;}
+
 /* 留言卡片 */
 .sp-board-card{background:white;border-radius:14px;padding:14px;box-shadow:0 2px 10px rgba(0,0,0,0.06);display:flex;gap:10px;align-items:flex-start;}
 .sp-board-ava{width:38px;height:38px;border-radius:50%;flex-shrink:0;object-fit:cover;background:#e8e8e8;display:flex;align-items:center;justify-content:center;font-size:18px;}
@@ -5508,6 +5403,32 @@ if(typeof localforage === 'undefined') {
 .sp-visitor-name{font-size:13px;font-weight:bold;color:#333;}
 .sp-visitor-action{font-size:11px;color:#999;margin-top:2px;}
 .sp-visitor-time{font-size:11px;color:#bbb;white-space:nowrap;}
+
+
+/* ══ 我的页面新设计 ══ */
+.me-header-new{display:flex;align-items:center;gap:14px;padding:20px 18px 16px;background:white;border-bottom:1px solid #f0f0f5;}
+.me-stats-row{display:flex;gap:10px;padding:14px 14px 6px;background:#f7f8fc;}
+.me-stat-card{flex:1;background:white;border-radius:14px;padding:12px 8px;text-align:center;box-shadow:0 2px 10px rgba(108,92,231,0.08);}
+.me-stat-num{font-size:22px;font-weight:bold;color:#6c5ce7;line-height:1;}
+.me-stat-label{font-size:11px;color:#bbb;margin-top:4px;}
+.me-section-label{font-size:12px;color:#aaa;font-weight:600;letter-spacing:.5px;padding:4px 4px 2px;margin-top:4px;}
+/* ══ 情绪日历 ══ */
+.mood-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;padding:10px;}
+.mood-cal-day{aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;background:#f5f5f5;transition:.15s;}
+.mood-cal-day:active{transform:scale(.92);}
+.mood-cal-day.today{box-shadow:0 0 0 2px #6c5ce7;}
+.mood-cal-day.empty{background:transparent;cursor:default;}
+/* ══ 成就墙 ══ */
+.achieve-item{background:white;border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05);}
+.achieve-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.achieve-locked{filter:grayscale(1);opacity:.4;}
+/* ══ 标签 ══ */
+.label-chip{display:inline-block;padding:6px 14px;border-radius:20px;font-size:13px;cursor:pointer;margin:4px;border:1.5px solid transparent;transition:.15s;}
+.label-chip.selected{border-color:#6c5ce7;background:rgba(108,92,231,0.1);color:#6c5ce7;font-weight:bold;}
+.label-chip:not(.selected){background:#f0f0f5;color:#888;}
+/* ══ 时光胶囊 ══ */
+.capsule-card{background:linear-gradient(135deg,#fff8f0,#fff0f8);border:1.5px solid #ffd6e0;border-radius:16px;padding:16px;margin-bottom:10px;}
+.capsule-sealed{opacity:.7;filter:sepia(.2);}
 
 </style>
 
@@ -5622,7 +5543,7 @@ window._customConfirm = function(msg) {
     });
 };
 
-let lock=$("scrLock"), home=$("scrHome"), list=$("scrList"), room=$("scrRoom"), setApi=$("scrSetApi"), setChat=$("scrSetChat"), scrWb=$("scrWb"), scrWbEdit=$("scrWbEdit"), scrMe=$("scrMe"), scrCharSticker=$("scrCharSticker"), scrSpace=$("scrSpace"), scrLogList=$("scrLogList"), scrLogEdit=$("scrLogEdit");
+let lock=$("scrLock"), home=$("scrHome"), list=$("scrList"), room=$("scrRoom"), setApi=$("scrSetApi"), setChat=$("scrSetChat"), scrWb=$("scrWb"), scrWbEdit=$("scrWbEdit"), scrMe=$("scrMe"), scrCharSticker=$("scrCharSticker"), scrLogList=$("scrLogList"), scrLogEdit=$("scrLogEdit");
 let iptMsg=$("iptMsg"), msgs=$("msgs"), modal=$("modal");
 let stW=$("stW"), stC=$("stC"), stA=$("stA"), stT=$("stT");
 let ls = localStorage;
@@ -5758,7 +5679,7 @@ let pressTimer = null;
 let selEl = null;
 let currentQuote ="";
 function showScreen(showId) {
-    [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrSpace, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet"), $("scrContact"), $("scrSetFont"), $("scrCharPhone"), $("scrSpyDiary"), $("scrSpyZhihu"), $("scrSpySecret"), $("scrSpyMeituan"), $("scrSpyFootprint"), $("scrSpyWallet"), $("scrSpyShop"), $("scrSpyIqiyi"), $("scrSpySettings"), $("scrMoment"), $("scrGroupRoom"), $("scrGroupSettings"), $("scrOurSongs"), $("scrHomeSettings"), $("scrCoupleSpace"), $("scrPeriod"), $("scrPastMemory"), $("scrDiary"), $("scrAstro"), $("scrAnon"), $("scrSpaceBoard"), $("scrSpaceAlbum"), $("scrSpaceVisitor")].forEach(s => { if(s) s.style.display = "none"; });
+    [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet"), $("scrContact"), $("scrSetFont"), $("scrCharPhone"), $("scrSpyDiary"), $("scrSpyZhihu"), $("scrSpySecret"), $("scrSpyMeituan"), $("scrSpyFootprint"), $("scrSpyWallet"), $("scrSpyShop"), $("scrSpyIqiyi"), $("scrSpySettings"), $("scrMoment"), $("scrGroupRoom"), $("scrGroupSettings"), $("scrOurSongs"), $("scrHomeSettings"), $("scrCoupleSpace"), $("scrPeriod"), $("scrPastMemory"), $("scrDiary"), $("scrAstro"), $("scrAnon"), $("scrMoodCal"), $("scrMeAchieve"), $("scrMeCapsule"), $("scrMeLabels")].forEach(s => { if(s) s.style.display = "none"; });
 
     let target = $(showId);
     if(showId === "scrRoom") {
@@ -5766,7 +5687,7 @@ function showScreen(showId) {
         if(_im){ _im.style.height="34px"; _im.style.overflowY="hidden"; }
     }
     if(target) {
-        if(showId === "scrRoom" || showId === "scrList" || showId === "scrSetApi" || showId === "scrSetChat" || showId === "scrWb" || showId === "scrWbEdit" || showId === "scrMe" || showId === "scrCharSticker" || showId === "scrSpace" || showId === "scrLogList" || showId === "scrLogEdit" || showId === "scrFav" || showId === "scrWallet" || showId === "scrContact" || showId === "scrSetFont" || showId === "scrSpyDiary" || showId === "scrSpyZhihu" || showId === "scrSpySecret" || showId === "scrSpyMeituan" || showId === "scrSpyFootprint" || showId === "scrSpyWallet" || showId === "scrSpyShop" || showId === "scrSpyIqiyi" || showId === "scrSpySettings" || showId === "scrMoment" || showId === "scrGroupRoom" || showId === "scrGroupSettings" || showId === "scrOurSongs" || showId === "scrHomeSettings" || showId === "scrPeriod" || showId === "scrPastMemory" || showId === "scrDiary" || showId === "scrAstro" || showId === "scrAnon" || showId === "scrSpaceBoard" || showId === "scrSpaceAlbum" || showId === "scrSpaceVisitor") {
+        if(showId === "scrRoom" || showId === "scrList" || showId === "scrSetApi" || showId === "scrSetChat" || showId === "scrWb" || showId === "scrWbEdit" || showId === "scrMe" || showId === "scrCharSticker" || showId === "scrLogList" || showId === "scrLogEdit" || showId === "scrFav" || showId === "scrWallet" || showId === "scrContact" || showId === "scrSetFont" || showId === "scrSpyDiary" || showId === "scrSpyZhihu" || showId === "scrSpySecret" || showId === "scrSpyMeituan" || showId === "scrSpyFootprint" || showId === "scrSpyWallet" || showId === "scrSpyShop" || showId === "scrSpyIqiyi" || showId === "scrSpySettings" || showId === "scrMoment" || showId === "scrGroupRoom" || showId === "scrGroupSettings" || showId === "scrOurSongs" || showId === "scrHomeSettings" || showId === "scrPeriod" || showId === "scrPastMemory" || showId === "scrDiary" || showId === "scrAstro" || showId === "scrAnon" ) {
             target.style.display = "flex";
         } else if (showId === "scrCharPhone") {
             target.style.display = "flex";
@@ -11373,9 +11294,8 @@ if($("upMeAvatar")) {
 
 
 
-if($("btnHomeSpace")) $("btnHomeSpace").onclick = () =>showScreen("scrSpace");
-if($("btnMeSpace")) $("btnMeSpace").onclick = () =>showScreen("scrSpace");
-if($("btnSpaceBack")) $("btnSpaceBack").onclick = () =>showScreen("scrMe");
+
+
 
 if($("btnEditSpace")) $("btnEditSpace").onclick = async () =>{
     // 读取空间独立数据
@@ -11437,7 +11357,7 @@ if($("upSpaceAvatar")) {
 }
 
 if($("btnSpaceLogs")) $("btnSpaceLogs").onclick = () =>showScreen("scrLogList");
-if($("btnLogListBack")) $("btnLogListBack").onclick = () =>showScreen("scrSpace");
+if($("btnLogListBack")) $("btnLogListBack").onclick = () =>showScreen("scrMe");
 if($("btnWriteLog")) $("btnWriteLog").onclick = () =>{
     $("logImgType").value = "none";
     $("logTextImgBlock").style.display = "none";
@@ -23492,426 +23412,327 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
 })();
 </script>
 
+<!-- ══ 情绪日历 scrMoodCal ══ -->
+<div id="scrMoodCal" style="display:none;flex-direction:column;position:absolute;top:0;width:100%;height:100%;z-index:30;background:#f7f8fc;">
+  <div class="room-header">
+    <span class="back-btn" onclick="showScreen('scrMe')">＜</span>
+    <span class="header-center">📅 情绪日历</span>
+    <span class="empty-btn"></span>
+  </div>
+  <div style="padding:10px 14px 4px;display:flex;align-items:center;justify-content:space-between;">
+    <button onclick="moodCalPrev()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#6c5ce7;">‹</button>
+    <div id="moodCalTitle" style="font-size:15px;font-weight:bold;color:#333;"></div>
+    <button onclick="moodCalNext()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#6c5ce7;">›</button>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(7,1fr);padding:4px 10px 0;gap:2px;">
+    <div style="text-align:center;font-size:11px;color:#bbb;padding:4px 0;">日</div>
+    <div style="text-align:center;font-size:11px;color:#bbb;padding:4px 0;">一</div>
+    <div style="text-align:center;font-size:11px;color:#bbb;padding:4px 0;">二</div>
+    <div style="text-align:center;font-size:11px;color:#bbb;padding:4px 0;">三</div>
+    <div style="text-align:center;font-size:11px;color:#bbb;padding:4px 0;">四</div>
+    <div style="text-align:center;font-size:11px;color:#bbb;padding:4px 0;">五</div>
+    <div style="text-align:center;font-size:11px;color:#bbb;padding:4px 0;">六</div>
+  </div>
+  <div id="moodCalGrid" class="mood-cal-grid" style="flex:1;overflow-y:auto;align-content:start;"></div>
+  <!-- 心情选择弹窗 -->
+  <div id="moodPickModal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.4);align-items:flex-end;justify-content:center;">
+    <div style="background:white;border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:480px;">
+      <div style="font-size:14px;color:#888;margin-bottom:12px;text-align:center;" id="moodPickDate"></div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px;">
+        <div class="mood-cal-day" onclick="moodPickSel('😊')" style="background:#fff9e6;">😊</div>
+        <div class="mood-cal-day" onclick="moodPickSel('😢')" style="background:#e6f0ff;">😢</div>
+        <div class="mood-cal-day" onclick="moodPickSel('😡')" style="background:#ffe6e6;">😡</div>
+        <div class="mood-cal-day" onclick="moodPickSel('😍')" style="background:#ffe6f5;">😍</div>
+        <div class="mood-cal-day" onclick="moodPickSel('😴')" style="background:#f0e6ff;">😴</div>
+        <div class="mood-cal-day" onclick="moodPickSel('🥰')" style="background:#ffe6f0;">🥰</div>
+        <div class="mood-cal-day" onclick="moodPickSel('😤')" style="background:#fff0e6;">😤</div>
+        <div class="mood-cal-day" onclick="moodPickSel('🤔')" style="background:#e6fff0;">🤔</div>
+        <div class="mood-cal-day" onclick="moodPickSel('🥺')" style="background:#f5e6ff;">🥺</div>
+        <div class="mood-cal-day" onclick="moodPickSel('🌟')" style="background:#fffde6;">🌟</div>
+      </div>
+      <button onclick="document.getElementById('moodPickModal').style.display='none'" style="width:100%;padding:12px;border:none;background:#f0f0f5;border-radius:12px;font-size:14px;cursor:pointer;color:#888;">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 成就墙 scrMeAchieve ══ -->
+<div id="scrMeAchieve" style="display:none;flex-direction:column;position:absolute;top:0;width:100%;height:100%;z-index:30;background:#f7f8fc;">
+  <div class="room-header">
+    <span class="back-btn" onclick="showScreen('scrMe')">＜</span>
+    <span class="header-center">🌟 成就墙</span>
+    <span class="empty-btn"></span>
+  </div>
+  <div id="achieveList" style="flex:1;overflow-y:auto;padding:12px 14px 20px;display:flex;flex-direction:column;gap:10px;"></div>
+</div>
+
+<!-- ══ 时光胶囊 scrMeCapsule ══ -->
+<div id="scrMeCapsule" style="display:none;flex-direction:column;position:absolute;top:0;width:100%;height:100%;z-index:30;background:#f7f8fc;">
+  <div class="room-header">
+    <span class="back-btn" onclick="showScreen('scrMe')">＜</span>
+    <span class="header-center">💌 时光胶囊</span>
+    <span style="font-size:14px;color:#6c5ce7;cursor:pointer;font-weight:bold;" onclick="capsuleNew()">＋ 新建</span>
+  </div>
+  <div id="capsuleList" style="flex:1;overflow-y:auto;padding:12px 14px 20px;"></div>
+  <!-- 写信弹窗 -->
+  <div id="capsuleWriteModal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;">
+    <div style="background:white;border-radius:20px;padding:20px;width:88vw;max-width:360px;">
+      <div style="font-size:16px;font-weight:bold;margin-bottom:14px;">写一封信给未来</div>
+      <textarea id="capsuleContent" placeholder="写下此刻想说的话…" style="width:100%;height:120px;padding:10px;border:1.5px solid #eee;border-radius:12px;font-size:13px;resize:none;box-sizing:border-box;outline:none;line-height:1.6;"></textarea>
+      <div style="font-size:12px;color:#bbb;margin:10px 0 6px;">开封日期</div>
+      <input type="date" id="capsuleDate" style="width:100%;padding:9px 12px;border:1.5px solid #eee;border-radius:12px;font-size:13px;box-sizing:border-box;outline:none;color:#555;">
+      <div style="display:flex;gap:8px;margin-top:14px;">
+        <button onclick="document.getElementById('capsuleWriteModal').style.display='none'" style="flex:1;padding:11px;border:1.5px solid #eee;border-radius:12px;background:white;font-size:13px;cursor:pointer;color:#888;">取消</button>
+        <button onclick="capsuleSave()" style="flex:1;padding:11px;background:#6c5ce7;color:white;border:none;border-radius:12px;font-size:13px;cursor:pointer;font-weight:bold;">封存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 我的标签 scrMeLabels ══ -->
+<div id="scrMeLabels" style="display:none;flex-direction:column;position:absolute;top:0;width:100%;height:100%;z-index:30;background:#f7f8fc;">
+  <div class="room-header">
+    <span class="back-btn" onclick="showScreen('scrMe')">＜</span>
+    <span class="header-center">🪞 我的标签</span>
+    <span class="empty-btn"></span>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding:14px;">
+    <div style="font-size:12px;color:#aaa;margin-bottom:10px;">选择符合你的标签（最多6个），char会根据这些调整互动风格</div>
+    <div id="labelGrid" style="display:flex;flex-wrap:wrap;gap:2px;"></div>
+    <button onclick="labelSave()" style="width:100%;margin-top:20px;padding:13px;background:#6c5ce7;color:white;border:none;border-radius:14px;font-size:15px;cursor:pointer;font-weight:bold;">保存标签</button>
+  </div>
+</div>
+
 <script>
 // ══════════════════════════════════════════════
-// 我的空间：留言板 + 相册 + 访客记录
+// 我的页面新功能：数据统计 + 情绪日历 + 成就墙 + 时光胶囊 + 我的标签
 // ══════════════════════════════════════════════
-(function initMySpace(){
+(function initMeNew(){
 
-// ══ 存储（Fix4：localforage优先，localStorage备份）══
-async function spSave(k,v){
-  try{await localforage.setItem(k,v);}catch(e){}
+async function meSave(k,v){try{await localforage.setItem(k,v);}catch(e){}try{if(v==null)localStorage.removeItem(k);else localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+async function meLoad(k,def){var d=null;try{d=await localforage.getItem(k);}catch(e){}if(d===null||d===undefined){try{var r=localStorage.getItem(k);if(r!=null)d=JSON.parse(r);}catch(e){}}return(d===null||d===undefined)?def:d;}
+function meToast(msg){var t=document.createElement('div');t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:rgba(50,50,80,0.9);color:white;padding:8px 18px;border-radius:20px;font-size:13px;z-index:9999;pointer-events:none;white-space:nowrap;';t.textContent=msg;document.body.appendChild(t);setTimeout(function(){t.remove();},2200);}
+
+// ── 数据统计 ──
+async function meRefreshStats(){
+  // 聊天天数：从chatHistory读取不重复的日期数
+  var days=0;
   try{
-    if(v===null||v===undefined){localStorage.removeItem(k);}
-    else{localStorage.setItem(k,JSON.stringify(v));}
-  }catch(e){}
-}
-async function spLoad(k,def){
-  var d=null;
-  try{d=await localforage.getItem(k);}catch(e){}
-  if(d===null||d===undefined){
-    try{var r=localStorage.getItem(k);if(r!=null)d=JSON.parse(r);}catch(e){}
-  }
-  return(d===null||d===undefined)?def:d;
-}
-
-async function spApi(){
-  var pxy='',key='',mod='';
-  try{pxy=originalGetItem.call(localStorage,'pxy')||'';}catch(e){}
-  try{key=originalGetItem.call(localStorage,'key')||'';}catch(e){}
-  try{mod=originalGetItem.call(localStorage,'mod')||'';}catch(e){}
-  if(!pxy){try{pxy=await localforage.getItem('pxy')||'';}catch(e){}}
-  if(!key){try{key=await localforage.getItem('key')||'';}catch(e){}}
-  if(!pxy||!key)return null;
-  if(!pxy.includes('chat/completions'))pxy=pxy.replace(/\/$/,'')+'/chat/completions';
-  if(!mod)mod='claude-sonnet-4-20250514';
-  return{pxy:pxy,key:key,mod:mod};
-}
-async function spCallApi(cfg,pr,maxTokens){
-  var res=await fetch(cfg.pxy,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+cfg.key},
-    body:JSON.stringify({model:cfg.mod,max_tokens:maxTokens||300,temperature:0.9,messages:[{role:'user',content:pr}]})});
-  var d=await res.json();
-  var t='';if(d.content&&d.content[0])t=d.content[0].text||'';else if(d.choices&&d.choices[0])t=(d.choices[0].message&&d.choices[0].message.content)||'';
-  return t.trim();
-}
-
-function getAllCharNames(){
-  var names=[];
-  try{
-    var opened=JSON.parse(localStorage.getItem('cs_opened_chars')||'[]');
-    opened.forEach(function(cid){var n=localStorage.getItem('cN_'+cid);if(n)names.push({type:'char',name:n,cid:cid});});
-    opened.forEach(function(cid){
-      var npcRaw=originalGetItem.call(localStorage,'npcList_'+cid);
-      if(npcRaw){try{JSON.parse(npcRaw).forEach(function(n){if(n.name)names.push({type:'npc',name:n.name,avatar:n.avatar||null});});}catch(e){}}
-    });
-  }catch(e){}
-  return names;
-}
-function getMyName(){
-  try{return localStorage.getItem('cMyN_'+(localStorage.getItem('cs_active_char')||''))||'我';}catch(e){}
-  return '我';
-}
-
-// ══ Fix1: 自定义弹窗替代 prompt/confirm ══
-function spPrompt(msg,def,cb){
-  var overlay=document.createElement('div');
-  overlay.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;';
-  var box=document.createElement('div');
-  box.style.cssText='background:white;border-radius:20px;padding:24px 20px 16px;width:82vw;max-width:320px;box-shadow:0 8px 32px rgba(0,0,0,0.18);';
-  box.innerHTML='<div style="font-size:15px;color:#333;margin-bottom:14px;line-height:1.5;">'+msg+'</div>'+
-    '<input id="_spPromptInput" type="text" value="'+(def||'')+'" style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:12px;font-size:14px;box-sizing:border-box;outline:none;margin-bottom:14px;">'+
-    '<div style="display:flex;gap:10px;">'+
-    '<button id="_spPromptCancel" style="flex:1;padding:10px;border:1.5px solid #ddd;border-radius:12px;background:white;font-size:14px;cursor:pointer;color:#666;">取消</button>'+
-    '<button id="_spPromptOk" style="flex:1;padding:10px;background:#6c5ce7;color:white;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:bold;">确定</button>'+
-    '</div>';
-  overlay.appendChild(box);document.body.appendChild(overlay);
-  var inp=box.querySelector('#_spPromptInput');inp.focus();
-  box.querySelector('#_spPromptCancel').onclick=function(){overlay.remove();cb(null);};
-  box.querySelector('#_spPromptOk').onclick=function(){var v=inp.value;overlay.remove();cb(v);};
-  inp.addEventListener('keydown',function(e){if(e.key==='Enter'){var v=inp.value;overlay.remove();cb(v);}});
-}
-function spConfirm(msg,cb){
-  var overlay=document.createElement('div');
-  overlay.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;';
-  var box=document.createElement('div');
-  box.style.cssText='background:white;border-radius:20px;padding:24px 20px 16px;width:78vw;max-width:300px;box-shadow:0 8px 32px rgba(0,0,0,0.18);text-align:center;';
-  box.innerHTML='<div style="font-size:15px;color:#333;margin-bottom:18px;line-height:1.5;">'+msg+'</div>'+
-    '<div style="display:flex;gap:10px;">'+
-    '<button id="_spConfirmNo" style="flex:1;padding:10px;border:1.5px solid #ddd;border-radius:12px;background:white;font-size:14px;cursor:pointer;color:#666;">取消</button>'+
-    '<button id="_spConfirmYes" style="flex:1;padding:10px;background:#ff7675;color:white;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:bold;">确认</button>'+
-    '</div>';
-  overlay.appendChild(box);document.body.appendChild(overlay);
-  box.querySelector('#_spConfirmNo').onclick=function(){overlay.remove();cb(false);};
-  box.querySelector('#_spConfirmYes').onclick=function(){overlay.remove();cb(true);};
-}
-
-// ══ 空间密码 ══
-window.spaceTogglePwd=async function(){
-  var panel=document.getElementById('spacePwdPanel');if(!panel)return;
-  panel.style.display=panel.style.display==='none'?'block':'none';
-};
-window.spaceSavePwd=async function(){
-  var v=(document.getElementById('spacePwdInput')||{}).value||'';
-  if(!v){spToast('密码不能为空');return;}
-  await spSave('space_pwd',v);
-  var btn=document.getElementById('btnSpacePwd');if(btn)btn.textContent='🔒 已设密码';
-  document.getElementById('spacePwdPanel').style.display='none';
-  spToast('密码已设置 🔒');
-};
-window.spaceClearPwd=async function(){
-  await spSave('space_pwd',null);
-  var btn=document.getElementById('btnSpacePwd');if(btn)btn.textContent='🔓 无密码';
-  document.getElementById('spacePwdPanel').style.display='none';
-  spToast('密码已删除');
-};
-
-// ══ Fix2: 刷新首页各板块数量 ══
-async function spRefreshHomeBadges(){
-  // 日志数
-  try{
-    var logs=null;try{logs=await localforage.getItem('myLogs');}catch(e){}
-    if(!logs){try{var lr=localStorage.getItem('myLogs');if(lr)logs=JSON.parse(lr);}catch(e){}}
-    var logArr=Array.isArray(logs)?logs:[];
-    var logSub=document.querySelector('#btnSpaceLogs .sp-grid-sub');
-    if(logSub)logSub.textContent=logArr.length?logArr.length+'篇日志':'写下心情故事';
-  }catch(e){}
-  // 留言数
-  var board=await spLoad('space_board',[]);
-  var boardSub=document.querySelector('#btnSpaceBoard .sp-grid-sub');
-  if(boardSub)boardSub.textContent=board.length?board.length+'条留言':'朋友们的心意';
-  // 相册数
-  var album=await spLoad('space_album',[]);
-  var albumSub=document.getElementById('spAlbumSub');
-  if(albumSub)albumSub.textContent=album.length?album.length+'张照片':'珍藏的瞬间';
-  // 访客今日
-  var vdata=await spLoad('space_visit_data',null);
-  var visitorSub=document.getElementById('spVisitorSub');
-  if(visitorSub&&vdata)visitorSub.textContent='今日 +'+vdata.today+' 位访客';
-}
-
-// ══ Fix2: 更新页内顶部数量 ══
-function spSetBoardCount(n){
-  var el=document.getElementById('spBoardCount');if(el)el.textContent=n+'条留言';
-}
-function spSetAlbumCount(n){
-  var el=document.getElementById('spAlbumCount');if(el)el.textContent=n+'张照片';
-}
-
-// ══ 访客计数 ══
-async function spInitVisitCount(){
-  var data=await spLoad('space_visit_data',null);
-  if(!data){
-    // Fix1: 用自定义弹窗
-    await new Promise(function(resolve){
-      spPrompt('设置空间初始访问量<br>（模拟以前积累的人气）','1234',function(v){
-        var initNum=parseInt(v||'1234');
-        if(isNaN(initNum))initNum=1234;
-        data={total:initNum,today:0,lastDate:''};
-        resolve();
-      });
-    });
-    await spSave('space_visit_data',data);
-  }
-  var today=new Date().toDateString();
-  if(data.lastDate!==today){
-    var inc=Math.floor(Math.random()*8)+1;
-    data.total+=inc;data.today=inc;data.lastDate=today;
-    await spSave('space_visit_data',data);
-  }
-  var totalEl=document.getElementById('spTotalVisit');
-  var subEl=document.getElementById('spVisitorSub');
-  if(totalEl)totalEl.textContent=data.total.toLocaleString();
-  if(subEl)subEl.textContent='今日 +'+data.today+' 位访客';
-  return data;
-}
-
-var VISITOR_ACTIONS=['访问了你的空间','查看了你的日志','翻了你的相册','在留言板留言了','默默看了看就走了','连着刷了好几遍','深夜悄悄来了','点了个赞然后跑了'];
-var VISITOR_NET_NAMES=['路过的小熊','unknown_user','七号星球人','下午三点半','会飞的鱼','黑白键盘侠','深夜闯入者','神秘访客X','匿名の旅人','落单的云'];
-
-async function spLoadVisitors(){
-  var list=await spLoad('space_visitors',[]);
-  if(!list.length){
-    var chars=getAllCharNames();var now=Date.now();
-    for(var i=0;i<10;i++){
-      var isNet=i%2===0&&i<chars.length?false:(i>=chars.length?true:Math.random()<0.4);
-      var name=isNet?VISITOR_NET_NAMES[i%VISITOR_NET_NAMES.length]:(chars[i%chars.length]||{name:'访客'}).name;
-      var type=isNet?'net':(chars[i%chars.length]||{type:'net'}).type;
-      list.push({name:name,type:type,action:VISITOR_ACTIONS[Math.floor(Math.random()*VISITOR_ACTIONS.length)],ts:now-(i*3600000+Math.floor(Math.random()*3600000))});
+    var cid=localStorage.getItem('cs_active_char')||'';
+    var hist=null;
+    try{hist=await localforage.getItem('chatHistory_'+cid);}catch(e){}
+    if(!hist){try{var r=localStorage.getItem('chatHistory_'+cid)||localStorage.getItem('chatHistory');if(r)hist=JSON.parse(r);}catch(e){}}
+    if(Array.isArray(hist)){
+      var dates=new Set();
+      hist.forEach(function(m){if(m.ts){var d=new Date(m.ts);dates.add(d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate());}});
+      days=dates.size||1;
     }
-    await spSave('space_visitors',list);
+  }catch(e){}
+  var el1=document.getElementById('meStatDays');if(el1)el1.textContent=days||'—';
+
+  // 日志篇数
+  var logCount=0;
+  try{var logs=null;try{logs=await localforage.getItem('myLogs');}catch(e){}if(!logs){try{var r=localStorage.getItem('myLogs');if(r)logs=JSON.parse(r);}catch(e){}}logCount=Array.isArray(logs)?logs.length:0;}catch(e){}
+  var el2=document.getElementById('meStatLogs');if(el2)el2.textContent=logCount;
+
+  // 标签数
+  var labels=await meLoad('me_labels',[]);
+  var el3=document.getElementById('meStatTags');if(el3)el3.textContent=labels.length||'—';
+
+  // 今日心情标签
+  var moods=await meLoad('me_moods',{});
+  var todayKey=_moodDateKey(new Date());
+  var todayMood=moods[todayKey];
+  var moodTag=document.getElementById('meMoodTag');
+  if(moodTag){
+    if(todayMood){moodTag.style.display='inline-block';moodTag.textContent=todayMood+' 今天';}
+    else{moodTag.style.display='none';}
   }
-  return list;
-}
-async function spRenderVisitors(){
-  var data=await spInitVisitCount();
-  var list=await spLoadVisitors();
-  var todayEl=document.getElementById('spVisitTodayNum');
-  var totalEl2=document.getElementById('spVisitTotalNum');
-  if(todayEl)todayEl.textContent=data.today;
-  if(totalEl2)totalEl2.textContent=data.total.toLocaleString();
-  var container=document.getElementById('spVisitorList');if(!container)return;
-  container.innerHTML='';
-  list.forEach(function(v){
-    var item=document.createElement('div');item.className='sp-visitor-item';
-    var isNet=v.type==='net'||v.type==='npc';
-    var avaHtml=isNet?'<div class="sp-visitor-ava" style="background:linear-gradient(135deg,#ddd,#bbb);color:#888;">👤</div>':
-      '<div class="sp-visitor-ava" style="background:linear-gradient(135deg,#a29bfe,#6c5ce7);color:white;font-size:14px;">'+v.name.slice(0,1)+'</div>';
-    var d2=new Date(v.ts);
-    var tstr=(d2.getMonth()+1)+'/'+(d2.getDate())+' '+d2.getHours()+':'+(d2.getMinutes()<10?'0':'')+d2.getMinutes();
-    item.innerHTML=avaHtml+'<div class="sp-visitor-info"><div class="sp-visitor-name">'+v.name+'</div><div class="sp-visitor-action">'+v.action+'</div></div><div class="sp-visitor-time">'+tstr+'</div>';
-    container.appendChild(item);
-  });
 }
 
-// ══ 留言板 ══
-async function spLoadBoard(){return await spLoad('space_board',[]);}
-async function spSaveBoard(list){await spSave('space_board',list);}
-function spRenderBoard(list){
-  var container=document.getElementById('spBoardList');if(!container)return;
+// ── 情绪日历 ──
+var _moodYear=new Date().getFullYear(), _moodMonth=new Date().getMonth();
+var _moodPickTarget=null;
+function _moodDateKey(d){return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
+window.moodCalPrev=function(){_moodMonth--;if(_moodMonth<0){_moodMonth=11;_moodYear--;}renderMoodCal();}
+window.moodCalNext=function(){_moodMonth++;if(_moodMonth>11){_moodMonth=0;_moodYear++;}renderMoodCal();}
+async function renderMoodCal(){
+  var moods=await meLoad('me_moods',{});
+  var title=document.getElementById('moodCalTitle');
+  var MONTHS=['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
+  if(title)title.textContent=_moodYear+'年 '+MONTHS[_moodMonth];
+  var grid=document.getElementById('moodCalGrid');if(!grid)return;
+  grid.innerHTML='';
+  var first=new Date(_moodYear,_moodMonth,1).getDay();
+  var days=new Date(_moodYear,_moodMonth+1,0).getDate();
+  var today=new Date();
+  // 空格
+  for(var i=0;i<first;i++){var e=document.createElement('div');e.className='mood-cal-day empty';grid.appendChild(e);}
+  for(var d=1;d<=days;d++){
+    var cell=document.createElement('div');cell.className='mood-cal-day';
+    var key=_moodYear+'-'+(_moodMonth+1)+'-'+d;
+    var isToday=today.getFullYear()===_moodYear&&today.getMonth()===_moodMonth&&today.getDate()===d;
+    if(isToday)cell.classList.add('today');
+    cell.textContent=moods[key]||d;
+    if(moods[key])cell.style.background='linear-gradient(135deg,#fff8f0,#fff0f8)';
+    var isFuture=new Date(_moodYear,_moodMonth,d)>today;
+    if(isFuture){cell.style.opacity='.4';cell.style.cursor='default';}
+    else{
+      (function(dk,dd){
+        cell.onclick=function(){
+          _moodPickTarget=dk;
+          var pDate=document.getElementById('moodPickDate');if(pDate)pDate.textContent=_moodYear+'年'+(_moodMonth+1)+'月'+dd+'日';
+          document.getElementById('moodPickModal').style.display='flex';
+        };
+      })(key,d);
+    }
+    grid.appendChild(cell);
+  }
+}
+window.moodPickSel=async function(emoji){
+  if(!_moodPickTarget)return;
+  var moods=await meLoad('me_moods',{});
+  moods[_moodPickTarget]=emoji;
+  await meSave('me_moods',moods);
+  document.getElementById('moodPickModal').style.display='none';
+  renderMoodCal();
+  meRefreshStats();
+  meToast('心情已记录 '+emoji);
+};
+
+// ── 成就墙 ──
+var ACHIEVEMENTS=[
+  {id:'a1',icon:'💬',name:'初次相遇',desc:'发出第一条消息',color:'#fff8e6',check:function(h){return h.length>=1;}},
+  {id:'a2',icon:'🌙',name:'深夜守候',desc:'深夜12点后还在聊天',color:'#f0e6ff',check:function(h){return h.some(function(m){var d=new Date(m.ts||0);return d.getHours()>=0&&d.getHours()<4;});}},
+  {id:'a3',icon:'💌',name:'写信达人',desc:'写下第一篇日志',color:'#ffe6f0',check:async function(){var logs=null;try{logs=await localforage.getItem('myLogs');}catch(e){}if(!logs){try{var r=localStorage.getItem('myLogs');if(r)logs=JSON.parse(r);}catch(e){}}return Array.isArray(logs)&&logs.length>=1;}},
+  {id:'a4',icon:'💰',name:'初尝甜头',desc:'收到第一笔红包或转账',color:'#fff0e6',check:function(h){return h.some(function(m){return m.content&&(m.content.includes('红包消息')||m.content.includes('转账'));});}},
+  {id:'a5',icon:'🎵',name:'音乐灵魂',desc:'收藏第一首歌',color:'#e6f0ff',check:function(){return false;}},
+  {id:'a6',icon:'🌟',name:'百日情缘',desc:'聊天超过100条消息',color:'#f5ffe6',check:function(h){return h.length>=100;}},
+  {id:'a7',icon:'📞',name:'声音陪伴',desc:'打过一次语音通话',color:'#e6fff5',check:function(h){return h.some(function(m){return m.content&&m.content.includes('语音通话结束');});}},
+  {id:'a8',icon:'💌',name:'时光旅人',desc:'封存第一个时光胶囊',color:'#ffe6f8',check:async function(){var c=await meLoad('me_capsules',[]);return c.length>=1;}},
+];
+async function renderAchieve(){
+  var container=document.getElementById('achieveList');if(!container)return;
   container.innerHTML='';
-  spSetBoardCount(list.length);
-  if(!list.length){container.innerHTML='<div style="text-align:center;padding:40px;color:#ccc;font-style:italic;">还没有留言，点右上角生成第一批吧~</div>';return;}
-  list.forEach(function(msg,idx){
-    var card=document.createElement('div');card.className='sp-board-card';
-    var isNet=msg.type==='net'||!msg.type;
-    var avaHtml=msg.avatar?'<img src="'+msg.avatar+'" class="sp-board-ava" style="border-radius:50%;width:38px;height:38px;object-fit:cover;">':
-      (isNet?'<div class="sp-board-ava" style="background:linear-gradient(135deg,#ddd,#bbb);color:#777;font-size:14px;">'+msg.name.slice(0,1)+'</div>':
-       '<div class="sp-board-ava" style="background:linear-gradient(135deg,#fdcb6e,#e17055);color:white;font-size:14px;">'+msg.name.slice(0,1)+'</div>');
-    var d2=new Date(msg.ts);
-    var tstr=(d2.getMonth()+1)+'/'+(d2.getDate());
-    card.innerHTML=avaHtml+'<div class="sp-board-body"><div><span class="sp-board-name">'+msg.name+'</span><span class="sp-board-time">'+tstr+'</span></div><div class="sp-board-txt">'+msg.text+'</div><span class="sp-board-del" data-idx="'+idx+'">删除</span></div>';
-    card.querySelector('.sp-board-del').onclick=function(){window.spBoardDel(parseInt(this.getAttribute('data-idx')));};
+  var cid=localStorage.getItem('cs_active_char')||'';
+  var hist=null;
+  try{hist=await localforage.getItem('chatHistory_'+cid);}catch(e){}
+  if(!hist){try{var r=localStorage.getItem('chatHistory_'+cid)||localStorage.getItem('chatHistory');if(r)hist=JSON.parse(r);}catch(e){}}
+  hist=Array.isArray(hist)?hist:[];
+  var unlocked=0;
+  for(var i=0;i<ACHIEVEMENTS.length;i++){
+    var a=ACHIEVEMENTS[i];
+    var ok=false;
+    try{ok=typeof a.check==='function'?await a.check(hist):false;}catch(e){}
+    unlocked+=ok?1:0;
+    var item=document.createElement('div');item.className='achieve-item'+(ok?'':' achieve-locked');
+    item.innerHTML='<div class="achieve-icon" style="background:'+a.color+';">'+a.icon+'</div>'+
+      '<div style="flex:1;"><div style="font-size:14px;font-weight:bold;color:'+(ok?'#333':'#bbb')+';">'+a.name+'</div><div style="font-size:12px;color:#bbb;margin-top:2px;">'+a.desc+'</div></div>'+
+      (ok?'<div style="font-size:12px;color:#6c5ce7;font-weight:bold;">已解锁 ✓</div>':'<div style="font-size:20px;color:#ddd;">🔒</div>');
+    container.appendChild(item);
+  }
+  var hdr=document.querySelector('#scrMeAchieve .room-header .header-center');
+  if(hdr)hdr.textContent='🌟 成就墙 '+unlocked+'/'+ACHIEVEMENTS.length;
+}
+
+// ── 时光胶囊 ──
+window.capsuleNew=function(){
+  var m=document.getElementById('capsuleWriteModal');
+  var inp=document.getElementById('capsuleContent');
+  var dt=document.getElementById('capsuleDate');
+  if(inp)inp.value='';
+  if(dt){var n=new Date();n.setMonth(n.getMonth()+1);dt.value=n.toISOString().slice(0,10);}
+  if(m)m.style.display='flex';
+};
+window.capsuleSave=async function(){
+  var content=(document.getElementById('capsuleContent')||{}).value||'';
+  var date=(document.getElementById('capsuleDate')||{}).value||'';
+  if(!content.trim()){meToast('请写点什么');return;}
+  if(!date){meToast('请选择开封日期');return;}
+  var list=await meLoad('me_capsules',[]);
+  list.push({id:Date.now(),content:content,date:date,created:new Date().toISOString().slice(0,10),opened:false});
+  await meSave('me_capsules',list);
+  document.getElementById('capsuleWriteModal').style.display='none';
+  renderCapsule();
+  meToast('胶囊已封存 💌');
+};
+async function renderCapsule(){
+  var list=await meLoad('me_capsules',[]);
+  var container=document.getElementById('capsuleList');if(!container)return;
+  container.innerHTML='';
+  if(!list.length){container.innerHTML='<div style="text-align:center;padding:40px;color:#ccc;">还没有时光胶囊<br>点右上角新建一个吧~</div>';return;}
+  var today=new Date().toISOString().slice(0,10);
+  list.sort(function(a,b){return a.date<b.date?1:-1;}).forEach(function(c,idx){
+    var canOpen=c.date<=today;
+    var card=document.createElement('div');
+    card.className='capsule-card'+(canOpen?'':' capsule-sealed');
+    card.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'+
+      '<span style="font-size:13px;color:#e17055;font-weight:bold;">'+(canOpen?'💌 可以打开了':'🔒 '+c.date+' 开封')+'</span>'+
+      '<span style="font-size:11px;color:#ccc;">写于 '+c.created+'</span>'+
+      '</div>'+
+      (canOpen?'<div style="font-size:13px;color:#555;line-height:1.7;white-space:pre-wrap;">'+c.content+'</div>':
+       '<div style="font-size:13px;color:#ccc;font-style:italic;">信件已封存，等待开封日…</div>')+
+      '<div style="margin-top:10px;text-align:right;"><span style="font-size:11px;color:#ff7675;cursor:pointer;" data-idx="'+idx+'">删除</span></div>';
+    card.querySelector('[data-idx]').onclick=async function(){
+      var i=parseInt(this.getAttribute('data-idx'));
+      var l=await meLoad('me_capsules',[]);l.splice(i,1);
+      await meSave('me_capsules',l);renderCapsule();
+    };
     container.appendChild(card);
   });
 }
-window.spBoardDel=async function(idx){
-  var list=await spLoadBoard();list.splice(idx,1);
-  await spSaveBoard(list);spRenderBoard(list);spRefreshHomeBadges();spToast('已删除');
-};
-// Fix3: 确保char/npc优先出现在留言里
-window.spBoardGenMore=async function(){
-  var cfg=await spApi();if(!cfg){spToast('请先配置API');return;}
-  spToast('生成留言中…');
-  var chars=getAllCharNames();var myName=getMyName();
-  var charList=chars.filter(function(c){return c.type==='char';});
-  var npcList=chars.filter(function(c){return c.type==='npc';});
-  var charNames=charList.map(function(c){return c.name;}).join('、');
-  var npcNames=npcList.map(function(c){return c.name;}).join('、');
-  // Fix3: 强制要求至少2个char/npc的留言
-  var forceNote='';
-  if(charNames)forceNote+='【强制要求】留言者中必须包含以下好友中的至少2位：'+charNames+'，他们要用符合自己性格的口吻留言。';
-  if(npcNames)forceNote+='也可以包含认识的人：'+npcNames+'。';
-  forceNote+='其余可以是1-2个网友（用网络ID风格名字）。';
-  var pr='为一个叫'+myName+'的人的QQ空间留言板生成6条留言。'+forceNote+'语气真实自然各不相同，字数15-40字。严格用JSON数组输出：[{"name":"x","type":"char或npc或net","text":"x"}] 只输出JSON数组。';
-  try{
-    var raw=await spCallApi(cfg,pr,600);
-    raw=raw.replace(/```json|```/g,'').trim();
-    var items=JSON.parse(raw);
-    var list=await spLoadBoard();var now=Date.now();
-    // Fix3: list此时是数组，Array.prototype.unshift可用
-    var newItems=[];
-    items.forEach(function(item,i){
-      var cObj=chars.find(function(c){return c.name===item.name;});
-      newItems.push({name:item.name,type:item.type||'net',text:item.text,avatar:(cObj&&cObj.avatar)||null,ts:now-i*3600000});
-    });
-    // 新留言插到最前面
-    list=newItems.concat(list);
-    await spSaveBoard(list);spRenderBoard(list);spRefreshHomeBadges();spToast('新留言已生成 💬');
-  }catch(e){spToast('生成失败：'+e.message);}
-};
 
-// ══ 相册 ══
-var _spAlbumCurIdx=-1;
-async function spLoadAlbum(){return await spLoad('space_album',[]);}
-async function spSaveAlbum(list){await spSave('space_album',list);}
-async function spRenderAlbum(){
-  var list=await spLoadAlbum();
-  spSetAlbumCount(list.length);
-  var grid=document.getElementById('spAlbumGrid');if(!grid)return;
+// ── 我的标签 ──
+var ALL_LABELS=[
+  {emoji:'🌙',text:'夜猫子'},{emoji:'🗣️',text:'话痨'},{emoji:'🍋',text:'柠檬精'},
+  {emoji:'🐰',text:'粘人精'},{emoji:'😤',text:'醋坛子'},{emoji:'🧊',text:'冷淡脸'},
+  {emoji:'🎭',text:'戏精'},{emoji:'💤',text:'懒人体质'},{emoji:'🌪️',text:'情绪旋风'},
+  {emoji:'🤡',text:'自我感觉良好'},{emoji:'📚',text:'书虫'},{emoji:'🎵',text:'音乐脑'},
+  {emoji:'😏',text:'腹黑本黑'},{emoji:'🥺',text:'玻璃心'},{emoji:'💪',text:'表面强硬'},
+  {emoji:'🫶',text:'暗中关心'},{emoji:'🔥',text:'容易上头'},{emoji:'🌸',text:'软萌本体'},
+];
+async function renderLabels(){
+  var saved=await meLoad('me_labels',[]);
+  var grid=document.getElementById('labelGrid');if(!grid)return;
   grid.innerHTML='';
-  if(!list.length){grid.innerHTML='<div style="text-align:center;padding:40px;color:#ccc;grid-column:1/-1;">还没有照片，点右上角添加~</div>';return;}
-  list.forEach(function(photo,idx){
-    var cell=document.createElement('div');cell.className='sp-album-cell';
-    var hasPwd=!!photo.pwd;
-    cell.innerHTML='<img src="'+photo.src+'" loading="lazy" style="width:100%;height:100%;object-fit:cover;"><div class="sp-album-lock" style="display:'+(hasPwd?'flex':'none')+'">🔒</div>';
-    (function(i){cell.onclick=function(){window.spAlbumOpen(i);};})(idx);
-    grid.appendChild(cell);
+  ALL_LABELS.forEach(function(lb){
+    var chip=document.createElement('span');chip.className='label-chip'+(saved.includes(lb.text)?' selected':'');
+    chip.textContent=lb.emoji+' '+lb.text;
+    chip.onclick=function(){
+      var s=Array.from(grid.querySelectorAll('.label-chip.selected'));
+      if(chip.classList.contains('selected')){chip.classList.remove('selected');}
+      else if(s.length>=6){meToast('最多选6个标签');}
+      else{chip.classList.add('selected');}
+    };
+    grid.appendChild(chip);
   });
 }
-window.spAlbumAdd=function(){var u=document.getElementById('spAlbumUpload');if(u)u.click();};
-window.spAlbumOpen=async function(idx){
-  var list=await spLoadAlbum();var photo=list[idx];if(!photo)return;
-  _spAlbumCurIdx=idx;
-  if(photo.pwd){
-    // Fix1: 自定义弹窗
-    await new Promise(function(resolve){
-      spPrompt('这张照片加密了，请输入密码：','',function(v){
-        if(v===null){resolve(false);return;}
-        if(v!==photo.pwd){spToast('密码错误 🔒');resolve(false);return;}
-        resolve(true);
-      });
-    }).then(function(ok){
-      if(!ok)return;
-      _showAlbumDetail(photo);
-    });
-    return;
-  }
-  _showAlbumDetail(photo);
-};
-function _showAlbumDetail(photo){
-  var detail=document.getElementById('spAlbumDetail');
-  var img=document.getElementById('spAlbumDetailImg');
-  var desc=document.getElementById('spAlbumDetailDesc');
-  var pwdBtn=document.getElementById('spAlbumDetailPwd');
-  if(img)img.src=photo.src;
-  if(desc)desc.textContent=photo.desc||'';
-  if(pwdBtn)pwdBtn.textContent=photo.pwd?'🔓 取消密码':'🔒 设置密码';
-  if(detail)detail.style.display='flex';
-}
-window.spAlbumSavePwd=async function(){
-  var v=(document.getElementById('spAlbumPwdInput')||{}).value||'';
-  var list=await spLoadAlbum();
-  if(_spAlbumCurIdx>=0&&_spAlbumCurIdx<list.length){
-    list[_spAlbumCurIdx].pwd=v||'';
-    await spSaveAlbum(list);spRenderAlbum();
-    spToast(v?'密码已设置 🔒':'密码已取消');
-  }
-  var modal=document.getElementById('spAlbumPwdModal');if(modal)modal.style.display='none';
+window.labelSave=async function(){
+  var selected=Array.from(document.querySelectorAll('#labelGrid .label-chip.selected')).map(function(c){return c.textContent.slice(2).trim();});
+  await meSave('me_labels',selected);
+  meRefreshStats();
+  meToast('标签已保存 ✨ ('+selected.length+'个)');
+  showScreen('scrMe');
 };
 
-setTimeout(function(){
-  var pwdBtn=document.getElementById('spAlbumDetailPwd');
-  if(pwdBtn)pwdBtn.onclick=function(){
-    var detail=document.getElementById('spAlbumDetail');if(detail)detail.style.display='none';
-    var modal=document.getElementById('spAlbumPwdModal');if(modal)modal.style.display='flex';
-    var inp=document.getElementById('spAlbumPwdInput');if(inp)inp.value='';
-  };
-  var delBtn=document.getElementById('spAlbumDetailDel');
-  if(delBtn)delBtn.onclick=function(){
-    spConfirm('确认删除这张照片？',async function(ok){
-      if(!ok)return;
-      var list=await spLoadAlbum();list.splice(_spAlbumCurIdx,1);
-      await spSaveAlbum(list);
-      var detail=document.getElementById('spAlbumDetail');if(detail)detail.style.display='none';
-      spRenderAlbum();spRefreshHomeBadges();spToast('已删除');
-    });
-  };
-  var upEl=document.getElementById('spAlbumUpload');
-  if(upEl)upEl.addEventListener('change',async function(){
-    var files=Array.from(this.files);if(!files.length)return;
-    var list=await spLoadAlbum();
-    // Fix1: 自定义弹窗替代prompt
-    await new Promise(function(resolve){
-      spPrompt('给这批照片加个说明（可留空）','',function(desc){
-        desc=desc||'';
-        var pending=files.length;
-        for(var i=0;i<files.length;i++){
-          (function(file){
-            var reader=new FileReader();
-            reader.onload=function(e){
-              list.unshift({src:e.target.result,desc:desc,pwd:'',ts:Date.now()});
-              pending--;if(pending===0)resolve();
-            };
-            reader.readAsDataURL(file);
-          })(files[i]);
-        }
-      });
-    });
-    await spSaveAlbum(list);spRenderAlbum();spRefreshHomeBadges();spToast('已添加'+files.length+'张照片 📷');
-    upEl.value='';
-  });
-},500);
-
-function spToast(msg){
-  var t=document.createElement('div');
-  t.style.cssText='position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(50,50,80,0.9);color:white;padding:8px 18px;border-radius:20px;font-size:13px;z-index:9999;pointer-events:none;white-space:nowrap;';
-  t.textContent=msg;document.body.appendChild(t);setTimeout(function(){t.remove();},2200);
-}
-
-// ══ Fix2: 在留言板/相册顶部增加数量显示 ══
-function spInjectCounts(){
-  var boardHdr=document.querySelector('#scrSpaceBoard .room-header .header-center');
-  if(boardHdr&&!document.getElementById('spBoardCount')){
-    var span=document.createElement('span');span.id='spBoardCount';
-    span.style.cssText='font-size:12px;color:#a29bfe;margin-left:6px;font-weight:normal;';
-    boardHdr.appendChild(span);
-  }
-  var albumHdr=document.querySelector('#scrSpaceAlbum .room-header .header-center');
-  if(albumHdr&&!document.getElementById('spAlbumCount')){
-    var span2=document.createElement('span');span2.id='spAlbumCount';
-    span2.style.cssText='font-size:12px;color:#74b9ff;margin-left:6px;font-weight:normal;';
-    albumHdr.appendChild(span2);
-  }
-}
-
-var _origSpShow=window.showScreen;
+// ── showScreen patch ──
+var _origMeNew=window.showScreen;
 window.showScreen=function(id){
-  _origSpShow(id);
-  if(id==='scrSpace'){
-    spInitVisitCount();
-    spRefreshHomeBadges();
-    spLoad('space_pwd',null).then(function(pwd){var btn=document.getElementById('btnSpacePwd');if(btn)btn.textContent=pwd?'🔒 已设密码':'🔓 无密码';});
-  }
-  if(id==='scrSpaceBoard'){
-    spInjectCounts();
-    spLoadBoard().then(function(l){spRenderBoard(l);});
-  }
-  if(id==='scrSpaceAlbum'){
-    spInjectCounts();
-    spRenderAlbum();
-  }
-  if(id==='scrSpaceVisitor')spRenderVisitors();
+  _origMeNew(id);
+  if(id==='scrMe')meRefreshStats();
+  if(id==='scrMoodCal'){_moodYear=new Date().getFullYear();_moodMonth=new Date().getMonth();renderMoodCal();}
+  if(id==='scrMeAchieve')renderAchieve();
+  if(id==='scrMeCapsule')renderCapsule();
+  if(id==='scrMeLabels')renderLabels();
 };
 
+// ── 注册新屏幕到showScreen白名单 ──
+// （已在showScreen条件里处理，这里只做按钮绑定）
 setTimeout(function(){
-  spInjectCounts();
-  var b1=document.getElementById('btnSpaceLogs');if(b1)b1.onclick=function(){showScreen('scrLogList');};
-  var b2=document.getElementById('btnSpaceBoard');if(b2)b2.onclick=function(){showScreen('scrSpaceBoard');};
-  var b3=document.getElementById('btnSpaceAlbum');if(b3)b3.onclick=function(){showScreen('scrSpaceAlbum');};
-  var b4=document.getElementById('btnSpaceVisitor');if(b4)b4.onclick=function(){showScreen('scrSpaceVisitor');};
-  var bm=document.getElementById('btnSpaceMoments');if(bm)bm.onclick=function(){};
-  var scrLog=document.getElementById('scrLogList');
-  if(scrLog&&!scrLog.style.background)scrLog.style.background='linear-gradient(160deg,#fff8fc 0%,#f5f0ff 100%)';
+  var b1=document.getElementById('btnMeLogs');if(b1)b1.onclick=function(){showScreen('scrLogList');};
+  var b2=document.getElementById('btnMeMoodCal');if(b2)b2.onclick=function(){showScreen('scrMoodCal');};
+  var b3=document.getElementById('btnMeAchieve');if(b3)b3.onclick=function(){showScreen('scrMeAchieve');};
+  var b4=document.getElementById('btnMeCapsule');if(b4)b4.onclick=function(){showScreen('scrMeCapsule');};
+  var b5=document.getElementById('btnMeLabels');if(b5)b5.onclick=function(){showScreen('scrMeLabels');};
 },400);
 
 })();
