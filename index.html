@@ -536,7 +536,6 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         .hd-app-lbl{font-size:10px;color:#444;font-weight:500;margin-top:4px;text-align:center;}
 
         /* ══ Dock ══ */
-        #hdDockSpacer{flex:1;min-height:6px;}
         #hdDock{
           flex-shrink:0;z-index:2;
           background:rgba(255,255,255,.52);
@@ -724,13 +723,12 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
       </div>
 
       <!-- ══ 页面指示点 ══ -->
-      <div id="homePageDots" style="display:flex;justify-content:center;gap:6px;padding:6px 0 2px;flex-shrink:0;">
+      <div id="homePageDots" style="display:flex;justify-content:center;gap:6px;padding:4px 0;flex-shrink:0;">
         <div id="homeDot1" style="width:6px;height:6px;border-radius:50%;background:rgba(100,80,180,0.8);transition:.3s;"></div>
         <div id="homeDot2" style="width:6px;height:6px;border-radius:50%;background:rgba(100,80,180,0.25);transition:.3s;"></div>
       </div>
 
       <!-- ══ Dock ══ -->
-      <div id="hdDockSpacer"></div>
       <div id="hdDock">
         <div class="hd-dock-item" id="btnHomeSpy">
           <div class="hd-dock-icon" id="hdDockIconSpy" style="position:relative;overflow:hidden;"><img id="hdDockImgSpy" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:15px;" alt=""><span id="hdDockEmoSpy">📱</span></div><span class="hd-dock-lbl" id="hdDockLblSpy">查手机</span>
