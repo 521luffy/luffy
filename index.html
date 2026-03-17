@@ -2964,45 +2964,124 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
             </div>
         </div>
     </div>
-  <div id="scrSpace" class="scr-flex">
-    <div class="room-header">
+  <div id="scrSpace" class="scr-flex" style="background:linear-gradient(160deg,#fff0f8 0%,#f0f4ff 50%,#f5fff0 100%);position:relative;overflow:hidden;">
+    <!-- 装饰背景粒子 -->
+    <div style="position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden;">
+      <div style="position:absolute;top:8%;left:5%;font-size:20px;opacity:.15;animation:spFloat 4s ease-in-out infinite;">🌸</div>
+      <div style="position:absolute;top:15%;right:8%;font-size:16px;opacity:.12;animation:spFloat 5s ease-in-out 1s infinite;">⭐</div>
+      <div style="position:absolute;top:35%;left:3%;font-size:14px;opacity:.1;animation:spFloat 3.5s ease-in-out 0.5s infinite;">💫</div>
+      <div style="position:absolute;top:55%;right:5%;font-size:18px;opacity:.12;animation:spFloat 4.5s ease-in-out 2s infinite;">🌙</div>
+      <div style="position:absolute;top:70%;left:8%;font-size:15px;opacity:.1;animation:spFloat 5s ease-in-out 1.5s infinite;">✨</div>
+      <div style="position:absolute;top:25%;right:15%;font-size:12px;opacity:.1;animation:spFloat 3.8s ease-in-out 0.8s infinite;">🎀</div>
+    </div>
+    <div class="room-header" style="background:rgba(255,255,255,0.85);backdrop-filter:blur(10px);position:relative;z-index:1;">
         <span id="btnSpaceBack" class="back-btn" onclick="showScreen('scrMe')">＜</span>
-        <span class="header-center">我的空间</span>
+        <span class="header-center">✦ 我的空间 ✦</span>
         <span class="empty-btn"></span>
     </div>
-    <div class="me-header">
-        <div id="spaceAvatar" class="me-avatar"></div>
-        <div class="me-info">
-            <div id="spaceName" class="me-name">你的名字</div>
-            <div id="spaceBio" class="me-bio">请添加你的个性签名吧！</div>
-        </div>
-        <div class="me-icons">
-            <span id="btnEditSpace" style="cursor:pointer;">📝</span>
-        </div>
+    <!-- 4格功能入口 -->
+    <div style="position:relative;z-index:1;padding:20px 16px;display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div id="btnSpaceLogs" class="sp-grid-item" style="background:linear-gradient(135deg,#fff0f8,#ffe4ef);border:1.5px solid #ffb6c1;">
+        <div class="sp-grid-icon">📝</div>
+        <div class="sp-grid-name">我的日志</div>
+        <div class="sp-grid-sub">写下心情故事</div>
+      </div>
+      <div id="btnSpaceBoard" class="sp-grid-item" style="background:linear-gradient(135deg,#f0f4ff,#e4ecff);border:1.5px solid #b6c9ff;">
+        <div class="sp-grid-icon">💬</div>
+        <div class="sp-grid-name">留言板</div>
+        <div class="sp-grid-sub">朋友们的心意</div>
+      </div>
+      <div id="btnSpaceAlbum" class="sp-grid-item" style="background:linear-gradient(135deg,#f0fff4,#e4ffec);border:1.5px solid #b6ffce;">
+        <div class="sp-grid-icon">📷</div>
+        <div class="sp-grid-name">我的相册</div>
+        <div class="sp-grid-sub" id="spAlbumSub">珍藏的瞬间</div>
+      </div>
+      <div id="btnSpaceVisitor" class="sp-grid-item" style="background:linear-gradient(135deg,#fffaf0,#fff3e0);border:1.5px solid #ffd6b6;">
+        <div class="sp-grid-icon">👣</div>
+        <div class="sp-grid-name">访客记录</div>
+        <div class="sp-grid-sub" id="spVisitorSub">今日有人来访</div>
+      </div>
     </div>
-    <div class="me-menu-list">
-        <div id="btnSpaceLogs" class="me-menu-item">
-            <div class="me-menu-left">
-                <div class="me-menu-title">我的日志</div>
-                <div class="me-menu-sub">记录生活点滴，互动评论</div>
-            </div>
-            <div class="me-menu-right">＞</div>
-        </div>
-        <div id="btnSpaceBoard" class="me-menu-item">
-            <div class="me-menu-left">
-                <div class="me-menu-title">留言板</div>
-                <div class="me-menu-sub">主人寄语，朋友踩踩</div>
-            </div>
-            <div class="me-menu-right">＞</div>
-        </div>
-        <div id="btnSpaceMoments" class="me-menu-item">
-            <div class="me-menu-left">
-                <div class="me-menu-title">我的说说</div>
-                <div class="me-menu-sub">随时随地分享心情</div>
-            </div>
-            <div class="me-menu-right">＞</div>
-        </div>
+    <!-- 访客总数 + 密码设置 -->
+    <div style="position:relative;z-index:1;margin:0 16px;padding:12px 16px;background:rgba(255,255,255,0.7);border-radius:14px;display:flex;align-items:center;justify-content:space-between;backdrop-filter:blur(5px);border:1px solid rgba(180,180,255,0.2);">
+      <div>
+        <span style="font-size:12px;color:#999;">总访问量</span>
+        <span id="spTotalVisit" style="font-size:22px;font-weight:bold;color:#6c5ce7;margin-left:8px;">0</span>
+        <span style="font-size:12px;color:#bbb;margin-left:4px;">次</span>
+      </div>
+      <button id="btnSpacePwd" onclick="spaceTogglePwd()" style="padding:7px 14px;border-radius:20px;border:1.5px solid #ddd;background:white;font-size:12px;cursor:pointer;color:#666;">🔓 无密码</button>
     </div>
+    <!-- 密码输入区（初始隐藏）-->
+    <div id="spacePwdPanel" style="display:none;position:relative;z-index:1;margin:10px 16px 0;padding:12px;background:rgba(255,255,255,0.8);border-radius:12px;border:1px solid rgba(200,150,255,0.3);">
+      <div style="font-size:12px;color:#888;margin-bottom:8px;">设置空间密码（char访问时需要输入）</div>
+      <div style="display:flex;gap:8px;">
+        <input id="spacePwdInput" type="password" placeholder="输入密码" style="flex:1;padding:8px 12px;border:1px solid #ddd;border-radius:10px;font-size:13px;outline:none;">
+        <button onclick="spaceSavePwd()" style="padding:8px 14px;background:#6c5ce7;color:white;border:none;border-radius:10px;font-size:12px;cursor:pointer;">保存</button>
+      </div>
+      <button onclick="spaceClearPwd()" style="margin-top:8px;font-size:11px;color:#ff7675;background:none;border:none;cursor:pointer;padding:0;">删除密码</button>
+    </div>
+</div>
+
+<!-- ═══ 留言板 scrSpaceBoard ═══ -->
+<div id="scrSpaceBoard" style="display:none;flex-direction:column;position:absolute;top:0;width:100%;height:100%;z-index:30;background:#f5f6fa;">
+  <div class="room-header">
+    <span class="back-btn" onclick="showScreen('scrSpace')">＜</span>
+    <span class="header-center">💬 留言板</span>
+    <span style="font-size:13px;color:#6c5ce7;cursor:pointer;font-weight:bold;" onclick="spBoardGenMore()">+ 更多</span>
+  </div>
+  <div id="spBoardList" style="flex:1;overflow-y:auto;padding:12px 14px 20px;display:flex;flex-direction:column;gap:10px;"></div>
+</div>
+
+<!-- ═══ 相册 scrSpaceAlbum ═══ -->
+<div id="scrSpaceAlbum" style="display:none;flex-direction:column;position:absolute;top:0;width:100%;height:100%;z-index:30;background:#f5f6fa;">
+  <div class="room-header">
+    <span class="back-btn" onclick="showScreen('scrSpace')">＜</span>
+    <span class="header-center">📷 我的相册</span>
+    <span style="font-size:20px;cursor:pointer;" onclick="spAlbumAdd()">＋</span>
+  </div>
+  <div id="spAlbumGrid" style="flex:1;overflow-y:auto;padding:10px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;"></div>
+  <input type="file" id="spAlbumUpload" accept="image/*" multiple style="display:none;">
+  <!-- 相册详情弹窗 -->
+  <div id="spAlbumDetail" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.85);flex-direction:column;align-items:center;justify-content:center;">
+    <div style="position:absolute;top:20px;right:20px;color:white;font-size:28px;cursor:pointer;" onclick="document.getElementById('spAlbumDetail').style.display='none'">×</div>
+    <img id="spAlbumDetailImg" style="max-width:90vw;max-height:70vh;border-radius:12px;object-fit:contain;">
+    <div style="color:white;margin-top:12px;font-size:13px;text-align:center;max-width:80vw;" id="spAlbumDetailDesc"></div>
+    <div style="display:flex;gap:10px;margin-top:14px;">
+      <button id="spAlbumDetailPwd" style="padding:8px 16px;border-radius:20px;background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.3);font-size:12px;cursor:pointer;">🔒 设置密码</button>
+      <button id="spAlbumDetailDel" style="padding:8px 16px;border-radius:20px;background:rgba(255,100,100,0.4);color:white;border:none;font-size:12px;cursor:pointer;">🗑 删除</button>
+    </div>
+  </div>
+  <!-- 相册密码弹窗 -->
+  <div id="spAlbumPwdModal" style="display:none;position:fixed;inset:0;z-index:210;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;">
+    <div style="background:white;border-radius:16px;padding:20px;width:80vw;max-width:300px;">
+      <div style="font-size:15px;font-weight:bold;margin-bottom:12px;" id="spAlbumPwdTitle">设置相片密码</div>
+      <input id="spAlbumPwdInput" type="password" placeholder="输入密码（留空则取消密码）" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:10px;font-size:13px;box-sizing:border-box;outline:none;">
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button onclick="document.getElementById('spAlbumPwdModal').style.display='none'" style="flex:1;padding:10px;border:1px solid #ddd;border-radius:10px;background:white;cursor:pointer;">取消</button>
+        <button onclick="spAlbumSavePwd()" style="flex:1;padding:10px;background:#6c5ce7;color:white;border:none;border-radius:10px;cursor:pointer;">确定</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 访客记录 scrSpaceVisitor ═══ -->
+<div id="scrSpaceVisitor" style="display:none;flex-direction:column;position:absolute;top:0;width:100%;height:100%;z-index:30;background:#f5f6fa;">
+  <div class="room-header">
+    <span class="back-btn" onclick="showScreen('scrSpace')">＜</span>
+    <span class="header-center">👣 访客记录</span>
+    <span class="empty-btn"></span>
+  </div>
+  <div style="padding:12px 14px 6px;display:flex;gap:12px;">
+    <div style="flex:1;background:white;border-radius:12px;padding:12px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+      <div style="font-size:22px;font-weight:bold;color:#6c5ce7;" id="spVisitTodayNum">0</div>
+      <div style="font-size:11px;color:#999;margin-top:2px;">今日访客</div>
+    </div>
+    <div style="flex:1;background:white;border-radius:12px;padding:12px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+      <div style="font-size:22px;font-weight:bold;color:#e17055;" id="spVisitTotalNum">0</div>
+      <div style="font-size:11px;color:#999;margin-top:2px;">总访问量</div>
+    </div>
+  </div>
+  <div id="spVisitorList" style="flex:1;overflow-y:auto;padding:10px 14px 20px;display:flex;flex-direction:column;gap:8px;"></div>
 </div>
 
 
@@ -5402,6 +5481,34 @@ if(typeof localforage === 'undefined') {
 .anon-user-inp:focus{border-color:#c084fc;}
 .anon-send-sm{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#9333ea);border:none;color:white;font-size:18px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
 
+
+/* ══ 我的空间 ══ */
+@keyframes spFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.sp-grid-item{border-radius:18px;padding:18px 14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:.15s;box-shadow:0 4px 14px rgba(0,0,0,0.06);}
+.sp-grid-item:active{transform:scale(.97);}
+.sp-grid-icon{font-size:32px;line-height:1;}
+.sp-grid-name{font-size:14px;font-weight:700;color:#333;}
+.sp-grid-sub{font-size:11px;color:#999;text-align:center;}
+/* 留言卡片 */
+.sp-board-card{background:white;border-radius:14px;padding:14px;box-shadow:0 2px 10px rgba(0,0,0,0.06);display:flex;gap:10px;align-items:flex-start;}
+.sp-board-ava{width:38px;height:38px;border-radius:50%;flex-shrink:0;object-fit:cover;background:#e8e8e8;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.sp-board-body{flex:1;min-width:0;}
+.sp-board-name{font-size:13px;font-weight:bold;color:#333;}
+.sp-board-time{font-size:11px;color:#bbb;margin-left:6px;}
+.sp-board-txt{font-size:13px;color:#555;line-height:1.6;margin-top:4px;word-break:break-word;}
+.sp-board-del{font-size:11px;color:#ff7675;cursor:pointer;margin-top:6px;display:inline-block;}
+/* 相册格子 */
+.sp-album-cell{aspect-ratio:1;border-radius:10px;overflow:hidden;position:relative;cursor:pointer;background:#e8e8e8;}
+.sp-album-cell img{width:100%;height:100%;object-fit:cover;}
+.sp-album-lock{position:absolute;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;font-size:22px;}
+/* 访客条目 */
+.sp-visitor-item{background:white;border-radius:12px;padding:12px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,0.05);}
+.sp-visitor-ava{width:40px;height:40px;border-radius:50%;flex-shrink:0;background:#ddd;display:flex;align-items:center;justify-content:center;font-size:20px;object-fit:cover;}
+.sp-visitor-info{flex:1;min-width:0;}
+.sp-visitor-name{font-size:13px;font-weight:bold;color:#333;}
+.sp-visitor-action{font-size:11px;color:#999;margin-top:2px;}
+.sp-visitor-time{font-size:11px;color:#bbb;white-space:nowrap;}
+
 </style>
 
 <script>
@@ -5651,7 +5758,7 @@ let pressTimer = null;
 let selEl = null;
 let currentQuote ="";
 function showScreen(showId) {
-    [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrSpace, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet"), $("scrContact"), $("scrSetFont"), $("scrCharPhone"), $("scrSpyDiary"), $("scrSpyZhihu"), $("scrSpySecret"), $("scrSpyMeituan"), $("scrSpyFootprint"), $("scrSpyWallet"), $("scrSpyShop"), $("scrSpyIqiyi"), $("scrSpySettings"), $("scrMoment"), $("scrGroupRoom"), $("scrGroupSettings"), $("scrOurSongs"), $("scrHomeSettings"), $("scrCoupleSpace"), $("scrPeriod"), $("scrPastMemory"), $("scrDiary"), $("scrAstro"), $("scrAnon")].forEach(s => { if(s) s.style.display = "none"; });
+    [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrSpace, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet"), $("scrContact"), $("scrSetFont"), $("scrCharPhone"), $("scrSpyDiary"), $("scrSpyZhihu"), $("scrSpySecret"), $("scrSpyMeituan"), $("scrSpyFootprint"), $("scrSpyWallet"), $("scrSpyShop"), $("scrSpyIqiyi"), $("scrSpySettings"), $("scrMoment"), $("scrGroupRoom"), $("scrGroupSettings"), $("scrOurSongs"), $("scrHomeSettings"), $("scrCoupleSpace"), $("scrPeriod"), $("scrPastMemory"), $("scrDiary"), $("scrAstro"), $("scrAnon"), $("scrSpaceBoard"), $("scrSpaceAlbum"), $("scrSpaceVisitor")].forEach(s => { if(s) s.style.display = "none"; });
 
     let target = $(showId);
     if(showId === "scrRoom") {
@@ -5659,7 +5766,7 @@ function showScreen(showId) {
         if(_im){ _im.style.height="34px"; _im.style.overflowY="hidden"; }
     }
     if(target) {
-        if(showId === "scrRoom" || showId === "scrList" || showId === "scrSetApi" || showId === "scrSetChat" || showId === "scrWb" || showId === "scrWbEdit" || showId === "scrMe" || showId === "scrCharSticker" || showId === "scrSpace" || showId === "scrLogList" || showId === "scrLogEdit" || showId === "scrFav" || showId === "scrWallet" || showId === "scrContact" || showId === "scrSetFont" || showId === "scrSpyDiary" || showId === "scrSpyZhihu" || showId === "scrSpySecret" || showId === "scrSpyMeituan" || showId === "scrSpyFootprint" || showId === "scrSpyWallet" || showId === "scrSpyShop" || showId === "scrSpyIqiyi" || showId === "scrSpySettings" || showId === "scrMoment" || showId === "scrGroupRoom" || showId === "scrGroupSettings" || showId === "scrOurSongs" || showId === "scrHomeSettings" || showId === "scrPeriod" || showId === "scrPastMemory" || showId === "scrDiary" || showId === "scrAstro" || showId === "scrAnon") {
+        if(showId === "scrRoom" || showId === "scrList" || showId === "scrSetApi" || showId === "scrSetChat" || showId === "scrWb" || showId === "scrWbEdit" || showId === "scrMe" || showId === "scrCharSticker" || showId === "scrSpace" || showId === "scrLogList" || showId === "scrLogEdit" || showId === "scrFav" || showId === "scrWallet" || showId === "scrContact" || showId === "scrSetFont" || showId === "scrSpyDiary" || showId === "scrSpyZhihu" || showId === "scrSpySecret" || showId === "scrSpyMeituan" || showId === "scrSpyFootprint" || showId === "scrSpyWallet" || showId === "scrSpyShop" || showId === "scrSpyIqiyi" || showId === "scrSpySettings" || showId === "scrMoment" || showId === "scrGroupRoom" || showId === "scrGroupSettings" || showId === "scrOurSongs" || showId === "scrHomeSettings" || showId === "scrPeriod" || showId === "scrPastMemory" || showId === "scrDiary" || showId === "scrAstro" || showId === "scrAnon" || showId === "scrSpaceBoard" || showId === "scrSpaceAlbum" || showId === "scrSpaceVisitor") {
             target.style.display = "flex";
         } else if (showId === "scrCharPhone") {
             target.style.display = "flex";
@@ -23382,5 +23489,276 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
       renderIdGrid('anonBeIdGrid','anonBeIdCustom');
     }
   };
+})();
+</script>
+
+<script>
+// ══════════════════════════════════════════════
+// 我的空间：留言板 + 相册 + 访客记录
+// ══════════════════════════════════════════════
+(function initMySpace(){
+
+async function spSave(k,v){try{await localforage.setItem(k,v);}catch(e){}try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+async function spLoad(k,def){var d=null;try{d=await localforage.getItem(k);}catch(e){}if(d===null||d===undefined){try{var r=localStorage.getItem(k);if(r)d=JSON.parse(r);}catch(e){}}return(d===null||d===undefined)?def:d;}
+
+async function spApi(){
+  var pxy='',key='',mod='';
+  try{pxy=originalGetItem.call(localStorage,'pxy')||'';}catch(e){}
+  try{key=originalGetItem.call(localStorage,'key')||'';}catch(e){}
+  try{mod=originalGetItem.call(localStorage,'mod')||'';}catch(e){}
+  if(!pxy){try{pxy=await localforage.getItem('pxy')||'';}catch(e){}}
+  if(!key){try{key=await localforage.getItem('key')||'';}catch(e){}}
+  if(!pxy||!key)return null;
+  if(!pxy.includes('chat/completions'))pxy=pxy.replace(/\/$/,'')+'/chat/completions';
+  if(!mod)mod='claude-sonnet-4-20250514';
+  return{pxy:pxy,key:key,mod:mod};
+}
+async function spCallApi(cfg,prompt,maxTokens){
+  var res=await fetch(cfg.pxy,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+cfg.key},
+    body:JSON.stringify({model:cfg.mod,max_tokens:maxTokens||300,temperature:0.9,messages:[{role:'user',content:prompt}]})});
+  var d=await res.json();
+  var t='';if(d.content&&d.content[0])t=d.content[0].text||'';else if(d.choices&&d.choices[0])t=(d.choices[0].message&&d.choices[0].message.content)||'';
+  return t.trim();
+}
+
+function getAllCharNames(){
+  var names=[];
+  try{
+    var opened=JSON.parse(localStorage.getItem('cs_opened_chars')||'[]');
+    opened.forEach(function(cid){var n=localStorage.getItem('cN_'+cid);if(n)names.push({type:'char',name:n,cid:cid});});
+    opened.forEach(function(cid){
+      var npcRaw=originalGetItem.call(localStorage,'npcList_'+cid);
+      if(npcRaw){try{JSON.parse(npcRaw).forEach(function(n){if(n.name)names.push({type:'npc',name:n.name,avatar:n.avatar||null});});}catch(e){}}
+    });
+  }catch(e){}
+  return names;
+}
+function getMyName(){try{return localStorage.getItem('cMyN_'+(localStorage.getItem('cs_active_char')||''))||'我';}catch(e){}return'我';}
+
+window.spaceTogglePwd=async function(){
+  var panel=document.getElementById('spacePwdPanel');if(!panel)return;
+  panel.style.display=panel.style.display==='none'?'block':'none';
+};
+window.spaceSavePwd=async function(){
+  var v=(document.getElementById('spacePwdInput')||{}).value||'';
+  if(!v){spToast('密码不能为空');return;}
+  await spSave('space_pwd',v);
+  var btn=document.getElementById('btnSpacePwd');if(btn)btn.textContent='🔒 已设密码';
+  document.getElementById('spacePwdPanel').style.display='none';
+  spToast('密码已设置 🔒');
+};
+window.spaceClearPwd=async function(){
+  await spSave('space_pwd',null);
+  var btn=document.getElementById('btnSpacePwd');if(btn)btn.textContent='🔓 无密码';
+  document.getElementById('spacePwdPanel').style.display='none';
+  spToast('密码已删除');
+};
+
+async function spInitVisitCount(){
+  var data=await spLoad('space_visit_data',null);
+  if(!data){
+    var initStr=prompt('设置空间初始访问量（模拟以前积累的人气）','1234');
+    var initNum=parseInt(initStr||'1234');
+    if(isNaN(initNum))initNum=1234;
+    data={total:initNum,today:0,lastDate:''};
+    await spSave('space_visit_data',data);
+  }
+  var today=new Date().toDateString();
+  if(data.lastDate!==today){
+    var inc=Math.floor(Math.random()*8)+1;
+    data.total+=inc;data.today=inc;data.lastDate=today;
+    await spSave('space_visit_data',data);
+  }
+  var totalEl=document.getElementById('spTotalVisit');
+  var subEl=document.getElementById('spVisitorSub');
+  if(totalEl)totalEl.textContent=data.total.toLocaleString();
+  if(subEl)subEl.textContent='今日 +'+data.today+' 位访客';
+  return data;
+}
+
+var VISITOR_ACTIONS=['访问了你的空间','查看了你的日志','翻了你的相册','在留言板留言了','默默看了看就走了','连着刷了好几遍','深夜悄悄来了','点了个赞然后跑了'];
+var VISITOR_NET_NAMES=['路过的小熊','unknown_user','七号星球人','下午三点半','会飞的鱼','黑白键盘侠','深夜闯入者','神秘访客X','匿名の旅人','落单的云'];
+
+async function spLoadVisitors(){
+  var list=await spLoad('space_visitors',[]);
+  if(!list.length){
+    var chars=getAllCharNames();var now=Date.now();
+    for(var i=0;i<10;i++){
+      var isNet=Math.random()<0.5||i>=chars.length;
+      var name=isNet?VISITOR_NET_NAMES[i%VISITOR_NET_NAMES.length]:(chars[i%chars.length]||{name:'访客'}).name;
+      var type=isNet?'net':(chars[i%chars.length]||{type:'net'}).type;
+      var action=VISITOR_ACTIONS[Math.floor(Math.random()*VISITOR_ACTIONS.length)];
+      var ts=now-(i*3600000+Math.floor(Math.random()*3600000));
+      list.push({name:name,type:type,action:action,ts:ts});
+    }
+    await spSave('space_visitors',list);
+  }
+  return list;
+}
+async function spRenderVisitors(){
+  var data=await spInitVisitCount();
+  var list=await spLoadVisitors();
+  var todayEl=document.getElementById('spVisitTodayNum');
+  var totalEl2=document.getElementById('spVisitTotalNum');
+  if(todayEl)todayEl.textContent=data.today;
+  if(totalEl2)totalEl2.textContent=data.total.toLocaleString();
+  var container=document.getElementById('spVisitorList');if(!container)return;
+  container.innerHTML='';
+  list.forEach(function(v){
+    var item=document.createElement('div');item.className='sp-visitor-item';
+    var isNet=v.type==='net'||v.type==='npc';
+    var avaHtml=isNet?'<div class="sp-visitor-ava" style="background:linear-gradient(135deg,#ddd,#bbb);color:#888;">👤</div>':
+      '<div class="sp-visitor-ava" style="background:linear-gradient(135deg,#a29bfe,#6c5ce7);color:white;font-size:14px;">'+v.name.slice(0,1)+'</div>';
+    var d2=new Date(v.ts);
+    var tstr=(d2.getMonth()+1)+'/'+(d2.getDate())+' '+d2.getHours()+':'+(d2.getMinutes()<10?'0':'')+d2.getMinutes();
+    item.innerHTML=avaHtml+'<div class="sp-visitor-info"><div class="sp-visitor-name">'+v.name+'</div><div class="sp-visitor-action">'+v.action+'</div></div><div class="sp-visitor-time">'+tstr+'</div>';
+    container.appendChild(item);
+  });
+}
+
+async function spLoadBoard(){return await spLoad('space_board',[]);}
+async function spSaveBoard(list){await spSave('space_board',list);}
+function spRenderBoard(list){
+  var container=document.getElementById('spBoardList');if(!container)return;
+  container.innerHTML='';
+  if(!list.length){container.innerHTML='<div style="text-align:center;padding:40px;color:#ccc;font-style:italic;">还没有留言，点右上角生成第一批吧~</div>';return;}
+  list.forEach(function(msg,idx){
+    var card=document.createElement('div');card.className='sp-board-card';
+    var isNet=msg.type==='net'||!msg.type;
+    var avaHtml=msg.avatar?'<img src="'+msg.avatar+'" class="sp-board-ava" style="border-radius:50%;width:38px;height:38px;object-fit:cover;">':
+      (isNet?'<div class="sp-board-ava" style="background:linear-gradient(135deg,#ddd,#bbb);color:#777;font-size:14px;">'+msg.name.slice(0,1)+'</div>':
+       '<div class="sp-board-ava" style="background:linear-gradient(135deg,#fdcb6e,#e17055);color:white;font-size:14px;">'+msg.name.slice(0,1)+'</div>');
+    var d2=new Date(msg.ts);
+    var tstr=(d2.getMonth()+1)+'/'+(d2.getDate());
+    card.innerHTML=avaHtml+'<div class="sp-board-body"><div><span class="sp-board-name">'+msg.name+'</span><span class="sp-board-time">'+tstr+'</span></div><div class="sp-board-txt">'+msg.text+'</div><span class="sp-board-del" data-idx="'+idx+'">删除</span></div>';
+    card.querySelector('.sp-board-del').onclick=function(){window.spBoardDel(parseInt(this.getAttribute('data-idx')));};
+    container.appendChild(card);
+  });
+}
+window.spBoardDel=async function(idx){
+  var list=await spLoadBoard();list.splice(idx,1);
+  await spSaveBoard(list);spRenderBoard(list);spToast('已删除');
+};
+window.spBoardGenMore=async function(){
+  var cfg=await spApi();if(!cfg){spToast('请先配置API');return;}
+  spToast('生成留言中…');
+  var chars=getAllCharNames();var myName=getMyName();
+  var charNames=chars.filter(function(c){return c.type==='char';}).map(function(c){return c.name;}).join('、')||'好友';
+  var npcNames=chars.filter(function(c){return c.type==='npc';}).map(function(c){return c.name;}).join('、');
+  var prompt='为一个叫"'+myName+'"的人的QQ空间留言板生成6条留言。留言者包括好友('+charNames+')'+(npcNames?'、认识的人('+npcNames+')':'')+' 以及2-3个网友。语气真实自然，各不相同，有温柔有搞怪有神秘，字数15-40字。严格用JSON数组输出，不加任何前缀：[{"name":"留言者名字","type":"char或npc或net","text":"留言内容"}] 只输出JSON数组。';
+  try{
+    var raw=await spCallApi(cfg,prompt,600);
+    raw=raw.replace(/```json|```/g,'').trim();
+    var items=JSON.parse(raw);
+    var list=await spLoadBoard();var now=Date.now();
+    items.forEach(function(item,i){
+      var cObj=chars.find(function(c){return c.name===item.name;});
+      list.unshift({name:item.name,type:item.type||'net',text:item.text,avatar:(cObj&&cObj.avatar)||null,ts:now-i*3600000});
+    });
+    await spSaveBoard(list);spRenderBoard(list);spToast('新留言已生成 💬');
+  }catch(e){spToast('生成失败：'+e.message);}
+};
+
+var _spAlbumCurIdx=-1;
+async function spLoadAlbum(){return await spLoad('space_album',[]);}
+async function spSaveAlbum(list){await spSave('space_album',list);}
+async function spRenderAlbum(){
+  var list=await spLoadAlbum();
+  var grid=document.getElementById('spAlbumGrid');if(!grid)return;
+  grid.innerHTML='';
+  if(!list.length){grid.innerHTML='<div style="text-align:center;padding:40px;color:#ccc;grid-column:1/-1;">还没有照片，点右上角添加~</div>';return;}
+  list.forEach(function(photo,idx){
+    var cell=document.createElement('div');cell.className='sp-album-cell';
+    var hasPwd=!!photo.pwd;
+    cell.innerHTML='<img src="'+photo.src+'" loading="lazy" style="width:100%;height:100%;object-fit:cover;"><div class="sp-album-lock" style="display:'+(hasPwd?'flex':'none')+'">🔒</div>';
+    (function(i){cell.onclick=function(){window.spAlbumOpen(i);};})(idx);
+    grid.appendChild(cell);
+  });
+}
+window.spAlbumAdd=function(){var u=document.getElementById('spAlbumUpload');if(u)u.click();};
+window.spAlbumOpen=async function(idx){
+  var list=await spLoadAlbum();var photo=list[idx];if(!photo)return;
+  _spAlbumCurIdx=idx;
+  if(photo.pwd){var input=prompt('这张照片加密了，请输入密码：');if(input!==photo.pwd){spToast('密码错误 🔒');return;}}
+  var detail=document.getElementById('spAlbumDetail');
+  var img=document.getElementById('spAlbumDetailImg');
+  var desc=document.getElementById('spAlbumDetailDesc');
+  var pwdBtn=document.getElementById('spAlbumDetailPwd');
+  if(img)img.src=photo.src;
+  if(desc)desc.textContent=photo.desc||'';
+  if(pwdBtn)pwdBtn.textContent=photo.pwd?'🔓 取消密码':'🔒 设置密码';
+  if(detail)detail.style.display='flex';
+};
+window.spAlbumSavePwd=async function(){
+  var v=(document.getElementById('spAlbumPwdInput')||{}).value||'';
+  var list=await spLoadAlbum();
+  if(_spAlbumCurIdx>=0&&_spAlbumCurIdx<list.length){
+    list[_spAlbumCurIdx].pwd=v||'';
+    await spSaveAlbum(list);spRenderAlbum();
+    spToast(v?'密码已设置 🔒':'密码已取消');
+  }
+  var modal=document.getElementById('spAlbumPwdModal');if(modal)modal.style.display='none';
+};
+
+setTimeout(function(){
+  var pwdBtn=document.getElementById('spAlbumDetailPwd');
+  if(pwdBtn)pwdBtn.onclick=function(){
+    var detail=document.getElementById('spAlbumDetail');if(detail)detail.style.display='none';
+    var modal=document.getElementById('spAlbumPwdModal');if(modal)modal.style.display='flex';
+    var inp=document.getElementById('spAlbumPwdInput');if(inp)inp.value='';
+  };
+  var delBtn=document.getElementById('spAlbumDetailDel');
+  if(delBtn)delBtn.onclick=async function(){
+    if(!confirm('确认删除？'))return;
+    var list=await spLoadAlbum();list.splice(_spAlbumCurIdx,1);
+    await spSaveAlbum(list);
+    var detail=document.getElementById('spAlbumDetail');if(detail)detail.style.display='none';
+    spRenderAlbum();spToast('已删除');
+  };
+  var upEl=document.getElementById('spAlbumUpload');
+  if(upEl)upEl.addEventListener('change',async function(){
+    var files=Array.from(this.files);if(!files.length)return;
+    var list=await spLoadAlbum();
+    var desc=prompt('给这批照片加个说明（可留空）')||'';
+    for(var i=0;i<files.length;i++){
+      await (function(file){return new Promise(function(resolve){
+        var reader=new FileReader();
+        reader.onload=async function(e){list.unshift({src:e.target.result,desc:desc,pwd:'',ts:Date.now()});resolve();};
+        reader.readAsDataURL(file);
+      });})(files[i]);
+    }
+    await spSaveAlbum(list);spRenderAlbum();spToast('已添加'+files.length+'张照片 📷');
+    upEl.value='';
+  });
+},500);
+
+function spToast(msg){
+  var t=document.createElement('div');
+  t.style.cssText='position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(50,50,80,0.9);color:white;padding:8px 18px;border-radius:20px;font-size:13px;z-index:9999;pointer-events:none;white-space:nowrap;';
+  t.textContent=msg;document.body.appendChild(t);setTimeout(function(){t.remove();},2200);
+}
+
+var _origSpShow=window.showScreen;
+window.showScreen=function(id){
+  _origSpShow(id);
+  if(id==='scrSpace'){
+    spInitVisitCount();
+    spLoad('space_pwd',null).then(function(pwd){var btn=document.getElementById('btnSpacePwd');if(btn)btn.textContent=pwd?'🔒 已设密码':'🔓 无密码';});
+  }
+  if(id==='scrSpaceBoard')spLoadBoard().then(function(l){spRenderBoard(l);});
+  if(id==='scrSpaceAlbum')spRenderAlbum();
+  if(id==='scrSpaceVisitor')spRenderVisitors();
+};
+
+setTimeout(function(){
+  var b1=document.getElementById('btnSpaceLogs');if(b1)b1.onclick=function(){showScreen('scrLogList');};
+  var b2=document.getElementById('btnSpaceBoard');if(b2)b2.onclick=function(){showScreen('scrSpaceBoard');};
+  var b3=document.getElementById('btnSpaceAlbum');if(b3)b3.onclick=function(){showScreen('scrSpaceAlbum');};
+  var b4=document.getElementById('btnSpaceVisitor');if(b4)b4.onclick=function(){showScreen('scrSpaceVisitor');};
+  var bm=document.getElementById('btnSpaceMoments');if(bm)bm.onclick=function(){};
+  var scrLog=document.getElementById('scrLogList');
+  if(scrLog&&!scrLog.style.background)scrLog.style.background='linear-gradient(160deg,#fff8fc 0%,#f5f0ff 100%)';
+},400);
+
 })();
 </script>
