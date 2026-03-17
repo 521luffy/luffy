@@ -24066,8 +24066,23 @@ if(wrap){
   },{passive:true});
 }
 
-async function hp2S(k,v){try{await localforage.setItem('hp2_'+k,v);}catch(e){}try{localStorage.setItem('hp2_'+k,JSON.stringify(v));}catch(e){}}
-async function hp2L(k,def){var d=null;try{d=await localforage.getItem('hp2_'+k);}catch(e){}if(d===null||d===undefined){try{var r=localStorage.getItem('hp2_'+k);if(r!=null)d=JSON.parse(r);}catch(e){}}return(d===null||d===undefined)?def:d;}
+async function hp2S(k,v){
+  try{await localforage.setItem('hp2_'+k,v);}catch(e){}
+  try{localStorage.setItem('hp2_'+k,typeof v==='string'?v:JSON.stringify(v));}catch(e){}
+}
+async function hp2L(k,def){
+  var d=null;
+  try{d=await localforage.getItem('hp2_'+k);}catch(e){}
+  if(d===null||d===undefined){
+    try{
+      var r=localStorage.getItem('hp2_'+k);
+      if(r!=null){
+        try{d=JSON.parse(r);}catch(e){d=r;} // 解析失败就用原始字符串
+      }
+    }catch(e){}
+  }
+  return(d===null||d===undefined)?def:d;
+}
 
 ['A','B','C'].forEach(function(tag){
   var inp=document.getElementById('hp2Inp'+tag);
@@ -24093,16 +24108,26 @@ function hp2Dialog(title,val,maxLen,cb){
   ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;';
   var box=document.createElement('div');
   box.style.cssText='background:white;border-radius:18px;padding:18px 16px 14px;width:80vw;max-width:300px;box-shadow:0 8px 28px rgba(0,0,0,0.18);';
-  box.innerHTML='<div style="font-size:13px;color:#999;margin-bottom:10px;">'+title+'</div>'+
-    '<input id="_hp2dlgInp" maxlength="'+maxLen+'" value="'+(val||'')+'" style="width:100%;padding:8px 10px;border:1.5px solid #f5b8d4;border-radius:12px;font-size:14px;box-sizing:border-box;outline:none;text-align:center;font-family:inherit;">'+
-    '<div style="display:flex;gap:8px;margin-top:12px;">'+
-    '<button id="_hp2dlgCancel" style="flex:1;padding:9px;border:1.5px solid #eee;border-radius:12px;background:white;font-size:13px;cursor:pointer;color:#999;">取消</button>'+
-    '<button id="_hp2dlgOk" style="flex:2;padding:9px;background:#e87090;color:white;border:none;border-radius:12px;font-size:13px;cursor:pointer;font-weight:bold;">确定</button>'+
-    '</div>';
+  // 用 createElement 避免 innerHTML value 属性被引号截断
+  var titleEl=document.createElement('div');
+  titleEl.style.cssText='font-size:13px;color:#999;margin-bottom:10px;';
+  titleEl.textContent=title;
+  var inp=document.createElement('input');
+  inp.maxLength=maxLen;
+  inp.value=val||''; // 直接赋值，不受引号影响
+  inp.style.cssText='width:100%;padding:8px 10px;border:1.5px solid #f5b8d4;border-radius:12px;font-size:14px;box-sizing:border-box;outline:none;text-align:center;font-family:inherit;';
+  var btnRow=document.createElement('div');
+  btnRow.style.cssText='display:flex;gap:8px;margin-top:12px;';
+  var btnCan=document.createElement('button');
+  btnCan.textContent='取消';btnCan.style.cssText='flex:1;padding:9px;border:1.5px solid #eee;border-radius:12px;background:white;font-size:13px;cursor:pointer;color:#999;';
+  var btnOk=document.createElement('button');
+  btnOk.textContent='确定';btnOk.style.cssText='flex:2;padding:9px;background:#e87090;color:white;border:none;border-radius:12px;font-size:13px;cursor:pointer;font-weight:bold;';
+  btnRow.appendChild(btnCan);btnRow.appendChild(btnOk);
+  box.appendChild(titleEl);box.appendChild(inp);box.appendChild(btnRow);
   ov.appendChild(box);document.body.appendChild(ov);
-  var inp=box.querySelector('#_hp2dlgInp');inp.focus();inp.select();
-  box.querySelector('#_hp2dlgCancel').onclick=function(){ov.remove();cb(null);};
-  box.querySelector('#_hp2dlgOk').onclick=function(){var v=inp.value;ov.remove();cb(v);};
+  inp.focus();inp.select();
+  btnCan.onclick=function(){ov.remove();cb(null);};
+  btnOk.onclick=function(){var v=inp.value;ov.remove();cb(v);};
   inp.addEventListener('keydown',function(e){if(e.key==='Enter'){var v=inp.value;ov.remove();cb(v);}});
   ov.onclick=function(e){if(e.target===ov){ov.remove();cb(null);}};
 }
@@ -24233,14 +24258,24 @@ function hp2UpdateCd(dateStr){
   var numEl=document.getElementById('hp2CdNum');
   var dateEl=document.getElementById('hp2CdDate');
   if(!numEl||!dateEl||!dateStr)return;
-  var target=new Date(dateStr);
+  var parts=dateStr.split('-');
+  var bMonth=parseInt(parts[1])||1;
+  var bDay=parseInt(parts[2])||1;
+  var origYear=parseInt(parts[0])||2000;
+  // 只算月日：今年的这个日期距今天还剩多少天
   var now=new Date();now.setHours(0,0,0,0);
-  var diff=Math.round((target-now)/(1000*60*60*24));
-  numEl.textContent=Math.abs(diff);
-  numEl.style.color=diff>=0?'#c05080':'#bbb';
-  var y=target.getFullYear(),m=String(target.getMonth()+1).padStart(2,'0'),d=String(target.getDate()).padStart(2,'0');
-  // 未来：显示日期 + 还有X天；过去：只显示日期
-  dateEl.textContent=y+'.'+m+'.'+d+(diff>0?' 还有'+diff+'天':'');
+  var thisYear=new Date(now.getFullYear(),bMonth-1,bDay);thisYear.setHours(0,0,0,0);
+  var diff=Math.round((thisYear-now)/(1000*60*60*24));
+  // 如果今年的已过，算明年的
+  if(diff<0){
+    var nextYear=new Date(now.getFullYear()+1,bMonth-1,bDay);nextYear.setHours(0,0,0,0);
+    diff=Math.round((nextYear-now)/(1000*60*60*24));
+  }
+  numEl.textContent=diff===0?'今天':diff;
+  numEl.style.color=diff===0?'#e87090':'#c05080';
+  var ms=String(bMonth).padStart(2,'0'),ds=String(bDay).padStart(2,'0');
+  // 显示：原始年份.月.日 还有X天
+  dateEl.textContent=origYear+'.'+ms+'.'+ds+(diff>0?' 还有'+diff+'天':' 🎂 今天！');
   dateEl.dataset.date=dateStr;
 }
 
