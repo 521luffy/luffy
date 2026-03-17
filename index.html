@@ -667,7 +667,11 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
             <div style="display:flex;gap:7px;margin-bottom:7px;align-items:stretch;">
               <!-- 左：留白 -->
               <div style="flex:0 0 48%;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:6px;min-height:170px;">
-                <div id="hp2SlotA1" style="border-radius:14px;"></div>
+                <!-- 左上：论坛入口 -->
+                <div id="btnHomeForum" style="border-radius:14px;background:linear-gradient(135deg,#a29bfe,#6c5ce7);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;box-shadow:0 2px 10px rgba(108,92,231,0.2);">
+                  <span style="font-size:22px;">📋</span>
+                  <span style="font-size:10px;color:white;font-weight:600;">论坛</span>
+                </div>
                 <div id="hp2SlotA2" style="border-radius:14px;"></div>
                 <div id="hp2SlotA3" style="border-radius:14px;"></div>
                 <div id="hp2SlotA4" style="border-radius:14px;"></div>
@@ -765,10 +769,6 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         </div>
         <div class="hd-dock-item" id="btnHomeCoupleSpace">
           <div class="hd-dock-icon" id="hdDockIconCS" style="position:relative;overflow:hidden;background:linear-gradient(135deg,#ffb6c1,#ff8fab);"><img id="hdDockImgCS" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:15px;" alt=""><span id="hdDockEmoCS">💑</span></div><span class="hd-dock-lbl" id="hdDockLblCS">情侣空间</span>
-        </div>
-        <div class="hd-dock-item" id="btnHomeForum">
-          <div class="hd-dock-icon" style="background:linear-gradient(135deg,#a29bfe,#6c5ce7);"><span>📋</span></div>
-          <span class="hd-dock-lbl">论坛</span>
         </div>
       </div>
 
@@ -24790,11 +24790,138 @@ window.forumSaveSettings=async function(){
   forumRefresh();
 };
 
+// ── 构建UI（动态创建，避免HTML丢失白屏）──
+function forumBuildUI(){
+  var wrap=document.getElementById('scrForum');
+  if(!wrap||wrap.querySelector('#forumTopBar'))return; // 已建过则跳过
+  wrap.style.cssText='display:none;flex-direction:column;position:absolute;top:0;width:100%;height:100%;z-index:40;overflow:hidden;background:var(--forum-bg,#f5f6fa);';
+  wrap.innerHTML=`
+<style>
+#scrForum{--forum-bg:#f5f6fa;--forum-accent:#6c5ce7;--forum-card:#fff;--forum-text:#333;--forum-sub:#888;}
+#forumTopBar{display:flex;align-items:center;justify-content:space-between;padding:56px 14px 10px;background:var(--forum-card);flex-shrink:0;box-shadow:0 1px 6px rgba(0,0,0,0.06);position:relative;z-index:10;}
+#forumMenuBtn,#forumSearchBtn{font-size:22px;cursor:pointer;padding:4px 6px;color:var(--forum-text);}
+#forumTitle{font-size:17px;font-weight:bold;color:var(--forum-text);}
+#forumHotBar{display:flex;align-items:center;overflow-x:auto;padding:6px 12px;background:var(--forum-card);border-bottom:1px solid rgba(0,0,0,0.05);flex-shrink:0;scrollbar-width:none;}
+#forumHotBar::-webkit-scrollbar{display:none;}
+.fhot{flex-shrink:0;padding:3px 9px;margin-right:5px;border-radius:20px;font-size:11px;cursor:pointer;background:rgba(108,92,231,0.08);color:var(--forum-accent);white-space:nowrap;}
+.fhot.h1{background:rgba(231,76,60,0.1);color:#e74c3c;}.fhot.h2{background:rgba(230,126,34,0.1);color:#e67e22;}.fhot.h3{background:rgba(243,156,18,0.1);color:#f39c12;}
+#forumTabWrap{display:flex;overflow-x:auto;padding:0 10px;background:var(--forum-card);border-bottom:2px solid rgba(0,0,0,0.04);flex-shrink:0;scrollbar-width:none;}
+#forumTabWrap::-webkit-scrollbar{display:none;}
+.ftab{flex-shrink:0;padding:8px 14px;font-size:13px;font-weight:600;color:var(--forum-sub);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:.2s;}
+.ftab.active{color:var(--forum-accent);border-bottom-color:var(--forum-accent);}
+#forumPostList{flex:1;overflow-y:auto;padding:10px 12px;background:var(--forum-bg);display:flex;flex-direction:column;gap:8px;}
+.fcard{background:var(--forum-card);border-radius:14px;padding:12px 14px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.04);}
+.fcard:active{transform:scale(.99);}
+.fcard-hdr{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+.fava{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:bold;color:white;overflow:hidden;background-size:cover;background-position:center;}
+.fname{font-size:13px;font-weight:600;color:var(--forum-text);}
+.ftime{font-size:11px;color:var(--forum-sub);margin-left:auto;}
+.ftitle{font-size:14px;font-weight:700;color:var(--forum-text);margin-bottom:4px;line-height:1.5;}
+.fprev{font-size:12px;color:var(--forum-sub);line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.ffooter{display:flex;align-items:center;gap:10px;margin-top:8px;}
+.fstat{font-size:11px;color:var(--forum-sub);}
+.ftag{font-size:10px;padding:2px 7px;border-radius:10px;background:rgba(108,92,231,0.08);color:var(--forum-accent);}
+.ftag.hot{background:rgba(231,76,60,0.1);color:#e74c3c;}
+#forumFab{position:absolute;right:16px;bottom:20px;width:50px;height:50px;border-radius:50%;background:var(--forum-accent);color:white;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;box-shadow:0 4px 16px rgba(108,92,231,0.35);z-index:10;}
+#forumFab:active{transform:scale(.92);}
+#forumDrawer{position:absolute;top:0;left:0;width:78%;max-width:280px;height:100%;background:var(--forum-card);z-index:50;transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow-y:auto;box-shadow:4px 0 20px rgba(0,0,0,0.12);}
+#forumDrawer.open{transform:translateX(0);}
+#forumDrOv{position:absolute;inset:0;background:rgba(0,0,0,0.3);z-index:49;display:none;}
+#forumDrOv.open{display:block;}
+.fdr-hdr{padding:52px 18px 14px;font-size:18px;font-weight:bold;color:var(--forum-text);border-bottom:1px solid rgba(0,0,0,0.06);flex-shrink:0;}
+.fdr-sec{padding:12px 18px 4px;font-size:11px;color:var(--forum-sub);font-weight:700;letter-spacing:.5px;}
+.fdr-item{display:flex;align-items:center;gap:10px;padding:11px 18px;font-size:14px;color:var(--forum-text);cursor:pointer;}
+.fdr-item:active{background:rgba(108,92,231,0.06);}
+.fdr-ico{width:30px;height:30px;border-radius:9px;background:rgba(108,92,231,0.08);display:flex;align-items:center;justify-content:center;font-size:15px;}
+.ftheme-row{display:flex;gap:8px;padding:8px 18px 12px;flex-wrap:wrap;}
+.ftheme-dot{width:26px;height:26px;border-radius:50%;cursor:pointer;border:3px solid transparent;}
+.ftheme-dot.active{border-color:#222;}
+#forumPostDetail{display:none;flex-direction:column;position:absolute;top:0;width:100%;height:100%;z-index:55;background:var(--forum-bg);}
+#fDetailBar{display:flex;align-items:center;gap:10px;padding:52px 14px 10px;background:var(--forum-card);flex-shrink:0;box-shadow:0 1px 6px rgba(0,0,0,0.06);}
+#fDetailBack{font-size:22px;cursor:pointer;color:var(--forum-text);}
+#fDetailTitle{font-size:15px;font-weight:bold;color:var(--forum-text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#fDetailBody{flex:1;overflow-y:auto;padding:12px;}
+.fd-post{background:var(--forum-card);border-radius:14px;padding:14px;margin-bottom:10px;}
+.fd-post-title{font-size:16px;font-weight:bold;color:var(--forum-text);margin-bottom:8px;line-height:1.5;}
+.fd-post-content{font-size:14px;color:var(--forum-text);line-height:1.7;}
+.fd-cmts-lbl{font-size:12px;color:var(--forum-sub);font-weight:600;padding:6px 0 8px;}
+.fcmt{background:var(--forum-card);border-radius:12px;padding:10px 12px;margin-bottom:7px;}
+.fcmt-hdr{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+.fcmt-ava{width:26px;height:26px;border-radius:50%;background:#ddd;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:bold;color:white;flex-shrink:0;overflow:hidden;background-size:cover;background-position:center;}
+.fcmt-name{font-size:12px;font-weight:600;color:var(--forum-text);}
+.fcmt-time{font-size:10px;color:var(--forum-sub);margin-left:auto;}
+.fcmt-txt{font-size:13px;color:var(--forum-text);line-height:1.6;}
+.fcmt-likes{font-size:11px;color:var(--forum-sub);margin-top:4px;display:flex;align-items:center;gap:4px;}
+.freply{background:rgba(0,0,0,0.025);border-radius:8px;padding:7px 10px;margin-top:5px;margin-left:34px;}
+#forumReplyBar{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--forum-card);border-top:1px solid rgba(0,0,0,0.06);flex-shrink:0;}
+#forumReplyInp{flex:1;padding:8px 12px;border:1.5px solid rgba(108,92,231,0.2);border-radius:20px;font-size:13px;outline:none;background:var(--forum-bg);font-family:inherit;color:var(--forum-text);}
+#forumReplySend{padding:8px 16px;background:var(--forum-accent);color:white;border:none;border-radius:20px;font-size:13px;cursor:pointer;font-weight:bold;flex-shrink:0;}
+</style>
+<div id="forumTopBar">
+  <span id="forumMenuBtn" onclick="forumToggleDrawer()">☰</span>
+  <span id="forumTitle">📋 论坛</span>
+  <span id="forumSearchBtn" onclick="forumRefresh()">🔄</span>
+</div>
+<div id="forumHotBar">
+  <span style="font-size:11px;color:#e74c3c;font-weight:700;flex-shrink:0;margin-right:6px;">🔥</span>
+  <div id="forumHotTags" style="display:flex;"></div>
+</div>
+<div id="forumTabWrap">
+  <div class="ftab active" data-board="all" onclick="forumSwitchBoard(this,'all')">全部</div>
+  <div id="forumBoardTabs" style="display:contents;"></div>
+</div>
+<div id="forumPostList"></div>
+<div id="forumFab" onclick="forumNewPost()">＋</div>
+<div id="forumDrOv" onclick="forumToggleDrawer()"></div>
+<div id="forumDrawer">
+  <div class="fdr-hdr">📋 论坛设置</div>
+  <div class="fdr-sec">世界观 & 提示词</div>
+  <div style="padding:6px 18px 10px;">
+    <textarea id="forumWorldView" placeholder="论坛世界观（时代/地点/背景…）" style="width:100%;height:72px;padding:8px 10px;border:1.5px solid rgba(108,92,231,0.18);border-radius:10px;font-size:12px;resize:none;box-sizing:border-box;outline:none;font-family:inherit;line-height:1.6;"></textarea>
+    <textarea id="forumPrompt" placeholder="额外提示词（影响帖子和评论风格）" style="width:100%;height:52px;padding:8px 10px;border:1.5px solid rgba(108,92,231,0.18);border-radius:10px;font-size:12px;resize:none;box-sizing:border-box;outline:none;font-family:inherit;line-height:1.6;margin-top:6px;"></textarea>
+  </div>
+  <div class="fdr-sec">时间设定</div>
+  <div style="padding:4px 18px 10px;">
+    <input id="forumDateSet" type="text" placeholder="如：2008年北京（留空=当下）" style="width:100%;padding:8px 10px;border:1.5px solid rgba(108,92,231,0.18);border-radius:10px;font-size:13px;box-sizing:border-box;outline:none;font-family:inherit;">
+  </div>
+  <div class="fdr-sec">版块管理</div>
+  <div id="forumBoardList" style="padding:0 18px 4px;"></div>
+  <div style="padding:4px 18px 10px;display:flex;gap:6px;">
+    <input id="forumNewBoardInp" placeholder="新版块名称" style="flex:1;padding:7px 10px;border:1.5px solid rgba(108,92,231,0.18);border-radius:10px;font-size:12px;outline:none;font-family:inherit;">
+    <button onclick="forumAddBoard()" style="padding:7px 12px;background:var(--forum-accent);color:white;border:none;border-radius:10px;font-size:12px;cursor:pointer;font-weight:bold;">添加</button>
+  </div>
+  <div class="fdr-sec">主题色</div>
+  <div class="ftheme-row" id="forumThemeRow"></div>
+  <div class="fdr-sec">字体大小</div>
+  <div style="padding:4px 18px 12px;display:flex;align-items:center;gap:10px;">
+    <span style="font-size:11px;color:var(--forum-sub);">小</span>
+    <input type="range" id="forumFontSize" min="12" max="17" value="14" oninput="forumApplyFont(this.value)" style="flex:1;accent-color:var(--forum-accent);">
+    <span style="font-size:11px;color:var(--forum-sub);">大</span>
+  </div>
+  <div class="fdr-item" onclick="forumSaveSettings();forumToggleDrawer();"><div class="fdr-ico">💾</div><span>保存并刷新</span></div>
+  <div class="fdr-item" onclick="forumToggleDrawer();"><div class="fdr-ico">✕</div><span>收起</span></div>
+</div>
+<div id="forumPostDetail">
+  <div id="fDetailBar">
+    <span id="fDetailBack" onclick="forumCloseDetail()">＜</span>
+    <span id="fDetailTitle">帖子详情</span>
+    <span id="fDetailRefresh" style="font-size:16px;cursor:pointer;color:var(--forum-sub);margin-left:auto;" onclick="forumLoadMoreComments()">＋评论</span>
+  </div>
+  <div id="fDetailBody"></div>
+  <div id="forumReplyBar">
+    <input id="forumReplyInp" placeholder="写下你的评论…">
+    <button id="forumReplySend" onclick="forumSendReply()">发送</button>
+  </div>
+</div>`;
+}
+
 // ── Toast ──
 function fToast(msg){var t=document.createElement('div');t.style.cssText='position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(40,40,60,0.9);color:white;padding:8px 18px;border-radius:20px;font-size:13px;z-index:99999;pointer-events:none;white-space:nowrap;';t.textContent=msg;document.body.appendChild(t);setTimeout(function(){t.remove();},2000);}
 
 // ── 初始化 ──
 async function forumInit(){
+  // 每次进入先重建UI（避免空容器白屏）
+  forumBuildUI();
   // 加载设置
   var s=await fLoad('settings',null);
   if(s){
@@ -24841,3 +24968,9 @@ setTimeout(function(){
 
 })();
 </script>
+
+
+<!-- ═══ 论坛容器 ═══ -->
+<div id="scrForum" style="display:none;flex-direction:column;position:absolute;top:0;width:100%;height:100%;z-index:40;overflow:hidden;background:#f5f6fa;">
+</div>
+</html>
