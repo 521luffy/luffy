@@ -766,6 +766,10 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         <div class="hd-dock-item" id="btnHomeCoupleSpace">
           <div class="hd-dock-icon" id="hdDockIconCS" style="position:relative;overflow:hidden;background:linear-gradient(135deg,#ffb6c1,#ff8fab);"><img id="hdDockImgCS" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:15px;" alt=""><span id="hdDockEmoCS">💑</span></div><span class="hd-dock-lbl" id="hdDockLblCS">情侣空间</span>
         </div>
+        <div class="hd-dock-item" id="btnHomeForum">
+          <div class="hd-dock-icon" style="background:linear-gradient(135deg,#a29bfe,#6c5ce7);"><span>📋</span></div>
+          <span class="hd-dock-lbl">论坛</span>
+        </div>
       </div>
 
       <div id="btnHomeSpace" style="display:none;"></div>
@@ -5798,7 +5802,7 @@ let pressTimer = null;
 let selEl = null;
 let currentQuote ="";
 function showScreen(showId) {
-    [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet"), $("scrContact"), $("scrSetFont"), $("scrCharPhone"), $("scrSpyDiary"), $("scrSpyZhihu"), $("scrSpySecret"), $("scrSpyMeituan"), $("scrSpyFootprint"), $("scrSpyWallet"), $("scrSpyShop"), $("scrSpyIqiyi"), $("scrSpySettings"), $("scrMoment"), $("scrGroupRoom"), $("scrGroupSettings"), $("scrOurSongs"), $("scrHomeSettings"), $("scrCoupleSpace"), $("scrPeriod"), $("scrPastMemory"), $("scrDiary"), $("scrAstro"), $("scrAnon"), $("scrMoodCal"), $("scrMeAchieve"), $("scrMeCapsule"), $("scrMeLabels")].forEach(s => { if(s) s.style.display = "none"; });
+    [lock, home, list, room, setApi, setChat, scrWb, scrWbEdit, scrMe, scrCharSticker, scrLogList, scrLogEdit, $("scrFav"), $("scrWallet"), $("scrContact"), $("scrSetFont"), $("scrCharPhone"), $("scrSpyDiary"), $("scrSpyZhihu"), $("scrSpySecret"), $("scrSpyMeituan"), $("scrSpyFootprint"), $("scrSpyWallet"), $("scrSpyShop"), $("scrSpyIqiyi"), $("scrSpySettings"), $("scrMoment"), $("scrGroupRoom"), $("scrGroupSettings"), $("scrOurSongs"), $("scrHomeSettings"), $("scrCoupleSpace"), $("scrPeriod"), $("scrPastMemory"), $("scrDiary"), $("scrAstro"), $("scrAnon"), $("scrForum"), $("scrMoodCal"), $("scrMeAchieve"), $("scrMeCapsule"), $("scrMeLabels")].forEach(s => { if(s) s.style.display = "none"; });
 
     let target = $(showId);
     if(showId === "scrRoom") {
@@ -5806,7 +5810,7 @@ function showScreen(showId) {
         if(_im){ _im.style.height="34px"; _im.style.overflowY="hidden"; }
     }
     if(target) {
-        if(showId === "scrRoom" || showId === "scrList" || showId === "scrSetApi" || showId === "scrSetChat" || showId === "scrWb" || showId === "scrWbEdit" || showId === "scrMe" || showId === "scrCharSticker" || showId === "scrLogList" || showId === "scrLogEdit" || showId === "scrFav" || showId === "scrWallet" || showId === "scrContact" || showId === "scrSetFont" || showId === "scrSpyDiary" || showId === "scrSpyZhihu" || showId === "scrSpySecret" || showId === "scrSpyMeituan" || showId === "scrSpyFootprint" || showId === "scrSpyWallet" || showId === "scrSpyShop" || showId === "scrSpyIqiyi" || showId === "scrSpySettings" || showId === "scrMoment" || showId === "scrGroupRoom" || showId === "scrGroupSettings" || showId === "scrOurSongs" || showId === "scrHomeSettings" || showId === "scrPeriod" || showId === "scrPastMemory" || showId === "scrDiary" || showId === "scrAstro" || showId === "scrAnon" ) {
+        if(showId === "scrRoom" || showId === "scrList" || showId === "scrSetApi" || showId === "scrSetChat" || showId === "scrWb" || showId === "scrWbEdit" || showId === "scrMe" || showId === "scrCharSticker" || showId === "scrLogList" || showId === "scrLogEdit" || showId === "scrFav" || showId === "scrWallet" || showId === "scrContact" || showId === "scrSetFont" || showId === "scrSpyDiary" || showId === "scrSpyZhihu" || showId === "scrSpySecret" || showId === "scrSpyMeituan" || showId === "scrSpyFootprint" || showId === "scrSpyWallet" || showId === "scrSpyShop" || showId === "scrSpyIqiyi" || showId === "scrSpySettings" || showId === "scrMoment" || showId === "scrGroupRoom" || showId === "scrGroupSettings" || showId === "scrOurSongs" || showId === "scrHomeSettings" || showId === "scrPeriod" || showId === "scrPastMemory" || showId === "scrDiary" || showId === "scrAstro" || showId === "scrAnon" || showId === "scrForum") {
             target.style.display = "flex";
         } else if (showId === "scrCharPhone") {
             target.style.display = "flex";
@@ -24354,3 +24358,486 @@ setTimeout(hp2Init,300);
 })();
 </script>
 
+<script>
+// ══════════════════════════════════════════════
+// 论坛系统 (scrForum)
+// ══════════════════════════════════════════════
+(function initForum(){
+
+// ── 存取 ──
+async function fSave(k,v){try{await localforage.setItem('forum_'+k,v);}catch(e){}try{localStorage.setItem('forum_'+k,typeof v==='string'?v:JSON.stringify(v));}catch(e){}}
+async function fLoad(k,def){var d=null;try{d=await localforage.getItem('forum_'+k);}catch(e){}if(d===null||d===undefined){try{var r=localStorage.getItem('forum_'+k);if(r!=null){try{d=JSON.parse(r);}catch(e){d=r;}}}catch(e){}}return(d===null||d===undefined)?def:d;}
+
+// ── API ──
+async function fApi(){
+  var pxy='',key='',mod='';
+  try{pxy=originalGetItem.call(localStorage,'pxy')||'';}catch(e){}
+  try{key=originalGetItem.call(localStorage,'key')||'';}catch(e){}
+  try{mod=originalGetItem.call(localStorage,'mod')||'';}catch(e){}
+  if(!pxy){try{pxy=await localforage.getItem('pxy')||'';}catch(e){}}
+  if(!key){try{key=await localforage.getItem('key')||'';}catch(e){}}
+  if(!pxy||!key)return null;
+  if(!pxy.includes('chat/completions'))pxy=pxy.replace(/\/$/,'')+'/chat/completions';
+  if(!mod)mod='claude-sonnet-4-20250514';
+  return{pxy,key,mod};
+}
+async function fCall(cfg,prompt,maxT){
+  var res=await fetch(cfg.pxy,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+cfg.key},
+    body:JSON.stringify({model:cfg.mod,max_tokens:maxT||600,temperature:0.92,messages:[{role:'user',content:prompt}]})});
+  var d=await res.json();
+  var t='';if(d.content&&d.content[0])t=d.content[0].text||'';else if(d.choices&&d.choices[0])t=(d.choices[0].message&&d.choices[0].message.content)||'';
+  return t.trim();
+}
+function fParseJson(raw){
+  raw=raw.replace(/```json|```/g,'').trim();
+  var m=raw.match(/(\[[\s\S]*\]|\{[\s\S]*\})/);
+  if(m)raw=m[1];
+  return JSON.parse(raw);
+}
+
+// ── 读取全局设定 ──
+function fGetSettings(){
+  var wv='',pr='',dt='';
+  try{wv=(document.getElementById('forumWorldView')||{}).value||'';}catch(e){}
+  try{pr=(document.getElementById('forumPrompt')||{}).value||'';}catch(e){}
+  try{dt=(document.getElementById('forumDateSet')||{}).value||'';}catch(e){}
+  return{worldView:wv,prompt:pr,date:dt||'2026年3月（当下）'};
+}
+function fGetChars(){
+  var names=[];
+  try{
+    var opened=JSON.parse(localStorage.getItem('cs_opened_chars')||'[]');
+    opened.forEach(function(cid){
+      var n=localStorage.getItem('cN_'+cid);
+      var ava=localStorage.getItem('charAva_'+cid)||'';
+      if(n)names.push({name:n,type:'char',cid:cid,ava:ava});
+    });
+    opened.forEach(function(cid){
+      var npcRaw=originalGetItem.call(localStorage,'npcList_'+cid);
+      if(npcRaw){try{JSON.parse(npcRaw).forEach(function(n){if(n.name)names.push({name:n.name,type:'npc',ava:n.avatar||''});});}catch(e){}}
+    });
+  }catch(e){}
+  return names;
+}
+
+// ── 状态 ──
+var _fBoards=['日常','八卦','树洞'];
+var _fCurBoard='all';
+var _fPosts=[];
+var _fHotTags=[];
+var _fCurPost=null;
+var _fReplyTarget=null; // {postIdx,cmtIdx} or null
+
+// ── 主题色 ──
+var THEMES=[
+  {name:'紫',accent:'#6c5ce7',bg:'#f5f4ff'},
+  {name:'蓝',accent:'#0984e3',bg:'#f0f7ff'},
+  {name:'粉',accent:'#e84393',bg:'#fff0f7'},
+  {name:'绿',accent:'#00b894',bg:'#f0fff9'},
+  {name:'橙',accent:'#e17055',bg:'#fff5f0'},
+  {name:'深',accent:'#2d3436',bg:'#f5f5f5'},
+];
+var _fThemeIdx=0;
+function forumApplyTheme(idx){
+  _fThemeIdx=idx;
+  var t=THEMES[idx];
+  var el=document.getElementById('scrForum');
+  if(!el)return;
+  el.style.setProperty('--forum-accent',t.accent);
+  el.style.setProperty('--forum-bg',t.bg);
+  document.querySelectorAll('.ftheme-dot').forEach(function(d,i){d.classList.toggle('active',i===idx);});
+}
+window.forumApplyFont=function(v){
+  var el=document.getElementById('scrForum');
+  if(el)el.style.setProperty('font-size',v+'px');
+};
+
+// ── 侧边抽屉 ──
+window.forumToggleDrawer=function(){
+  var dr=document.getElementById('forumDrawer');
+  var ov=document.getElementById('forumDrOv');
+  if(!dr)return;
+  var isOpen=dr.classList.contains('open');
+  dr.classList.toggle('open',!isOpen);
+  ov.classList.toggle('open',!isOpen);
+  if(!isOpen)forumRenderBoardManager();
+};
+
+// ── 版块Tab渲染 ──
+function forumRenderTabs(){
+  var wrap=document.getElementById('forumBoardTabs');if(!wrap)return;
+  wrap.innerHTML='';
+  _fBoards.forEach(function(b){
+    var t=document.createElement('div');
+    t.className='ftab'+(b===_fCurBoard?' active':'');
+    t.textContent=b;t.dataset.board=b;
+    t.onclick=function(){forumSwitchBoard(t,b);};
+    wrap.appendChild(t);
+  });
+}
+window.forumSwitchBoard=function(el,board){
+  _fCurBoard=board;
+  document.querySelectorAll('.ftab').forEach(function(t){t.classList.remove('active');});
+  if(el)el.classList.add('active');
+  forumRenderPosts();
+};
+
+// ── 版块管理侧边栏 ──
+function forumRenderBoardManager(){
+  var el=document.getElementById('forumBoardList');if(!el)return;
+  el.innerHTML='';
+  _fBoards.forEach(function(b,i){
+    var row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:6px 0;';
+    row.innerHTML='<span style="font-size:13px;color:var(--forum-text);">'+b+'</span>'+
+      '<span style="font-size:11px;color:#e74c3c;cursor:pointer;" data-i="'+i+'">删除</span>';
+    row.querySelector('[data-i]').onclick=function(){var idx=parseInt(this.getAttribute('data-i'));_fBoards.splice(idx,1);forumRenderBoardManager();forumRenderTabs();};
+    el.appendChild(row);
+  });
+}
+window.forumAddBoard=function(){
+  var inp=document.getElementById('forumNewBoardInp');if(!inp)return;
+  var v=inp.value.trim();if(!v)return;
+  if(!_fBoards.includes(v))_fBoards.push(v);
+  inp.value='';
+  forumRenderBoardManager();
+  forumRenderTabs();
+};
+
+// ── 热搜渲染 ──
+function forumRenderHotTags(){
+  var wrap=document.getElementById('forumHotTags');if(!wrap)return;
+  wrap.innerHTML='';
+  if(!_fHotTags.length){wrap.innerHTML='<span style="font-size:11px;color:#bbb;">点击刷新生成热搜</span>';return;}
+  _fHotTags.forEach(function(tag,i){
+    var el=document.createElement('span');
+    el.className='fhot'+(i===0?' h1':i===1?' h2':i===2?' h3':'');
+    el.textContent=(i+1)+'. '+tag.text;
+    el.onclick=function(){forumOpenHotPost(tag);};
+    wrap.appendChild(el);
+  });
+}
+
+// ── 帖子渲染 ──
+function forumRenderPosts(){
+  var list=document.getElementById('forumPostList');if(!list)return;
+  var posts=_fCurBoard==='all'?_fPosts:_fPosts.filter(function(p){return p.board===_fCurBoard;});
+  list.innerHTML='';
+  if(!posts.length){
+    list.innerHTML='<div style="text-align:center;padding:40px;color:#ccc;">还没有帖子<br>点 ＋ 生成或发帖</div>';
+    return;
+  }
+  posts.forEach(function(post,idx){
+    var card=document.createElement('div');card.className='fcard';
+    var avaStyle=post.avatarUrl?'background-image:url('+post.avatarUrl+');background-color:transparent;':'background:'+post.avatarColor+';';
+    var avaText=post.avatarUrl?'':post.name.slice(0,1);
+    card.innerHTML='<div class="fcard-hdr">'+
+      '<div class="fava" style="'+avaStyle+'">'+avaText+'</div>'+
+      '<span class="fname">'+post.name+'</span>'+
+      '<span class="ftime">'+post.time+'</span>'+
+      '</div>'+
+      '<div class="ftitle">'+post.title+'</div>'+
+      '<div class="fprev">'+post.content+'</div>'+
+      '<div class="ffooter">'+
+      '<span class="fstat">💬 '+post.comments.length+'</span>'+
+      '<span class="fstat">👍 '+post.likes+'</span>'+
+      '<span class="ftag'+(post.hot?' hot':'')+'">'+post.board+'</span>'+
+      '</div>';
+    var realIdx=_fPosts.indexOf(post);
+    card.onclick=function(){forumOpenPost(realIdx);};
+    list.appendChild(card);
+  });
+}
+
+// ── 打开帖子详情 ──
+window.forumOpenPost=function(idx){
+  _fCurPost=idx;_fReplyTarget=null;
+  var post=_fPosts[idx];if(!post)return;
+  var det=document.getElementById('forumPostDetail');
+  var title=document.getElementById('fDetailTitle');
+  var body=document.getElementById('fDetailBody');
+  if(!det||!title||!body)return;
+  title.textContent=post.title;
+  body.innerHTML='';
+  // 帖子主体
+  var postDiv=document.createElement('div');postDiv.className='fd-post';
+  var avaStyle=post.avatarUrl?'background-image:url('+post.avatarUrl+');background-color:transparent;':'background:'+post.avatarColor+';';
+  postDiv.innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">'+
+    '<div class="fava" style="'+avaStyle+'width:34px;height:34px;font-size:15px;">'+( post.avatarUrl?'':post.name.slice(0,1))+'</div>'+
+    '<div><div style="font-size:14px;font-weight:700;color:var(--forum-text);">'+post.name+'</div><div style="font-size:11px;color:var(--forum-sub);">'+post.time+'</div></div>'+
+    '</div>'+
+    '<div class="fd-post-title">'+post.title+'</div>'+
+    '<div class="fd-post-content">'+post.content+'</div>'+
+    '<div style="margin-top:10px;font-size:12px;color:var(--forum-sub);">👍 '+post.likes+' 赞</div>';
+  body.appendChild(postDiv);
+  // 评论区
+  var cmtSection=document.createElement('div');cmtSection.className='fd-cmts-lbl';
+  cmtSection.textContent='评论 '+post.comments.length+' 条';
+  body.appendChild(cmtSection);
+  post.comments.forEach(function(cmt,ci){
+    body.appendChild(buildCommentEl(cmt,idx,ci));
+  });
+  det.style.display='flex';
+};
+window.forumOpenHotPost=function(tag){
+  // 找相关帖子或生成一篇
+  var found=_fPosts.find(function(p){return p.title.includes(tag.text)||p.content.includes(tag.text);});
+  if(found){forumOpenPost(_fPosts.indexOf(found));}
+  else{forumGenOnePost(tag.text);}
+};
+
+function buildCommentEl(cmt,postIdx,cmtIdx){
+  var wrap=document.createElement('div');wrap.className='fcmt';
+  var avaStyle=cmt.avatarUrl?'background-image:url('+cmt.avatarUrl+');background-color:transparent;':'background:'+(cmt.avatarColor||'#aaa')+';';
+  var avaText=cmt.avatarUrl?'':cmt.name.slice(0,1);
+  wrap.innerHTML='<div class="fcmt-hdr">'+
+    '<div class="fcmt-ava" style="'+avaStyle+'">'+avaText+'</div>'+
+    '<span class="fcmt-name">'+cmt.name+'</span>'+
+    '<span class="fcmt-time">'+cmt.time+'</span>'+
+    '</div>'+
+    '<div class="fcmt-txt">'+cmt.text+'</div>'+
+    '<div class="fcmt-likes"><span>👍 '+cmt.likes+'</span><span style="margin-left:8px;cursor:pointer;color:var(--forum-accent);" data-pi="'+postIdx+'" data-ci="'+cmtIdx+'">回复</span></div>';
+  wrap.querySelector('[data-ci]').onclick=function(){
+    _fReplyTarget={postIdx:postIdx,cmtIdx:cmtIdx,name:cmt.name};
+    var inp=document.getElementById('forumReplyInp');
+    if(inp){inp.placeholder='回复 @'+cmt.name+'…';inp.focus();}
+  };
+  // 子回复
+  if(cmt.replies&&cmt.replies.length){
+    cmt.replies.forEach(function(rep){
+      var rd=document.createElement('div');rd.className='freply';
+      var rs=rep.avatarUrl?'background-image:url('+rep.avatarUrl+');background-color:transparent;':'background:'+(rep.avatarColor||'#bbb')+';';
+      rd.innerHTML='<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">'+
+        '<div class="fcmt-ava" style="'+rs+'width:20px;height:20px;font-size:9px;">'+( rep.avatarUrl?'':rep.name.slice(0,1))+'</div>'+
+        '<span style="font-size:11px;font-weight:700;color:var(--forum-text);">'+rep.name+'</span>'+
+        '<span style="font-size:10px;color:var(--forum-sub);">'+rep.time+'</span></div>'+
+        '<div style="font-size:12px;color:var(--forum-text);line-height:1.5;">'+rep.text+'</div>';
+      wrap.appendChild(rd);
+    });
+  }
+  return wrap;
+}
+
+window.forumCloseDetail=function(){
+  var det=document.getElementById('forumPostDetail');
+  if(det)det.style.display='none';
+  _fCurPost=null;_fReplyTarget=null;
+  var inp=document.getElementById('forumReplyInp');
+  if(inp)inp.placeholder='写下你的评论…';
+};
+
+// ── 发送评论 ──
+window.forumSendReply=function(){
+  var inp=document.getElementById('forumReplyInp');
+  if(!inp||!inp.value.trim())return;
+  var text=inp.value.trim();
+  var myName=localStorage.getItem('cMyN_'+(localStorage.getItem('cs_active_char')||''))||'我';
+  var newCmt={name:myName,type:'user',avatarColor:'#6c5ce7',text:text,time:'刚刚',likes:0,replies:[]};
+  if(_fReplyTarget!==null&&_fCurPost!==null){
+    var post=_fPosts[_fCurPost];
+    if(post&&post.comments[_fReplyTarget.cmtIdx]){
+      if(!post.comments[_fReplyTarget.cmtIdx].replies)post.comments[_fReplyTarget.cmtIdx].replies=[];
+      post.comments[_fReplyTarget.cmtIdx].replies.push(newCmt);
+    }
+    _fReplyTarget=null;
+    inp.placeholder='写下你的评论…';
+  } else if(_fCurPost!==null){
+    _fPosts[_fCurPost].comments.push(newCmt);
+  }
+  inp.value='';
+  fSave('posts',_fPosts);
+  if(_fCurPost!==null)forumOpenPost(_fCurPost);
+};
+
+// ── 加载更多AI评论 ──
+window.forumLoadMoreComments=async function(){
+  if(_fCurPost===null)return;
+  var cfg=await fApi();if(!cfg){fToast('请先配置API');return;}
+  var post=_fPosts[_fCurPost];if(!post)return;
+  fToast('生成评论中…');
+  var s=fGetSettings();
+  var chars=fGetChars();
+  var charNames=chars.map(function(c){return c.name;}).join('、')||'路人';
+  var pr='在以下背景下，为这篇帖子生成4条真实的评论（包含2位以上这些人物：'+charNames+'，以及2个网友）。\n背景：'+s.worldView+'\n时间：'+s.date+'\n帖子标题：'+post.title+'\n帖子内容：'+post.content+'\n'+s.prompt+'\n每条评论要符合发言人的性格，网友用有趣的网名，语气自然。\n严格输出JSON数组：[{"name":"名字","type":"char或npc或net","text":"评论内容","likes":数字}]\n只输出JSON数组。';
+  try{
+    var raw=await fCall(cfg,pr,500);
+    var items=fParseJson(raw);
+    var charMap={};chars.forEach(function(c){charMap[c.name]=c;});
+    var now=new Date();var tstr=(now.getMonth()+1)+'/'+(now.getDate())+' '+now.getHours()+':'+(now.getMinutes()<10?'0':'')+now.getMinutes();
+    items.forEach(function(item){
+      var c=charMap[item.name];
+      var ava=c&&c.ava?c.ava:null;
+      var color=item.type==='net'?'#888':item.type==='char'?'#e17055':'#0984e3';
+      post.comments.push({name:item.name,type:item.type||'net',avatarUrl:ava,avatarColor:color,text:item.text,time:tstr,likes:item.likes||0,replies:[]});
+    });
+    fSave('posts',_fPosts);
+    forumOpenPost(_fCurPost);
+    fToast('新评论已生成 💬');
+  }catch(e){fToast('生成失败');}
+};
+
+// ── 生成热搜 ──
+async function forumGenHotTags(){
+  var cfg=await fApi();if(!cfg)return;
+  var s=fGetSettings();
+  var pr='根据以下设定，生成8条热搜词条（简短，10字以内），要真实可信，包含社会事件、娱乐圈、本地新闻等。\n时间背景：'+s.date+'\n世界观：'+(s.worldView||'现实世界')+'\n'+s.prompt+'\n输出JSON数组：[{"text":"热搜词条"},...]\n只输出JSON数组。';
+  try{
+    var raw=await fCall(cfg,pr,300);
+    _fHotTags=fParseJson(raw);
+    fSave('hotTags',_fHotTags);
+    forumRenderHotTags();
+  }catch(e){console.log('热搜生成失败',e);}
+}
+
+// ── 生成一批帖子 ──
+async function forumGenPosts(board){
+  var cfg=await fApi();if(!cfg){fToast('请先配置API');return;}
+  fToast('生成帖子中…');
+  var s=fGetSettings();
+  var chars=fGetChars();
+  var charNames=chars.map(function(c){return c.name;}).join('、')||'用户';
+  var boardName=board&&board!=='all'?board:'综合';
+  var pr='在以下背景的论坛"'+boardName+"\"版块里，生成5篇帖子（发帖者包含："+charNames+"以及2-3个网友）。\n时间："+s.date+"\n世界观："+(s.worldView||'现实生活')+"\n"+s.prompt+"\n每篇帖子要有标题、内容（50-100字）、2-3条评论。\n严格输出JSON数组：\n[{\"name\":\"发帖者\",\"type\":\"char或npc或net\",\"title\":\"帖子标题\",\"content\":\"正文\",\"board\":\""+boardName+"\",\"likes\":数字,\"hot\":true或false,\"comments\":[{\"name\":\"评论者\",\"type\":\"char或npc或net\",\"text\":\"评论内容\",\"likes\":数字}]}]\n只输出JSON数组。";
+  try{
+    var raw=await fCall(cfg,pr,800);
+    var items=fParseJson(raw);
+    var charMap={};chars.forEach(function(c){charMap[c.name]=c;});
+    var now=new Date();
+    items.forEach(function(item){
+      var c=charMap[item.name];
+      var color=item.type==='net'?'#888':item.type==='char'?'#e17055':'#0984e3';
+      var tstr=(now.getMonth()+1)+'/'+(now.getDate());
+      var cmts=(item.comments||[]).map(function(cm){
+        var cc=charMap[cm.name];
+        return{name:cm.name,type:cm.type||'net',avatarUrl:cc&&cc.ava?cc.ava:null,avatarColor:cm.type==='net'?'#888':cm.type==='char'?'#e17055':'#0984e3',text:cm.text,time:tstr,likes:cm.likes||0,replies:[]};
+      });
+      _fPosts.unshift({name:item.name,type:item.type||'net',avatarUrl:c&&c.ava?c.ava:null,avatarColor:color,title:item.title,content:item.content,board:item.board||boardName,likes:item.likes||0,hot:!!item.hot,time:tstr,comments:cmts});
+    });
+    fSave('posts',_fPosts);
+    forumRenderPosts();
+    fToast('帖子已生成 ✨');
+  }catch(e){fToast('生成失败：'+e.message);}
+}
+
+async function forumGenOnePost(keyword){
+  var cfg=await fApi();if(!cfg)return;
+  fToast('生成帖子…');
+  var s=fGetSettings();
+  var chars=fGetChars();
+  var charNames=chars.map(function(c){return c.name;}).join('、')||'用户';
+  var pr='生成1篇关于"'+keyword+'"的论坛帖子。发帖者从以下人物中选一位：'+charNames+'或网友。时间：'+s.date+'\n输出JSON：{"name":"","type":"char或net","title":"","content":"(80字内)","board":"日常","likes":数字,"hot":true,"comments":[{"name":"","type":"net","text":"","likes":数字}]}\n只输出JSON对象。';
+  try{
+    var raw=await fCall(cfg,pr,400);raw=raw.replace(/```json|```/g,'').trim();
+    var item=JSON.parse(raw);
+    var charMap={};chars.forEach(function(c){charMap[c.name]=c;});
+    var c=charMap[item.name];
+    var now=new Date();var tstr=(now.getMonth()+1)+'/'+(now.getDate());
+    var cmts=(item.comments||[]).map(function(cm){return{name:cm.name,type:'net',avatarColor:'#888',text:cm.text,time:tstr,likes:cm.likes||0,replies:[]};});
+    _fPosts.unshift({name:item.name,type:item.type||'net',avatarUrl:c&&c.ava?c.ava:null,avatarColor:item.type==='net'?'#888':'#e17055',title:item.title,content:item.content,board:item.board||'日常',likes:item.likes||0,hot:true,time:tstr,comments:cmts});
+    fSave('posts',_fPosts);
+    forumRenderPosts();
+    var newIdx=_fPosts.findIndex(function(p){return p.title===item.title;});
+    if(newIdx>=0)forumOpenPost(newIdx);
+  }catch(e){fToast('生成失败');}
+}
+
+// ── 刷新（重新生成热搜+帖子）══
+window.forumRefresh=async function(){
+  await forumGenHotTags();
+  await forumGenPosts(_fCurBoard==='all'?null:_fCurBoard);
+};
+
+// ── 新建帖子 ──
+window.forumNewPost=function(){
+  var ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.4);display:flex;align-items:flex-end;justify-content:center;';
+  var box=document.createElement('div');
+  box.style.cssText='background:white;border-radius:20px 20px 0 0;padding:16px 16px 28px;width:100%;max-width:480px;';
+  var boardOpts=_fBoards.map(function(b){return '<option>'+b+'</option>';}).join('');
+  box.innerHTML='<div style="font-size:15px;font-weight:bold;margin-bottom:12px;color:#333;">发布新帖</div>'+
+    '<select id="_fNewBoard" style="width:100%;padding:8px 10px;border:1.5px solid #eee;border-radius:10px;font-size:13px;margin-bottom:8px;outline:none;">'+boardOpts+'</select>'+
+    '<input id="_fNewTitle" placeholder="帖子标题（必填）" maxlength="30" style="width:100%;padding:9px 10px;border:1.5px solid #eee;border-radius:10px;font-size:13px;box-sizing:border-box;outline:none;margin-bottom:8px;">'+
+    '<textarea id="_fNewContent" placeholder="正文内容（可选）" style="width:100%;height:80px;padding:9px 10px;border:1.5px solid #eee;border-radius:10px;font-size:13px;resize:none;box-sizing:border-box;outline:none;"></textarea>'+
+    '<div style="display:flex;gap:8px;margin-top:10px;">'+
+    '<button id="_fNewCancel" style="flex:1;padding:10px;border:1.5px solid #eee;border-radius:12px;background:white;font-size:13px;cursor:pointer;color:#999;">取消</button>'+
+    '<button id="_fNewOk" style="flex:2;padding:10px;background:var(--forum-accent,#6c5ce7);color:white;border:none;border-radius:12px;font-size:13px;cursor:pointer;font-weight:bold;">发布</button>'+
+    '</div>';
+  ov.appendChild(box);document.body.appendChild(ov);
+  box.querySelector('#_fNewCancel').onclick=function(){ov.remove();};
+  box.querySelector('#_fNewOk').onclick=function(){
+    var title=(box.querySelector('#_fNewTitle')||{}).value||'';
+    var content=(box.querySelector('#_fNewContent')||{}).value||'';
+    var board=(box.querySelector('#_fNewBoard')||{}).value||'日常';
+    if(!title.trim()){fToast('标题不能为空');return;}
+    ov.remove();
+    var myName=localStorage.getItem('cMyN_'+(localStorage.getItem('cs_active_char')||''))||'我';
+    var now=new Date();var tstr=(now.getMonth()+1)+'/'+(now.getDate())+' '+now.getHours()+':'+(now.getMinutes()<10?'0':'')+now.getMinutes();
+    _fPosts.unshift({name:myName,type:'user',avatarColor:'#6c5ce7',title:title,content:content||'（暂无正文）',board:board,likes:0,hot:false,time:tstr,comments:[]});
+    fSave('posts',_fPosts);
+    forumRenderPosts();fToast('发布成功！');
+  };
+  ov.onclick=function(e){if(e.target===ov)ov.remove();};
+};
+
+// ── 保存设置 ──
+window.forumSaveSettings=async function(){
+  var s=fGetSettings();
+  await fSave('settings',s);
+  await fSave('boards',_fBoards);
+  await fSave('themeIdx',_fThemeIdx);
+  var fs=(document.getElementById('forumFontSize')||{}).value||'14';
+  await fSave('fontSize',fs);
+  forumRefresh();
+};
+
+// ── Toast ──
+function fToast(msg){var t=document.createElement('div');t.style.cssText='position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(40,40,60,0.9);color:white;padding:8px 18px;border-radius:20px;font-size:13px;z-index:99999;pointer-events:none;white-space:nowrap;';t.textContent=msg;document.body.appendChild(t);setTimeout(function(){t.remove();},2000);}
+
+// ── 初始化 ──
+async function forumInit(){
+  // 加载设置
+  var s=await fLoad('settings',null);
+  if(s){
+    if(s.worldView){var el=document.getElementById('forumWorldView');if(el)el.value=s.worldView;}
+    if(s.prompt){var el2=document.getElementById('forumPrompt');if(el2)el2.value=s.prompt;}
+    if(s.date){var el3=document.getElementById('forumDateSet');if(el3)el3.value=s.date;}
+  }
+  var boards=await fLoad('boards',null);
+  if(boards&&boards.length)_fBoards=boards;
+  var themeIdx=await fLoad('themeIdx',0);
+  _fThemeIdx=themeIdx||0;
+  var fontSize=await fLoad('fontSize','14');
+  var fsEl=document.getElementById('forumFontSize');if(fsEl)fsEl.value=fontSize;
+  forumApplyFont(fontSize);
+
+  // 主题色点
+  var tr=document.getElementById('forumThemeRow');
+  if(tr){tr.innerHTML='';THEMES.forEach(function(t,i){var dot=document.createElement('div');dot.className='ftheme-dot'+(i===_fThemeIdx?' active':'');dot.style.background=t.accent;dot.onclick=function(){forumApplyTheme(i);};tr.appendChild(dot);});}
+  forumApplyTheme(_fThemeIdx);
+
+  // 加载数据
+  var posts=await fLoad('posts',[]);
+  if(Array.isArray(posts))_fPosts=posts;
+  var hot=await fLoad('hotTags',[]);
+  if(Array.isArray(hot))_fHotTags=hot;
+
+  forumRenderTabs();
+  forumRenderHotTags();
+  forumRenderPosts();
+}
+
+// ── showScreen patch ──
+var _origFrShow=window.showScreen;
+window.showScreen=function(id){
+  _origFrShow(id);
+  if(id==='scrForum')forumInit();
+};
+
+// ── Dock按钮绑定 ──
+setTimeout(function(){
+  var btn=document.getElementById('btnHomeForum');
+  if(btn)btn.onclick=function(){showScreen('scrForum');};
+},400);
+
+})();
+</script>
