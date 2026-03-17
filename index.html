@@ -2880,12 +2880,14 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
               <div id="meMoodTag" style="font-size:11px;padding:2px 8px;border-radius:20px;background:rgba(108,92,231,0.1);color:#6c5ce7;display:none;"></div>
             </div>
             <div id=meBio class=me-bio style="margin-top:4px;">请添加你的个性签名吧！</div>
+            <!-- ══ 内联标签区 ══ -->
+            <div id="meTagsRow" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;"></div>
           </div>
           <span id=btnEditMe style="cursor:pointer;font-size:18px;color:#a29bfe;flex-shrink:0;">📝</span>
         </div>
 
         <!-- ══ 数据卡片行 ══ -->
-        <div class="me-stats-row">
+        <div class="me-stats-row" style="margin-top:10px;">
           <div class="me-stat-card" style="cursor:text;" onclick="document.getElementById('meStatLikes').focus()">
             <div class="me-stat-num" style="position:relative;">
               <input id="meStatLikes" type="number" inputmode="numeric"
@@ -2899,52 +2901,48 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
             <div class="me-stat-label">日志篇数</div>
           </div>
           <div class="me-stat-card">
-            <div class="me-stat-num" id="meStatTags">—</div>
+            <div class="me-stat-num" id="meStatTagCount">—</div>
             <div class="me-stat-label">我的标签</div>
           </div>
         </div>
 
         <!-- ══ 功能菜单 ══ -->
         <div class=me-menu-list>
-          <!-- 原有功能 -->
+          <!-- 常用功能（改了名字） -->
           <div class="me-section-label">🗂 常用功能</div>
           <div id=btnGoCharSticker class=me-menu-item>
-            <div class=me-menu-left><div class=me-menu-title>角色表情包库</div><div class=me-menu-sub>设定专属表情，让他随时懂你</div></div>
+            <div class=me-menu-left><div class=me-menu-title>他の专属表情</div><div class=me-menu-sub>设定专属表情，让他随时懂你</div></div>
             <div class=me-menu-right>＞</div>
           </div>
           <div id=btnGoFav class=me-menu-item>
-            <div class=me-menu-left><div class=me-menu-title>我的收藏</div><div class=me-menu-sub>那些舍不得删的瞬间</div></div>
+            <div class=me-menu-left><div class=me-menu-title>那些藏在聊天里の回忆</div><div class=me-menu-sub>那些舍不得删的瞬间</div></div>
             <div class=me-menu-right>＞</div>
           </div>
           <div id=btnGoOurSongs class=me-menu-item>
-            <div class=me-menu-left><div class=me-menu-title>🎵 我们的歌</div><div class=me-menu-sub>一起听过的歌，说过的那些话</div></div>
+            <div class=me-menu-left><div class=me-menu-title>🎵 我们の歌</div><div class=me-menu-sub>一起听过的歌，说过的那些话</div></div>
             <div class=me-menu-right>＞</div>
           </div>
           <div id=btnOpenWallet class=me-menu-item>
-            <div class=me-menu-left><div class=me-menu-title>我的钱包</div><div class=me-menu-sub>存着你们之间流转的每一分心意</div></div>
+            <div class=me-menu-left><div class=me-menu-title>随手记の账单</div><div class=me-menu-sub>存着你们之间流转的每一分心意</div></div>
             <div class=me-menu-right>＞</div>
           </div>
           <div id=btnMeLogs class=me-menu-item>
-            <div class=me-menu-left><div class=me-menu-title>📝 我的日志</div><div class=me-menu-sub>空间日志，他看得见</div></div>
+            <div class=me-menu-left><div class=me-menu-title>📝 空间日志</div><div class=me-menu-sub>空间日志，他看得见</div></div>
             <div class=me-menu-right>＞</div>
           </div>
 
-          <!-- 新功能 -->
+          <!-- 特色功能 -->
           <div class="me-section-label">✨ 特色功能</div>
           <div id=btnMeMoodCal class=me-menu-item>
-            <div class=me-menu-left><div class=me-menu-title>📅 情绪日历</div><div class=me-menu-sub>今天是什么心情？</div></div>
+            <div class=me-menu-left><div class=me-menu-title>📅 📅 情绪日历</div><div class=me-menu-sub>今天是什么心情？</div></div>
             <div class=me-menu-right>＞</div>
           </div>
           <div id=btnMeAchieve class=me-menu-item>
-            <div class=me-menu-left><div class=me-menu-title>🌟 成就墙</div><div class=me-menu-sub>你们独有的专属印记</div></div>
+            <div class=me-menu-left><div class=me-menu-title>🌟 🌟 成就墙</div><div class=me-menu-sub>你们独有的专属印记</div></div>
             <div class=me-menu-right>＞</div>
           </div>
           <div id=btnMeCapsule class=me-menu-item>
-            <div class=me-menu-left><div class=me-menu-title>💌 时光胶囊</div><div class=me-menu-sub>藏一句话，等他来拆</div></div>
-            <div class=me-menu-right>＞</div>
-          </div>
-          <div id=btnMeLabels class=me-menu-item>
-            <div class=me-menu-left><div class=me-menu-title>🪞 我的标签</div><div class=me-menu-sub>你是什么样的人，你最清楚</div></div>
+            <div class=me-menu-left><div class=me-menu-title>💌 💌 时光胶囊</div><div class=me-menu-sub>藏一句话，等他来拆</div></div>
             <div class=me-menu-right>＞</div>
           </div>
         </div>
@@ -23571,7 +23569,7 @@ async function meRefreshStats(){
   // Fix: 标签数——正确读取已保存的标签数组长度
   var labels=await meLoad('me_labels',[]);
   var labelArr=Array.isArray(labels)?labels:[];
-  var el3=document.getElementById('meStatTags');if(el3)el3.textContent=labelArr.length||'—';
+  var el3=document.getElementById('meStatTagCount');if(el3)el3.textContent=labelArr.length||'—';
 
   // 今日心情标签
   var moods=await meLoad('me_moods',{});
@@ -23784,74 +23782,118 @@ async function renderCapsule(){
   });
 }
 
-// ── 我的标签（纯自我认知，不注入sys）──
-var ALL_LABELS=[
-  {emoji:'🌙',text:'夜猫子'},{emoji:'🗣️',text:'话痨'},{emoji:'🍋',text:'柠檬精'},
-  {emoji:'🐰',text:'粘人精'},{emoji:'😤',text:'醋坛子'},{emoji:'🧊',text:'冷淡脸'},
-  {emoji:'🎭',text:'戏精'},{emoji:'💤',text:'懒人体质'},{emoji:'🌪️',text:'情绪旋风'},
-  {emoji:'🤡',text:'自我感觉良好'},{emoji:'📚',text:'书虫'},{emoji:'🎵',text:'音乐脑'},
-  {emoji:'😏',text:'腹黑本黑'},{emoji:'🥺',text:'玻璃心'},{emoji:'💪',text:'表面强硬'},
-  {emoji:'🫶',text:'暗中关心'},{emoji:'🔥',text:'容易上头'},{emoji:'🌸',text:'软萌本体'},
+// ── 内联标签（直接显示在bio下方，可编辑/长按删除）──
+var _TAG_COLORS=[
+  {bg:'rgba(108,92,231,0.12)',bd:'#a29bfe'},
+  {bg:'rgba(0,184,148,0.10)',bd:'#00b894'},
+  {bg:'rgba(253,121,168,0.13)',bd:'#fd79a8'},
+  {bg:'rgba(253,196,0,0.13)',bd:'#e6ac00'},
+  {bg:'rgba(9,132,227,0.10)',bd:'#74b9ff'},
+  {bg:'rgba(225,112,85,0.13)',bd:'#e17055'},
 ];
-async function renderLabels(){
+
+async function renderInlineTags(){
   var raw=await meLoad('me_labels',[]);
   var saved=Array.isArray(raw)?raw:[];
-  var grid=document.getElementById('labelGrid');if(!grid)return;
-  grid.innerHTML='';
-  ALL_LABELS.forEach(function(lb){
-    var chip=document.createElement('span');chip.className='label-chip'+(saved.includes(lb.text)?' selected':'');
-    chip.textContent=lb.emoji+' '+lb.text;
-    chip.onclick=function(){
-      var sel=Array.from(grid.querySelectorAll('.label-chip.selected'));
-      if(chip.classList.contains('selected')){chip.classList.remove('selected');}
-      else if(sel.length>=6){meToast('最多选6个标签');}
-      else{chip.classList.add('selected');}
-    };
-    grid.appendChild(chip);
+  var row=document.getElementById('meTagsRow');if(!row)return;
+  row.innerHTML='';
+  // 渲染已有标签
+  saved.forEach(function(txt,idx){
+    var col=_TAG_COLORS[idx%_TAG_COLORS.length];
+    var chip=_makeTagChip(txt,idx,col,saved);
+    row.appendChild(chip);
   });
-  // 自定义标签输入
-  var customRow=document.createElement('div');
-  customRow.style.cssText='display:flex;gap:8px;margin-top:10px;width:100%;';
-  customRow.innerHTML='<input id="labelCustomInput" placeholder="自定义标签…" style="flex:1;padding:8px 12px;border:1.5px solid #ddd;border-radius:20px;font-size:13px;outline:none;">'+
-    '<button onclick="labelAddCustom()" style="padding:8px 14px;background:#6c5ce7;color:white;border:none;border-radius:20px;font-size:13px;cursor:pointer;">添加</button>';
-  grid.after(customRow);
-  // 已有自定义标签（已选中不在ALL_LABELS里的）
-  var customSaved=saved.filter(function(s){return!ALL_LABELS.find(function(l){return l.text===s;});});
-  customSaved.forEach(function(ct){
-    var chip=document.createElement('span');chip.className='label-chip selected';
-    chip.textContent='✏️ '+ct;
-    chip.onclick=function(){chip.classList.toggle('selected');};
-    grid.appendChild(chip);
-  });
+  // 如果不足6个，加一个"+"占位
+  if(saved.length<6){
+    var plus=document.createElement('div');
+    plus.style.cssText='min-width:28px;height:24px;border-radius:12px;border:1.5px dashed #ccc;display:flex;align-items:center;justify-content:center;font-size:14px;color:#ccc;cursor:pointer;';
+    plus.textContent='+';
+    plus.onclick=function(){_addTagChip(saved);};
+    row.appendChild(plus);
+  }
+  // 更新统计
+  var el3=document.getElementById('meStatTagCount');if(el3)el3.textContent=saved.length||'—';
 }
-window.labelAddCustom=function(){
-  var inp=document.getElementById('labelCustomInput');
-  if(!inp||!inp.value.trim())return;
-  var txt=inp.value.trim().slice(0,8);
-  var grid=document.getElementById('labelGrid');
-  var existing=Array.from(grid.querySelectorAll('.label-chip'));
-  if(existing.some(function(c){return c.textContent.includes(txt);})){meToast('已有这个标签');return;}
-  var sel=grid.querySelectorAll('.label-chip.selected');
-  if(sel.length>=6){meToast('最多选6个标签');return;}
-  var chip=document.createElement('span');chip.className='label-chip selected';
-  chip.textContent='✏️ '+txt;
-  chip.onclick=function(){chip.classList.toggle('selected');};
-  grid.appendChild(chip);
-  inp.value='';
-  meToast('已添加 ✏️ '+txt);
-};
+
+function _makeTagChip(txt,idx,col,allTags){
+  var chip=document.createElement('div');
+  chip.style.cssText='display:inline-flex;align-items:center;padding:3px 8px;border-radius:12px;border:1.5px solid '+col.bd+';background:'+col.bg+';font-size:12px;color:#444;cursor:pointer;max-width:80px;position:relative;';
+  // 显示文字
+  var span=document.createElement('span');span.textContent=txt;span.style.cssText='white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60px;';
+  chip.appendChild(span);
+  // 点击进入编辑
+  chip.onclick=function(e){e.stopPropagation();_editTagChip(idx,allTags,col);};
+  // 长按删除
+  var _timer;
+  chip.addEventListener('pointerdown',function(){_timer=setTimeout(function(){_deleteTag(idx,allTags);},600);});
+  chip.addEventListener('pointerup',function(){clearTimeout(_timer);});
+  chip.addEventListener('pointercancel',function(){clearTimeout(_timer);});
+  return chip;
+}
+
+function _editTagChip(idx,allTags,col){
+  // 弹出自定义输入层
+  var overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;';
+  var box=document.createElement('div');
+  box.style.cssText='background:white;border-radius:16px;padding:16px 16px 12px;width:75vw;max-width:280px;box-shadow:0 8px 24px rgba(0,0,0,0.15);';
+  var curVal=allTags[idx]||'';
+  box.innerHTML='<div style="font-size:13px;color:#999;margin-bottom:10px;">修改标签（最多6字）</div>'+
+    '<input id="_tagEditInp" maxlength="6" value="'+curVal+'" placeholder="最多6个字" style="width:100%;padding:8px 10px;border:1.5px solid '+col.bd+';border-radius:10px;font-size:14px;box-sizing:border-box;outline:none;text-align:center;">'+
+    '<div style="display:flex;gap:8px;margin-top:10px;">'+
+    '<button id="_tagEditDel" style="flex:1;padding:8px;border:1px solid #ffb3b3;border-radius:10px;background:white;font-size:13px;cursor:pointer;color:#e17055;">删除</button>'+
+    '<button id="_tagEditOk" style="flex:2;padding:8px;background:'+col.bd+';color:white;border:none;border-radius:10px;font-size:13px;cursor:pointer;font-weight:bold;">保存</button>'+
+    '</div>';
+  overlay.appendChild(box);document.body.appendChild(overlay);
+  var inp=box.querySelector('#_tagEditInp');inp.focus();inp.select();
+  box.querySelector('#_tagEditDel').onclick=function(){overlay.remove();_deleteTag(idx,allTags);};
+  box.querySelector('#_tagEditOk').onclick=function(){
+    var v=inp.value.trim().slice(0,6);
+    overlay.remove();
+    if(v){allTags[idx]=v;}else{allTags.splice(idx,1);}
+    meSave('me_labels',allTags).then(function(){renderInlineTags();});
+  };
+  inp.addEventListener('keydown',function(e){if(e.key==='Enter'){box.querySelector('#_tagEditOk').click();}});
+  overlay.onclick=function(e){if(e.target===overlay)overlay.remove();};
+}
+
+function _addTagChip(allTags){
+  if(allTags.length>=6){meToast('最多6个标签');return;}
+  var colors=_TAG_COLORS[allTags.length%_TAG_COLORS.length];
+  var overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;';
+  var box=document.createElement('div');
+  box.style.cssText='background:white;border-radius:16px;padding:16px 16px 12px;width:75vw;max-width:280px;box-shadow:0 8px 24px rgba(0,0,0,0.15);';
+  box.innerHTML='<div style="font-size:13px;color:#999;margin-bottom:10px;">添加新标签（最多6字）</div>'+
+    '<input id="_tagAddInp" maxlength="6" placeholder="输入标签内容" style="width:100%;padding:8px 10px;border:1.5px solid '+colors.bd+';border-radius:10px;font-size:14px;box-sizing:border-box;outline:none;text-align:center;">'+
+    '<div style="display:flex;gap:8px;margin-top:10px;">'+
+    '<button id="_tagAddCancel" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:10px;background:white;font-size:13px;cursor:pointer;color:#999;">取消</button>'+
+    '<button id="_tagAddOk" style="flex:2;padding:8px;background:'+colors.bd+';color:white;border:none;border-radius:10px;font-size:13px;cursor:pointer;font-weight:bold;">添加</button>'+
+    '</div>';
+  overlay.appendChild(box);document.body.appendChild(overlay);
+  var inp=box.querySelector('#_tagAddInp');inp.focus();
+  box.querySelector('#_tagAddCancel').onclick=function(){overlay.remove();};
+  box.querySelector('#_tagAddOk').onclick=function(){
+    var v=inp.value.trim().slice(0,6);
+    overlay.remove();
+    if(!v)return;
+    allTags.push(v);
+    meSave('me_labels',allTags).then(function(){renderInlineTags();});
+  };
+  inp.addEventListener('keydown',function(e){if(e.key==='Enter'){box.querySelector('#_tagAddOk').click();}});
+  overlay.onclick=function(e){if(e.target===overlay)overlay.remove();};
+}
+
+function _deleteTag(idx,allTags){
+  allTags.splice(idx,1);
+  meSave('me_labels',allTags).then(function(){renderInlineTags();meToast('已删除');});
+}
+
+// 兼容旧的labelSave（保留以防其他地方调用）
 window.labelSave=async function(){
-  var chips=Array.from(document.querySelectorAll('#labelGrid .label-chip.selected'));
-  var selected=chips.map(function(c){
-    var t=c.textContent.trim();
-    // 去掉emoji前缀
-    return t.replace(/^.{1,2}\s/,'');
-  });
-  await meSave('me_labels',selected);
-  await meRefreshStats();
-  meToast('标签已保存 ('+selected.length+'个)');
-  showScreen('scrMe');
+  meToast('标签已更新');showScreen('scrMe');
 };
+
 
 // ── showScreen patch ──
 var _origMeNew=window.showScreen;
@@ -23861,15 +23903,16 @@ window.showScreen=function(id){
   if(id==='scrMoodCal'){_moodYear=new Date().getFullYear();_moodMonth=new Date().getMonth();renderMoodCal();}
   if(id==='scrMeAchieve')renderAchieve();
   if(id==='scrMeCapsule')renderCapsule();
-  if(id==='scrMeLabels')renderLabels();
+  
 };
 
 setTimeout(function(){
+  renderInlineTags();
   var b1=document.getElementById('btnMeLogs');if(b1)b1.onclick=function(){showScreen('scrLogList');};
   var b2=document.getElementById('btnMeMoodCal');if(b2)b2.onclick=function(){showScreen('scrMoodCal');};
   var b3=document.getElementById('btnMeAchieve');if(b3)b3.onclick=function(){showScreen('scrMeAchieve');};
   var b4=document.getElementById('btnMeCapsule');if(b4)b4.onclick=function(){showScreen('scrMeCapsule');};
-  var b5=document.getElementById('btnMeLabels');if(b5)b5.onclick=function(){showScreen('scrMeLabels');};
+
 },400);
 
 })();
