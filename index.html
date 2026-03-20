@@ -24358,840 +24358,347 @@ setTimeout(hp2Init,300);
 </script>
 
 <script>
-// ══════════════════════════════════════════════
-// 论坛系统 v2 — 仿推特/微博风格
-// ══════════════════════════════════════════════
-(function initForum(){
+(function(){
+'use strict';
+async function fS(k,v){try{await localforage.setItem('f_'+k,v);}catch(e){}try{localStorage.setItem('f_'+k,typeof v==='string'?v:JSON.stringify(v));}catch(e){}}
+async function fL(k,d){var r=null;try{r=await localforage.getItem('f_'+k);}catch(e){}if(r===null||r===undefined){try{var ls=localStorage.getItem('f_'+k);if(ls!=null){try{r=JSON.parse(ls);}catch(e){r=ls;}}}catch(e){}}return(r===null||r===undefined)?d:r;}
+async function fApi(){var p='',k='',m='';try{p=originalGetItem.call(localStorage,'pxy')||'';}catch(e){}try{k=originalGetItem.call(localStorage,'key')||'';}catch(e){}try{m=originalGetItem.call(localStorage,'mod')||'';}catch(e){}if(!p){try{p=await localforage.getItem('pxy')||'';}catch(e){}}if(!k){try{k=await localforage.getItem('key')||'';}catch(e){}}if(!p||!k)return null;if(!p.includes('chat/completions'))p=p.replace(/\/$/,'')+'/chat/completions';if(!m)m='claude-sonnet-4-20250514';return{p,k,m};}
+async function fCall(cfg,prompt,maxT){var res=await fetch(cfg.p,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+cfg.k},body:JSON.stringify({model:cfg.m,max_tokens:maxT||600,temperature:0.9,messages:[{role:'user',content:prompt}]})});var d=await res.json();var t='';if(d.content&&d.content[0])t=d.content[0].text||'';else if(d.choices&&d.choices[0])t=(d.choices[0].message&&d.choices[0].message.content)||'';return t.trim();}
+function fJson(raw){raw=raw.replace(/```json|```/g,'').trim();var m=raw.match(/(\[[\s\S]*\]|\{[\s\S]*\})/);if(m)raw=m[1];return JSON.parse(raw);}
+var _posts=[],_following=[],_curTab='推荐',_bottomTab='home',_wbItems=[],_extraChars=[],_extraCharsData=[],_charOverrides={},_customTabs=[],_tabDescs={},_curPostIdx=null,_replyTarget=null,_acc='#1d9bf0';
+function injectCSS(){if(document.getElementById('fCSS3'))return;var st=document.createElement('style');st.id='fCSS3';st.textContent='#scrForum{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f7f9f9;color:#0f1419;}#fWrap{display:flex;flex-direction:column;width:100%;height:100%;}#fHeader{background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-bottom:1px solid #eff3f4;flex-shrink:0;padding-top:max(env(safe-area-inset-top,20px),20px);}#fHeaderTop{display:flex;align-items:center;padding:8px 14px;}#fMenuBtn{width:34px;height:34px;border-radius:50%;background:#eff3f4;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;}#fHeaderTitle{flex:1;text-align:center;font-size:17px;font-weight:700;color:#0f1419;}#fRefreshBtn{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;background:#ffd6e0;color:#e84393;}#fSearchBar{padding:6px 14px 8px;display:flex;gap:8px;align-items:center;}#fSearchInp{flex:1;padding:9px 14px;background:#eff3f4;border:none;border-radius:24px;font-size:15px;outline:none;color:#0f1419;}#fTabBar{display:flex;overflow-x:auto;border-bottom:1px solid #eff3f4;scrollbar-width:none;}#fTabBar::-webkit-scrollbar{display:none;}.fTab{flex-shrink:0;padding:13px 16px;font-size:15px;font-weight:600;color:#536471;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;}.fTab.on{color:#0f1419;border-bottom-color:#1d9bf0;}.fTab.add{color:#1d9bf0;font-size:20px;padding:10px 12px;}#fFeed{flex:1;overflow-y:auto;background:#f7f9f9;}.fPost{background:#fff;border-bottom:1px solid #eff3f4;padding:12px 14px;display:flex;gap:10px;cursor:pointer;}.fPost:active{background:#f7f9f9;}.fAva{width:42px;height:42px;border-radius:50%;flex-shrink:0;background:#ccc;overflow:hidden;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#fff;cursor:pointer;}.fBody{flex:1;min-width:0;}.fName{font-size:15px;font-weight:700;color:#0f1419;}.fHandle,.fTime{font-size:14px;color:#536471;margin-left:3px;}.fText{font-size:15px;color:#0f1419;line-height:1.6;margin:4px 0 8px;word-break:break-word;}.fStats{display:flex;gap:20px;}.fStat{font-size:14px;color:#536471;}.fBadge{display:inline-block;padding:1px 7px;border-radius:10px;font-size:12px;margin-bottom:4px;background:rgba(29,155,240,.1);color:#1d9bf0;}.fBadge.hot{background:rgba(249,24,128,.1);color:#f91880;}#fBottomNav{display:flex;background:#fff;border-top:1px solid #eff3f4;flex-shrink:0;}.fBNav{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 0 8px;cursor:pointer;color:#536471;}.fBNav.on{color:#1d9bf0;}.fBNavIco{font-size:22px;line-height:1;}.fBNavLbl{font-size:10px;margin-top:2px;}#fFab{position:absolute;right:16px;bottom:74px;width:52px;height:52px;border-radius:50%;background:#1d9bf0;color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;box-shadow:0 4px 14px rgba(29,155,240,.4);z-index:10;}#fFab:active{transform:scale(.92);}#fDrawer{position:absolute;top:0;left:0;width:80%;max-width:300px;height:100%;background:#fff;z-index:50;transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow-y:auto;box-shadow:4px 0 24px rgba(0,0,0,.15);}#fDrawer.on{transform:translateX(0);}#fDrawOv{position:absolute;inset:0;background:rgba(0,0,0,.35);z-index:49;display:none;}#fDrawOv.on{display:block;}#fDetail{display:none;flex-direction:column;position:absolute;top:0;width:100%;height:100%;z-index:55;background:#fff;}#fDetHeader{background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-bottom:1px solid #eff3f4;padding:max(env(safe-area-inset-top,20px),20px) 14px 10px;display:flex;align-items:center;gap:10px;flex-shrink:0;}#fDetBack{font-size:20px;cursor:pointer;color:#0f1419;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;}#fDetTitle{font-size:17px;font-weight:700;color:#0f1419;}#fDetBody{flex:1;overflow-y:auto;}.fCmt{background:#fff;border-bottom:1px solid #eff3f4;padding:12px 14px;display:flex;gap:10px;}.fCmtAva{width:36px;height:36px;border-radius:50%;flex-shrink:0;background:#ccc;overflow:hidden;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;}.fCmtBody{flex:1;min-width:0;}.fCmtName{font-size:14px;font-weight:700;color:#0f1419;}.fCmtTime{font-size:12px;color:#536471;margin-left:4px;}.fCmtText{font-size:14px;color:#0f1419;line-height:1.6;margin-top:3px;}.fReplyChip{margin-left:0;background:#f7f9f9;border-radius:8px;padding:6px 10px;margin-top:5px;font-size:13px;}#fReplyBar{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#fff;border-top:1px solid #eff3f4;flex-shrink:0;}#fReplyInp{flex:1;padding:9px 14px;border:1.5px solid #cfd9de;border-radius:24px;font-size:14px;outline:none;background:#fff;font-family:inherit;color:#0f1419;}#fReplySend{padding:8px 18px;background:#1d9bf0;color:#fff;border:none;border-radius:24px;font-size:14px;cursor:pointer;font-weight:700;flex-shrink:0;}#fProfilePage,#fDMPage{display:none;flex-direction:column;position:absolute;top:0;width:100%;height:100%;z-index:30;background:#fff;}.fDrSec{padding:12px 16px 4px;font-size:12px;color:#536471;font-weight:700;letter-spacing:.5px;}.fDrItem{display:flex;align-items:center;gap:12px;padding:12px 16px;font-size:15px;color:#0f1419;cursor:pointer;}.fDrItem:active{background:#f7f9f9;}.fDrIco{width:34px;height:34px;border-radius:10px;background:#eff3f4;display:flex;align-items:center;justify-content:center;font-size:17px;}';
+document.head.appendChild(st);}
+function ce(tag,id){var el=document.createElement(tag||'div');if(id)el.id=id;return el;}
+function hdl(name){return '@'+name.replace(/\s/g,'_').toLowerCase();}
+function toast(msg){var t=ce('div');t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(15,20,25,.88);color:#fff;padding:9px 18px;border-radius:20px;font-size:14px;z-index:99999;pointer-events:none;white-space:nowrap;';t.textContent=msg;document.body.appendChild(t);setTimeout(function(){t.remove();},2000);}
+function getMyName(){return localStorage.getItem('cMyN_'+(localStorage.getItem('cs_active_char')||''))||'我';}
+function getChars(){var names=[];try{var opened=JSON.parse(localStorage.getItem('cs_opened_chars')||'[]');opened.forEach(function(cid){var n=localStorage.getItem('cN_'+cid);var ava=localStorage.getItem('charAva_'+cid)||'';if(n){var ov=_charOverrides&&_charOverrides[n];names.push({name:n,type:'char',ava:(ov&&ov.ava)||ava,handle:ov&&ov.handle,bio:ov&&ov.bio,following:ov&&ov.following,followers:ov&&ov.followers});}});opened.forEach(function(cid){var raw=originalGetItem.call(localStorage,'npcList_'+cid);if(raw){try{JSON.parse(raw).forEach(function(n){if(n.name){var ov=_charOverrides&&_charOverrides[n.name];names.push({name:n.name,type:'npc',ava:(ov&&ov.ava)||n.avatar||''});}});}catch(e){}}});}catch(e){}_extraCharsData.forEach(function(d){if(!names.find(function(c){return c.name===d.name;}))names.push({name:d.name,type:'extra',ava:d.ava||''});});return names;}
+function getS(){return{wv:(document.getElementById('fWvArea')||{}).value||'',pr:(document.getElementById('fPrArea')||{}).value||'',dt:(document.getElementById('fDtInp')||{}).value||'2026年3月'};}
+function aColor(name){var c=['#1d9bf0','#e17055','#00b894','#a29bfe','#e84393','#f39c12'],h=0;for(var i=0;i<name.length;i++)h=(h*31+name.charCodeAt(i))&0xffff;return c[h%c.length];}
 
-// ── 存取 ──
-async function fSave(k,v){try{await localforage.setItem('forum_'+k,v);}catch(e){}try{localStorage.setItem('forum_'+k,typeof v==='string'?v:JSON.stringify(v));}catch(e){}}
-async function fLoad(k,def){var d=null;try{d=await localforage.getItem('forum_'+k);}catch(e){}if(d===null||d===undefined){try{var r=localStorage.getItem('forum_'+k);if(r!=null){try{d=JSON.parse(r);}catch(e){d=r;}}}catch(e){}}return(d===null||d===undefined)?def:d;}
+function switchBottom(tab){_bottomTab=tab;document.querySelectorAll('.fBNav').forEach(function(b){b.classList.toggle('on',b.dataset.tab===tab);});var feed=document.getElementById('fFeed'),tb=document.getElementById('fTabBar'),sb=document.getElementById('fSearchBar'),fab=document.getElementById('fFab'),prof=document.getElementById('fProfilePage'),dm=document.getElementById('fDMPage');if(feed)feed.style.display=(tab==='home'||tab==='follow')?'block':'none';if(tb)tb.style.display=tab==='home'?'flex':'none';if(sb)sb.style.display=(tab==='home'||tab==='follow')?'flex':'none';if(fab)fab.style.display=(tab==='home'||tab==='follow')?'flex':'none';if(prof)prof.style.display=tab==='profile'?'flex':'none';if(dm)dm.style.display=tab==='dm'?'flex':'none';if(tab==='home')loadFeed();if(tab==='follow')loadFollowFeed();if(tab==='profile')renderProfile();if(tab==='dm')renderDM();}
+window.fSwitchBottom=switchBottom;
 
-// ── API ──
-async function fApi(){
-  var pxy='',key='',mod='';
-  try{pxy=originalGetItem.call(localStorage,'pxy')||'';}catch(e){}
-  try{key=originalGetItem.call(localStorage,'key')||'';}catch(e){}
-  try{mod=originalGetItem.call(localStorage,'mod')||'';}catch(e){}
-  if(!pxy){try{pxy=await localforage.getItem('pxy')||'';}catch(e){}}
-  if(!key){try{key=await localforage.getItem('key')||'';}catch(e){}}
-  if(!pxy||!key)return null;
-  if(!pxy.includes('chat/completions'))pxy=pxy.replace(/\/$/,'')+'/chat/completions';
-  if(!mod)mod='claude-sonnet-4-20250514';
-  return{pxy,key,mod};
-}
-async function fCall(cfg,prompt,maxT){
-  var res=await fetch(cfg.pxy,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+cfg.key},
-    body:JSON.stringify({model:cfg.mod,max_tokens:maxT||600,temperature:0.92,messages:[{role:'user',content:prompt}]})});
-  var d=await res.json();
-  var t='';if(d.content&&d.content[0])t=d.content[0].text||'';else if(d.choices&&d.choices[0])t=(d.choices[0].message&&d.choices[0].message.content)||'';
-  return t.trim();
-}
-function fParseJson(raw){
-  raw=raw.replace(/```json|```/g,'').trim();
-  var m=raw.match(/(\[[\s\S]*\]|\{[\s\S]*\})/);
-  if(m)raw=m[1];
-  return JSON.parse(raw);
+function toggleDrawer(){var dr=document.getElementById('fDrawer'),ov=document.getElementById('fDrawOv');if(!dr)return;var on=dr.classList.contains('on');dr.classList.toggle('on',!on);ov.classList.toggle('on',!on);if(!on)buildDrawer();}
+window.fToggleDrawer=toggleDrawer;
+
+function renderTabs(){var bar=document.getElementById('fTabBar');if(!bar)return;bar.innerHTML='';['推荐','热搜','文娱','社会'].concat(_customTabs).forEach(function(t){var el=ce('div');el.className='fTab'+(t===_curTab?' on':'');el.textContent=t;el.onclick=function(){_curTab=t;renderTabs();loadFeed();};bar.appendChild(el);});var add=ce('div');add.className='fTab add';add.textContent='＋';add.onclick=addTab;bar.appendChild(add);}
+
+function loadFeed(){var feed=document.getElementById('fFeed');if(!feed)return;feed.innerHTML='';var list=_posts.filter(function(p){if(_curTab==='推荐')return true;if(_curTab==='热搜')return p.hot;return p.board===_curTab;});if(!list.length){var tip=ce('div');tip.style.cssText='text-align:center;padding:48px 20px;color:#536471;font-size:15px;line-height:2.2;';tip.innerHTML='还没有内容<br><span style="color:#1d9bf0;cursor:pointer;" onclick="window.fRefresh()">点这里生成内容 🔄</span>';feed.appendChild(tip);return;}list.forEach(function(p){feed.appendChild(buildCard(p,_posts.indexOf(p)));});}
+function loadFollowFeed(){var feed=document.getElementById('fFeed');if(!feed)return;feed.innerHTML='';var list=_posts.filter(function(p){return _following.find(function(f){return f.name===p.name;});});if(!list.length){var tip=ce('div');tip.style.cssText='text-align:center;padding:48px 20px;color:#536471;font-size:15px;';tip.textContent='还没有关注的人\n点帖子头像可关注';feed.appendChild(tip);return;}list.forEach(function(p){feed.appendChild(buildCard(p,_posts.indexOf(p)));});}
+
+function buildCard(post,idx){var card=ce('div');card.className='fPost';var ava=ce('div');ava.className='fAva';if(post.ava){ava.style.backgroundImage='url('+post.ava+')';ava.style.backgroundColor='transparent';}else{ava.style.background=aColor(post.name);ava.textContent=post.name.slice(0,1);}ava.onclick=function(e){e.stopPropagation();tFollow(post);};var body=ce('div');body.className='fBody';if(post.board&&post.board!=='推荐'){var badge=ce('div');badge.className='fBadge'+(post.hot?' hot':'');badge.textContent=post.board;body.appendChild(badge);}var nr=ce('div');nr.style.cssText='display:flex;align-items:center;flex-wrap:wrap;margin-bottom:2px;';nr.innerHTML='<span class="fName">'+post.name+'</span><span class="fHandle">'+hdl(post.name)+'</span><span class="fTime"> · '+post.time+'</span>';body.appendChild(nr);var txt=ce('div');txt.className='fText';txt.textContent=post.content;body.appendChild(txt);var stats=ce('div');stats.className='fStats';stats.innerHTML='<span class="fStat">💬 '+post.comments.length+'</span><span class="fStat">🔁 '+(Math.floor(Math.random()*80)+2)+'</span><span class="fStat">❤️ '+post.likes+'</span>';body.appendChild(stats);card.appendChild(ava);card.appendChild(body);card.onclick=function(){openPost(idx);};return card;}
+
+function tFollow(post){var i=_following.findIndex(function(f){return f.name===post.name;});if(i>=0){_following.splice(i,1);toast('已取关 '+hdl(post.name));}else{_following.push({name:post.name,type:post.type,ava:post.ava||''});toast('已关注 '+hdl(post.name)+' ✓');}fS('following',_following);}
+
+function openPost(idx){_curPostIdx=idx;_replyTarget=null;var post=_posts[idx];if(!post)return;var det=document.getElementById('fDetail'),body=document.getElementById('fDetBody');if(!det||!body)return;body.innerHTML='';var orig=ce('div');orig.className='fPost';orig.style.cssText='background:#fff;border-bottom:2px solid #eff3f4;cursor:default;';var ava=ce('div');ava.className='fAva';if(post.ava){ava.style.backgroundImage='url('+post.ava+')';ava.style.backgroundColor='transparent';}else{ava.style.background=aColor(post.name);ava.textContent=post.name.slice(0,1);}var bd=ce('div');bd.className='fBody';bd.innerHTML='<div class="fName">'+post.name+'</div><div class="fHandle">'+hdl(post.name)+'</div><div class="fText" style="font-size:16px;margin-top:8px;">'+post.content+'</div><div style="font-size:13px;color:#536471;margin:8px 0;padding-bottom:10px;border-bottom:1px solid #eff3f4;">'+post.time+'</div><div class="fStats"><span class="fStat"><b>'+post.likes+'</b> 喜欢</span><span class="fStat"><b>'+post.comments.length+'</b> 评论</span></div>';orig.appendChild(ava);orig.appendChild(bd);body.appendChild(orig);post.comments.forEach(function(cmt,ci){body.appendChild(buildCmt(cmt,idx,ci));});det.style.display='flex';}
+window.fOpenPost=openPost;
+
+function buildCmt(cmt,pi,ci){var card=ce('div');card.className='fCmt';var ava=ce('div');ava.className='fCmtAva';if(cmt.ava){ava.style.backgroundImage='url('+cmt.ava+')';ava.style.backgroundColor='transparent';}else{ava.style.background=aColor(cmt.name);ava.textContent=cmt.name.slice(0,1);}var bd=ce('div');bd.className='fCmtBody';bd.innerHTML='<span class="fCmtName">'+cmt.name+'</span><span class="fCmtTime">'+hdl(cmt.name)+' · '+cmt.time+'</span><div class="fCmtText">'+cmt.text+'</div>';var sr=ce('div');sr.style.cssText='display:flex;gap:16px;margin-top:5px;';var rb=ce('span');rb.style.cssText='font-size:13px;color:#536471;cursor:pointer;';rb.textContent='↩ 回复';rb.onclick=function(){_replyTarget={pi:pi,ci:ci,name:cmt.name};var inp=document.getElementById('fReplyInp');if(inp){inp.placeholder='回复 '+hdl(cmt.name)+'…';inp.focus();}};var lk=ce('span');lk.style.cssText='font-size:13px;color:#536471;';lk.textContent='❤️ '+cmt.likes;sr.appendChild(rb);sr.appendChild(lk);bd.appendChild(sr);if(cmt.replies&&cmt.replies.length){cmt.replies.forEach(function(rep){var rd=ce('div');rd.className='fReplyChip';rd.innerHTML='<b>'+rep.name+'</b> <span style="color:#536471;">'+hdl(rep.name)+'</span><div>'+rep.text+'</div>';bd.appendChild(rd);});}card.appendChild(ava);card.appendChild(bd);return card;}
+
+function closeDetail(){var det=document.getElementById('fDetail');if(det)det.style.display='none';_curPostIdx=null;_replyTarget=null;var inp=document.getElementById('fReplyInp');if(inp)inp.placeholder='发表评论…';}
+window.fCloseDetail=closeDetail;
+
+function sendReply(){var inp=document.getElementById('fReplyInp');if(!inp||!inp.value.trim())return;var text=inp.value.trim(),tstr='刚刚',cmt={name:getMyName(),type:'user',ava:null,text:text,time:tstr,likes:0,replies:[]};if(_replyTarget!==null&&_curPostIdx!==null){var p=_posts[_curPostIdx];if(p&&p.comments[_replyTarget.ci]){if(!p.comments[_replyTarget.ci].replies)p.comments[_replyTarget.ci].replies=[];p.comments[_replyTarget.ci].replies.push(cmt);}  _replyTarget=null;inp.placeholder='发表评论…';}else if(_curPostIdx!==null){_posts[_curPostIdx].comments.push(cmt);}inp.value='';fS('posts',_posts);if(_curPostIdx!==null)openPost(_curPostIdx);}
+window.fSendReply=sendReply;
+
+async function loadMoreCmts(){if(_curPostIdx===null)return;var cfg=await fApi();if(!cfg){toast('请先配置API');return;}var post=_posts[_curPostIdx];if(!post)return;toast('生成评论中…');var s=getS(),chars=getChars().map(function(c){return c.name;}).join('、')||'路人';var pr='为这条帖子生成4条评论（来自：'+chars+'以及网友）。时间：'+s.dt+'\n帖子：'+post.content+'\n输出JSON：[{"name":"","type":"char或net","text":"","likes":数字}]\n只输出JSON数组。';try{var raw=await fCall(cfg,pr,400);var items=fJson(raw);var charMap={};getChars().forEach(function(c){charMap[c.name]=c;});var tstr=new Date().toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'});items.forEach(function(item){var c=charMap[item.name];post.comments.push({name:item.name,type:item.type||'net',ava:c&&c.ava?c.ava:null,text:item.text,time:tstr,likes:item.likes||0,replies:[]});});fS('posts',_posts);openPost(_curPostIdx);toast('新评论已生成 💬');}catch(e){toast('生成失败');}}
+window.fLoadMoreComments=loadMoreCmts;
+
+async function doRefresh(){var cfg=await fApi();if(!cfg){toast('请先配置API，点🔄再试');return;}await genHot(cfg);await genPosts(cfg,_curTab);}
+window.fRefresh=doRefresh;
+
+async function genHot(cfg){var s=getS(),wbCtx=_wbItems.map(function(i){return i.title+':'+i.content;}).join('；');var pr='生成8条热搜词条（10字内），时间：'+s.dt+'\n世界观：'+(s.wv||'现实')+(wbCtx?'\n世界书：'+wbCtx:'')+'\n输出JSON：[{"text":"词条"}]\n只输出JSON数组。';try{var raw=await fCall(cfg,pr,250);var tags=fJson(raw);var bar=document.getElementById('forumHotTags');if(bar){bar.innerHTML='';tags.forEach(function(tag,i){var el=ce('span');el.style.cssText='flex-shrink:0;padding:3px 10px;margin-right:5px;border-radius:20px;font-size:12px;cursor:pointer;white-space:nowrap;background:'+(i<3?'rgba(249,24,128,.1)':'rgba(29,155,240,.08)')+';color:'+(i<3?'#f91880':'#1d9bf0')+';';el.textContent=(i+1)+'. '+tag.text;el.onclick=function(){doSearch(tag.text);};bar.appendChild(el);});}fS('hotTags',tags);}catch(e){}}
+
+async function genPosts(cfg,board){toast('生成内容中…');var s=getS(),chars=getChars(),charNames=chars.map(function(c){return c.name;}).join('、')||'网友',boardName=board==='推荐'?'综合':board,wbCtx=_wbItems.map(function(i){return i.title+':'+i.content;}).join('；'),tabDesc=_tabDescs[board]?'板块描述：'+_tabDescs[board]+'\n':'';var pr='为"'+boardName+'"生成6条帖子（发帖者含：'+charNames+'以及2-3个网友）。\n时间：'+s.dt+'\n世界观：'+(s.wv||'现实生活')+(wbCtx?'\n世界书：'+wbCtx:'')+'\n'+tabDesc+s.pr+'\n输出JSON：[{"name":"","type":"char或net","content":"正文60-100字","board":"'+boardName+'","likes":数字,"hot":false,"comments":[{"name":"","type":"net","text":"","likes":数字}]}]\n只输出JSON数组。';try{var raw=await fCall(cfg,pr,900);var items=fJson(raw);var charMap={};chars.forEach(function(c){charMap[c.name]=c;});var tstr=new Date().toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'});items.forEach(function(item){var c=charMap[item.name];var cmts=(item.comments||[]).map(function(cm){var cc=charMap[cm.name];return{name:cm.name,type:cm.type||'net',ava:cc&&cc.ava?cc.ava:null,text:cm.text,time:tstr,likes:cm.likes||0,replies:[]};});_posts.unshift({name:item.name,type:item.type||'net',ava:c&&c.ava?c.ava:null,content:item.content,board:item.board||boardName,likes:item.likes||0,hot:!!item.hot,time:tstr,comments:cmts});});fS('posts',_posts);loadFeed();toast('内容已更新 ✨');}catch(e){toast('生成失败：'+e.message);}}
+
+async function doSearch(q){if(!q)return;var feed=document.getElementById('fFeed');if(!feed)return;var local=_posts.filter(function(p){return p.content&&p.content.includes(q);});feed.innerHTML='<div style="padding:10px 14px;font-size:14px;font-weight:700;color:#536471;border-bottom:1px solid #eff3f4;">搜索：'+q+'</div>';if(local.length)local.forEach(function(p){feed.appendChild(buildCard(p,_posts.indexOf(p)));});var cfg=await fApi();if(!cfg)return;var s=getS();var pr='生成5条关于"'+q+'"的帖子，时间：'+s.dt+'\n输出JSON：[{"name":"网友名","type":"net","content":"60字内","board":"综合","likes":数字,"hot":false,"comments":[]}]\n只输出JSON数组。';try{var raw=await fCall(cfg,pr,400);var items=fJson(raw);var tstr=new Date().toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'});items.forEach(function(item){var p={name:item.name,type:'net',ava:null,content:item.content,board:item.board||'综合',likes:item.likes||0,hot:false,time:tstr,comments:[]};feed.appendChild(buildCard(p,_posts.length));_posts.push(p);});fS('posts',_posts);}catch(e){}}
+window.fDoSearch=doSearch;
+
+function newPost(){var ov=ce('div');ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.4);display:flex;align-items:flex-end;justify-content:center;';var box=ce('div');box.style.cssText='background:#fff;border-radius:20px 20px 0 0;padding:16px 16px 28px;width:100%;max-width:480px;';box.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;"><span style="font-size:16px;font-weight:700;color:#0f1419;">发帖</span><button id="_fpCan" style="border:none;background:none;font-size:14px;color:#536471;cursor:pointer;">取消</button></div><textarea id="_fpTxt" placeholder="有什么新鲜事？" style="width:100%;height:90px;padding:10px;border:1.5px solid #cfd9de;border-radius:12px;font-size:15px;resize:none;box-sizing:border-box;outline:none;"></textarea><div style="margin-top:10px;text-align:right;"><button id="_fpOk" style="padding:8px 20px;background:#1d9bf0;color:#fff;border:none;border-radius:24px;font-size:15px;cursor:pointer;font-weight:700;">发布</button></div>';ov.appendChild(box);document.body.appendChild(ov);box.querySelector('#_fpCan').onclick=function(){ov.remove();};box.querySelector('#_fpOk').onclick=function(){var txt=(box.querySelector('#_fpTxt')||{}).value||'';if(!txt.trim()){toast('请输入内容');return;}ov.remove();var tstr=new Date().toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'})+' '+new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});_posts.unshift({name:getMyName(),type:'user',ava:null,content:txt,board:_curTab==='推荐'?'日常':_curTab,likes:0,hot:false,time:tstr,comments:[]});fS('posts',_posts);loadFeed();toast('发布成功！');};ov.onclick=function(e){if(e.target===ov)ov.remove();};}
+window.fNewPost=newPost;
+
+function renderProfile(){var body=document.getElementById('fProfileBody');if(!body)return;var myName=getMyName(),myPosts=_posts.filter(function(p){return p.name===myName;});body.innerHTML='';var banner=ce('div');banner.style.cssText='height:90px;background:linear-gradient(135deg,#1d9bf0,#a29bfe);flex-shrink:0;';body.appendChild(banner);var aa=ce('div');aa.style.cssText='padding:0 14px 14px;background:#fff;border-bottom:1px solid #eff3f4;';var avEl=ce('div');avEl.style.cssText='width:62px;height:62px;border-radius:50%;background:'+aColor(myName)+';border:3px solid #fff;margin-top:-32px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff;';avEl.textContent=myName.slice(0,1);var ne=ce('div');ne.style.cssText='font-size:19px;font-weight:700;color:#0f1419;margin-top:8px;';ne.textContent=myName;var he=ce('div');he.style.cssText='font-size:14px;color:#536471;';he.textContent=hdl(myName);var st=ce('div');st.style.cssText='display:flex;gap:20px;margin-top:12px;font-size:14px;color:#0f1419;';st.innerHTML='<span><b>'+_following.length+'</b> <span style="color:#536471;">正在关注</span></span><span><b>'+myPosts.length+'</b> <span style="color:#536471;">帖子</span></span>';aa.appendChild(avEl);aa.appendChild(ne);aa.appendChild(he);aa.appendChild(st);body.appendChild(aa);var tr=ce('div');tr.style.cssText='display:flex;background:#fff;border-bottom:1px solid #eff3f4;';['帖子','回复','喜欢'].forEach(function(t,i){var el=ce('div');el.style.cssText='flex:1;text-align:center;padding:13px 0;font-size:15px;font-weight:600;color:'+(i===0?'#0f1419':'#536471')+';border-bottom:'+(i===0?'3px solid #1d9bf0':'3px solid transparent')+';cursor:pointer;';el.textContent=t;tr.appendChild(el);});body.appendChild(tr);if(!myPosts.length){var tip=ce('div');tip.style.cssText='text-align:center;padding:40px;color:#536471;font-size:14px;';tip.textContent='还没有发布过帖子';body.appendChild(tip);return;}myPosts.forEach(function(p){body.appendChild(buildCard(p,_posts.indexOf(p)));});}
+
+function renderDM(){var list=document.getElementById('fDMList');if(!list)return;list.innerHTML='<div style="text-align:center;padding:48px 20px;color:#536471;font-size:15px;">还没有私信<br><span style="color:#1d9bf0;cursor:pointer;" onclick="window.fNewDM()">点击开始私信</span></div>';}
+window.fNewDM=function(){var chars=getChars();var opts=chars.map(function(c){return '<option value="'+c.name+'">'+c.name+'</option>';}).join('');var ov=ce('div');ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;';var box=ce('div');box.style.cssText='background:#fff;border-radius:18px;padding:18px 16px;width:80vw;max-width:300px;';box.innerHTML='<div style="font-size:16px;font-weight:700;margin-bottom:12px;color:#0f1419;">新私信</div><select id="_fdmS" style="width:100%;padding:9px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;outline:none;background:#fff;margin-bottom:8px;"><option>选择联系人…</option>'+opts+'</select><input id="_fdmC" placeholder="或输入名字" style="width:100%;padding:9px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;outline:none;box-sizing:border-box;margin-bottom:12px;"><div style="display:flex;gap:8px;"><button id="_fdmCan" style="flex:1;padding:10px;border:1.5px solid #cfd9de;border-radius:12px;background:#fff;font-size:14px;cursor:pointer;color:#536471;">取消</button><button id="_fdmOk" style="flex:2;padding:10px;background:#1d9bf0;color:#fff;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:700;">开始聊天</button></div>';ov.appendChild(box);document.body.appendChild(ov);box.querySelector('#_fdmCan').onclick=function(){ov.remove();};box.querySelector('#_fdmOk').onclick=function(){var n=(box.querySelector('#_fdmC')||{}).value.trim()||(box.querySelector('#_fdmS')||{}).value||'';if(!n){toast('请选择联系人');return;}ov.remove();toast('即将与 '+hdl(n)+' 私信…');};ov.onclick=function(e){if(e.target===ov)ov.remove();};}
+
+function addTab(){var ov=ce('div');ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;';var box=ce('div');box.style.cssText='background:#fff;border-radius:18px;padding:18px 16px;width:80vw;max-width:300px;';box.innerHTML='<div style="font-size:16px;font-weight:700;margin-bottom:12px;color:#0f1419;">添加板块</div><input id="_ftN" placeholder="板块名称" maxlength="12" style="width:100%;padding:9px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;outline:none;box-sizing:border-box;margin-bottom:8px;"><textarea id="_ftD" placeholder="板块描述（AI据此生成内容）" style="width:100%;height:60px;padding:9px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;resize:none;box-sizing:border-box;outline:none;margin-bottom:12px;"></textarea><div style="display:flex;gap:8px;"><button id="_ftCan" style="flex:1;padding:10px;border:1.5px solid #cfd9de;border-radius:12px;background:#fff;font-size:14px;cursor:pointer;color:#536471;">取消</button><button id="_ftOk" style="flex:2;padding:10px;background:#1d9bf0;color:#fff;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:700;">添加</button></div>';ov.appendChild(box);document.body.appendChild(ov);box.querySelector('#_ftCan').onclick=function(){ov.remove();};box.querySelector('#_ftOk').onclick=function(){var n=(box.querySelector('#_ftN')||{}).value.trim(),d=(box.querySelector('#_ftD')||{}).value.trim();if(!n){toast('请输入板块名称');return;}ov.remove();if(!_customTabs.includes(n)){_customTabs.push(n);_tabDescs[n]=d;}renderTabs();toast('板块已添加：'+n);};ov.onclick=function(e){if(e.target===ov)ov.remove();};}
+
+function buildDrawer(){
+var dr=document.getElementById('fDrawer');if(!dr||dr.dataset.built==='1')return;dr.dataset.built='1';
+var hdr=ce('div');hdr.style.cssText='padding:max(env(safe-area-inset-top,20px),20px) 16px 14px;font-size:20px;font-weight:700;color:#0f1419;border-bottom:1px solid #eff3f4;';hdr.textContent='论坛设置';dr.appendChild(hdr);
+function sec(t){var d=ce('div');d.className='fDrSec';d.textContent=t;return d;}
+function item(ico,txt,fn){var d=ce('div');d.className='fDrItem';d.innerHTML='<div class="fDrIco">'+ico+'</div><span>'+txt+'</span>';d.onclick=fn;return d;}
+
+// 世界观 & 提示词（高度加大，可滚动）
+dr.appendChild(sec('世界观 & 提示词'));
+var wvA=ce('textarea','fWvArea');wvA.placeholder='论坛世界观（时代/地点/背景…）';wvA.style.cssText='width:100%;height:110px;padding:9px 12px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;outline:none;font-family:inherit;box-sizing:border-box;display:block;resize:none;overflow-y:auto;';
+var prA=ce('textarea','fPrArea');prA.placeholder='额外提示词';prA.style.cssText='width:100%;height:80px;padding:9px 12px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;outline:none;font-family:inherit;box-sizing:border-box;display:block;resize:none;overflow-y:auto;margin-top:8px;';
+var p1=ce('div');p1.style.padding='6px 16px 10px';p1.appendChild(wvA);p1.appendChild(prA);dr.appendChild(p1);
+
+// 时间设定
+dr.appendChild(sec('时间设定'));
+var dtI=ce('input','fDtInp');dtI.type='text';dtI.placeholder='如：2008年北京（留空=当下）';dtI.style.cssText='width:100%;padding:9px 12px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;outline:none;font-family:inherit;box-sizing:border-box;display:block;';
+var p2=ce('div');p2.style.padding='4px 16px 10px';p2.appendChild(dtI);dr.appendChild(p2);
+
+// 绑定世界书（大弹窗添加）
+dr.appendChild(sec('绑定世界书'));
+var wbListEl=ce('div','fWbList');wbListEl.style.padding='0 16px 4px';dr.appendChild(wbListEl);
+var wbAddRow=ce('div');wbAddRow.style.cssText='padding:4px 16px 12px;';
+var wbAddBtn=document.createElement('button');wbAddBtn.textContent='＋ 添加世界书';wbAddBtn.style.cssText='width:100%;padding:10px;background:#1d9bf0;color:#fff;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:700;';
+wbAddBtn.onclick=showAddWbDialog;
+wbAddRow.appendChild(wbAddBtn);dr.appendChild(wbAddRow);
+
+// 绑定角色（含编辑）
+dr.appendChild(sec('绑定角色'));
+var charListEl=ce('div','fCharList2');charListEl.style.padding='0 16px 4px';dr.appendChild(charListEl);
+var charAddRow=ce('div');charAddRow.style.cssText='padding:4px 16px 12px;';
+var charAddBtn=document.createElement('button');charAddBtn.textContent='＋ 添加自定义角色';charAddBtn.style.cssText='width:100%;padding:10px;background:#1d9bf0;color:#fff;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:700;';
+charAddBtn.onclick=function(){showEditCharDialog(null,null);};
+charAddRow.appendChild(charAddBtn);dr.appendChild(charAddRow);
+
+// 字体大小
+dr.appendChild(sec('字体大小'));
+var fsRow=ce('div');fsRow.style.cssText='padding:4px 16px 12px;display:flex;align-items:center;gap:10px;';
+fsRow.innerHTML='<span style="font-size:12px;color:#536471;">小</span><input type="range" id="fFsRange" min="13" max="18" value="15" style="flex:1;accent-color:#1d9bf0;"><span style="font-size:12px;color:#536471;">大</span>';
+fsRow.querySelector('#fFsRange').oninput=function(){document.getElementById('scrForum').style.fontSize=this.value+'px';};
+dr.appendChild(fsRow);
+
+dr.appendChild(item('💾','保存并刷新',function(){saveSettings();toggleDrawer();}));
+dr.appendChild(item('✕','收起',toggleDrawer));
+setTimeout(function(){renderWbList();renderCharList2();},50);
 }
 
-// ── 读取设定 ──
-function fGetSettings(){
-  var wv='',pr='',dt='';
-  try{wv=(document.getElementById('forumWorldView')||{}).value||'';}catch(e){}
-  try{pr=(document.getElementById('forumPrompt')||{}).value||'';}catch(e){}
-  try{dt=(document.getElementById('forumDateSet')||{}).value||'';}catch(e){}
-  return{worldView:wv,prompt:pr,date:dt||'2026年（当下）'};
+// 世界书添加弹窗
+function showAddWbDialog(editIdx){
+  var isEdit=editIdx!=null;
+  var oldItem=isEdit?_wbItems[editIdx]:{title:'',content:''};
+  var ov=ce('div');ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center;';
+  var box=ce('div');box.style.cssText='background:#fff;border-radius:20px 20px 0 0;padding:16px 16px 32px;width:100%;max-width:480px;max-height:80vh;overflow-y:auto;';
+  var titleRow=ce('div');titleRow.style.cssText='display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;';
+  titleRow.innerHTML='<span style="font-size:17px;font-weight:700;color:#0f1419;">'+(isEdit?'编辑':'添加')+'世界书</span><span style="font-size:22px;cursor:pointer;color:#536471;" id="_wbClose">✕</span>';
+  var nameLbl=ce('div');nameLbl.style.cssText='font-size:14px;font-weight:700;color:#0f1419;margin-bottom:6px;';nameLbl.textContent='世界书名称 *';
+  var nameInp=ce('input','_wbNameInp');nameInp.value=oldItem.title;nameInp.placeholder='例如：角色背景设定、世界观规则…';nameInp.style.cssText='width:100%;padding:10px 12px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;outline:none;box-sizing:border-box;display:block;margin-bottom:12px;';
+  var ctLbl=ce('div');ctLbl.style.cssText='font-size:14px;font-weight:700;color:#0f1419;margin-bottom:6px;';ctLbl.textContent='世界书内容 *';
+  var ctArea=ce('textarea','_wbCtArea');ctArea.value=oldItem.content;ctArea.placeholder='输入世界书内容，例如：\n角色背景、历史事件、社会规则…';ctArea.style.cssText='width:100%;height:160px;padding:10px 12px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;outline:none;font-family:inherit;box-sizing:border-box;resize:none;overflow-y:auto;display:block;margin-bottom:16px;';
+  var btnRow=ce('div');btnRow.style.cssText='display:flex;gap:8px;';
+  btnRow.innerHTML='<button id="_wbCan" style="flex:1;padding:11px;border:1.5px solid #cfd9de;border-radius:12px;background:#fff;font-size:14px;cursor:pointer;color:#536471;">取消</button>'+
+    '<button id="_wbOk" style="flex:2;padding:11px;background:#1d9bf0;color:#fff;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:700;">'+(isEdit?'保存':'添加')+'</button>';
+  box.appendChild(titleRow);box.appendChild(nameLbl);box.appendChild(nameInp);box.appendChild(ctLbl);box.appendChild(ctArea);box.appendChild(btnRow);
+  ov.appendChild(box);document.body.appendChild(ov);
+  box.querySelector('#_wbClose').onclick=function(){ov.remove();};
+  box.querySelector('#_wbCan').onclick=function(){ov.remove();};
+  box.querySelector('#_wbOk').onclick=function(){
+    var n=nameInp.value.trim(),c=ctArea.value.trim();
+    if(!n){toast('请输入世界书名称');return;}
+    if(isEdit){_wbItems[editIdx]={title:n,content:c};}
+    else{_wbItems.push({title:n,content:c});}
+    ov.remove();renderWbList();toast(isEdit?'世界书已更新':'世界书已添加 ✓');
+  };
+  ov.onclick=function(e){if(e.target===ov)ov.remove();};
 }
-function fGetChars(){
-  var names=[];
+
+// 角色编辑弹窗（char或自定义）
+function showEditCharDialog(charData,extraIdx){
+  var isNew=charData===null&&extraIdx===null;
+  var isExtra=extraIdx!==null&&extraIdx>=0;
+  var oldData=isExtra?_extraCharsData[extraIdx]:(charData||{});
+  var ov=ce('div');ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center;';
+  var box=ce('div');box.style.cssText='background:#fff;border-radius:20px 20px 0 0;padding:16px 16px 32px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;';
+  var titleTxt=isNew?'添加自定义角色':('编辑：'+(oldData.name||charData&&charData.name||'角色'));
+  box.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;"><span style="font-size:17px;font-weight:700;color:#0f1419;">'+titleTxt+'</span><span style="font-size:22px;cursor:pointer;color:#536471;" id="_ecClose">✕</span></div>';
+  function field(lbl,id,ph,val,ta){
+    var row=ce('div');row.style.marginBottom='10px';
+    var l=ce('div');l.style.cssText='font-size:13px;font-weight:700;color:#0f1419;margin-bottom:5px;';l.textContent=lbl;
+    var el=document.createElement(ta?'textarea':'input');el.id=id;el.placeholder=ph;el.style.cssText='width:100%;padding:9px 12px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;outline:none;font-family:inherit;box-sizing:border-box;display:block;'+(ta?'height:80px;resize:none;':'');
+    if(val)el.value=val;
+    row.appendChild(l);row.appendChild(el);return row;
+  }
+  box.appendChild(field('昵称 *','_ecName','角色名称',oldData.name||''));
+  box.appendChild(field('@handle（不含@）','_ecHandle','如：username',oldData.handle||''));
+  // 头像上传
+  var avaRow=ce('div');avaRow.style.marginBottom='10px';
+  var avaLbl=ce('div');avaLbl.style.cssText='font-size:13px;font-weight:700;color:#0f1419;margin-bottom:5px;';avaLbl.textContent='头像';
+  var avaPreview=ce('div','_ecAvaPreview');avaPreview.style.cssText='width:56px;height:56px;border-radius:50%;background:#1d9bf0;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff;overflow:hidden;background-size:cover;background-position:center;cursor:pointer;';
+  if(oldData.ava){avaPreview.style.backgroundImage='url('+oldData.ava+')';avaPreview.style.backgroundColor='transparent';}
+  else{avaPreview.textContent=(oldData.name||'A').slice(0,1);}
+  var avaInp=document.createElement('input');avaInp.type='file';avaInp.accept='image/*';avaInp.style.display='none';avaInp.id='_ecAvaInp';
+  avaInp.onchange=function(){var file=this.files[0];if(!file)return;var reader=new FileReader();reader.onload=function(ev){avaPreview.style.backgroundImage='url('+ev.target.result+')';avaPreview.style.backgroundColor='transparent';avaPreview.textContent='';};reader.readAsDataURL(file);};
+  avaPreview.onclick=function(){avaInp.click();};
+  avaRow.appendChild(avaLbl);avaRow.appendChild(avaPreview);avaRow.appendChild(avaInp);
+  box.appendChild(avaRow);
+  box.appendChild(field('个性签名','_ecBio','写点什么…',oldData.bio||'',true));
+  box.appendChild(field('正在关注数','_ecFollowing','如：58',oldData.following||''));
+  box.appendChild(field('粉丝数','_ecFollowers','如：85408',oldData.followers||''));
+  var btnRow=ce('div');btnRow.style.cssText='display:flex;gap:8px;margin-top:6px;';
+  var canBtn=document.createElement('button');canBtn.textContent='取消';canBtn.style.cssText='flex:1;padding:11px;border:1.5px solid #cfd9de;border-radius:12px;background:#fff;font-size:14px;cursor:pointer;color:#536471;';
+  var okBtn=document.createElement('button');okBtn.textContent=isNew?'添加':'保存';okBtn.style.cssText='flex:2;padding:11px;background:#1d9bf0;color:#fff;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:700;';
+  canBtn.onclick=function(){ov.remove();};
+  okBtn.onclick=function(){
+    var name=(box.querySelector('#_ecName')||{}).value.trim();
+    if(!name){toast('请输入角色名称');return;}
+    var avaData='';
+    var avaEl=box.querySelector('#_ecAvaPreview');
+    if(avaEl&&avaEl.style.backgroundImage)avaData=avaEl.style.backgroundImage.replace(/url\(["']?|["']?\)/g,'');
+    var data={name:name,handle:(box.querySelector('#_ecHandle')||{}).value.trim()||name.toLowerCase().replace(/\s/g,'_'),ava:avaData,bio:(box.querySelector('#_ecBio')||{}).value.trim(),following:(box.querySelector('#_ecFollowing')||{}).value.trim(),followers:(box.querySelector('#_ecFollowers')||{}).value.trim()};
+    if(isExtra){_extraCharsData[extraIdx]=data;_extraChars[extraIdx]=name;}
+    else if(isNew){_extraCharsData.push(data);_extraChars.push(name);}
+    else if(charData){if(!_charOverrides)_charOverrides={};_charOverrides[charData.name]=data;}
+    ov.remove();renderCharList2();toast(isNew?'角色已添加 ✓':'信息已更新 ✓');
+  };
+  btnRow.appendChild(canBtn);btnRow.appendChild(okBtn);box.appendChild(btnRow);
+  ov.appendChild(box);document.body.appendChild(ov);
+  box.querySelector('#_ecClose').onclick=function(){ov.remove();};
+  ov.onclick=function(e){if(e.target===ov)ov.remove();};
+}
+window.showEditCharDialog=showEditCharDialog;
+
+
+async function saveSettings(){var s=getS();await fS('settings',s);await fS('boards',_customTabs);await fS('wbItems',_wbItems);await fS('extraChars',_extraChars);await fS('extraCharsData',_extraCharsData);await fS('charOverrides',_charOverrides);await fS('following',_following);doRefresh();}
+
+function renderWbList(){
+  var el=document.getElementById('fWbList');if(!el)return;
+  el.innerHTML='';
+  if(!_wbItems.length){
+    var tip=ce('div');tip.style.cssText='padding:10px 0;font-size:13px;color:#536471;text-align:center;';
+    tip.textContent='暂无世界书，点下方按钮添加';el.appendChild(tip);return;
+  }
+  _wbItems.forEach(function(item,i){
+    var r=ce('div');r.style.cssText='display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f5f5f5;';
+    var left=ce('div');left.style.cssText='flex:1;min-width:0;cursor:pointer;';
+    left.innerHTML='<div style="font-size:13px;font-weight:700;color:#0f1419;">'+item.title+'</div>'+
+      '<div style="font-size:12px;color:#536471;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px;">'+item.content+'</div>';
+    left.onclick=function(){showAddWbDialog(i);};
+    var del=ce('span');del.style.cssText='color:#f91880;cursor:pointer;font-size:12px;flex-shrink:0;';del.textContent='删除';
+    del.onclick=function(){_wbItems.splice(i,1);renderWbList();};
+    r.appendChild(left);r.appendChild(del);el.appendChild(r);
+  });
+}
+
+function renderCharList2(){
+  var el=document.getElementById('fCharList2');if(!el)return;el.innerHTML='';
+  var baseChars=[];
   try{
     var opened=JSON.parse(localStorage.getItem('cs_opened_chars')||'[]');
-    opened.forEach(function(cid){var n=localStorage.getItem('cN_'+cid);var ava=localStorage.getItem('charAva_'+cid)||'';if(n)names.push({name:n,type:'char',cid:cid,ava:ava});});
-    opened.forEach(function(cid){var npcRaw=originalGetItem.call(localStorage,'npcList_'+cid);if(npcRaw){try{JSON.parse(npcRaw).forEach(function(n){if(n.name)names.push({name:n.name,type:'npc',ava:n.avatar||''});});}catch(e){}}});
+    opened.forEach(function(cid){var n=localStorage.getItem('cN_'+cid);var ava=localStorage.getItem('charAva_'+cid)||'';if(n)baseChars.push({name:n,type:'char',ava:ava,isExtra:false});});
+    opened.forEach(function(cid){var raw=originalGetItem.call(localStorage,'npcList_'+cid);if(raw){try{JSON.parse(raw).forEach(function(n){if(n.name)baseChars.push({name:n.name,type:'npc',ava:n.avatar||'',isExtra:false});});}catch(e){}}});
   }catch(e){}
-  return names;
-}
-function fGetMyName(){return localStorage.getItem('cMyN_'+(localStorage.getItem('cs_active_char')||''))||'我';}
-
-// ── 状态 ──
-var _fTopTabs=['为你推荐','热搜','文娱','社会'];
-var _fCustomTabs=[];
-var _fCurTop='为你推荐';
-var _fBottomTab='home'; // home|following|dm|profile
-var _fPosts=[];
-var _fFollowing=[]; // 关注列表 {name,type,ava}
-var _fDMs=[]; // 私信列表
-var _fCurPost=null;
-var _fReplyTarget=null;
-var _fSearchMode=false;
-var _fWbItems=[]; // 世界书条目
-var _fExtraChars=[]; // 自定义角色
-
-// ── 主题 ──
-var THEMES=[
-  {accent:'#6c5ce7',bg:'#f5f4ff'},
-  {accent:'#0984e3',bg:'#f0f7ff'},
-  {accent:'#e84393',bg:'#fff0f7'},
-  {accent:'#00b894',bg:'#f0fff9'},
-  {accent:'#e17055',bg:'#fff5f0'},
-  {accent:'#2d3436',bg:'#f5f5f5'},
-];
-var _fThemeIdx=0;
-
-// ── CSS注入（只注入一次）──
-function fInjectCSS(){
-  if(document.getElementById('forumCSS2'))return;
-  var st=document.createElement('style');
-  st.id='forumCSS2';
-  st.textContent=
-    '#scrForum{--fa:#6c5ce7;--fb:#f5f6fa;--fc:#fff;--ft:#0f1419;--fs:#536471;--fb2:#eff3f4;font-family:inherit;}'+
-    '#fTopBar{display:flex;align-items:center;gap:0;padding:52px 14px 0;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);flex-shrink:0;position:sticky;top:0;z-index:20;border-bottom:1px solid #e7e7e7;}'+
-    '#fSearch{display:flex;align-items:center;gap:8px;padding:8px 14px;background:rgba(255,255,255,0.92);backdrop-filter:blur(8px);flex-shrink:0;border-bottom:1px solid #e7e7e7;}'+
-    '#fSearchInp{flex:1;padding:9px 14px;background:#eff3f4;border:none;border-radius:20px;font-size:14px;outline:none;font-family:inherit;color:var(--ft);}'+
-    '#fMenuBtn{font-size:22px;cursor:pointer;padding:0 6px 0 0;color:var(--ft);}'+
-    '#fForumTitle{font-size:17px;font-weight:700;color:var(--ft);flex:1;text-align:center;}'+
-    '#fRefreshBtn{font-size:18px;cursor:pointer;padding:0 0 0 6px;color:#ff9eb5;}'+
-    '.ftabrow{display:flex;overflow-x:auto;flex-shrink:0;scrollbar-width:none;}'+
-    '.ftabrow::-webkit-scrollbar{display:none;}'+
-    '.ftab2{flex-shrink:0;padding:12px 16px;font-size:15px;font-weight:600;color:var(--fs);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;transition:.2s;}'+
-    '.ftab2.active{color:var(--ft);border-bottom-color:var(--fa);}'+
-    '.ftab2.add{color:var(--fa);font-size:18px;padding:12px 10px;}'+
-    '#fFeed{flex:1;overflow-y:auto;background:var(--fb);}'+
-    '.fpost{background:var(--fc);border-bottom:1px solid #e7e7e7;padding:12px 14px;cursor:pointer;display:flex;gap:10px;}'+
-    '.fpost:active{background:#f7f9f9;}'+
-    '.fpost-ava{width:42px;height:42px;border-radius:50%;flex-shrink:0;background:#ddd;overflow:hidden;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:bold;color:white;}'+
-    '.fpost-body{flex:1;min-width:0;}'+
-    '.fpost-hdr{display:flex;align-items:center;gap:4px;margin-bottom:2px;}'+
-    '.fpost-name{font-size:15px;font-weight:700;color:var(--ft);}'+
-    '.fpost-handle{font-size:13px;color:var(--fs);}'+
-    '.fpost-time{font-size:13px;color:var(--fs);margin-left:auto;}'+
-    '.fpost-text{font-size:15px;color:var(--ft);line-height:1.6;margin-bottom:8px;word-break:break-word;}'+
-    '.fpost-stats{display:flex;gap:18px;}'+
-    '.fstat2{font-size:13px;color:var(--fs);display:flex;align-items:center;gap:4px;}'+
-    '.fpost-badge{display:inline-block;padding:1px 6px;border-radius:10px;font-size:11px;background:rgba(108,92,231,.1);color:var(--fa);margin-bottom:4px;}'+
-    '.fpost-badge.hot{background:rgba(231,76,60,.1);color:#e74c3c;}'+
-    '#fBottomNav{display:flex;background:var(--fc);border-top:1px solid #e7e7e7;flex-shrink:0;}'+
-    '.fbnav{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 0;cursor:pointer;font-size:22px;color:var(--fs);}'+
-    '.fbnav.active{color:var(--fa);}'+
-    '.fbnav-lbl{font-size:10px;margin-top:2px;}'+
-    '#fDrawer{position:absolute;top:0;left:0;width:82%;max-width:310px;height:100%;background:var(--fc);z-index:50;transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow-y:auto;box-shadow:4px 0 20px rgba(0,0,0,.15);}'+
-    '#fDrawer.open{transform:translateX(0);}'+
-    '#fDrOv{position:absolute;inset:0;background:rgba(0,0,0,.3);z-index:49;display:none;}'+
-    '#fDrOv.open{display:block;}'+
-    '.fdr2-hdr{padding:52px 20px 10px;font-size:20px;font-weight:700;color:var(--ft);border-bottom:1px solid #e7e7e7;flex-shrink:0;}'+
-    '.fdr2-sec{padding:14px 20px 4px;font-size:12px;color:var(--fs);font-weight:700;letter-spacing:.5px;text-transform:uppercase;}'+
-    '.fdr2-item{display:flex;align-items:center;gap:12px;padding:13px 20px;font-size:15px;color:var(--ft);cursor:pointer;}'+
-    '.fdr2-item:active{background:var(--fb);}'+
-    '.fdr2-ico{width:36px;height:36px;border-radius:12px;background:var(--fb2);display:flex;align-items:center;justify-content:center;font-size:18px;}'+
-    '#fDetail{display:none;flex-direction:column;position:absolute;top:0;width:100%;height:100%;z-index:55;background:var(--fb);}'+
-    '#fDetBar{display:flex;align-items:center;gap:10px;padding:52px 14px 10px;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);flex-shrink:0;border-bottom:1px solid #e7e7e7;}'+
-    '#fDetBack{font-size:22px;cursor:pointer;color:var(--ft);}'+
-    '#fDetTitle{font-size:17px;font-weight:700;color:var(--ft);flex:1;}'+
-    '#fDetBody{flex:1;overflow-y:auto;}'+
-    '#fReplyBar{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--fc);border-top:1px solid #e7e7e7;flex-shrink:0;}'+
-    '#fReplyInp{flex:1;padding:9px 12px;border:1.5px solid rgba(108,92,231,.2);border-radius:20px;font-size:14px;outline:none;background:var(--fb);font-family:inherit;color:var(--ft);}'+
-    '#fReplySend{padding:8px 16px;background:var(--fa);color:white;border:none;border-radius:20px;font-size:14px;cursor:pointer;font-weight:bold;flex-shrink:0;}'+
-    '.fcmt2{background:var(--fc);border-bottom:1px solid #e7e7e7;padding:12px 14px;display:flex;gap:10px;}'+
-    '.fcmt2-ava{width:36px;height:36px;border-radius:50%;flex-shrink:0;background:#ddd;overflow:hidden;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:bold;color:white;}'+
-    '.fcmt2-body{flex:1;min-width:0;}'+
-    '.fcmt2-name{font-size:14px;font-weight:700;color:var(--ft);}'+
-    '.fcmt2-time{font-size:12px;color:var(--fs);margin-left:6px;}'+
-    '.fcmt2-txt{font-size:14px;color:var(--ft);line-height:1.6;margin-top:3px;}'+
-    '.fcmt2-likes{font-size:12px;color:var(--fs);margin-top:4px;}'+
-    '#fProfilePage{display:none;flex-direction:column;position:absolute;top:0;width:100%;height:100%;z-index:30;background:var(--fb);}'+
-    '#fDMPage{display:none;flex-direction:column;position:absolute;top:0;width:100%;height:100%;z-index:30;background:var(--fc);}'+
-    '#fFab{position:absolute;right:16px;bottom:70px;width:52px;height:52px;border-radius:50%;background:var(--fa);color:white;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;box-shadow:0 4px 16px rgba(108,92,231,.35);z-index:10;}'+
-    '#fFab:active{transform:scale(.9);}';
-  document.head.appendChild(st);
-}
-
-// ── 构建UI ──
-function fBuildUI(){
-  var wrap=document.getElementById('scrForum');
-  if(!wrap||wrap.querySelector('#fTopBar'))return;
-  fInjectCSS();
-  wrap.style.cssText='display:flex;flex-direction:column;position:absolute;top:0;width:100%;height:100%;z-index:40;overflow:hidden;background:var(--fb,#f5f6fa);';
-
-  // 顶栏
-  var topBar=_ce('div','fTopBar');
-  var menuBtn=_ce('span','fMenuBtn','☰');menuBtn.onclick=fToggleDrawer;
-  var title=_ce('span','fForumTitle','📋 论坛');
-  var refreshBtn=_ce('span','fRefreshBtn','🔄');refreshBtn.onclick=fRefresh;
-  topBar.appendChild(menuBtn);topBar.appendChild(title);topBar.appendChild(refreshBtn);
-
-  // 搜索栏
-  var searchDiv=_ce('div','fSearch');
-  var searchInp=_ce('input','fSearchInp');searchInp.placeholder='搜索论坛内容…';
-  searchInp.addEventListener('keydown',function(e){if(e.key==='Enter'&&this.value.trim())fDoSearch(this.value.trim());});
-  var searchIcon=document.createElement('span');searchIcon.textContent='🔍';searchIcon.style.cssText='font-size:18px;flex-shrink:0;cursor:pointer;';
-  searchIcon.onclick=function(){var v=searchInp.value.trim();if(v)fDoSearch(v);};
-  searchDiv.appendChild(searchIcon);searchDiv.appendChild(searchInp);
-
-  // 顶部Tab行
-  var tabRow=_ce('div',null);tabRow.className='ftabrow';tabRow.id='fTabRow';
-
-  // Feed
-  var feed=_ce('div','fFeed');
-
-  // FAB
-  var fab=_ce('div','fFab','＋');fab.onclick=fNewPost;
-
-  // 底部导航
-  var bnav=_ce('div','fBottomNav');
-  [['🏠','首页','home'],['👥','关注','following'],['✉️','私信','dm'],['👤','我的','profile']].forEach(function(tab){
-    var btn=document.createElement('div');btn.className='fbnav'+(tab[2]==='home'?' active':'');
-    btn.dataset.tab=tab[2];
-    btn.innerHTML='<span style="font-size:22px;">'+tab[0]+'</span><span class="fbnav-lbl">'+tab[1]+'</span>';
-    btn.onclick=function(){fSwitchBottom(tab[2]);};
-    bnav.appendChild(btn);
-  });
-
-  // 遮罩+抽屉
-  var drOv=_ce('div','fDrOv');drOv.onclick=fToggleDrawer;
-  var drawer=fBuildDrawer();
-
-  // 帖子详情
-  var detail=fBuildDetail();
-
-  // 个人页
-  var profile=fBuildProfile();
-
-  // 私信页
-  var dm=fBuildDM();
-
-  wrap.appendChild(topBar);
-  wrap.appendChild(searchDiv);
-  wrap.appendChild(tabRow);
-  wrap.appendChild(feed);
-  wrap.appendChild(fab);
-  wrap.appendChild(bnav);
-  wrap.appendChild(drOv);
-  wrap.appendChild(drawer);
-  wrap.appendChild(detail);
-  wrap.appendChild(profile);
-  wrap.appendChild(dm);
-  fRenderTopTabs();
-}
-
-function _ce(tag,id,txt){
-  var el=document.createElement(tag||'div');
-  if(id)el.id=id;
-  if(txt!==undefined)el.textContent=txt;
-  return el;
-}
-
-// ── 构建侧边抽屉 ──
-function fBuildDrawer(){
-  var dr=_ce('div','fDrawer');
-  var hdr=_ce('div',null,'📋 论坛设置');hdr.className='fdr2-hdr';dr.appendChild(hdr);
-
-  function sec(t){var d=_ce('div',null,t);d.className='fdr2-sec';return d;}
-  function item(ico,txt,fn){var d=_ce('div');d.className='fdr2-item';d.innerHTML='<div class="fdr2-ico">'+ico+'</div><span>'+txt+'</span>';d.onclick=fn;return d;}
-
-  dr.appendChild(sec('世界观 & 提示词'));
-  var wvArea=document.createElement('textarea');wvArea.id='forumWorldView';wvArea.placeholder='论坛世界观（时代/地点/背景…）';
-  wvArea.style.cssText='width:100%;height:72px;padding:8px 10px;border:1.5px solid rgba(108,92,231,.18);border-radius:10px;font-size:13px;resize:none;box-sizing:border-box;outline:none;font-family:inherit;line-height:1.6;display:block;';
-  var prArea=document.createElement('textarea');prArea.id='forumPrompt';prArea.placeholder='额外提示词';
-  prArea.style.cssText='width:100%;height:52px;padding:8px 10px;border:1.5px solid rgba(108,92,231,.18);border-radius:10px;font-size:13px;resize:none;box-sizing:border-box;outline:none;font-family:inherit;line-height:1.6;display:block;margin-top:6px;';
-  var wvWrap=document.createElement('div');wvWrap.style.padding='6px 20px 10px';wvWrap.appendChild(wvArea);wvWrap.appendChild(prArea);dr.appendChild(wvWrap);
-
-  dr.appendChild(sec('时间设定'));
-  var dtInp=document.createElement('input');dtInp.id='forumDateSet';dtInp.type='text';dtInp.placeholder='如：2008年北京（留空=当下）';
-  dtInp.style.cssText='width:100%;padding:8px 10px;border:1.5px solid rgba(108,92,231,.18);border-radius:10px;font-size:13px;box-sizing:border-box;outline:none;font-family:inherit;display:block;';
-  var dtWrap=document.createElement('div');dtWrap.style.padding='4px 20px 10px';dtWrap.appendChild(dtInp);dr.appendChild(dtWrap);
-
-  // 绑定世界书
-  dr.appendChild(sec('绑定世界书'));
-  var wbList=_ce('div','fWbList');wbList.style.padding='0 20px 4px';dr.appendChild(wbList);
-  var wbAddDiv=document.createElement('div');wbAddDiv.style.cssText='padding:4px 20px 10px;display:flex;gap:6px;';
-  var wbTitleInp=document.createElement('input');wbTitleInp.id='fWbTitleInp';wbTitleInp.placeholder='标题';
-  wbTitleInp.style.cssText='width:70px;padding:7px 8px;border:1.5px solid rgba(108,92,231,.18);border-radius:10px;font-size:12px;outline:none;font-family:inherit;flex-shrink:0;';
-  var wbContentInp=document.createElement('input');wbContentInp.id='fWbContentInp';wbContentInp.placeholder='内容描述…';
-  wbContentInp.style.cssText='flex:1;padding:7px 8px;border:1.5px solid rgba(108,92,231,.18);border-radius:10px;font-size:12px;outline:none;font-family:inherit;';
-  var wbAddBtn=document.createElement('button');wbAddBtn.textContent='添加';
-  wbAddBtn.style.cssText='padding:7px 10px;background:#6c5ce7;color:white;border:none;border-radius:10px;font-size:12px;cursor:pointer;font-weight:bold;flex-shrink:0;';
-  wbAddBtn.onclick=fAddWbItem;
-  wbAddDiv.appendChild(wbTitleInp);wbAddDiv.appendChild(wbContentInp);wbAddDiv.appendChild(wbAddBtn);
-  dr.appendChild(wbAddDiv);
-
-  // 绑定角色
-  dr.appendChild(sec('绑定角色'));
-  var charList=_ce('div','fCharList');charList.style.padding='0 20px 4px';dr.appendChild(charList);
-  var charAddDiv=document.createElement('div');charAddDiv.style.cssText='padding:4px 20px 10px;';
-  var charSel=document.createElement('select');charSel.id='fCharSel';
-  charSel.style.cssText='width:100%;padding:8px 10px;border:1.5px solid rgba(108,92,231,.18);border-radius:10px;font-size:13px;box-sizing:border-box;outline:none;font-family:inherit;margin-bottom:6px;background:white;';
-  var charInp=document.createElement('input');charInp.id='fCharCustomInp';charInp.placeholder='或输入自定义角色名';
-  charInp.style.cssText='width:100%;padding:8px 10px;border:1.5px solid rgba(108,92,231,.18);border-radius:10px;font-size:13px;box-sizing:border-box;outline:none;font-family:inherit;';
-  var charAddBtn=document.createElement('button');charAddBtn.textContent='绑定';
-  charAddBtn.style.cssText='width:100%;margin-top:6px;padding:9px;background:#6c5ce7;color:white;border:none;border-radius:10px;font-size:13px;cursor:pointer;font-weight:bold;';
-  charAddBtn.onclick=fAddChar;
-  charAddDiv.appendChild(charSel);charAddDiv.appendChild(charInp);charAddDiv.appendChild(charAddBtn);dr.appendChild(charAddDiv);
-
-  dr.appendChild(sec('主题色'));
-  var tr=_ce('div','fThemeRow');tr.style.cssText='display:flex;gap:8px;padding:8px 20px 12px;flex-wrap:wrap;';dr.appendChild(tr);
-
-  dr.appendChild(sec('字体大小'));
-  var fsWrap=document.createElement('div');fsWrap.style.cssText='padding:4px 20px 12px;display:flex;align-items:center;gap:10px;';
-  fsWrap.innerHTML='<span style="font-size:11px;color:#888;">小</span><input type="range" id="forumFontSize" min="13" max="18" value="15" oninput="forumApplyFont(this.value)" style="flex:1;accent-color:#6c5ce7;"><span style="font-size:11px;color:#888;">大</span>';
-  dr.appendChild(fsWrap);
-
-  dr.appendChild(item('💾','保存并刷新',function(){fSaveSettings();fToggleDrawer();}));
-  dr.appendChild(item('✕','收起',fToggleDrawer));
-  return dr;
-}
-
-// ── 构建帖子详情 ──
-function fBuildDetail(){
-  var det=_ce('div','fDetail');
-  var bar=_ce('div','fDetBar');
-  var back=_ce('span','fDetBack','＜');back.onclick=fCloseDetail;
-  var t=_ce('span','fDetTitle','帖子详情');
-  var moreCmt=document.createElement('span');moreCmt.style.cssText='font-size:14px;cursor:pointer;color:#6c5ce7;margin-left:auto;font-weight:600;';moreCmt.textContent='＋更多评论';moreCmt.onclick=fLoadMoreComments;
-  bar.appendChild(back);bar.appendChild(t);bar.appendChild(moreCmt);
-  var body=_ce('div','fDetBody');
-  var replyBar=_ce('div','fReplyBar');
-  var inp=_ce('input','fReplyInp');inp.placeholder='发表评论…';
-  var btn=_ce('button','fReplySend','发送');btn.onclick=fSendReply;
-  replyBar.appendChild(inp);replyBar.appendChild(btn);
-  det.appendChild(bar);det.appendChild(body);det.appendChild(replyBar);
-  return det;
-}
-
-// ── 构建个人页 ──
-function fBuildProfile(){
-  var pg=_ce('div','fProfilePage');
-  var bar=document.createElement('div');bar.style.cssText='display:flex;align-items:center;gap:10px;padding:52px 14px 10px;background:white;flex-shrink:0;border-bottom:1px solid #e7e7e7;';
-  bar.innerHTML='<span style="font-size:22px;cursor:pointer;" onclick="fSwitchBottom(\'home\')">＜</span><span style="font-size:17px;font-weight:700;">我的主页</span>';
-  var body=_ce('div','fProfileBody');body.style.cssText='flex:1;overflow-y:auto;';
-  pg.appendChild(bar);pg.appendChild(body);
-  return pg;
-}
-
-// ── 构建私信页 ──
-function fBuildDM(){
-  var pg=_ce('div','fDMPage');
-  var bar=document.createElement('div');bar.style.cssText='display:flex;align-items:center;gap:10px;padding:52px 14px 10px;background:white;flex-shrink:0;border-bottom:1px solid #e7e7e7;';
-  bar.innerHTML='<span style="font-size:22px;cursor:pointer;" onclick="fSwitchBottom(\'home\')">＜</span><span style="font-size:17px;font-weight:700;">私信</span><span style="margin-left:auto;font-size:20px;cursor:pointer;color:#6c5ce7;" onclick="fNewDM()">✏️</span>';
-  var list=_ce('div','fDMList');list.style.cssText='flex:1;overflow-y:auto;';
-  list.innerHTML='<div style="text-align:center;padding:40px;color:#888;font-size:14px;">还没有私信<br>点右上角✏️开始聊天</div>';
-  pg.appendChild(bar);pg.appendChild(list);
-  return pg;
-}
-
-// ── 顶部Tab渲染 ──
-function fRenderTopTabs(){
-  var row=document.getElementById('fTabRow');if(!row)return;
-  row.innerHTML='';
-  var allTabs=_fTopTabs.concat(_fCustomTabs);
-  allTabs.forEach(function(t){
-    var el=document.createElement('div');el.className='ftab2'+(t===_fCurTop?' active':'');el.textContent=t;
-    el.onclick=function(){_fCurTop=t;fRenderTopTabs();fLoadFeed();};
-    row.appendChild(el);
-  });
-  // ＋新建板块按钮
-  var addBtn=document.createElement('div');addBtn.className='ftab2 add';addBtn.textContent='＋';
-  addBtn.onclick=fAddCustomTab;row.appendChild(addBtn);
-}
-
-// ── 切换底部Tab ──
-window.fSwitchBottom=function(tab){
-  _fBottomTab=tab;
-  document.querySelectorAll('.fbnav').forEach(function(b){b.classList.toggle('active',b.dataset.tab===tab);});
-  var feed=document.getElementById('fFeed');
-  var profile=document.getElementById('fProfilePage');
-  var dm=document.getElementById('fDMPage');
-  var tabRow=document.getElementById('fTabRow');
-  var search=document.getElementById('fSearch');
-  var fab=document.getElementById('fFab');
-  if(feed)feed.style.display=tab==='home'||tab==='following'?'block':'none';
-  if(tabRow)tabRow.style.display=tab==='home'?'flex':'none';
-  if(search)search.style.display=tab==='home'?'flex':'none';
-  if(profile){profile.style.display=tab==='profile'?'flex':'none';}
-  if(dm){dm.style.display=tab==='dm'?'flex':'none';}
-  if(fab)fab.style.display=tab==='home'||tab==='following'?'flex':'none';
-  if(tab==='home')fLoadFeed();
-  if(tab==='following')fLoadFollowingFeed();
-  if(tab==='profile')fRenderProfile();
-};
-
-// ── 侧边抽屉 ──
-window.fToggleDrawer=function(){
-  var dr=document.getElementById('fDrawer');
-  var ov=document.getElementById('fDrOv');
-  if(!dr)return;
-  var open=dr.classList.contains('open');
-  dr.classList.toggle('open',!open);
-  ov.classList.toggle('open',!open);
-  if(!open)fRenderDrawerLists();
-};
-
-// ── 渲染抽屉列表（世界书、角色）──
-function fRenderDrawerLists(){
-  // 世界书列表
-  var wbl=document.getElementById('fWbList');if(wbl){
-    wbl.innerHTML='';
-    _fWbItems.forEach(function(item,i){
-      var row=document.createElement('div');row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:5px 0;font-size:13px;';
-      row.innerHTML='<span style="font-weight:600;">'+item.title+'</span><span style="color:#888;font-size:11px;flex:1;margin:0 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+item.content+'</span><span style="color:#e74c3c;cursor:pointer;font-size:11px;" data-i="'+i+'">删</span>';
-      row.querySelector('[data-i]').onclick=function(){_fWbItems.splice(parseInt(this.getAttribute('data-i')),1);fRenderDrawerLists();};
-      wbl.appendChild(row);
-    });
-  }
-  // 角色下拉
-  var sel=document.getElementById('fCharSel');if(sel){
-    sel.innerHTML='<option value="">选择已有角色…</option>';
-    var chars=fGetChars();
-    chars.forEach(function(c){var opt=document.createElement('option');opt.value=c.name;opt.textContent=c.name+(c.type==='npc'?'（NPC）':'');sel.appendChild(opt);});
-  }
-  // 已绑定角色列表
-  var cl=document.getElementById('fCharList');if(cl){
-    cl.innerHTML='';
-    _fExtraChars.forEach(function(c,i){
-      var row=document.createElement('div');row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:5px 0;font-size:13px;';
-      row.innerHTML='<span>'+c+'</span><span style="color:#e74c3c;cursor:pointer;font-size:11px;" data-i="'+i+'">删</span>';
-      row.querySelector('[data-i]').onclick=function(){_fExtraChars.splice(parseInt(this.getAttribute('data-i')),1);fRenderDrawerLists();};
-      cl.appendChild(row);
-    });
-  }
-  // 主题色
-  var tr=document.getElementById('fThemeRow');if(tr&&!tr.hasChildNodes()){
-    THEMES.forEach(function(t,i){var dot=document.createElement('div');dot.style.cssText='width:26px;height:26px;border-radius:50%;cursor:pointer;background:'+t.accent+';border:3px solid '+(i===_fThemeIdx?'#222':'transparent')+';';
-    dot.onclick=function(){_fThemeIdx=i;fApplyTheme(i);fRenderDrawerLists();};tr.appendChild(dot);});
-  }
-}
-
-// ── 世界书/角色操作 ──
-window.fAddWbItem=function(){
-  var t=(document.getElementById('fWbTitleInp')||{}).value||'';
-  var c=(document.getElementById('fWbContentInp')||{}).value||'';
-  if(!t.trim())return;
-  _fWbItems.push({title:t.trim(),content:c.trim()});
-  if(document.getElementById('fWbTitleInp'))document.getElementById('fWbTitleInp').value='';
-  if(document.getElementById('fWbContentInp'))document.getElementById('fWbContentInp').value='';
-  fRenderDrawerLists();fToast('世界书已添加');
-};
-window.fAddChar=function(){
-  var sel=(document.getElementById('fCharSel')||{}).value||'';
-  var custom=(document.getElementById('fCharCustomInp')||{}).value||'';
-  var name=custom.trim()||sel;
-  if(!name)return;
-  if(!_fExtraChars.includes(name))_fExtraChars.push(name);
-  if(document.getElementById('fCharCustomInp'))document.getElementById('fCharCustomInp').value='';
-  fRenderDrawerLists();fToast('角色已绑定');
-};
-
-// ── 板块Tab添加/删除 ──
-window.fAddCustomTab=function(){
-  var ov=document.createElement('div');ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;';
-  var box=document.createElement('div');box.style.cssText='background:white;border-radius:18px;padding:20px;width:80vw;max-width:300px;';
-  box.innerHTML='<div style="font-size:15px;font-weight:700;margin-bottom:12px;color:#0f1419;">添加自定义板块</div>'+
-    '<input id="_ftabName" placeholder="板块名称（如：青岛一中）" maxlength="12" style="width:100%;padding:9px 12px;border:1.5px solid #e7e7e7;border-radius:12px;font-size:14px;box-sizing:border-box;outline:none;margin-bottom:8px;">'+
-    '<textarea id="_ftabDesc" placeholder="板块内容描述（AI将根据此生成相关帖子）" style="width:100%;height:60px;padding:9px 12px;border:1.5px solid #e7e7e7;border-radius:12px;font-size:13px;resize:none;box-sizing:border-box;outline:none;"></textarea>'+
-    '<div style="display:flex;gap:8px;margin-top:12px;">'+
-    '<button id="_ftabCan" style="flex:1;padding:10px;border:1.5px solid #e7e7e7;border-radius:12px;background:white;font-size:14px;cursor:pointer;color:#888;">取消</button>'+
-    '<button id="_ftabOk" style="flex:2;padding:10px;background:#6c5ce7;color:white;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:bold;">添加</button>'+
-    '</div>';
-  ov.appendChild(box);document.body.appendChild(ov);
-  box.querySelector('#_ftabCan').onclick=function(){ov.remove();};
-  box.querySelector('#_ftabOk').onclick=function(){
-    var name=(box.querySelector('#_ftabName')||{}).value||'';
-    var desc=(box.querySelector('#_ftabDesc')||{}).value||'';
-    if(!name.trim()){fToast('请输入板块名称');return;}
-    ov.remove();
-    _fCustomTabs.push(name.trim());
-    // 存板块描述
-    if(!window._fTabDescs)window._fTabDescs={};
-    window._fTabDescs[name.trim()]=desc.trim();
-    fRenderTopTabs();fToast('板块已添加：'+name);
-  };
-  ov.onclick=function(e){if(e.target===ov)ov.remove();};
-};
-
-// ── 加载Feed ──
-async function fLoadFeed(){
-  var feed=document.getElementById('fFeed');if(!feed)return;
-  feed.innerHTML='';
-  var cached=_fPosts.filter(function(p){
-    if(_fCurTop==='为你推荐')return true;
-    if(_fCurTop==='热搜')return p.hot;
-    return p.board===_fCurTop;
-  });
-  if(!cached.length){
-    feed.innerHTML='<div style="text-align:center;padding:40px;color:#888;font-size:14px;">没有内容<br>点击🔄刷新生成</div>';
-    return;
-  }
-  cached.forEach(function(post,idx){feed.appendChild(fBuildPostCard(post,_fPosts.indexOf(post)));});
-}
-
-function fLoadFollowingFeed(){
-  var feed=document.getElementById('fFeed');if(!feed)return;
-  feed.innerHTML='';
-  var posts=_fPosts.filter(function(p){return _fFollowing.find(function(f){return f.name===p.name;});});
-  if(!posts.length){feed.innerHTML='<div style="text-align:center;padding:40px;color:#888;font-size:14px;">还没有关注的人<br>在帖子里点头像可关注</div>';return;}
-  posts.forEach(function(post){feed.appendChild(fBuildPostCard(post,_fPosts.indexOf(post)));});
-}
-
-// ── 构建帖子卡片 ──
-function fBuildPostCard(post,realIdx){
-  var card=document.createElement('div');card.className='fpost';
-  var avaEl=document.createElement('div');avaEl.className='fpost-ava';
-  if(post.avatarUrl){avaEl.style.backgroundImage='url('+post.avatarUrl+')';avaEl.style.backgroundColor='transparent';}
-  else{avaEl.style.background=post.avatarColor||'#888';avaEl.textContent=post.name.slice(0,1);}
-  avaEl.onclick=function(e){e.stopPropagation();fToggleFollow(post);};
-  var body=document.createElement('div');body.className='fpost-body';
-  var hdr=document.createElement('div');hdr.className='fpost-hdr';
-  var name=document.createElement('span');name.className='fpost-name';name.textContent=post.name;
-  var handle=document.createElement('span');handle.className='fpost-handle';handle.textContent='@'+fToHandle(post.name);
-  var time=document.createElement('span');time.className='fpost-time';time.textContent=post.time;
-  hdr.appendChild(name);hdr.appendChild(handle);hdr.appendChild(time);
-  if(post.board){var badge=document.createElement('div');badge.className='fpost-badge'+(post.hot?' hot':'');badge.textContent=post.board;body.appendChild(badge);}
-  body.appendChild(hdr);
-  var txt=document.createElement('div');txt.className='fpost-text';txt.textContent=post.content;body.appendChild(txt);
-  var stats=document.createElement('div');stats.className='fpost-stats';
-  stats.innerHTML='<span class="fstat2">💬 '+post.comments.length+'</span><span class="fstat2">🔁 '+Math.floor(Math.random()*50)+'</span><span class="fstat2">❤️ '+post.likes+'</span>';
-  body.appendChild(stats);
-  card.appendChild(avaEl);card.appendChild(body);
-  card.onclick=function(){fOpenPost(realIdx);};
-  return card;
-}
-
-function fToHandle(name){return name.replace(/\s/g,'_').toLowerCase();}
-
-// ── 关注/取关 ──
-function fToggleFollow(post){
-  var idx=_fFollowing.findIndex(function(f){return f.name===post.name;});
-  if(idx>=0){_fFollowing.splice(idx,1);fToast('已取关 @'+fToHandle(post.name));}
-  else{_fFollowing.push({name:post.name,type:post.type,ava:post.avatarUrl||''});fToast('已关注 @'+fToHandle(post.name)+' ✓');}
-  fSave('following',_fFollowing);
-}
-
-// ── 搜索 ──
-async function fDoSearch(q){
-  var cfg=await fApi();
-  var feed=document.getElementById('fFeed');if(!feed)return;
-  feed.innerHTML='<div style="text-align:center;padding:40px;color:#888;">搜索中…</div>';
-  if(!cfg){
-    // 本地过滤
-    var results=_fPosts.filter(function(p){return p.title&&p.title.includes(q)||p.content&&p.content.includes(q);});
-    feed.innerHTML='';
-    if(!results.length){feed.innerHTML='<div style="text-align:center;padding:40px;color:#888;">没找到相关内容</div>';return;}
-    results.forEach(function(post){feed.appendChild(fBuildPostCard(post,_fPosts.indexOf(post)));});
-    return;
-  }
-  var s=fGetSettings();
-  var pr='根据以下设定，生成5条关于"'+q+'"的论坛帖子。时间：'+s.date+'\n世界观：'+(s.worldView||'现实生活')+'\n输出JSON数组：[{"name":"发帖者","type":"char或net","content":"帖文内容(80字内)","board":"'+_fCurTop+'","likes":数字,"hot":false}]\n只输出JSON数组。';
-  try{
-    var raw=await fCall(cfg,pr,500);
-    var items=fParseJson(raw);
-    var charMap={};fGetChars().forEach(function(c){charMap[c.name]=c;});
-    var now=new Date();var tstr=(now.getMonth()+1)+'/'+(now.getDate());
-    feed.innerHTML='';
-    items.forEach(function(item){
-      var c=charMap[item.name];
-      var post={name:item.name,type:item.type||'net',avatarUrl:c&&c.ava?c.ava:null,avatarColor:item.type==='net'?'#888':'#e17055',content:item.content,board:item.board||_fCurTop,likes:item.likes||0,hot:!!item.hot,time:tstr,comments:[]};
-      feed.appendChild(fBuildPostCard(post,_fPosts.length));
-      _fPosts.push(post);
-    });
-    fSave('posts',_fPosts);
-  }catch(e){feed.innerHTML='<div style="text-align:center;padding:40px;color:#888;">搜索失败，请重试</div>';}
-}
-
-// ── 打开帖子 ──
-window.fOpenPost=function(idx){
-  _fCurPost=idx;_fReplyTarget=null;
-  var post=_fPosts[idx];if(!post)return;
-  var det=document.getElementById('fDetail');
-  var title=document.getElementById('fDetTitle');
-  var body=document.getElementById('fDetBody');
-  if(!det||!title||!body)return;
-  title.textContent='帖子';
-  body.innerHTML='';
-  // 原帖
-  var orig=document.createElement('div');orig.className='fpost';orig.style.borderBottom='3px solid #e7e7e7';
-  var avaEl=document.createElement('div');avaEl.className='fpost-ava';
-  if(post.avatarUrl){avaEl.style.backgroundImage='url('+post.avatarUrl+')';avaEl.style.backgroundColor='transparent';}
-  else{avaEl.style.background=post.avatarColor||'#888';avaEl.textContent=post.name.slice(0,1);}
-  var bd=document.createElement('div');bd.className='fpost-body';
-  bd.innerHTML='<div class="fpost-hdr"><span class="fpost-name">'+post.name+'</span><span class="fpost-handle">@'+fToHandle(post.name)+'</span><span class="fpost-time">'+post.time+'</span></div>'+
-    '<div style="font-size:16px;color:var(--ft);line-height:1.7;margin-bottom:10px;word-break:break-word;">'+post.content+'</div>'+
-    '<div class="fpost-stats"><span class="fstat2">💬 '+post.comments.length+'</span><span class="fstat2">❤️ '+post.likes+'</span></div>';
-  orig.appendChild(avaEl);orig.appendChild(bd);body.appendChild(orig);
-  // 评论
-  var cmtLabel=document.createElement('div');cmtLabel.style.cssText='padding:10px 14px;font-size:14px;font-weight:700;color:var(--ft);border-bottom:1px solid #e7e7e7;background:white;';cmtLabel.textContent='评论 '+post.comments.length+' 条';
-  body.appendChild(cmtLabel);
-  post.comments.forEach(function(cmt,ci){body.appendChild(fBuildCmtEl(cmt,idx,ci));});
-  det.style.display='flex';
-};
-
-function fBuildCmtEl(cmt,postIdx,cmtIdx){
-  var card=document.createElement('div');card.className='fcmt2';
-  var avaEl=document.createElement('div');avaEl.className='fcmt2-ava';
-  if(cmt.avatarUrl){avaEl.style.backgroundImage='url('+cmt.avatarUrl+')';avaEl.style.backgroundColor='transparent';}
-  else{avaEl.style.background=cmt.avatarColor||'#888';avaEl.textContent=cmt.name.slice(0,1);}
-  var bd=document.createElement('div');bd.className='fcmt2-body';
-  bd.innerHTML='<div><span class="fcmt2-name">'+cmt.name+'</span><span class="fcmt2-time">'+cmt.time+'</span></div>'+
-    '<div class="fcmt2-txt">'+cmt.text+'</div>'+
-    '<div class="fcmt2-likes"><span style="cursor:pointer;" onclick="fReplyToCmt('+postIdx+','+cmtIdx+',\''+cmt.name.replace(/'/g,'')+'\')">回复</span><span style="margin-left:12px;">❤️ '+cmt.likes+'</span></div>';
-  if(cmt.replies&&cmt.replies.length){
-    cmt.replies.forEach(function(rep){
-      var rd=document.createElement('div');rd.className='freply';
-      var rs=rep.avatarUrl?'background-image:url('+rep.avatarUrl+');background-color:transparent;':'background:'+(rep.avatarColor||'#bbb')+';';
-      rd.innerHTML='<div style="display:flex;gap:6px;align-items:center;"><div class="fcmt2-ava" style="'+rs+'width:22px;height:22px;font-size:10px;">'+( rep.avatarUrl?'':rep.name.slice(0,1))+'</div>'+
-        '<span style="font-size:13px;font-weight:700;color:var(--ft);">'+rep.name+'</span><span style="font-size:11px;color:var(--fs);">'+rep.time+'</span></div>'+
-        '<div style="font-size:13px;color:var(--ft);margin-top:3px;margin-left:28px;">'+rep.text+'</div>';
-      bd.appendChild(rd);
-    });
-  }
-  card.appendChild(avaEl);card.appendChild(bd);
-  return card;
-}
-window.fReplyToCmt=function(pi,ci,name){
-  _fReplyTarget={postIdx:pi,cmtIdx:ci,name:name};
-  var inp=document.getElementById('fReplyInp');if(inp){inp.placeholder='回复 @'+name+'…';inp.focus();}
-};
-window.fCloseDetail=function(){
-  var det=document.getElementById('fDetail');if(det)det.style.display='none';
-  _fCurPost=null;_fReplyTarget=null;
-  var inp=document.getElementById('fReplyInp');if(inp)inp.placeholder='发表评论…';
-};
-
-// ── 发评论 ──
-window.fSendReply=function(){
-  var inp=document.getElementById('fReplyInp');if(!inp||!inp.value.trim())return;
-  var text=inp.value.trim();
-  var myName=fGetMyName();
-  var newCmt={name:myName,type:'user',avatarColor:'#6c5ce7',text:text,time:'刚刚',likes:0,replies:[]};
-  if(_fReplyTarget!==null&&_fCurPost!==null){
-    var post=_fPosts[_fCurPost];
-    if(post&&post.comments[_fReplyTarget.cmtIdx]){
-      if(!post.comments[_fReplyTarget.cmtIdx].replies)post.comments[_fReplyTarget.cmtIdx].replies=[];
-      post.comments[_fReplyTarget.cmtIdx].replies.push(newCmt);
+  var extraCharsDisplay=_extraCharsData.map(function(d,i){return{name:d.name,type:'extra',ava:d.ava||'',isExtra:true,extraIdx:i};});
+  var allChars=baseChars.concat(extraCharsDisplay);
+  if(!allChars.length){var tip=ce('div');tip.style.cssText='padding:10px 0;font-size:13px;color:#536471;text-align:center;';tip.textContent='暂无绑定角色';el.appendChild(tip);return;}
+  allChars.forEach(function(c){
+    var r=ce('div');r.style.cssText='display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f5f5f5;';
+    var ava=ce('div');ava.style.cssText='width:32px;height:32px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;overflow:hidden;background-size:cover;background-position:center;';
+    var ov=_charOverrides&&_charOverrides[c.name];
+    var avaUrl=(ov&&ov.ava)||c.ava;
+    if(avaUrl){ava.style.backgroundImage='url('+avaUrl+')';ava.style.backgroundColor='transparent';}
+    else{ava.style.background=aColor(c.name);ava.textContent=c.name.slice(0,1);}
+    var info=ce('div');info.style.cssText='flex:1;min-width:0;';
+    var tag=c.type==='extra'?'[自定义] ':c.type==='npc'?'[NPC] ':'';
+    info.innerHTML='<div style="font-size:13px;font-weight:700;color:#0f1419;">'+tag+c.name+'</div>';
+    var editBtn=ce('span');editBtn.style.cssText='font-size:12px;color:#1d9bf0;cursor:pointer;flex-shrink:0;';editBtn.textContent='编辑';
+    var capturedC=c;
+    editBtn.onclick=function(){if(capturedC.isExtra){showEditCharDialog(null,capturedC.extraIdx);}else{showEditCharDialog(capturedC,null);}};
+    r.appendChild(ava);r.appendChild(info);r.appendChild(editBtn);
+    if(c.isExtra){
+      var delBtn=ce('span');delBtn.style.cssText='font-size:12px;color:#f91880;cursor:pointer;flex-shrink:0;margin-left:6px;';delBtn.textContent='删除';
+      var capturedIdx=c.extraIdx;
+      delBtn.onclick=function(){_extraCharsData.splice(capturedIdx,1);_extraChars.splice(capturedIdx,1);renderCharList2();};
+      r.appendChild(delBtn);
     }
-    _fReplyTarget=null;inp.placeholder='发表评论…';
-  } else if(_fCurPost!==null){_fPosts[_fCurPost].comments.push(newCmt);}
-  inp.value='';
-  fSave('posts',_fPosts);
-  if(_fCurPost!==null)fOpenPost(_fCurPost);
-};
+    el.appendChild(r);
+  });
+}
+function renderCharList(){renderCharList2();}
 
-// ── 加载更多AI评论 ──
-window.fLoadMoreComments=async function(){
-  if(_fCurPost===null)return;
-  var cfg=await fApi();if(!cfg){fToast('请先配置API');return;}
-  var post=_fPosts[_fCurPost];if(!post)return;
-  fToast('生成评论中…');
-  var s=fGetSettings();
-  var chars=fGetChars().concat(_fExtraChars.map(function(n){return{name:n,type:'custom'};}));
-  var charNames=chars.map(function(c){return c.name;}).join('、')||'路人';
-  var pr='为这条帖子生成5条评论（包含2位以上这些人物：'+charNames+'）。\n时间：'+s.date+'\n帖子内容：'+post.content+'\n'+s.prompt+'\n输出JSON数组：[{"name":"名字","type":"char或net","text":"评论","likes":数字}]\n只输出JSON数组。';
-  try{
-    var raw=await fCall(cfg,pr,400);
-    var items=fParseJson(raw);
-    var charMap={};chars.forEach(function(c){charMap[c.name]=c;});
-    var tstr=new Date().toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'});
-    items.forEach(function(item){
-      var c=charMap[item.name];
-      var color=item.type==='net'?'#888':item.type==='char'?'#e17055':'#0984e3';
-      post.comments.push({name:item.name,type:item.type||'net',avatarUrl:c&&c.ava?c.ava:null,avatarColor:color,text:item.text,time:tstr,likes:item.likes||0,replies:[]});
-    });
-    fSave('posts',_fPosts);
-    fOpenPost(_fCurPost);fToast('新评论已生成 💬');
-  }catch(e){fToast('生成失败');}
-};
+window.fSaveSettings=saveSettings;
 
-// ── 刷新/生成帖子 ──
-window.fRefresh=async function(){
-  await fGenHotTags();
-  await fGenPosts(_fCurTop);
-};
+function buildUI(){
+var wrap=document.getElementById('scrForum');if(!wrap||wrap.querySelector('#fWrap'))return;
+injectCSS();
+var w=ce('div','fWrap');
+// 顶部
+var hdr=ce('div','fHeader');
+var htop=ce('div','fHeaderTop');
+var mBtn=ce('div','fMenuBtn');mBtn.innerHTML='&#9776;';mBtn.onclick=toggleDrawer;
+var ht=ce('div','fHeaderTitle');ht.textContent='📋 论坛';
+var rBtn=ce('div','fRefreshBtn');rBtn.textContent='🔄';rBtn.onclick=doRefresh;
+htop.appendChild(mBtn);htop.appendChild(ht);htop.appendChild(rBtn);
+var hotBar=ce('div','fHotBar');hotBar.style.cssText='display:flex;align-items:center;overflow-x:auto;padding:4px 12px 6px;scrollbar-width:none;border-bottom:1px solid #eff3f4;';
+var hotLbl=ce('span');hotLbl.style.cssText='font-size:12px;color:#f91880;font-weight:700;flex-shrink:0;margin-right:6px;';hotLbl.textContent='🔥';
+var hotTags=ce('div','forumHotTags');hotTags.style.cssText='display:flex;overflow-x:auto;scrollbar-width:none;';
+var hotTip=ce('span');hotTip.style.cssText='font-size:12px;color:#536471;white-space:nowrap;';hotTip.textContent='点🔄生成热搜';hotTags.appendChild(hotTip);
+hotBar.appendChild(hotLbl);hotBar.appendChild(hotTags);
+var sBar=ce('div','fSearchBar');
+var sIco=ce('span');sIco.style.cssText='font-size:18px;flex-shrink:0;cursor:pointer;';sIco.textContent='🔍';sIco.onclick=function(){doSearch(document.getElementById('fSearchInp').value.trim());};
+var sInp=ce('input','fSearchInp');sInp.placeholder='搜索论坛…';
+sInp.addEventListener('keydown',function(e){if(e.key==='Enter')doSearch(sInp.value.trim());});
+sBar.appendChild(sIco);sBar.appendChild(sInp);
+var tabBar=ce('div','fTabBar');
+hdr.appendChild(htop);hdr.appendChild(hotBar);hdr.appendChild(sBar);hdr.appendChild(tabBar);
+// feed
+var feed=ce('div','fFeed');
+// fab
+var fab=ce('div','fFab');fab.textContent='✏';fab.onclick=newPost;
+// 底导
+var bnav=ce('div','fBottomNav');
+[{ico:'🏠',lbl:'首页',tab:'home'},{ico:'👥',lbl:'关注',tab:'follow'},{ico:'✉️',lbl:'私信',tab:'dm'},{ico:'👤',lbl:'我的',tab:'profile'}].forEach(function(item){var btn=ce('div');btn.className='fBNav'+(item.tab==='home'?' on':'');btn.dataset.tab=item.tab;btn.innerHTML='<span class="fBNavIco">'+item.ico+'</span><span class="fBNavLbl">'+item.lbl+'</span>';btn.onclick=function(){switchBottom(item.tab);};bnav.appendChild(btn);});
+// 抽屉
+var drOv=ce('div','fDrawOv');drOv.onclick=toggleDrawer;
+var drawer=ce('div','fDrawer');
+// 详情
+var det=ce('div','fDetail');
+var detHdr=ce('div','fDetHeader');
+var dBack=ce('div','fDetBack');dBack.innerHTML='&#8592;';dBack.onclick=closeDetail;
+var dTitle=ce('div','fDetTitle');dTitle.textContent='帖子';
+var dMore=ce('span');dMore.style.cssText='margin-left:auto;font-size:14px;color:#1d9bf0;cursor:pointer;font-weight:700;';dMore.textContent='＋评论';dMore.onclick=loadMoreCmts;
+detHdr.appendChild(dBack);detHdr.appendChild(dTitle);detHdr.appendChild(dMore);
+var detBody=ce('div','fDetBody');
+var rBar=ce('div','fReplyBar');
+var rInp=ce('input','fReplyInp');rInp.placeholder='发表评论…';
+var rSend=ce('button','fReplySend');rSend.textContent='发送';rSend.onclick=sendReply;
+rBar.appendChild(rInp);rBar.appendChild(rSend);
+det.appendChild(detHdr);det.appendChild(detBody);det.appendChild(rBar);
+// 个人页
+var prof=ce('div','fProfilePage');
+var profHdr=ce('div');profHdr.style.cssText='display:flex;align-items:center;gap:10px;padding:max(env(safe-area-inset-top,20px),20px) 14px 10px;background:#fff;border-bottom:1px solid #eff3f4;flex-shrink:0;';
+var profBack=ce('div');profBack.style.cssText='width:34px;height:34px;border-radius:50%;background:#eff3f4;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;';profBack.innerHTML='&#8592;';profBack.onclick=function(){switchBottom('home');};
+var profTitle=ce('div');profTitle.style.cssText='font-size:17px;font-weight:700;color:#0f1419;';profTitle.textContent='我的主页';
+profHdr.appendChild(profBack);profHdr.appendChild(profTitle);
+var profBody=ce('div','fProfileBody');profBody.style.cssText='flex:1;overflow-y:auto;';
+prof.appendChild(profHdr);prof.appendChild(profBody);
+// 私信页
+var dm=ce('div','fDMPage');
+var dmHdr=ce('div');dmHdr.style.cssText='display:flex;align-items:center;gap:10px;padding:max(env(safe-area-inset-top,20px),20px) 14px 10px;background:#fff;border-bottom:1px solid #eff3f4;flex-shrink:0;';
+var dmBack=ce('div');dmBack.style.cssText='width:34px;height:34px;border-radius:50%;background:#eff3f4;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;';dmBack.innerHTML='&#8592;';dmBack.onclick=function(){switchBottom('home');};
+var dmTitle=ce('div');dmTitle.style.cssText='font-size:17px;font-weight:700;color:#0f1419;';dmTitle.textContent='私信';
+var dmNew=ce('div');dmNew.style.cssText='margin-left:auto;font-size:20px;cursor:pointer;color:#1d9bf0;';dmNew.textContent='✏️';dmNew.onclick=window.fNewDM;
+dmHdr.appendChild(dmBack);dmHdr.appendChild(dmTitle);dmHdr.appendChild(dmNew);
+var dmList=ce('div','fDMList');dmList.style.cssText='flex:1;overflow-y:auto;';
+dm.appendChild(dmHdr);dm.appendChild(dmList);
 
-async function fGenHotTags(){
-  var cfg=await fApi();if(!cfg)return;
-  var s=fGetSettings();
-  var wbCtx=_fWbItems.map(function(i){return i.title+':'+i.content;}).join('；');
-  var pr='根据以下设定，生成8条热搜词条（简短10字内），包含社会事件、娱乐、本地新闻。\n时间：'+s.date+'\n世界观：'+(s.worldView||'现实世界')+(wbCtx?'\n世界书设定：'+wbCtx:'')+'\n输出JSON数组：[{"text":"热搜词"},…]\n只输出JSON数组。';
-  try{
-    var raw=await fCall(cfg,pr,250);
-    var tags=fParseJson(raw);
-    var hotBar=document.getElementById('forumHotTags');
-    if(hotBar){
-      hotBar.innerHTML='';
-      tags.forEach(function(tag,i){
-        var el=document.createElement('span');
-        el.className='fhot'+(i===0?' h1':i===1?' h2':i===2?' h3':'');
-        el.textContent=(i+1)+'. '+tag.text;
-        el.onclick=function(){fDoSearch(tag.text);};
-        hotBar.appendChild(el);
-      });
-    }
-    fSave('hotTags',tags);
-  }catch(e){}
+w.appendChild(hdr);w.appendChild(feed);w.appendChild(fab);w.appendChild(bnav);
+wrap.appendChild(w);wrap.appendChild(drOv);wrap.appendChild(drawer);wrap.appendChild(det);wrap.appendChild(prof);wrap.appendChild(dm);
 }
 
-async function fGenPosts(board){
-  var cfg=await fApi();if(!cfg){fToast('请先配置API');return;}
-  fToast('生成内容中…');
-  var s=fGetSettings();
-  var chars=fGetChars().concat(_fExtraChars.map(function(n){return{name:n,type:'custom'};}));
-  var charNames=chars.map(function(c){return c.name;}).join('、')||'网友';
-  var boardName=board==='为你推荐'?'综合推荐':board;
-  var wbCtx=_fWbItems.map(function(i){return i.title+':'+i.content;}).join('；');
-  var tabDesc=window._fTabDescs&&window._fTabDescs[board]?'板块描述：'+window._fTabDescs[board]+'\n':'';
-  var pr='在以下背景下，为"'+boardName+'\"板块生成6条帖子（发帖者包含：'+charNames+'以及2-3个网友）。\n时间：'+s.date+'\n世界观：'+(s.worldView||'现实生活')+(wbCtx?'\n世界书：'+wbCtx:'')+'\n'+tabDesc+s.prompt+'\n输出JSON数组：[{"name":"发帖者","type":"char或npc或net","content":"正文(60-100字)","board":"'+boardName+'","likes":数字,"hot":true或false,"comments":[{"name":"","type":"net","text":"","likes":数字}]}]\n只输出JSON数组。';
-  try{
-    var raw=await fCall(cfg,pr,900);
-    var items=fParseJson(raw);
-    var charMap={};chars.forEach(function(c){charMap[c.name]=c;});
-    var tstr=new Date().toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'});
-    items.forEach(function(item){
-      var c=charMap[item.name];
-      var color=item.type==='net'?'#888':item.type==='char'?'#e17055':'#0984e3';
-      var cmts=(item.comments||[]).map(function(cm){var cc=charMap[cm.name];return{name:cm.name,type:cm.type||'net',avatarUrl:cc&&cc.ava?cc.ava:null,avatarColor:cm.type==='net'?'#888':'#e17055',text:cm.text,time:tstr,likes:cm.likes||0,replies:[]};});
-      _fPosts.unshift({name:item.name,type:item.type||'net',avatarUrl:c&&c.ava?c.ava:null,avatarColor:color,content:item.content,board:item.board||boardName,likes:item.likes||0,hot:!!item.hot,time:tstr,comments:cmts});
-    });
-    fSave('posts',_fPosts);
-    fLoadFeed();fToast('内容已刷新 ✨');
-  }catch(e){fToast('生成失败：'+e.message);}
+async function init(){
+buildUI();
+var s=await fL('settings',null);if(s){var wv=document.getElementById('fWvArea'),pr=document.getElementById('fPrArea'),dt=document.getElementById('fDtInp');if(wv&&s.wv)wv.value=s.wv;if(pr&&s.pr)pr.value=s.pr;if(dt&&s.dt)dt.value=s.dt;}
+var boards=await fL('boards',[]);if(Array.isArray(boards))_customTabs=boards;
+var wbi=await fL('wbItems',[]);if(Array.isArray(wbi))_wbItems=wbi;
+var ec=await fL('extraChars',[]);if(Array.isArray(ec))_extraChars=ec;var ecd=await fL('extraCharsData',[]);if(Array.isArray(ecd))_extraCharsData=ecd;var co=await fL('charOverrides',{});if(co&&typeof co==='object')_charOverrides=co;
+var fl=await fL('following',[]);if(Array.isArray(fl))_following=fl;
+var posts=await fL('posts',[]);if(Array.isArray(posts))_posts=posts;
+var htags=await fL('hotTags',[]);
+if(htags.length){var bar=document.getElementById('forumHotTags');if(bar){bar.innerHTML='';htags.forEach(function(tag,i){var el=ce('span');el.style.cssText='flex-shrink:0;padding:3px 10px;margin-right:5px;border-radius:20px;font-size:12px;cursor:pointer;white-space:nowrap;background:'+(i<3?'rgba(249,24,128,.1)':'rgba(29,155,240,.08)')+';color:'+(i<3?'#f91880':'#1d9bf0')+';';el.textContent=(i+1)+'. '+tag.text;el.onclick=function(){doSearch(tag.text);};bar.appendChild(el);});}}
+renderTabs();
+switchBottom('home');
 }
 
-// ── 新建帖子 ──
-window.fNewPost=function(){
-  var ov=document.createElement('div');ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.4);display:flex;align-items:flex-end;justify-content:center;';
-  var box=document.createElement('div');box.style.cssText='background:white;border-radius:20px 20px 0 0;padding:16px 16px 28px;width:100%;max-width:480px;';
-  box.innerHTML='<div style="font-size:16px;font-weight:700;margin-bottom:12px;color:#0f1419;">发帖</div>'+
-    '<textarea id="_fnewTxt" placeholder="说点什么…" style="width:100%;height:100px;padding:10px;border:1.5px solid #e7e7e7;border-radius:12px;font-size:15px;resize:none;box-sizing:border-box;outline:none;"></textarea>'+
-    '<div style="display:flex;gap:8px;margin-top:10px;">'+
-    '<button id="_fnewCan" style="flex:1;padding:11px;border:1.5px solid #e7e7e7;border-radius:12px;background:white;font-size:14px;cursor:pointer;color:#888;">取消</button>'+
-    '<button id="_fnewOk" style="flex:2;padding:11px;background:#6c5ce7;color:white;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:bold;">发布</button>'+
-    '</div>';
-  ov.appendChild(box);document.body.appendChild(ov);
-  box.querySelector('#_fnewCan').onclick=function(){ov.remove();};
-  box.querySelector('#_fnewOk').onclick=function(){
-    var txt=(box.querySelector('#_fnewTxt')||{}).value||'';if(!txt.trim()){fToast('请输入内容');return;}
-    ov.remove();
-    var myName=fGetMyName();
-    var tstr=new Date().toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'})+' '+new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
-    _fPosts.unshift({name:myName,type:'user',avatarColor:'#6c5ce7',content:txt,board:_fCurTop==='为你推荐'?'日常':_fCurTop,likes:0,hot:false,time:tstr,comments:[]});
-    fSave('posts',_fPosts);fLoadFeed();fToast('发布成功！');
-  };
-  ov.onclick=function(e){if(e.target===ov)ov.remove();};
-};
-
-// ── 私信 ──
-window.fNewDM=function(){
-  var chars=fGetChars().concat(_fFollowing.filter(function(f){return f.type==='net';}));
-  var ov=document.createElement('div');ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;';
-  var box=document.createElement('div');box.style.cssText='background:white;border-radius:18px;padding:18px 16px;width:80vw;max-width:300px;';
-  var opts=chars.map(function(c){return '<option value="'+c.name+'">'+c.name+'</option>';}).join('');
-  box.innerHTML='<div style="font-size:15px;font-weight:700;margin-bottom:12px;">选择联系人</div>'+
-    '<select id="_fdmSel" style="width:100%;padding:9px;border:1.5px solid #e7e7e7;border-radius:10px;font-size:14px;outline:none;margin-bottom:8px;"><option value="">选择…</option>'+opts+'</select>'+
-    '<input id="_fdmCustom" placeholder="或输入名字" style="width:100%;padding:9px;border:1.5px solid #e7e7e7;border-radius:10px;font-size:14px;outline:none;box-sizing:border-box;">'+
-    '<div style="display:flex;gap:8px;margin-top:12px;">'+
-    '<button id="_fdmCan" style="flex:1;padding:10px;border:1.5px solid #e7e7e7;border-radius:10px;background:white;font-size:14px;cursor:pointer;color:#888;">取消</button>'+
-    '<button id="_fdmOk" style="flex:2;padding:10px;background:#6c5ce7;color:white;border:none;border-radius:10px;font-size:14px;cursor:pointer;font-weight:bold;">开始私信</button>'+
-    '</div>';
-  ov.appendChild(box);document.body.appendChild(ov);
-  box.querySelector('#_fdmCan').onclick=function(){ov.remove();};
-  box.querySelector('#_fdmOk').onclick=function(){
-    var name=(box.querySelector('#_fdmCustom')||{}).value.trim()||(box.querySelector('#_fdmSel')||{}).value||'';
-    if(!name){fToast('请选择联系人');return;}
-    ov.remove();fOpenDMChat(name);
-  };
-  ov.onclick=function(e){if(e.target===ov)ov.remove();};
-};
-
-function fOpenDMChat(name){
-  // 跳转聊天（复用现有聊天功能或创建简单私信窗口）
-  fToast('即将与 @'+fToHandle(name)+' 私信…');
-  // TODO: 后续可接入聊天室
-}
-
-// ── 个人页渲染 ──
-function fRenderProfile(){
-  var body=document.getElementById('fProfileBody');if(!body)return;
-  var myName=fGetMyName();
-  var myPosts=_fPosts.filter(function(p){return p.name===myName;});
-  body.innerHTML='<div style="background:linear-gradient(135deg,var(--fa),#a29bfe);height:80px;"></div>'+
-    '<div style="padding:0 14px 14px;background:white;border-bottom:1px solid #e7e7e7;">'+
-    '<div style="width:60px;height:60px;border-radius:50%;background:#6c5ce7;border:3px solid white;margin-top:-30px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:bold;color:white;">'+myName.slice(0,1)+'</div>'+
-    '<div style="font-size:18px;font-weight:700;margin-top:8px;">'+myName+'</div>'+
-    '<div style="font-size:14px;color:#888;">@'+fToHandle(myName)+'</div>'+
-    '<div style="display:flex;gap:20px;margin-top:12px;font-size:14px;"><span><b>'+_fFollowing.length+'</b> 关注</span><span><b>'+myPosts.length+'</b> 帖子</span></div>'+
-    '</div>'+
-    '<div style="padding:12px 14px;font-size:15px;font-weight:700;color:#0f1419;border-bottom:1px solid #e7e7e7;">我发布的帖子</div>';
-  if(!myPosts.length){body.innerHTML+='<div style="text-align:center;padding:40px;color:#888;">还没有发布过帖子</div>';return;}
-  myPosts.forEach(function(post){body.appendChild(fBuildPostCard(post,_fPosts.indexOf(post)));});
-}
-
-// ── 主题/字体 ──
-function fApplyTheme(idx){
-  _fThemeIdx=idx;var t=THEMES[idx];var el=document.getElementById('scrForum');
-  if(el){el.style.setProperty('--fa',t.accent);el.style.setProperty('--fb',t.bg);}
-}
-window.forumApplyFont=function(v){var el=document.getElementById('scrForum');if(el)el.style.fontSize=v+'px';};
-
-// ── 保存设置 ──
-window.fSaveSettings=async function(){
-  var s={worldView:(document.getElementById('forumWorldView')||{}).value||'',prompt:(document.getElementById('forumPrompt')||{}).value||'',date:(document.getElementById('forumDateSet')||{}).value||''};
-  await fSave('settings',s);
-  await fSave('boards',_fCustomTabs);
-  await fSave('themeIdx',_fThemeIdx);
-  await fSave('wbItems',_fWbItems);
-  await fSave('extraChars',_fExtraChars);
-  await fSave('following',_fFollowing);
-  fRefresh();
-};
-
-// ── Toast ──
-function fToast(msg){var t=document.createElement('div');t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(15,20,25,0.88);color:white;padding:8px 18px;border-radius:20px;font-size:14px;z-index:99999;pointer-events:none;white-space:nowrap;';t.textContent=msg;document.body.appendChild(t);setTimeout(function(){t.remove();},2000);}
-
-// ── 初始化 ──
-async function fInitAll(){
-  fBuildUI();
-  // 加载设置
-  var s=await fLoad('settings',null);
-  if(s){
-    if(s.worldView){var el=document.getElementById('forumWorldView');if(el)el.value=s.worldView;}
-    if(s.prompt){var el2=document.getElementById('forumPrompt');if(el2)el2.value=s.prompt;}
-    if(s.date){var el3=document.getElementById('forumDateSet');if(el3)el3.value=s.date;}
-  }
-  var boards=await fLoad('boards',[]);if(Array.isArray(boards))_fCustomTabs=boards;
-  _fThemeIdx=await fLoad('themeIdx',0)||0;
-  var wbi=await fLoad('wbItems',[]);if(Array.isArray(wbi))_fWbItems=wbi;
-  var ec=await fLoad('extraChars',[]);if(Array.isArray(ec))_fExtraChars=ec;
-  var fl=await fLoad('following',[]);if(Array.isArray(fl))_fFollowing=fl;
-  var posts=await fLoad('posts',[]);if(Array.isArray(posts))_fPosts=posts;
-  var fontSize=await fLoad('fontSize','15');
-  var fsEl=document.getElementById('forumFontSize');if(fsEl)fsEl.value=fontSize;
-  forumApplyFont(fontSize);
-  fApplyTheme(_fThemeIdx);
-  fRenderTopTabs();
-  fSwitchBottom('home');
-  // 热搜
-  var hotTags=await fLoad('hotTags',[]);
-  if(hotTags.length){
-    var hotBar=document.getElementById('forumHotTags');
-    if(hotBar){
-      hotBar.innerHTML='';
-      hotTags.forEach(function(tag,i){
-        var el=document.createElement('span');el.className='fhot'+(i===0?' h1':i===1?' h2':i===2?' h3':'');
-        el.textContent=(i+1)+'. '+tag.text;el.onclick=function(){fDoSearch(tag.text);};hotBar.appendChild(el);
-      });
-    }
-  }
-}
-
-// ── showScreen patch ──
-var _origForum=window.showScreen;
-window.showScreen=function(id){
-  _origForum(id);
-  if(id==='scrForum')fInitAll();
-};
-
-setTimeout(function(){
-  var btn=document.getElementById('btnHomeForum');
-  if(btn)btn.onclick=function(){showScreen('scrForum');};
-},400);
+var _origShow=window.showScreen;
+window.showScreen=function(id){_origShow(id);if(id==='scrForum')init();};
+setTimeout(function(){var btn=document.getElementById('btnHomeForum');if(btn)btn.onclick=function(){showScreen('scrForum');};},400);
 
 })();
 </script>
