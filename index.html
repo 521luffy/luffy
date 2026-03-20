@@ -24387,7 +24387,52 @@ function renderTabs(){var bar=document.getElementById('fTabBar');if(!bar)return;
 function loadFeed(){var feed=document.getElementById('fFeed');if(!feed)return;feed.innerHTML='';var list=_posts.filter(function(p){if(_curTab==='推荐')return true;if(_curTab==='热搜')return p.hot;return p.board===_curTab;});if(!list.length){var tip=ce('div');tip.style.cssText='text-align:center;padding:48px 20px;color:#536471;font-size:15px;line-height:2.2;';tip.innerHTML='还没有内容<br><span style="color:#1d9bf0;cursor:pointer;" onclick="window.fRefresh()">点这里生成内容 🔄</span>';feed.appendChild(tip);return;}list.forEach(function(p){feed.appendChild(buildCard(p,_posts.indexOf(p)));});}
 function loadFollowFeed(){var feed=document.getElementById('fFeed');if(!feed)return;feed.innerHTML='';var list=_posts.filter(function(p){return _following.find(function(f){return f.name===p.name;});});if(!list.length){var tip=ce('div');tip.style.cssText='text-align:center;padding:48px 20px;color:#536471;font-size:15px;';tip.textContent='还没有关注的人\n点帖子头像可关注';feed.appendChild(tip);return;}list.forEach(function(p){feed.appendChild(buildCard(p,_posts.indexOf(p)));});}
 
-function buildCard(post,idx){var card=ce('div');card.className='fPost';var ava=ce('div');ava.className='fAva';if(post.ava){ava.style.backgroundImage='url('+post.ava+')';ava.style.backgroundColor='transparent';}else{ava.style.background=aColor(post.name);ava.textContent=post.name.slice(0,1);}ava.onclick=function(e){e.stopPropagation();tFollow(post);};var body=ce('div');body.className='fBody';if(post.board&&post.board!=='推荐'){var badge=ce('div');badge.className='fBadge'+(post.hot?' hot':'');badge.textContent=post.board;body.appendChild(badge);}var nr=ce('div');nr.style.cssText='display:flex;align-items:center;flex-wrap:wrap;margin-bottom:2px;';nr.innerHTML='<span class="fName">'+post.name+'</span><span class="fHandle">'+hdl(post.name)+'</span><span class="fTime"> · '+post.time+'</span>';body.appendChild(nr);var txt=ce('div');txt.className='fText';txt.textContent=post.content;body.appendChild(txt);var stats=ce('div');stats.className='fStats';stats.innerHTML='<span class="fStat">💬 '+post.comments.length+'</span><span class="fStat">🔁 '+(Math.floor(Math.random()*80)+2)+'</span><span class="fStat">❤️ '+post.likes+'</span>';body.appendChild(stats);card.appendChild(ava);card.appendChild(body);card.onclick=function(){openPost(idx);};return card;}
+function buildCard(post,idx){var card=ce('div');card.className='fPost';var ava=ce('div');ava.className='fAva';if(post.ava){ava.style.backgroundImage='url('+post.ava+')';ava.style.backgroundColor='transparent';}else{ava.style.background=aColor(post.name);ava.textContent=post.name.slice(0,1);}ava.onclick=function(e){e.stopPropagation();openCharProfile(post);};var body=ce('div');body.className='fBody';if(post.board&&post.board!=='推荐'){var badge=ce('div');badge.className='fBadge'+(post.hot?' hot':'');badge.textContent=post.board;body.appendChild(badge);}var nr=ce('div');nr.style.cssText='display:flex;align-items:center;flex-wrap:wrap;margin-bottom:2px;';nr.innerHTML='<span class="fName">'+post.name+'</span><span class="fHandle">'+hdl(post.name)+'</span><span class="fTime"> · '+post.time+'</span>';body.appendChild(nr);var txt=ce('div');txt.className='fText';txt.textContent=post.content;body.appendChild(txt);var stats=ce('div');stats.className='fStats';stats.innerHTML='<span class="fStat">💬 '+post.comments.length+'</span><span class="fStat">🔁 '+(Math.floor(Math.random()*80)+2)+'</span><span class="fStat">❤️ '+post.likes+'</span>';body.appendChild(stats);card.appendChild(ava);card.appendChild(body);card.onclick=function(){openPost(idx);};return card;}
+
+function openCharProfile(post){
+  // 长按关注，单击查看主页
+  openCharPage(post.name, post.ava||'', post.type);
+}
+
+function openCharPage(name, ava, type){
+  var ov=ce('div','fCharProfileOv');ov.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;z-index:60;background:#fff;display:flex;flex-direction:column;overflow:hidden;';
+  // 顶栏
+  var topBar=ce('div');topBar.style.cssText='display:flex;align-items:center;gap:10px;padding:max(env(safe-area-inset-top,20px),20px) 14px 10px;background:#fff;border-bottom:1px solid #eff3f4;flex-shrink:0;';
+  var back=ce('div');back.style.cssText='width:34px;height:34px;border-radius:50%;background:#eff3f4;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;';back.innerHTML='&#8592;';back.onclick=function(){ov.remove();};
+  var title=ce('div');title.style.cssText='font-size:17px;font-weight:700;color:#0f1419;';title.textContent=name;
+  topBar.appendChild(back);topBar.appendChild(title);
+  var body=ce('div');body.style.cssText='flex:1;overflow-y:auto;';
+  // 读取角色数据
+  var data={};
+  var extraIdx=_extraCharsData.findIndex(function(d){return d.name===name;});
+  if(extraIdx>=0){data=_extraCharsData[extraIdx];}
+  var ov2=_charOverrides&&_charOverrides[name];if(ov2)data=Object.assign({},data,ov2);
+  var charPosts=_posts.filter(function(p){return p.name===name;});
+  // banner
+  var banner=ce('div');banner.style.cssText='height:90px;background:linear-gradient(135deg,'+aColor(name)+',#a29bfe);';
+  var avaEl=ce('div');avaEl.style.cssText='width:62px;height:62px;border-radius:50%;background:'+aColor(name)+';border:3px solid #fff;margin-top:-32px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff;overflow:hidden;background-size:cover;background-position:center;margin-left:14px;';
+  var avaUrl=data.ava||ava||'';
+  if(avaUrl){avaEl.style.backgroundImage='url('+avaUrl+')';avaEl.style.backgroundColor='transparent';}else{avaEl.textContent=name.slice(0,1);}
+  var info=ce('div');info.style.cssText='padding:4px 14px 14px;background:#fff;border-bottom:1px solid #eff3f4;';
+  var followed=_following.find(function(f){return f.name===name;});
+  var followBtn=ce('button');followBtn.textContent=followed?'已关注':'关注';followBtn.style.cssText='float:right;margin-top:-44px;padding:7px 16px;background:'+(followed?'#fff':'#0f1419')+';color:'+(followed?'#0f1419':'#fff')+';border:'+(followed?'1.5px solid #cfd9de':'none')+';border-radius:20px;font-size:14px;cursor:pointer;font-weight:700;';
+  followBtn.onclick=function(){tFollow({name:name,ava:avaUrl,type:type||'char'});followed=!followed;followBtn.textContent=followed?'已关注':'关注';followBtn.style.background=followed?'#fff':'#0f1419';followBtn.style.color=followed?'#0f1419':'#fff';followBtn.style.border=followed?'1.5px solid #cfd9de':'none';};
+  var nm=ce('div');nm.style.cssText='font-size:19px;font-weight:700;color:#0f1419;margin-top:8px;';nm.textContent=name;
+  var hd=ce('div');hd.style.cssText='font-size:14px;color:#536471;';hd.textContent='@'+(data.handle||name.toLowerCase().replace(/\s/g,'_'));
+  var st=ce('div');st.style.cssText='display:flex;gap:20px;margin-top:10px;font-size:14px;color:#0f1419;';
+  st.innerHTML='<span><b>'+(data.following||0)+'</b> <span style="color:#536471;">正在关注</span></span>'+
+    '<span><b>'+(data.followers||0)+'</b> <span style="color:#536471;">粉丝</span></span>';
+  if(data.bio){var bioEl=ce('div');bioEl.style.cssText='font-size:14px;color:#0f1419;margin-top:6px;';bioEl.textContent=data.bio;info.appendChild(bioEl);}
+  info.appendChild(followBtn);info.appendChild(avaEl);info.appendChild(nm);info.appendChild(hd);info.appendChild(st);
+  // 帖子
+  var postLbl=ce('div');postLbl.style.cssText='padding:10px 14px;font-size:14px;font-weight:700;color:#536471;border-bottom:1px solid #eff3f4;';postLbl.textContent='帖子 '+charPosts.length+' 条';
+  body.appendChild(banner);body.appendChild(info);body.appendChild(postLbl);
+  if(!charPosts.length){var tip=ce('div');tip.style.cssText='text-align:center;padding:40px;color:#536471;font-size:14px;';tip.textContent='还没有发布过帖子';body.appendChild(tip);}
+  else{charPosts.forEach(function(p){body.appendChild(buildCard(p,_posts.indexOf(p)));});}
+  ov.appendChild(topBar);ov.appendChild(body);
+  var forum=document.getElementById('scrForum');if(forum)forum.appendChild(ov);
+}
+window.openCharPage=openCharPage;
 
 function tFollow(post){var i=_following.findIndex(function(f){return f.name===post.name;});if(i>=0){_following.splice(i,1);toast('已取关 '+hdl(post.name));}else{_following.push({name:post.name,type:post.type,ava:post.ava||''});toast('已关注 '+hdl(post.name)+' ✓');}fS('following',_following);}
 
@@ -24408,9 +24453,9 @@ window.fLoadMoreComments=loadMoreCmts;
 async function doRefresh(){var cfg=await fApi();if(!cfg){toast('请先配置API，点🔄再试');return;}await genHot(cfg);await genPosts(cfg,_curTab);}
 window.fRefresh=doRefresh;
 
-async function genHot(cfg){var s=getS(),wbCtx=_wbItems.map(function(i){return i.title+':'+i.content;}).join('；');var pr='生成8条热搜词条（10字内），时间：'+s.dt+'\n世界观：'+(s.wv||'现实')+(wbCtx?'\n世界书：'+wbCtx:'')+'\n输出JSON：[{"text":"词条"}]\n只输出JSON数组。';try{var raw=await fCall(cfg,pr,250);var tags=fJson(raw);var bar=document.getElementById('forumHotTags');if(bar){bar.innerHTML='';tags.forEach(function(tag,i){var el=ce('span');el.style.cssText='flex-shrink:0;padding:3px 10px;margin-right:5px;border-radius:20px;font-size:12px;cursor:pointer;white-space:nowrap;background:'+(i<3?'rgba(249,24,128,.1)':'rgba(29,155,240,.08)')+';color:'+(i<3?'#f91880':'#1d9bf0')+';';el.textContent=(i+1)+'. '+tag.text;el.onclick=function(){doSearch(tag.text);};bar.appendChild(el);});}fS('hotTags',tags);}catch(e){}}
+async function genHot(cfg){var s=getS(),wbCtx=_wbItems.map(function(i){return i.title+':'+i.content;}).join('；');var hotParts=['请生成8条热搜词条，每条10字以内，风格类似微博热搜榜。','时间背景：'+s.dt,'世界观：'+(s.wv||'现实世界')];if(wbCtx)hotParts.push('世界书：'+wbCtx);hotParts.push('请只输出JSON数组格式如下：[{"text":"热搜词条一"},{"text":"热搜词条二"}]');hotParts.push('不要输出任何其他文字，不要代码块标记。');var pr=hotParts.join('\n');;try{var raw=await fCall(cfg,pr,250);var tags=fJson(raw);var bar=document.getElementById('forumHotTags');if(bar){bar.innerHTML='';tags.forEach(function(tag,i){var el=ce('span');el.style.cssText='flex-shrink:0;padding:3px 10px;margin-right:5px;border-radius:20px;font-size:12px;cursor:pointer;white-space:nowrap;background:'+(i<3?'rgba(249,24,128,.1)':'rgba(29,155,240,.08)')+';color:'+(i<3?'#f91880':'#1d9bf0')+';';el.textContent=(i+1)+'. '+tag.text;el.onclick=function(){doSearch(tag.text);};bar.appendChild(el);});}fS('hotTags',tags);}catch(e){}}
 
-async function genPosts(cfg,board){toast('生成内容中…');var s=getS(),chars=getChars(),charNames=chars.map(function(c){return c.name;}).join('、')||'网友',boardName=board==='推荐'?'综合':board,wbCtx=_wbItems.map(function(i){return i.title+':'+i.content;}).join('；'),tabDesc=_tabDescs[board]?'板块描述：'+_tabDescs[board]+'\n':'';var pr='为"'+boardName+'"生成6条帖子（发帖者含：'+charNames+'以及2-3个网友）。\n时间：'+s.dt+'\n世界观：'+(s.wv||'现实生活')+(wbCtx?'\n世界书：'+wbCtx:'')+'\n'+tabDesc+s.pr+'\n输出JSON：[{"name":"","type":"char或net","content":"正文60-100字","board":"'+boardName+'","likes":数字,"hot":false,"comments":[{"name":"","type":"net","text":"","likes":数字}]}]\n只输出JSON数组。';try{var raw=await fCall(cfg,pr,900);var items=fJson(raw);var charMap={};chars.forEach(function(c){charMap[c.name]=c;});var tstr=new Date().toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'});items.forEach(function(item){var c=charMap[item.name];var cmts=(item.comments||[]).map(function(cm){var cc=charMap[cm.name];return{name:cm.name,type:cm.type||'net',ava:cc&&cc.ava?cc.ava:null,text:cm.text,time:tstr,likes:cm.likes||0,replies:[]};});_posts.unshift({name:item.name,type:item.type||'net',ava:c&&c.ava?c.ava:null,content:item.content,board:item.board||boardName,likes:item.likes||0,hot:!!item.hot,time:tstr,comments:cmts});});fS('posts',_posts);loadFeed();toast('内容已更新 ✨');}catch(e){toast('生成失败：'+e.message);}}
+async function genPosts(cfg,board){toast('生成内容中…');var s=getS(),chars=getChars(),charNames=chars.map(function(c){return c.name;}).join('、')||'网友',boardName=board==='推荐'?'综合':board,wbCtx=_wbItems.map(function(i){return i.title+':'+i.content;}).join('；'),tabDesc=_tabDescs[board]?'板块描述：'+_tabDescs[board]+'\n':'';var prParts=['为['+boardName+']版块生成6条帖子，发帖者含：'+charNames+'以及2-3个网友。','时间：'+s.dt,'世界观：'+(s.wv||'现实生活')];if(wbCtx)prParts.push('世界书：'+wbCtx);if(tabDesc)prParts.push(tabDesc);if(s.pr)prParts.push(s.pr);prParts.push('请严格输出JSON数组，格式示例：');prParts.push('[{"name":"张三","type":"net","content":"帖子正文内容","board":"'+boardName+'","likes":10,"hot":false,"comments":[{"name":"李四","type":"net","text":"评论内容","likes":3}]}]');prParts.push('只输出JSON数组，不要其他任何文字。');var pr=prParts.join('\n');;try{var raw=await fCall(cfg,pr,900);var items=fJson(raw);var charMap={};chars.forEach(function(c){charMap[c.name]=c;});var tstr=new Date().toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'});items.forEach(function(item){var c=charMap[item.name];var cmts=(item.comments||[]).map(function(cm){var cc=charMap[cm.name];return{name:cm.name,type:cm.type||'net',ava:cc&&cc.ava?cc.ava:null,text:cm.text,time:tstr,likes:cm.likes||0,replies:[]};});_posts.unshift({name:item.name,type:item.type||'net',ava:c&&c.ava?c.ava:null,content:item.content,board:item.board||boardName,likes:item.likes||0,hot:!!item.hot,time:tstr,comments:cmts});});fS('posts',_posts);loadFeed();toast('内容已更新 ✨');}catch(e){toast('生成失败：'+e.message);}}
 
 async function doSearch(q){if(!q)return;var feed=document.getElementById('fFeed');if(!feed)return;var local=_posts.filter(function(p){return p.content&&p.content.includes(q);});feed.innerHTML='<div style="padding:10px 14px;font-size:14px;font-weight:700;color:#536471;border-bottom:1px solid #eff3f4;">搜索：'+q+'</div>';if(local.length)local.forEach(function(p){feed.appendChild(buildCard(p,_posts.indexOf(p)));});var cfg=await fApi();if(!cfg)return;var s=getS();var pr='生成5条关于"'+q+'"的帖子，时间：'+s.dt+'\n输出JSON：[{"name":"网友名","type":"net","content":"60字内","board":"综合","likes":数字,"hot":false,"comments":[]}]\n只输出JSON数组。';try{var raw=await fCall(cfg,pr,400);var items=fJson(raw);var tstr=new Date().toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'});items.forEach(function(item){var p={name:item.name,type:'net',ava:null,content:item.content,board:item.board||'综合',likes:item.likes||0,hot:false,time:tstr,comments:[]};feed.appendChild(buildCard(p,_posts.length));_posts.push(p);});fS('posts',_posts);}catch(e){}}
 window.fDoSearch=doSearch;
@@ -24418,7 +24463,91 @@ window.fDoSearch=doSearch;
 function newPost(){var ov=ce('div');ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.4);display:flex;align-items:flex-end;justify-content:center;';var box=ce('div');box.style.cssText='background:#fff;border-radius:20px 20px 0 0;padding:16px 16px 28px;width:100%;max-width:480px;';box.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;"><span style="font-size:16px;font-weight:700;color:#0f1419;">发帖</span><button id="_fpCan" style="border:none;background:none;font-size:14px;color:#536471;cursor:pointer;">取消</button></div><textarea id="_fpTxt" placeholder="有什么新鲜事？" style="width:100%;height:90px;padding:10px;border:1.5px solid #cfd9de;border-radius:12px;font-size:15px;resize:none;box-sizing:border-box;outline:none;"></textarea><div style="margin-top:10px;text-align:right;"><button id="_fpOk" style="padding:8px 20px;background:#1d9bf0;color:#fff;border:none;border-radius:24px;font-size:15px;cursor:pointer;font-weight:700;">发布</button></div>';ov.appendChild(box);document.body.appendChild(ov);box.querySelector('#_fpCan').onclick=function(){ov.remove();};box.querySelector('#_fpOk').onclick=function(){var txt=(box.querySelector('#_fpTxt')||{}).value||'';if(!txt.trim()){toast('请输入内容');return;}ov.remove();var tstr=new Date().toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'})+' '+new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});_posts.unshift({name:getMyName(),type:'user',ava:null,content:txt,board:_curTab==='推荐'?'日常':_curTab,likes:0,hot:false,time:tstr,comments:[]});fS('posts',_posts);loadFeed();toast('发布成功！');};ov.onclick=function(e){if(e.target===ov)ov.remove();};}
 window.fNewPost=newPost;
 
-function renderProfile(){var body=document.getElementById('fProfileBody');if(!body)return;var myName=getMyName(),myPosts=_posts.filter(function(p){return p.name===myName;});body.innerHTML='';var banner=ce('div');banner.style.cssText='height:90px;background:linear-gradient(135deg,#1d9bf0,#a29bfe);flex-shrink:0;';body.appendChild(banner);var aa=ce('div');aa.style.cssText='padding:0 14px 14px;background:#fff;border-bottom:1px solid #eff3f4;';var avEl=ce('div');avEl.style.cssText='width:62px;height:62px;border-radius:50%;background:'+aColor(myName)+';border:3px solid #fff;margin-top:-32px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff;';avEl.textContent=myName.slice(0,1);var ne=ce('div');ne.style.cssText='font-size:19px;font-weight:700;color:#0f1419;margin-top:8px;';ne.textContent=myName;var he=ce('div');he.style.cssText='font-size:14px;color:#536471;';he.textContent=hdl(myName);var st=ce('div');st.style.cssText='display:flex;gap:20px;margin-top:12px;font-size:14px;color:#0f1419;';st.innerHTML='<span><b>'+_following.length+'</b> <span style="color:#536471;">正在关注</span></span><span><b>'+myPosts.length+'</b> <span style="color:#536471;">帖子</span></span>';aa.appendChild(avEl);aa.appendChild(ne);aa.appendChild(he);aa.appendChild(st);body.appendChild(aa);var tr=ce('div');tr.style.cssText='display:flex;background:#fff;border-bottom:1px solid #eff3f4;';['帖子','回复','喜欢'].forEach(function(t,i){var el=ce('div');el.style.cssText='flex:1;text-align:center;padding:13px 0;font-size:15px;font-weight:600;color:'+(i===0?'#0f1419':'#536471')+';border-bottom:'+(i===0?'3px solid #1d9bf0':'3px solid transparent')+';cursor:pointer;';el.textContent=t;tr.appendChild(el);});body.appendChild(tr);if(!myPosts.length){var tip=ce('div');tip.style.cssText='text-align:center;padding:40px;color:#536471;font-size:14px;';tip.textContent='还没有发布过帖子';body.appendChild(tip);return;}myPosts.forEach(function(p){body.appendChild(buildCard(p,_posts.indexOf(p)));});}
+function renderProfile(){
+  var body=document.getElementById('fProfileBody');if(!body)return;
+  var myName=getMyName();
+  var myPosts=_posts.filter(function(p){return p.name===myName;});
+  body.innerHTML='';
+  // banner
+  var banner=ce('div');banner.style.cssText='height:90px;background:linear-gradient(135deg,#1d9bf0,#a29bfe);flex-shrink:0;position:relative;';
+  // 编辑按钮
+  var editProfileBtn=ce('button');editProfileBtn.textContent='编辑资料';editProfileBtn.style.cssText='position:absolute;right:14px;bottom:14px;padding:6px 14px;background:transparent;border:1.5px solid #fff;border-radius:20px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;';
+  editProfileBtn.onclick=function(){showEditProfileDialog();};
+  banner.appendChild(editProfileBtn);
+  body.appendChild(banner);
+  var aa=ce('div');aa.style.cssText='padding:0 14px 14px;background:#fff;border-bottom:1px solid #eff3f4;';
+  // 头像
+  var avEl=ce('div');avEl.style.cssText='width:62px;height:62px;border-radius:50%;background:'+aColor(myName)+';border:3px solid #fff;margin-top:-32px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff;overflow:hidden;background-size:cover;background-position:center;';
+  var myAva=localStorage.getItem('fMyAva')||'';
+  if(myAva){avEl.style.backgroundImage='url('+myAva+')';avEl.style.backgroundColor='transparent';}
+  else{avEl.textContent=myName.slice(0,1);}
+  var ne=ce('div');ne.style.cssText='font-size:19px;font-weight:700;color:#0f1419;margin-top:8px;';ne.textContent=myName;
+  var he=ce('div');he.style.cssText='font-size:14px;color:#536471;';he.textContent=hdl(myName);
+  var bio=localStorage.getItem('fMyBio')||'';
+  if(bio){var bioEl=ce('div');bioEl.style.cssText='font-size:14px;color:#0f1419;margin-top:6px;line-height:1.5;';bioEl.textContent=bio;aa.appendChild(avEl);aa.appendChild(ne);aa.appendChild(he);aa.appendChild(bioEl);}
+  else{aa.appendChild(avEl);aa.appendChild(ne);aa.appendChild(he);}
+  var st=ce('div');st.style.cssText='display:flex;gap:20px;margin-top:12px;font-size:14px;color:#0f1419;';
+  var myFollowing=parseInt(localStorage.getItem('fMyFollowing')||'0')||_following.length;
+  var myFollowers=parseInt(localStorage.getItem('fMyFollowers')||'0')||0;
+  st.innerHTML='<span style="cursor:pointer;"><b>'+myFollowing+'</b> <span style="color:#536471;">正在关注</span></span>'+
+    '<span style="cursor:pointer;"><b>'+myFollowers+'</b> <span style="color:#536471;">粉丝</span></span>'+
+    '<span><b>'+myPosts.length+'</b> <span style="color:#536471;">帖子</span></span>';
+  aa.appendChild(st);body.appendChild(aa);
+  // Tab（可点击切换）
+  var _profTab='posts';
+  var tr=ce('div');tr.style.cssText='display:flex;background:#fff;border-bottom:1px solid #eff3f4;';
+  var tabEls=[];
+  ['帖子','回复','喜欢'].forEach(function(t,i){
+    var el=ce('div');el.style.cssText='flex:1;text-align:center;padding:13px 0;font-size:15px;font-weight:600;cursor:pointer;color:'+(i===0?'#0f1419':'#536471')+';border-bottom:'+(i===0?'3px solid #1d9bf0':'3px solid transparent')+';';
+    el.textContent=t;
+    el.onclick=function(){
+      tabEls.forEach(function(te,ti){te.style.color=ti===i?'#0f1419':'#536471';te.style.borderBottom=ti===i?'3px solid #1d9bf0':'3px solid transparent';});
+      var listArea=document.getElementById('fProfPostList');if(!listArea)return;
+      listArea.innerHTML='';
+      var showPosts=i===0?myPosts:[];
+      if(!showPosts.length){var tip=ce('div');tip.style.cssText='text-align:center;padding:40px;color:#536471;font-size:14px;';tip.textContent=i===0?'还没有发布过帖子':'暂无内容';listArea.appendChild(tip);return;}
+      showPosts.forEach(function(p){listArea.appendChild(buildCard(p,_posts.indexOf(p)));});
+    };
+    tabEls.push(el);tr.appendChild(el);
+  });
+  body.appendChild(tr);
+  var listArea=ce('div','fProfPostList');
+  if(!myPosts.length){var tip=ce('div');tip.style.cssText='text-align:center;padding:40px;color:#536471;font-size:14px;';tip.textContent='还没有发布过帖子';listArea.appendChild(tip);}
+  else{myPosts.forEach(function(p){listArea.appendChild(buildCard(p,_posts.indexOf(p)));});}
+  body.appendChild(listArea);
+}
+// 编辑自己的资料
+function showEditProfileDialog(){
+  var myName=getMyName();
+  var ov=ce('div');ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center;';
+  var box=ce('div');box.style.cssText='background:#fff;border-radius:20px 20px 0 0;padding:16px 16px 32px;width:100%;max-width:480px;max-height:80vh;overflow-y:auto;';
+  box.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;"><span style="font-size:17px;font-weight:700;">编辑资料</span><span id="_epClose" style="font-size:22px;cursor:pointer;color:#536471;">✕</span></div>';
+  var myAva=localStorage.getItem('fMyAva')||'';
+  var avaPrev=ce('div');avaPrev.style.cssText='width:60px;height:60px;border-radius:50%;background:'+aColor(myName)+';display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff;overflow:hidden;background-size:cover;background-position:center;cursor:pointer;margin-bottom:12px;';
+  if(myAva){avaPrev.style.backgroundImage='url('+myAva+')';avaPrev.style.backgroundColor='transparent';}else{avaPrev.textContent=myName.slice(0,1);}
+  var avaFileInp=document.createElement('input');avaFileInp.type='file';avaFileInp.accept='image/*';avaFileInp.style.display='none';
+  avaFileInp.onchange=function(){var file=this.files[0];if(!file)return;var r=new FileReader();r.onload=function(ev){avaPrev.style.backgroundImage='url('+ev.target.result+')';avaPrev.style.backgroundColor='transparent';avaPrev.textContent='';localStorage.setItem('fMyAva',ev.target.result);};r.readAsDataURL(file);};
+  avaPrev.onclick=function(){avaFileInp.click();};
+  box.appendChild(avaPrev);box.appendChild(avaFileInp);
+  function addField(lbl,id,ph,val,ta){var row=ce('div');row.style.marginBottom='10px';var l=ce('div');l.style.cssText='font-size:13px;font-weight:700;margin-bottom:5px;';l.textContent=lbl;var el=document.createElement(ta?'textarea':'input');el.id=id;el.placeholder=ph;el.style.cssText='width:100%;padding:9px 12px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;outline:none;font-family:inherit;box-sizing:border-box;'+(ta?'height:72px;resize:none;display:block;':'');if(val)el.value=val;row.appendChild(l);row.appendChild(el);box.appendChild(row);}
+  addField('个性签名','_epBio','介绍一下自己…',localStorage.getItem('fMyBio')||'',true);
+  addField('正在关注数','_epFollowing','',localStorage.getItem('fMyFollowing')||'');
+  addField('粉丝数','_epFollowers','',localStorage.getItem('fMyFollowers')||'');
+  var btnRow=ce('div');btnRow.style.cssText='display:flex;gap:8px;margin-top:6px;';
+  var canBtn=document.createElement('button');canBtn.textContent='取消';canBtn.style.cssText='flex:1;padding:11px;border:1.5px solid #cfd9de;border-radius:12px;background:#fff;font-size:14px;cursor:pointer;color:#536471;';
+  var okBtn=document.createElement('button');okBtn.textContent='保存';okBtn.style.cssText='flex:2;padding:11px;background:#1d9bf0;color:#fff;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:700;';
+  canBtn.onclick=function(){ov.remove();};
+  okBtn.onclick=function(){
+    localStorage.setItem('fMyBio',(box.querySelector('#_epBio')||{}).value||'');
+    localStorage.setItem('fMyFollowing',(box.querySelector('#_epFollowing')||{}).value||'');
+    localStorage.setItem('fMyFollowers',(box.querySelector('#_epFollowers')||{}).value||'');
+    ov.remove();renderProfile();toast('资料已更新 ✓');
+  };
+  btnRow.appendChild(canBtn);btnRow.appendChild(okBtn);box.appendChild(btnRow);
+  ov.appendChild(box);document.body.appendChild(ov);
+  box.querySelector('#_epClose').onclick=function(){ov.remove();};
+  ov.onclick=function(e){if(e.target===ov)ov.remove();};
+}
 
 function renderDM(){var list=document.getElementById('fDMList');if(!list)return;list.innerHTML='<div style="text-align:center;padding:48px 20px;color:#536471;font-size:15px;">还没有私信<br><span style="color:#1d9bf0;cursor:pointer;" onclick="window.fNewDM()">点击开始私信</span></div>';}
 window.fNewDM=function(){var chars=getChars();var opts=chars.map(function(c){return '<option value="'+c.name+'">'+c.name+'</option>';}).join('');var ov=ce('div');ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;';var box=ce('div');box.style.cssText='background:#fff;border-radius:18px;padding:18px 16px;width:80vw;max-width:300px;';box.innerHTML='<div style="font-size:16px;font-weight:700;margin-bottom:12px;color:#0f1419;">新私信</div><select id="_fdmS" style="width:100%;padding:9px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;outline:none;background:#fff;margin-bottom:8px;"><option>选择联系人…</option>'+opts+'</select><input id="_fdmC" placeholder="或输入名字" style="width:100%;padding:9px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;outline:none;box-sizing:border-box;margin-bottom:12px;"><div style="display:flex;gap:8px;"><button id="_fdmCan" style="flex:1;padding:10px;border:1.5px solid #cfd9de;border-radius:12px;background:#fff;font-size:14px;cursor:pointer;color:#536471;">取消</button><button id="_fdmOk" style="flex:2;padding:10px;background:#1d9bf0;color:#fff;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:700;">开始聊天</button></div>';ov.appendChild(box);document.body.appendChild(ov);box.querySelector('#_fdmCan').onclick=function(){ov.remove();};box.querySelector('#_fdmOk').onclick=function(){var n=(box.querySelector('#_fdmC')||{}).value.trim()||(box.querySelector('#_fdmS')||{}).value||'';if(!n){toast('请选择联系人');return;}ov.remove();toast('即将与 '+hdl(n)+' 私信…');};ov.onclick=function(e){if(e.target===ov)ov.remove();};}
@@ -24434,7 +24563,7 @@ function item(ico,txt,fn){var d=ce('div');d.className='fDrItem';d.innerHTML='<di
 // 世界观 & 提示词（高度加大，可滚动）
 dr.appendChild(sec('世界观 & 提示词'));
 var wvA=ce('textarea','fWvArea');wvA.placeholder='论坛世界观（时代/地点/背景…）';wvA.style.cssText='width:100%;height:110px;padding:9px 12px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;outline:none;font-family:inherit;box-sizing:border-box;display:block;resize:none;overflow-y:auto;';
-var prA=ce('textarea','fPrArea');prA.placeholder='额外提示词';prA.style.cssText='width:100%;height:80px;padding:9px 12px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;outline:none;font-family:inherit;box-sizing:border-box;display:block;resize:none;overflow-y:auto;margin-top:8px;';
+var prA=ce('textarea','fPrArea');prA.placeholder='额外提示词';prA.style.cssText='width:100%;height:110px;padding:9px 12px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;outline:none;font-family:inherit;box-sizing:border-box;display:block;resize:none;overflow-y:auto;margin-top:8px;';
 var p1=ce('div');p1.style.padding='6px 16px 10px';p1.appendChild(wvA);p1.appendChild(prA);dr.appendChild(p1);
 
 // 时间设定
@@ -24447,14 +24576,32 @@ dr.appendChild(sec('绑定世界书'));
 var wbListEl=ce('div','fWbList');wbListEl.style.padding='0 16px 4px';dr.appendChild(wbListEl);
 var wbAddRow=ce('div');wbAddRow.style.cssText='padding:4px 16px 12px;';
 var wbAddBtn=document.createElement('button');wbAddBtn.textContent='＋ 添加世界书';wbAddBtn.style.cssText='width:100%;padding:10px;background:#1d9bf0;color:#fff;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:700;';
-wbAddBtn.onclick=showAddWbDialog;
+wbAddBtn.onclick=function(idx){window.showAddWbDialog(idx);};
 wbAddRow.appendChild(wbAddBtn);dr.appendChild(wbAddRow);
 
-// 绑定角色（含编辑）
+// 绑定角色（含下拉选择+编辑）
 dr.appendChild(sec('绑定角色'));
 var charListEl=ce('div','fCharList2');charListEl.style.padding='0 16px 4px';dr.appendChild(charListEl);
+// 下拉选择已有char
+var charSelRow=ce('div');charSelRow.style.cssText='padding:4px 16px 8px;display:flex;gap:6px;';
+var charSel=document.createElement('select');charSel.id='fDrawerCharSel';
+charSel.style.cssText='flex:1;padding:9px 10px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;outline:none;background:#fff;';
+charSel.innerHTML='<option value="">从已有角色中选择…</option>';
+// 填充char选项
+try{var opened=JSON.parse(localStorage.getItem('cs_opened_chars')||'[]');opened.forEach(function(cid){var n=localStorage.getItem('cN_'+cid);if(n){var o=document.createElement('option');o.value=n;o.textContent=n;charSel.appendChild(o);}});opened.forEach(function(cid){var raw=originalGetItem.call(localStorage,'npcList_'+cid);if(raw){try{JSON.parse(raw).forEach(function(n){if(n.name){var o=document.createElement('option');o.value=n.name;o.textContent=n.name+'（NPC）';charSel.appendChild(o);}});}catch(e){}}});}catch(e){}
+var charSelBtn=document.createElement('button');charSelBtn.textContent='绑定';
+charSelBtn.style.cssText='padding:9px 14px;background:#1d9bf0;color:#fff;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:700;flex-shrink:0;';
+charSelBtn.onclick=function(){
+  var val=charSel.value;if(!val)return;
+  if(!_extraChars.includes(val)){
+    var ava='';try{var opened2=JSON.parse(localStorage.getItem('cs_opened_chars')||'[]');opened2.forEach(function(cid){if(localStorage.getItem('cN_'+cid)===val)ava=localStorage.getItem('charAva_'+cid)||'';});}catch(e){}
+    _extraChars.push(val);_extraCharsData.push({name:val,ava:ava,bio:'',handle:val.toLowerCase().replace(/\s/g,'_'),following:'',followers:''});
+  }
+  charSel.value='';setTimeout(function(){renderCharList2();},50);toast('已绑定：'+val);
+};
+charSelRow.appendChild(charSel);charSelRow.appendChild(charSelBtn);dr.appendChild(charSelRow);
 var charAddRow=ce('div');charAddRow.style.cssText='padding:4px 16px 12px;';
-var charAddBtn=document.createElement('button');charAddBtn.textContent='＋ 添加自定义角色';charAddBtn.style.cssText='width:100%;padding:10px;background:#1d9bf0;color:#fff;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:700;';
+var charAddBtn=document.createElement('button');charAddBtn.textContent='＋ 添加自定义角色';charAddBtn.style.cssText='width:100%;padding:10px;background:#eff3f4;color:#1d9bf0;border:1.5px solid #1d9bf0;border-radius:12px;font-size:14px;cursor:pointer;font-weight:700;';
 charAddBtn.onclick=function(){showEditCharDialog(null,null);};
 charAddRow.appendChild(charAddBtn);dr.appendChild(charAddRow);
 
@@ -24471,7 +24618,7 @@ setTimeout(function(){renderWbList();renderCharList2();},50);
 }
 
 // 世界书添加弹窗
-function showAddWbDialog(editIdx){
+window.showAddWbDialog=function showAddWbDialog(editIdx){
   var isEdit=editIdx!=null;
   var oldItem=isEdit?_wbItems[editIdx]:{title:'',content:''};
   var ov=ce('div');ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center;';
@@ -24500,7 +24647,7 @@ function showAddWbDialog(editIdx){
 }
 
 // 角色编辑弹窗（char或自定义）
-function showEditCharDialog(charData,extraIdx){
+window.showEditCharDialog=function showEditCharDialog(charData,extraIdx){
   var isNew=charData===null&&extraIdx===null;
   var isExtra=extraIdx!==null&&extraIdx>=0;
   var oldData=isExtra?_extraCharsData[extraIdx]:(charData||{});
@@ -24595,7 +24742,7 @@ function renderCharList2(){
     if(avaUrl){ava.style.backgroundImage='url('+avaUrl+')';ava.style.backgroundColor='transparent';}
     else{ava.style.background=aColor(c.name);ava.textContent=c.name.slice(0,1);}
     var info=ce('div');info.style.cssText='flex:1;min-width:0;';
-    var tag=c.type==='extra'?'[自定义] ':c.type==='npc'?'[NPC] ':'';
+    var tag=c.type==='npc'?'[NPC] ':'';
     info.innerHTML='<div style="font-size:13px;font-weight:700;color:#0f1419;">'+tag+c.name+'</div>';
     var editBtn=ce('span');editBtn.style.cssText='font-size:12px;color:#1d9bf0;cursor:pointer;flex-shrink:0;';editBtn.textContent='编辑';
     var capturedC=c;
