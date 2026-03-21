@@ -24364,7 +24364,7 @@ async function fS(k,v){try{await localforage.setItem('f_'+k,v);}catch(e){}try{lo
 async function fL(k,d){var r=null;try{r=await localforage.getItem('f_'+k);}catch(e){}if(r===null||r===undefined){try{var ls=localStorage.getItem('f_'+k);if(ls!=null){try{r=JSON.parse(ls);}catch(e){r=ls;}}}catch(e){}}return(r===null||r===undefined)?d:r;}
 async function fApi(){var p='',k='',m='';try{p=originalGetItem.call(localStorage,'pxy')||'';}catch(e){}try{k=originalGetItem.call(localStorage,'key')||'';}catch(e){}try{m=originalGetItem.call(localStorage,'mod')||'';}catch(e){}if(!p){try{p=await localforage.getItem('pxy')||'';}catch(e){}}if(!k){try{k=await localforage.getItem('key')||'';}catch(e){}}if(!m){try{m=await localforage.getItem('mod')||'';}catch(e){}}if(!p||!k)return null;if(!p.includes('chat/completions')&&!p.includes('/v1/messages'))p=p.replace(/\/$/,'')+'/chat/completions';if(!m)m='claude-sonnet-4-20250514';return{p,k,m};}
 async function fCall(cfg,prompt,maxT){
-  var res=await fetch(cfg.p,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+cfg.k},body:JSON.stringify({model:cfg.m,max_tokens:maxT||600,temperature:0.9,messages:[{role:'user',content:prompt}]})});
+  var res=await fetch(cfg.p,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+cfg.k},body:JSON.stringify({model:cfg.m,max_tokens:maxT||4096,temperature:0.9,messages:[{role:'user',content:prompt}]})});
   if(!res.ok){var errTxt='';try{var errD=await res.json();errTxt=errD.error&&errD.error.message||JSON.stringify(errD).slice(0,60);}catch(e){errTxt=res.status+' '+res.statusText;}throw new Error('API错误: '+errTxt);}
   var d=await res.json();var t='';
   if(d.content&&Array.isArray(d.content)){for(var i=0;i<d.content.length;i++){if(d.content[i].type==='text'&&d.content[i].text){t=d.content[i].text;break;}}}
@@ -24548,7 +24548,7 @@ function openPost(idx){
       var pr=(s.wv?'背景：'+s.wv+'\n':'')+(s.dt?'时间：'+s.dt+'\n':'')+
         '请围绕标题"'+post.title+'"写一篇论坛帖子正文（150-250字，口语化，有细节，符合'+post.name+'的人设）。\n'+
         '只输出正文内容，不要标题，不要JSON。';
-      fCall(cfg, pr, 600).then(function(raw){
+      fCall(cfg, pr).then(function(raw){
         post.fullContent = raw.trim()||post.title;
         post.isStub = false;
         fS('posts',_posts);
@@ -24624,7 +24624,7 @@ async function loadMoreCmts(btn){
     '帖子：'+(post.title||'')+(post.fullContent?' - '+post.fullContent.slice(0,50):'')+'\n'+
     '只输出JSON数组：[{"name":"评论人","type":"char或net","text":"评论内容（30字内）","likes":数字},...]  不要其他文字。';
   try{
-    var raw=await fCall(cfg,pr,500);
+    var raw=await fCall(cfg,pr);
     var items=fJson(raw);
     var charMap={};chars.forEach(function(c){charMap[c.name]=c;});
     var tstr=new Date().toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'});
@@ -24669,7 +24669,7 @@ async function genHot(cfg){
   var extra = (s.wv?'背景：'+s.wv+' ':'')+( s.dt?'时间：'+s.dt+' ':'');
   var pr = extra+'请生成10条热搜词条（每条不超过12字，中文）。只输出JSON数组：[{"text":"词条"},...] 不要其他任何文字。';
   try{
-    var raw = await fCall(cfg, pr, 400);
+    var raw = await fCall(cfg, pr);
     var tags = fJson(raw);
     if(!Array.isArray(tags)) return;
     var bar = document.getElementById('forumHotTags');
@@ -24704,7 +24704,7 @@ async function genPosts(cfg,board){
     '只输出JSON数组：[{"name":"发帖人","type":"char或net","title":"标题（15字内）","preview":"简介（30字内）","hot":false},...]  不要其他任何文字。';
 
   try{
-    var raw = await fCall(cfg, pr, 1500);
+    var raw = await fCall(cfg, pr);
     var items = fJson(raw);
     if(!Array.isArray(items)||!items.length) throw new Error('解析失败');
     var charMap={};chars.forEach(function(c){charMap[c.name]=c;});
@@ -24736,7 +24736,7 @@ async function genPosts(cfg,board){
     console.error('genPosts error:', e);
   }
 }
-async function doSearch(q){if(!q)return;var feed=document.getElementById('fFeed');if(!feed)return;var local=_posts.filter(function(p){return p.content&&p.content.includes(q);});feed.innerHTML='<div style="padding:10px 14px;font-size:14px;font-weight:700;color:#536471;border-bottom:1px solid #eff3f4;">搜索：'+q+'</div>';if(local.length)local.forEach(function(p){feed.appendChild(buildCard(p,_posts.indexOf(p)));});var cfg=await fApi();if(!cfg)return;var s=getS();var pr='生成5条关于"'+q+'"的帖子，时间：'+s.dt+'\n输出JSON：[{"name":"网友名","type":"net","content":"60字内","board":"综合","likes":数字,"hot":false,"comments":[]}]\n只输出JSON数组。';try{var raw=await fCall(cfg,pr,400);var items=fJson(raw);var tstr=new Date().toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'});items.forEach(function(item){var p={name:item.name,type:'net',ava:null,content:item.content,board:item.board||'综合',likes:item.likes||0,hot:false,time:tstr,comments:[]};feed.appendChild(buildCard(p,_posts.length));_posts.push(p);});fS('posts',_posts);}catch(e){}}
+async function doSearch(q){if(!q)return;var feed=document.getElementById('fFeed');if(!feed)return;var local=_posts.filter(function(p){return p.content&&p.content.includes(q);});feed.innerHTML='<div style="padding:10px 14px;font-size:14px;font-weight:700;color:#536471;border-bottom:1px solid #eff3f4;">搜索：'+q+'</div>';if(local.length)local.forEach(function(p){feed.appendChild(buildCard(p,_posts.indexOf(p)));});var cfg=await fApi();if(!cfg)return;var s=getS();var pr='生成5条关于"'+q+'"的帖子，时间：'+s.dt+'\n输出JSON：[{"name":"网友名","type":"net","content":"60字内","board":"综合","likes":数字,"hot":false,"comments":[]}]\n只输出JSON数组。';try{var raw=await fCall(cfg,pr);var items=fJson(raw);var tstr=new Date().toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'});items.forEach(function(item){var p={name:item.name,type:'net',ava:null,content:item.content,board:item.board||'综合',likes:item.likes||0,hot:false,time:tstr,comments:[]};feed.appendChild(buildCard(p,_posts.length));_posts.push(p);});fS('posts',_posts);}catch(e){}}
 window.fDoSearch=doSearch;
 
 function newPost(){var ov=ce('div');ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.4);display:flex;align-items:flex-end;justify-content:center;';var box=ce('div');box.style.cssText='background:#fff;border-radius:20px 20px 0 0;padding:16px 16px 28px;width:100%;max-width:480px;';box.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;"><span style="font-size:16px;font-weight:700;color:#0f1419;">发帖</span><button id="_fpCan" style="border:none;background:none;font-size:14px;color:#536471;cursor:pointer;">取消</button></div><textarea id="_fpTxt" placeholder="有什么新鲜事？" style="width:100%;height:90px;padding:10px;border:1.5px solid #cfd9de;border-radius:12px;font-size:15px;resize:none;box-sizing:border-box;outline:none;"></textarea><div style="margin-top:10px;text-align:right;"><button id="_fpOk" style="padding:8px 20px;background:#1d9bf0;color:#fff;border:none;border-radius:24px;font-size:15px;cursor:pointer;font-weight:700;">发布</button></div>';ov.appendChild(box);document.body.appendChild(ov);box.querySelector('#_fpCan').onclick=function(){ov.remove();};box.querySelector('#_fpOk').onclick=function(){var txt=(box.querySelector('#_fpTxt')||{}).value||'';if(!txt.trim()){toast('请输入内容');return;}ov.remove();var tstr=new Date().toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'})+' '+new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});_posts.unshift({name:getMyName(),type:'user',ava:null,content:txt,board:_curTab==='推荐'?'日常':_curTab,likes:0,hot:false,time:tstr,comments:[]});fS('posts',_posts);loadFeed();toast('发布成功！');};ov.onclick=function(e){if(e.target===ov)ov.remove();};}
@@ -24909,7 +24909,7 @@ window.fNewDM=function(){var chars=getChars();var opts=chars.map(function(c){ret
 function addTab(){var ov=ce('div');ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;';var box=ce('div');box.style.cssText='background:#fff;border-radius:18px;padding:18px 16px;width:80vw;max-width:300px;';box.innerHTML='<div style="font-size:16px;font-weight:700;margin-bottom:12px;color:#0f1419;">添加板块</div><input id="_ftN" placeholder="板块名称" maxlength="12" style="width:100%;padding:9px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;outline:none;box-sizing:border-box;margin-bottom:8px;"><textarea id="_ftD" placeholder="板块描述（AI据此生成内容）" style="width:100%;height:60px;padding:9px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;resize:none;box-sizing:border-box;outline:none;margin-bottom:12px;"></textarea><div style="display:flex;gap:8px;"><button id="_ftCan" style="flex:1;padding:10px;border:1.5px solid #cfd9de;border-radius:12px;background:#fff;font-size:14px;cursor:pointer;color:#536471;">取消</button><button id="_ftOk" style="flex:2;padding:10px;background:#1d9bf0;color:#fff;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:700;">添加</button></div>';ov.appendChild(box);document.body.appendChild(ov);box.querySelector('#_ftCan').onclick=function(){ov.remove();};box.querySelector('#_ftOk').onclick=function(){var n=(box.querySelector('#_ftN')||{}).value.trim(),d=(box.querySelector('#_ftD')||{}).value.trim();if(!n){toast('请输入板块名称');return;}ov.remove();if(!_customTabs.includes(n)){_customTabs.push(n);_tabDescs[n]=d;}renderTabs();toast('板块已添加：'+n);};ov.onclick=function(e){if(e.target===ov)ov.remove();};}
 
 function buildDrawer(){
-var dr=document.getElementById('fDrawer');if(!dr)return;if(dr.dataset.built==='1'){setTimeout(function(){renderWbList();renderCharList2();var s=dr.querySelector('#fDrawerCharSel');if(s){s.innerHTML='<option value="">从已有角色中选择…</option>';var _rc=getChars();var _ra={};_rc.forEach(function(c){if(c.name&&!_ra[c.name]){_ra[c.name]=true;var o=document.createElement('option');o.value=c.name;o.textContent=c.name+(c.type==='npc'?' （NPC）':c.type==='extra'?' （已绑定）':'');s.appendChild(o);}});}},50);return;}dr.dataset.built='1';
+var dr=document.getElementById('fDrawer');if(!dr)return;if(dr.dataset.built==='1'){setTimeout(function(){renderWbList();renderCharList2();},50);return;}dr.dataset.built='1';
 var hdr=ce('div');hdr.style.cssText='padding:max(env(safe-area-inset-top,20px),20px) 16px 14px;font-size:20px;font-weight:700;color:#0f1419;border-bottom:1px solid #eff3f4;';hdr.textContent='论坛设置';dr.appendChild(hdr);
 function sec(t){var d=ce('div');d.className='fDrSec';d.textContent=t;return d;}
 function item(ico,txt,fn){var d=ce('div');d.className='fDrItem';d.innerHTML='<div class="fDrIco">'+ico+'</div><span>'+txt+'</span>';d.onclick=fn;return d;}
@@ -24933,38 +24933,14 @@ var wbAddBtn=document.createElement('button');wbAddBtn.textContent='＋ 添加�
 wbAddBtn.onclick=function(){window.showAddWbDialog(null);};
 wbAddRow.appendChild(wbAddBtn);dr.appendChild(wbAddRow);
 
-// 绑定角色（含下拉选择+编辑）
+// 绑定角色（复选框弹窗选择）
 dr.appendChild(sec('绑定角色'));
 var charListEl=ce('div','fCharList2');charListEl.style.padding='0 16px 4px';dr.appendChild(charListEl);
-// 下拉选择已有char
+// 选择角色按钮 - 点击弹出复选框
 var charSelRow=ce('div');charSelRow.style.cssText='padding:4px 16px 8px;display:flex;gap:6px;';
-var charSel=document.createElement('select');charSel.id='fDrawerCharSel';
-charSel.style.cssText='flex:1;padding:9px 10px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;outline:none;background:#fff;';
-charSel.innerHTML='<option value="">从已有角色中选择…</option>';
-// 使用getChars()获取所有角色（该函数已验证可正常工作）
-var _allCharsForSel = getChars();
-var _selAdded = {};
-_allCharsForSel.forEach(function(c){
-  if(c.name && !_selAdded[c.name]){
-    _selAdded[c.name] = true;
-    var o = document.createElement('option');
-    o.value = c.name;
-    o.textContent = c.name + (c.type==='npc'?' （NPC）':c.type==='extra'?' （已绑定）':'');
-    charSel.appendChild(o);
-  }
-});
-var charSelBtn=document.createElement('button');charSelBtn.textContent='绑定';
-charSelBtn.style.cssText='padding:9px 14px;background:#1d9bf0;color:#fff;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:700;flex-shrink:0;';
-charSelBtn.onclick=function(){
-  var val=charSel.value;if(!val)return;
-  if(!_extraChars.includes(val)){
-    var ava='';var _bc=getChars();_bc.forEach(function(c){if(c.name===val&&c.ava)ava=c.ava;});
-    _extraChars.push(val);_extraCharsData.push({name:val,ava:ava,bio:'',handle:val.toLowerCase().replace(/\s/g,'_'),following:'',followers:''});
-    fS('extraChars',_extraChars);fS('extraCharsData',_extraCharsData);
-  }
-  charSel.value='';setTimeout(function(){renderCharList2();},50);toast('已绑定：'+val);
-};
-charSelRow.appendChild(charSel);charSelRow.appendChild(charSelBtn);dr.appendChild(charSelRow);
+var charPickBtn=document.createElement('button');charPickBtn.textContent='选择参与论坛的角色';charPickBtn.style.cssText='flex:1;padding:10px;background:#1d9bf0;color:#fff;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:700;';
+charPickBtn.onclick=function(){ showCharPickerDialog(); };
+charSelRow.appendChild(charPickBtn);dr.appendChild(charSelRow);
 var charAddRow=ce('div');charAddRow.style.cssText='padding:4px 16px 12px;';
 var charAddBtn=document.createElement('button');charAddBtn.textContent='＋ 添加自定义角色';charAddBtn.style.cssText='width:100%;padding:10px;background:#eff3f4;color:#1d9bf0;border:1.5px solid #1d9bf0;border-radius:12px;font-size:14px;cursor:pointer;font-weight:700;';
 charAddBtn.onclick=function(){showEditCharDialog(null,null);};
@@ -25068,8 +25044,108 @@ window.showEditCharDialog=function showEditCharDialog(charData,extraIdx){
 }
 window.showEditCharDialog=showEditCharDialog;
 
+// 角色选择复选框弹窗（参考图那样的全选多选界面）
+function showCharPickerDialog(){
+  // 收集所有可用角色 - 使用originalGetItem确保读取正确
+  var allAvailable = [];
+  var seen = {};
+  try{
+    var opened = JSON.parse(originalGetItem.call(localStorage,'cs_opened_chars')||'[]');
+    opened.forEach(function(cid){
+      var n = originalGetItem.call(localStorage,'cN_'+cid);
+      var ava = originalGetItem.call(localStorage,'charAva_'+cid)||'';
+      if(!ava){try{ava=originalGetItem.call(localStorage,'aiI_'+cid)||'';}catch(e){}}
+      if(n && !seen[n]){
+        seen[n]=true;
+        allAvailable.push({name:n, ava:ava, type:'char', cid:cid});
+      }
+    });
+    // NPC
+    opened.forEach(function(cid){
+      var raw = originalGetItem.call(localStorage,'npcList_'+cid);
+      if(raw){try{JSON.parse(raw).forEach(function(npc){
+        if(npc.name && !seen[npc.name]){
+          seen[npc.name]=true;
+          allAvailable.push({name:npc.name, ava:npc.avatar||'', type:'npc'});
+        }
+      });}catch(e){}}
+    });
+  }catch(e){ console.log('读取角色失败:',e); }
+  // 加上extraChars中不在上面的
+  _extraCharsData.forEach(function(d){
+    if(d.name && !seen[d.name]){
+      seen[d.name]=true;
+      allAvailable.push({name:d.name, ava:d.ava||'', type:'extra'});
+    }
+  });
 
-async function saveSettings(){var s=getS();await fS('settings',s);await fS('boards',_customTabs);await fS('wbItems',_wbItems);await fS('extraChars',_extraChars);await fS('extraCharsData',_extraCharsData);await fS('charOverrides',_charOverrides);await fS('following',_following);doRefresh();}
+  if(!allAvailable.length){
+    toast('还没有角色，请先在聊天中添加角色，或点下方"添加自定义角色"');
+    return;
+  }
+
+  // 构建弹窗
+  var ov=ce('div');ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:20px;';
+  var box=ce('div');box.style.cssText='background:#fff;border-radius:20px;padding:20px;width:100%;max-width:380px;max-height:80vh;display:flex;flex-direction:column;';
+  // 标题
+  var title=ce('div');title.style.cssText='font-size:18px;font-weight:700;color:#0f1419;text-align:center;margin-bottom:16px;';title.textContent='选择参与论坛的角色';
+  box.appendChild(title);
+  // 列表
+  var listWrap=ce('div');listWrap.style.cssText='flex:1;overflow-y:auto;border:1.5px solid #eff3f4;border-radius:14px;margin-bottom:16px;';
+  var checkState = {};
+  allAvailable.forEach(function(c){
+    var isBound = _extraChars.includes(c.name);
+    checkState[c.name] = isBound;
+    var row=ce('div');row.style.cssText='display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid #f5f5f5;cursor:pointer;';
+    // 复选框
+    var cb=document.createElement('input');cb.type='checkbox';cb.checked=isBound;cb.style.cssText='width:22px;height:22px;accent-color:#1d9bf0;flex-shrink:0;cursor:pointer;';
+    cb.dataset.charName=c.name;
+    // 头像
+    var av=ce('div');av.style.cssText='width:40px;height:40px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;overflow:hidden;background-size:cover;background-position:center;';
+    if(c.ava){av.style.backgroundImage='url('+c.ava+')';av.style.backgroundColor='transparent';}
+    else{av.style.background=aColor(c.name);av.textContent=c.name.slice(0,1);}
+    // 名字
+    var nm=ce('div');nm.style.cssText='flex:1;min-width:0;';
+    nm.innerHTML='<div style="font-size:15px;font-weight:700;color:#0f1419;">'+c.name+'</div>'+(c.type==='npc'?'<div style="font-size:12px;color:#536471;">NPC</div>':'');
+    row.appendChild(cb);row.appendChild(av);row.appendChild(nm);
+    row.onclick=function(e){if(e.target!==cb){cb.checked=!cb.checked;}checkState[c.name]=cb.checked;};
+    listWrap.appendChild(row);
+  });
+  box.appendChild(listWrap);
+  // 按钮
+  var btnRow=ce('div');btnRow.style.cssText='display:flex;gap:10px;';
+  var canBtn=ce('button');canBtn.textContent='取消';canBtn.style.cssText='flex:1;padding:12px;border-radius:30px;border:none;background:#eff3f4;font-size:15px;cursor:pointer;color:#0f1419;font-weight:600;';
+  canBtn.onclick=function(){ov.remove();};
+  var okBtn=ce('button');okBtn.textContent='保存';okBtn.style.cssText='flex:1;padding:12px;border-radius:30px;border:none;background:#0f1419;color:#fff;font-size:15px;cursor:pointer;font-weight:700;';
+  okBtn.onclick=function(){
+    // 同步选中状态到 _extraChars 和 _extraCharsData
+    var newExtra=[], newExtraData=[];
+    allAvailable.forEach(function(c){
+      if(checkState[c.name]){
+        // 保留已有的编辑数据
+        var existing = _extraCharsData.find(function(d){return d.name===c.name;});
+        if(existing){ newExtraData.push(existing); }
+        else{ newExtraData.push({name:c.name,ava:c.ava||'',bio:'',handle:c.name.toLowerCase().replace(/\s/g,'_'),following:'',followers:''}); }
+        newExtra.push(c.name);
+      }
+    });
+    _extraChars = newExtra;
+    _extraCharsData = newExtraData;
+    fS('extraChars',_extraChars);
+    fS('extraCharsData',_extraCharsData);
+    ov.remove();
+    renderCharList2();
+    toast('已保存 '+newExtra.length+' 个角色 ✓');
+  };
+  btnRow.appendChild(canBtn);btnRow.appendChild(okBtn);
+  box.appendChild(btnRow);
+  ov.appendChild(box);
+  document.body.appendChild(ov);
+  ov.onclick=function(e){if(e.target===ov)ov.remove();};
+}
+
+
+async function saveSettings(){var s=getS();await fS('settings',s);await fS('boards',_customTabs);await fS('wbItems',_wbItems);await fS('extraChars',_extraChars);await fS('extraCharsData',_extraCharsData);await fS('charOverrides',_charOverrides);await fS('following',_following);toast('设置已保存 ✓');}
 
 function renderWbList(){
   var el=document.getElementById('fWbList');if(!el)return;
@@ -25092,35 +25168,23 @@ function renderWbList(){
 
 function renderCharList2(){
   var el=document.getElementById('fCharList2');if(!el)return;el.innerHTML='';
-  var baseChars=[];
-  try{
-    var opened=JSON.parse(localStorage.getItem('cs_opened_chars')||'[]');
-    opened.forEach(function(cid){var n=localStorage.getItem('cN_'+cid);var ava=localStorage.getItem('charAva_'+cid)||'';if(n)baseChars.push({name:n,type:'char',ava:ava,isExtra:false});});
-    opened.forEach(function(cid){var raw=originalGetItem.call(localStorage,'npcList_'+cid);if(raw){try{JSON.parse(raw).forEach(function(n){if(n.name)baseChars.push({name:n.name,type:'npc',ava:n.avatar||'',isExtra:false});});}catch(e){}}});
-  }catch(e){}
-  var extraCharsDisplay=_extraCharsData.map(function(d,i){return{name:d.name,type:'extra',ava:d.ava||'',isExtra:true,extraIdx:i};});
-  var allChars=baseChars.concat(extraCharsDisplay);
-  if(!allChars.length){var tip=ce('div');tip.style.cssText='padding:10px 0;font-size:13px;color:#536471;text-align:center;';tip.textContent='暂无绑定角色';el.appendChild(tip);return;}
-  allChars.forEach(function(c){
+  // 只显示已绑定的角色（_extraCharsData）
+  if(!_extraCharsData.length){var tip=ce('div');tip.style.cssText='padding:10px 0;font-size:13px;color:#536471;text-align:center;';tip.textContent='暂无绑定角色，点上方按钮选择';el.appendChild(tip);return;}
+  _extraCharsData.forEach(function(d,i){
     var r=ce('div');r.style.cssText='display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f5f5f5;';
     var ava=ce('div');ava.style.cssText='width:32px;height:32px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;overflow:hidden;background-size:cover;background-position:center;';
-    var ov=_charOverrides&&_charOverrides[c.name];
-    var avaUrl=(ov&&ov.ava)||c.ava;
+    var ov=_charOverrides&&_charOverrides[d.name];
+    var avaUrl=(ov&&ov.ava)||d.ava||'';
     if(avaUrl){ava.style.backgroundImage='url('+avaUrl+')';ava.style.backgroundColor='transparent';}
-    else{ava.style.background=aColor(c.name);ava.textContent=c.name.slice(0,1);}
+    else{ava.style.background=aColor(d.name);ava.textContent=d.name.slice(0,1);}
     var info=ce('div');info.style.cssText='flex:1;min-width:0;';
-    var tag=c.type==='npc'?'[NPC] ':'';
-    info.innerHTML='<div style="font-size:13px;font-weight:700;color:#0f1419;">'+tag+c.name+'</div>';
+    info.innerHTML='<div style="font-size:13px;font-weight:700;color:#0f1419;">'+d.name+'</div>';
     var editBtn=ce('span');editBtn.style.cssText='font-size:12px;color:#1d9bf0;cursor:pointer;flex-shrink:0;';editBtn.textContent='编辑';
-    var capturedC=c;
-    editBtn.onclick=function(){if(capturedC.isExtra){showEditCharDialog(null,capturedC.extraIdx);}else{showEditCharDialog(capturedC,null);}};
-    r.appendChild(ava);r.appendChild(info);r.appendChild(editBtn);
-    if(c.isExtra){
-      var delBtn=ce('span');delBtn.style.cssText='font-size:12px;color:#f91880;cursor:pointer;flex-shrink:0;margin-left:6px;';delBtn.textContent='删除';
-      var capturedIdx=c.extraIdx;
-      delBtn.onclick=function(){_extraCharsData.splice(capturedIdx,1);_extraChars.splice(capturedIdx,1);renderCharList2();};
-      r.appendChild(delBtn);
-    }
+    var capturedIdx=i;
+    editBtn.onclick=function(){showEditCharDialog(null,capturedIdx);};
+    var delBtn=ce('span');delBtn.style.cssText='font-size:12px;color:#f91880;cursor:pointer;flex-shrink:0;margin-left:6px;';delBtn.textContent='删除';
+    delBtn.onclick=function(){_extraCharsData.splice(capturedIdx,1);_extraChars.splice(capturedIdx,1);fS('extraChars',_extraChars);fS('extraCharsData',_extraCharsData);renderCharList2();};
+    r.appendChild(ava);r.appendChild(info);r.appendChild(editBtn);r.appendChild(delBtn);
     el.appendChild(r);
   });
 }
@@ -25135,10 +25199,11 @@ var w=ce('div','fWrap');
 // 顶部
 var hdr=ce('div','fHeader');
 var htop=ce('div','fHeaderTop');
-var mBtn=ce('div','fMenuBtn');mBtn.innerHTML='&#9776;';mBtn.onclick=toggleDrawer;
+var backBtn=ce('div');backBtn.style.cssText='width:34px;height:34px;border-radius:50%;background:#eff3f4;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;color:#0f1419;';backBtn.innerHTML='&#8592;';backBtn.onclick=function(){showScreen('scrHome');};
+var mBtn=ce('div','fMenuBtn');mBtn.innerHTML='&#9776;';mBtn.onclick=toggleDrawer;mBtn.style.cssText='width:34px;height:34px;border-radius:50%;background:#eff3f4;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;margin-left:6px;';
 var ht=ce('div','fHeaderTitle');ht.textContent='📋 论坛';
 var rBtn=ce('div','fRefreshBtn');rBtn.textContent='🔄';rBtn.onclick=doRefresh;
-htop.appendChild(mBtn);htop.appendChild(ht);htop.appendChild(rBtn);
+htop.appendChild(backBtn);htop.appendChild(mBtn);htop.appendChild(ht);htop.appendChild(rBtn);
 var hotBar=ce('div','fHotBar');hotBar.style.cssText='display:flex;align-items:center;overflow-x:auto;padding:4px 12px 6px;scrollbar-width:none;border-bottom:1px solid #eff3f4;';
 var hotLbl=ce('span');hotLbl.style.cssText='font-size:12px;color:#f91880;font-weight:700;flex-shrink:0;margin-right:6px;';hotLbl.textContent='🔥';
 var hotTags=ce('div','forumHotTags');hotTags.style.cssText='display:flex;overflow-x:auto;scrollbar-width:none;';
