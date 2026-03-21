@@ -24458,44 +24458,50 @@ function loadFeed(){var feed=document.getElementById('fFeed');if(!feed)return;fe
 function loadFollowFeed(){var feed=document.getElementById('fFeed');if(!feed)return;feed.innerHTML='';
   var hdr=ce('div');hdr.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#fff;border-bottom:1px solid #eff3f4;';
   var lbl=ce('div');lbl.style.cssText='font-size:16px;font-weight:700;color:#0f1419;';lbl.textContent='正在关注';
-  var rfBtn=ce('div');rfBtn.style.cssText='font-size:18px;cursor:pointer;color:#1d9bf0;';rfBtn.textContent='↻';
+  var rfBtn=ce('div');rfBtn.style.cssText='font-size:20px;cursor:pointer;color:#1d9bf0;transition:.3s;';rfBtn.textContent='↻';rfBtn.id='fFollowRefreshBtn';
   rfBtn.onclick=async function(){
-    rfBtn.style.opacity='0.5';toast('正在生成动态…');
+    rfBtn.classList.add('spinning');
     try{
-      var cfg=await fApi();if(!cfg){toast('请先配置API');rfBtn.style.opacity='1';return;}
+      var cfg=await fApi();if(!cfg){toast('请先配置API');rfBtn.classList.remove('spinning');return;}
       var allChars=getChars();
-      if(!allChars.length){toast('还没有绑定角色');rfBtn.style.opacity='1';return;}
-      var charBios='';allChars.slice(0,6).forEach(function(c){var ov=_charOverrides&&_charOverrides[c.name];var bio=(ov&&ov.bio)||c.bio||'';charBios+=c.name+'：'+(bio||'无简介')+'\n';});
+      if(!allChars.length){toast('还没有绑定角色');rfBtn.classList.remove('spinning');return;}
+      var charBios='';allChars.slice(0,6).forEach(function(c){var ov=_charOverrides&&_charOverrides[c.name];var bio=(ov&&ov.bio)||c.bio||'';charBios+=c.name+'（人设：'+(bio||'无简介')+'）\n';});
       var s=getS();var ctx='';if(s.wv)ctx+='【世界观】'+s.wv+'\n';if(s.dt)ctx+='【时间】'+s.dt+'\n';
       var activeWb=_wbItems.filter(function(i){return i.active!==false;});
       if(activeWb.length)ctx+='【设定】'+activeWb.map(function(i){return i.title+'：'+i.content;}).join('\n')+'\n';
       if(s.pr)ctx+=s.pr+'\n';
-      ctx+='【角色人设】\n'+charBios+'\n';
-      var pr=ctx+'生成5条这些角色的日常动态（心情、碎碎念、分享日常），严格贴合人设语气。\n'+
-        '注意：这是朋友圈/动态，不需要标题！只要正文内容，像发微博一样随意。\n'+
-        '每条50-150字，口语化，可带#标签和【图片描述：xxx】。\n'+
+      ctx+='【角色人设（必须严格遵守）】\n'+charBios+'\n';
+      var pr=ctx+'为以上每个角色各生成1条日常动态（心情、碎碎念、分享日常）。\n'+
+        '极其重要：发帖风格、语气、内容必须100%贴合各自人设！\n'+
+        '沉默寡言的角色发帖要简短克制；活泼的角色可以多说；冷淡的角色绝对不会写长篇大论。\n'+
+        '这是微博动态，不需要标题！正文内容，真实活人感。\n'+
+        '每条30-120字，口语化，可带#标签和【图片描述：xxx】。\n'+
         '只输出JSON：[{"name":"角色名","content":"动态正文"}]\n不要其他文字。';
       var raw=await fCall(cfg,pr);var items=fJson(raw);
       var charMap={};allChars.forEach(function(c){charMap[c.name]=c;});
-      var tstr=new Date().toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'});
-      items.forEach(function(item){if(!item.name||!item.content)return;var c=charMap[item.name];
-        _posts.unshift({name:item.name,type:c?'char':'net',ava:c?c.ava||null:null,title:'',content:item.content.slice(0,60),fullContent:item.content,board:'关注',likes:Math.floor(Math.random()*500+10),hot:false,time:tstr,comments:[],isStub:false,topicKey:'_follow'});});
+      // 生成散开的时间（让帖子看起来不是同时发的）
+      var timeOffsets=[0,25,60,120,180,300];
+      var now=new Date();
+      items.forEach(function(item,idx){if(!item.name||!item.content)return;var c=charMap[item.name];
+        var postTime=new Date(now.getTime()-timeOffsets[idx%timeOffsets.length]*60000);
+        var tstr=timeAgo(postTime.toISOString());
+        _posts.unshift({name:item.name,type:c?'char':'net',ava:c?c.ava||null:null,title:'',content:item.content.slice(0,60),fullContent:item.content,board:'关注',likes:Math.floor((postHash({name:item.name,content:item.content})%480)+20),hot:false,time:tstr,comments:[],isStub:false,topicKey:'_follow'});});
       fS('posts',_posts);loadFollowFeed();toast('已刷新 ✓');
     }catch(e){toast('刷新失败：'+(e.message||'').slice(0,25));}
-    rfBtn.style.opacity='1';
+    rfBtn.classList.remove('spinning');
   };
   hdr.appendChild(lbl);hdr.appendChild(rfBtn);feed.appendChild(hdr);
-  // 只显示关注动态（topicKey='_follow'），不混入热搜帖子
-  var list=_posts.filter(function(p){return p.topicKey==='_follow';});
-  if(!list.length){var tip=ce('div');tip.style.cssText='text-align:center;padding:40px;color:#536471;font-size:14px;';tip.textContent='还没有动态，点 ↻ 刷新生成';feed.appendChild(tip);return;}
+  // 只显示关注动态（topicKey='_follow'），且不显示"我"自己的帖子
+  var myName=originalGetItem.call(localStorage,'fMyName')||getMyName();
+  var list=_posts.filter(function(p){return p.topicKey==='_follow'&&p.name!==myName;});
+  if(!list.length){var tip=ce('div');tip.style.cssText='text-align:center;padding:40px;color:#536471;font-size:14px;line-height:1.8;';tip.innerHTML='还没有动态<br><span style="font-size:12px;color:#aaa;">点右上角 ↻ 刷新生成</span>';feed.appendChild(tip);return;}
   list.forEach(function(p){
-    // 动态卡片（无标题，直接显示内容）
     var card=ce('div');card.style.cssText='background:#fff;border-bottom:1px solid #eff3f4;padding:14px;';
     var hRow=ce('div');hRow.style.cssText='display:flex;gap:10px;align-items:center;margin-bottom:8px;';
     var av=ce('div');av.className='fAva';
     if(p.ava){av.style.backgroundImage='url('+p.ava+')';av.style.backgroundColor='transparent';}else{av.style.background=aColor(p.name);av.textContent=p.name.slice(0,1);}
     av.style.cursor='pointer';av.onclick=function(e){e.stopPropagation();openCharProfile(p);};
-    var nm=ce('div');nm.innerHTML='<span class="fName">'+p.name+'</span> <span class="fHandle">'+hdl(p.name)+' · '+p.time+'</span>';
+    var nm=ce('div');nm.innerHTML='<span class="fName">'+p.name+'</span><span class="fHandle"> '+hdl(p.name)+'</span><span class="fTime"> · '+timeAgo(p.time)+'</span>';
     hRow.appendChild(av);hRow.appendChild(nm);card.appendChild(hRow);
     var rawTxt=p.fullContent||p.content||'';
     var imgM=rawTxt.match(/【图片描述[：:](.+?)】/);
@@ -24504,13 +24510,39 @@ function loadFollowFeed(){var feed=document.getElementById('fFeed');if(!feed)ret
     txt.innerHTML=mainTxt.replace(/#([^#\s]{1,20})#?/g,'<span style="color:#1d9bf0;">#$1</span>').replace(/@([^\s@]{1,15})/g,'<span style="color:#1d9bf0;">@$1</span>');
     card.appendChild(txt);
     if(imgM&&imgM[1]){var ic=ce('div');ic.style.cssText='background:#f7f9f9;border:1px solid #eff3f4;border-radius:14px;padding:12px;margin-bottom:8px;font-size:13px;color:#536471;';ic.textContent=imgM[1].trim();card.appendChild(ic);}
-    // X风格stats
-    var st=ce('div');st.style.cssText='display:flex;gap:18px;font-size:13px;color:#536471;';
-    st.innerHTML='<span>💬 '+Math.floor(Math.random()*80+3)+'</span><span>🔁 '+Math.floor(Math.random()*50+1)+'</span><span>♡ '+p.likes+'</span><span>📊 '+Math.floor(Math.random()*20+1)+'K</span><span>🔖</span><span>⬆️</span>';
+    var ps4=postStats(p);
+    var st=ce('div');st.className='fStats';st.style.cssText='display:flex;justify-content:space-around;align-items:center;padding-top:4px;';
+    st.innerHTML='<span class="fStat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'+ps4.cmts+'</span>'+
+      '<span class="fStat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>'+ps4.rts+'</span>'+
+      '<span class="fStat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'+p.likes+'</span>'+
+      '<span class="fStat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>'+ps4.views+'</span>'+
+      '<span class="fStat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></span>'+
+      '<span class="fStat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></span>';
     card.appendChild(st);
     card.style.cursor='pointer';card.onclick=function(){openPost(_posts.indexOf(p));};
     feed.appendChild(card);
   });
+}
+
+// 时间显示辅助函数：把日期字符串转成"刚刚/X分钟前/X小时前/X天前"
+function timeAgo(timeStr){
+  if(!timeStr)return'刚刚';
+  // 如果已经是相对时间格式，直接返回
+  if(/(前|刚刚|小时|分钟|天|周)/.test(timeStr))return timeStr;
+  // 尝试解析日期
+  var now=new Date();
+  var d=null;
+  // 格式如 "3/21" 或 "12月17日"
+  var m1=timeStr.match(/^(\d+)\/(\d+)$/);
+  if(m1){d=new Date(now.getFullYear(),parseInt(m1[1])-1,parseInt(m1[2]));}
+  if(!d||isNaN(d)){d=new Date(timeStr);}
+  if(!d||isNaN(d))return timeStr;
+  var diff=Math.floor((now-d)/1000);
+  if(diff<60)return'刚刚';
+  if(diff<3600)return Math.floor(diff/60)+'分钟前';
+  if(diff<86400)return Math.floor(diff/3600)+'小时前';
+  if(diff<604800)return Math.floor(diff/86400)+'天前';
+  return Math.floor(diff/604800)+'周前';
 }
 
 function postHash(post){var s=(post.name||'')+(post.title||'')+(post.content||'').slice(0,20);var h=0;for(var i=0;i<s.length;i++)h=((h<<5)-h+s.charCodeAt(i))|0;return Math.abs(h);}
@@ -24540,7 +24572,7 @@ function buildCard(post,idx){
   }
   // 名字行
   var nr=ce('div'); nr.style.cssText='display:flex;align-items:center;flex-wrap:wrap;margin-bottom:3px;';
-  nr.innerHTML='<span class="fName">'+post.name+'</span><span class="fHandle">'+hdl(post.name)+'</span><span class="fTime"> · '+post.time+'</span>';
+  nr.innerHTML='<span class="fName">'+post.name+'</span><span class="fHandle"> '+hdl(post.name)+'</span><span class="fTime"> · '+timeAgo(post.time)+'</span>';
   body.appendChild(nr);
   // 标题（大字）
   if(post.title){
@@ -24703,7 +24735,9 @@ function openPost(idx){
   if(post.isStub && !post.fullContent){
     var loading=ce('div');
     loading.style.cssText='text-align:center;padding:60px 20px;color:#536471;font-size:14px;';
-    loading.innerHTML='<div style="font-size:30px;margin-bottom:12px;">⏳</div>正在生成帖子内容…';
+    loading.innerHTML='<div style="font-size:14px;color:#536471;">正在生成帖子内容…</div>';
+    // 让顶部刷新按钮旋转
+    var rBtn2=document.getElementById('fRefreshBtn');if(rBtn2)rBtn2.classList.add('spinning');
     body.appendChild(loading);
     fApi().then(function(cfg){
       if(!cfg){ loading.textContent='请先配置API'; return; }
@@ -24759,16 +24793,16 @@ function renderPostDetail(post, body){
     imgCard.textContent=imgMatch[1].trim();
     orig.appendChild(imgCard);
   }
-  // stats row - X风格
+  // stats row - X风格（横向，图标+数字对齐）
   var ps2=postStats(post);
-  var statsRow=ce('div');statsRow.style.cssText='display:flex;justify-content:space-around;padding:12px 0;border-top:1px solid #eff3f4;border-bottom:1px solid #eff3f4;margin-top:8px;';
+  var statsRow=ce('div');statsRow.style.cssText='display:flex;justify-content:space-around;align-items:center;padding:10px 0;border-top:1px solid #eff3f4;border-bottom:1px solid #eff3f4;margin-top:8px;';
   statsRow.innerHTML=
-    '<span style="display:flex;flex-direction:column;align-items:center;gap:2px;color:#536471;font-size:13px;cursor:pointer;" title="评论"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'+ps2.cmts+'</span>'+
-    '<span style="display:flex;flex-direction:column;align-items:center;gap:2px;color:#536471;font-size:13px;cursor:pointer;" title="转发"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>'+ps2.rts+'</span>'+
-    '<span style="display:flex;flex-direction:column;align-items:center;gap:2px;color:#536471;font-size:13px;cursor:pointer;" title="喜欢"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'+post.likes+'</span>'+
-    '<span style="display:flex;flex-direction:column;align-items:center;gap:2px;color:#536471;font-size:13px;" title="浏览"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>'+ps2.views+'</span>'+
-    '<span style="display:flex;flex-direction:column;align-items:center;gap:2px;color:#536471;font-size:13px;cursor:pointer;" title="收藏"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>'+ps2.bks+'</span>'+
-    '<span style="display:flex;flex-direction:column;align-items:center;gap:2px;color:#536471;font-size:13px;cursor:pointer;" title="分享"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></span>';
+    '<span style="display:flex;align-items:center;gap:4px;color:#536471;font-size:13px;cursor:pointer;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'+ps2.cmts+'</span>'+
+    '<span style="display:flex;align-items:center;gap:4px;color:#536471;font-size:13px;cursor:pointer;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>'+ps2.rts+'</span>'+
+    '<span style="display:flex;align-items:center;gap:4px;color:#536471;font-size:13px;cursor:pointer;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'+post.likes+'</span>'+
+    '<span style="display:flex;align-items:center;gap:4px;color:#536471;font-size:13px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>'+ps2.views+'</span>'+
+    '<span style="display:flex;align-items:center;gap:4px;color:#536471;font-size:13px;cursor:pointer;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>'+ps2.bks+'</span>'+
+    '<span style="display:flex;align-items:center;gap:4px;color:#536471;font-size:13px;cursor:pointer;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></span>';
   orig.appendChild(statsRow);
   body.appendChild(orig);
 
@@ -25015,7 +25049,9 @@ async function openTopic(topic){
   var hd=ce('div');hd.style.cssText='display:flex;align-items:center;gap:10px;padding:max(env(safe-area-inset-top,20px),20px) 14px 10px;background:#fff;border-bottom:1px solid #eff3f4;flex-shrink:0;';
   var bk=ce('div');bk.style.cssText='width:34px;height:34px;border-radius:50%;background:#eff3f4;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;';bk.innerHTML='&#8592;';bk.onclick=function(){pg.remove();};
   var ht=ce('div');ht.style.cssText='flex:1;font-size:16px;font-weight:700;color:#0f1419;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';ht.textContent=topic.title;
-  hd.appendChild(bk);hd.appendChild(ht);
+  // 旋转刷新按钮
+  var topicRefBtn=ce('div');topicRefBtn.id='fTopicRefBtn';topicRefBtn.style.cssText='width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;color:#1d9bf0;transition:.3s;';topicRefBtn.textContent='↻';
+  hd.appendChild(bk);hd.appendChild(ht);hd.appendChild(topicRefBtn);
   var bd=ce('div');bd.style.cssText='flex:1;overflow-y:auto;';
   pg.appendChild(hd);pg.appendChild(bd);forum.appendChild(pg);
 
@@ -25026,9 +25062,11 @@ async function openTopic(topic){
     return;
   }
 
-  bd.innerHTML='<div style="text-align:center;padding:60px 20px;color:#536471;font-size:14px;"><div style="font-size:28px;margin-bottom:8px;">⏳</div>正在生成"'+topic.title+'"相关帖子…</div>';
+  // 显示旋转加载状态
+  if(topicRefBtn)topicRefBtn.classList.add('spinning');
+  bd.innerHTML='<div style="text-align:center;padding:60px 20px;color:#536471;font-size:14px;">正在生成"'+topic.title+'"相关帖子…</div>';
   try{
-    var cfg=await fApi();if(!cfg){bd.innerHTML='<div style="text-align:center;padding:40px;color:#e74c3c;">请先配置API</div>';return;}
+    var cfg=await fApi();if(!cfg){bd.innerHTML='<div style="text-align:center;padding:40px;color:#e74c3c;">请先配置API</div>';if(topicRefBtn)topicRefBtn.classList.remove('spinning');return;}
     var s=getS();var chars=getChars();
     var charNames=chars.length?chars.slice(0,5).map(function(c){return c.name;}).join('、'):'普通网友';
     // 构建角色简介（让AI了解人设）
@@ -25044,28 +25082,33 @@ async function openTopic(topic){
     if(s.pr)extra2+=s.pr+'\n';
 
     var pr=extra2+'围绕话题"'+topic.title+'"，生成5条帖子（发帖人包含：'+charNames+'和随机网友如"吃瓜专业户"等有趣网名）。\n'+
-      '重要：角色发帖必须完全贴合各自人设和性格！网友发帖要有真实活人感。\n'+
-      '每条200-350字，口语化，包含#话题标签，涉及配图用【图片描述：xxx】描述。\n'+
+      '极其重要：角色发帖必须完全贴合各自人设和性格！沉默寡言的角色只说简短的话；文艺的角色用文艺语气；冷淡的角色不会长篇大论！\n'+
+      '网友发帖要有真实活人感。字数跟人设走，不强求长度。\n'+
+      '包含#话题标签，涉及配图用【图片描述：xxx】描述。\n'+
       '只输出JSON数组：[{"name":"发帖人","title":"帖子标题","content":"正文"}]\n不要其他文字。';
     var raw=await fCall(cfg,pr);
     var items=fJson(raw);
     if(!Array.isArray(items)||!items.length) throw new Error('解析为空');
     var charMap={};chars.forEach(function(c){charMap[c.name]=c;});
-    var tstr=new Date().toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'});
+    // 散开时间让帖子显得自然
+    var now2=new Date();var timeOff2=[0,20,45,90,200];
     bd.innerHTML='';
     var newPosts=[];
-    items.forEach(function(item){
+    items.forEach(function(item,idx){
       if(!item.name||!item.content)return;
       var c=charMap[item.name];
-      var post={name:item.name,type:c?'char':'net',ava:c?c.ava||null:null,title:item.title||topic.title,content:item.content.slice(0,60),fullContent:item.content,board:topic.category||'综合',likes:Math.floor(Math.random()*500+10),hot:false,time:tstr,comments:[],isStub:false,topicKey:topic.title};
+      var postTime2=new Date(now2.getTime()-timeOff2[idx%timeOff2.length]*60000);
+      var post={name:item.name,type:c?'char':'net',ava:c?c.ava||null:null,title:item.title||topic.title,content:item.content.slice(0,60),fullContent:item.content,board:topic.category||'综合',likes:Math.floor((postHash({name:item.name,content:item.content})%480)+20),hot:false,time:timeAgo(postTime2.toISOString()),comments:[],isStub:false,topicKey:topic.title};
       _posts.unshift(post);
       newPosts.push(post);
     });
     fS('posts',_posts);
     renderTopicPosts(newPosts, bd);
+    if(topicRefBtn)topicRefBtn.classList.remove('spinning');
   }catch(e){
     console.error('openTopic error:',e);
-    bd.innerHTML='<div style="text-align:center;padding:40px 20px;color:#e74c3c;font-size:14px;line-height:2;"><div style="font-size:28px;margin-bottom:8px;">⚠️</div>生成失败<br><div style="font-size:12px;color:#999;">'+((e.message||'').slice(0,50))+'</div></div>';
+    if(topicRefBtn)topicRefBtn.classList.remove('spinning');
+    bd.innerHTML='<div style="text-align:center;padding:40px 20px;color:#e74c3c;font-size:14px;line-height:2;"><div style="font-size:14px;color:#536471;margin-bottom:8px;">生成失败</div><div style="font-size:12px;color:#999;">'+((e.message||'').slice(0,50))+'</div><br><span style="color:#1d9bf0;cursor:pointer;" onclick="this.closest(\'[id=fTopicPage]\')&&this.closest(\'[id=fTopicPage]\').remove()">返回重试</span></div>';
   }
 }
 window.fOpenTopic=openTopic;
