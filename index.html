@@ -24921,7 +24921,9 @@ function buildCmt(cmt,pi,ci){
   rt.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>'+cmtRts;
   var lk=ce('span');lk.style.cssText='font-size:13px;color:#536471;display:flex;align-items:center;gap:3px;cursor:pointer;';
   lk.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'+(cmt.likes||0);
-  lk.onclick=function(e){e.stopPropagation();cmt.likes=(cmt.likes||0)+1;lk.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f91880" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="#f91880"/></svg>'+cmt.likes;fS('posts',_posts);};
+  var _lkd=cmt._liked||false;
+  lk.innerHTML=(_lkd?'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f91880" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="#f91880"/>':'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>')+'</svg>'+(cmt.likes||0);
+  lk.onclick=function(e){e.stopPropagation();_lkd=!_lkd;cmt._liked=_lkd;if(_lkd){cmt.likes=(cmt.likes||0)+1;}else{cmt.likes=Math.max(0,(cmt.likes||1)-1);}lk.innerHTML=(_lkd?'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f91880" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="#f91880"/>':'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>')+'</svg>'+(cmt.likes||0);fS('posts',_posts);};
   var vw=ce('span');vw.style.cssText='font-size:13px;color:#536471;display:flex;align-items:center;gap:3px;';
   vw.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>'+cmtViews;
   var bk=ce('span');bk.style.cssText='font-size:13px;color:#536471;display:flex;align-items:center;gap:3px;cursor:pointer;';
@@ -24951,15 +24953,26 @@ function buildCmt(cmt,pi,ci){
         var rtsT=document.createElement('span');rtsT.textContent=rep.text;repTxt.appendChild(rtsT);
       }else{repTxt.textContent=rep.text;}
       repRow.appendChild(repTxt);
-      // 楼中楼的小stats
-      var repS=ce('div');repS.style.cssText='display:flex;gap:16px;margin-top:6px;padding-left:28px;';
-      var repRb=ce('span');repRb.style.cssText='font-size:12px;color:#536471;cursor:pointer;display:flex;align-items:center;gap:2px;';
-      repRb.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>回复';
-      repRb.onclick=function(){_replyTarget={pi:pi,ci:ci,name:rep.name};var inp2=document.getElementById('fReplyInp');if(inp2){inp2.placeholder='回复 '+hdl(rep.name)+'…';inp2.focus();}};
-      var repLk=ce('span');repLk.style.cssText='font-size:12px;color:#536471;cursor:pointer;display:flex;align-items:center;gap:2px;';
-      repLk.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'+(rep.likes||0);
-      repLk.onclick=function(e){e.stopPropagation();rep.likes=(rep.likes||0)+1;repLk.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f91880" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="#f91880"/></svg>'+rep.likes;fS('posts',_posts);};
-      repS.appendChild(repRb);repS.appendChild(repLk);repRow.appendChild(repS);
+      // 楼中楼 stats - 跟外层评论格式一致
+      var repH2=postHash({name:rep.name,content:rep.text||'',title:''});
+      var repRts=Math.max(0,Math.floor((rep.likes||0)*(0.12+(repH2%5)*0.03)));
+      var repViews=(rep.likes||0)>50?Math.floor((rep.likes||0)*5)+'':((rep.likes||0)*4+20)+'';
+      var repBks=Math.max(0,Math.floor((rep.likes||0)*0.06));
+      var repS=ce('div');repS.style.cssText='display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding-left:28px;padding-right:4px;';
+      var repRb2=ce('span');repRb2.style.cssText='font-size:12px;color:#536471;cursor:pointer;display:flex;align-items:center;gap:2px;';
+      repRb2.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>0';
+      repRb2.onclick=function(){_replyTarget={pi:pi,ci:ci,name:rep.name};var inp2=document.getElementById('fReplyInp');if(inp2){inp2.placeholder='回复 '+hdl(rep.name)+'…';inp2.focus();}};
+      var repRt2=ce('span');repRt2.style.cssText='font-size:12px;color:#536471;display:flex;align-items:center;gap:2px;';
+      repRt2.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>'+repRts;
+      var repLk2=ce('span');repLk2.style.cssText='font-size:12px;color:#536471;cursor:pointer;display:flex;align-items:center;gap:2px;';
+      var repLiked2=rep._liked||false;
+      repLk2.innerHTML=(repLiked2?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f91880" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="#f91880"/>':'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>')+'</svg>'+(rep.likes||0);
+      repLk2.onclick=function(e){e.stopPropagation();repLiked2=!repLiked2;rep._liked=repLiked2;if(repLiked2){rep.likes=(rep.likes||0)+1;}else{rep.likes=Math.max(0,(rep.likes||1)-1);}repLk2.innerHTML=(repLiked2?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f91880" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="#f91880"/>':'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>')+'</svg>'+(rep.likes||0);fS('posts',_posts);};
+      var repVw2=ce('span');repVw2.style.cssText='font-size:12px;color:#536471;display:flex;align-items:center;gap:2px;';
+      repVw2.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>'+repViews;
+      var repBk2=ce('span');repBk2.style.cssText='font-size:12px;color:#536471;display:flex;align-items:center;gap:2px;';
+      repBk2.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>'+(repBks||'');
+      repS.appendChild(repRb2);repS.appendChild(repRt2);repS.appendChild(repLk2);repS.appendChild(repVw2);repS.appendChild(repBk2);repRow.appendChild(repS);
       subWrap.appendChild(repRow);
     });
     subArea.appendChild(subWrap);
@@ -25066,7 +25079,7 @@ async function loadMoreCmts(btn){
   try{
     var raw=await fCall(cfg,pr);var items=fJson(raw);
     var charMap={};chars.forEach(function(c){charMap[c.name]=c;});
-    var tstr=new Date().toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'});
+    var tstr=new Date().toISOString();
     // 先创建没有replyTo的顶层评论，再把有replyTo的加进楼中楼
     var newCmtMap={};
     items.forEach(function(item){if(!item.name||!item.text)return;var c=charMap[item.name];
@@ -25326,7 +25339,7 @@ function newPost(){
     ov.remove();
     var myName=getMyName();
     var myAva=originalGetItem.call(localStorage,'fMyAva')||'';
-    var tstr=new Date().toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'})+' '+new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
+    var tstr=new Date().toISOString(); // 用ISO存储，timeAgo会转成刚刚/X分钟前
     var newPost2={name:myName,type:'user',ava:myAva||null,content:txt.slice(0,80),fullContent:fullContent,imgData:_postImgData||null,board:_curTab==='推荐'?'日常':_curTab,likes:0,hot:false,time:tstr,comments:[],topicKey:'_user'};
     _posts.unshift(newPost2);fS('posts',_posts);
     if(_bottomTab==='follow')loadFollowFeed();else loadFeed();
@@ -25344,7 +25357,7 @@ function newPost(){
            '只输出JSON：[{"name":"评论人","type":"char或net","text":"内容","likes":数字,"replyTo":"被回复人名或空"}]';
       var raw=await fCall(cfg,ctx);var items=fJson(raw);
       var charMap={};chars.forEach(function(c){charMap[c.name]=c;});
-      var tstr2=new Date().toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'});
+      var tstr2=new Date().toISOString();
       var newCmtMap={};
       items.forEach(function(item){if(!item.name||!item.text)return;var c=charMap[item.name];
         if(!item.replyTo){
@@ -25550,7 +25563,7 @@ function openDMChat(name,ava,type,initialMsg){
   var pg=ce('div','fDMChatPage');pg.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;z-index:65;background:#f7f9f9;display:flex;flex-direction:column;';
 
   // 聊天记录存储key
-  var chatKey='dmChat_'+name.replace(/\s/g,'_');
+  var chatKey='dmChat_'+name.replace(/[\s]+/g,'_');
 
   // 顶部导航
   var tb=ce('div');tb.style.cssText='display:flex;align-items:center;gap:10px;padding:max(env(safe-area-inset-top,20px),20px) 14px 10px;background:#fff;border-bottom:1px solid #eff3f4;flex-shrink:0;';
@@ -25595,24 +25608,32 @@ function openDMChat(name,ava,type,initialMsg){
 
   function appendMsg(txt,isMe){
     _chatHistory.push({text:txt,isMe:isMe});
-    // 双重存储确保持久化
+    // 三重存储确保持久化
     fS(chatKey,_chatHistory);
-    try{localStorage.setItem('f_'+chatKey,JSON.stringify(_chatHistory));}catch(e){}
+    var _histJson=JSON.stringify(_chatHistory);
+    try{localStorage.setItem('f_'+chatKey,_histJson);}catch(e){}
+    try{sessionStorage.setItem('f_'+chatKey,_histJson);}catch(e){}
     appendMsgBubble(txt,isMe,true);
   }
 
   // 加载历史：先localStorage快速读，再localforage确认
   var lsHist=null;
+  // 尝试三个存储来源
   try{var lsRaw=localStorage.getItem('f_'+chatKey);if(lsRaw)lsHist=JSON.parse(lsRaw);}catch(e){}
+  if(!lsHist||!lsHist.length){try{var ssRaw=sessionStorage.getItem('f_'+chatKey);if(ssRaw)lsHist=JSON.parse(ssRaw);}catch(e){}}
   if(Array.isArray(lsHist)&&lsHist.length){
     _chatHistory=lsHist;renderHistory(_chatHistory);
   } else if(initialMsg){
     appendMsg(initialMsg,false);
   }
-  // 再用localforage更新（如果有更新的数据）
+  // localforage异步补充
   fL(chatKey,[]).then(function(hist){
-    if(Array.isArray(hist)&&hist.length&&hist.length>_chatHistory.length){
-      _chatHistory=hist;renderHistory(_chatHistory);
+    if(Array.isArray(hist)&&hist.length&&hist.length>=_chatHistory.length){
+      _chatHistory=hist;
+      var _j=JSON.stringify(hist);
+      try{localStorage.setItem('f_'+chatKey,_j);}catch(e){}
+      try{sessionStorage.setItem('f_'+chatKey,_j);}catch(e){}
+      renderHistory(_chatHistory);
     }
   }).catch(function(){});
 
@@ -26063,7 +26084,8 @@ refreshReplyAva();
 // 提供emoji和图片上传工具行
 var rToolBar=ce('div');rToolBar.style.cssText='display:flex;align-items:center;gap:4px;padding:4px 12px 8px;background:#fff;flex-shrink:0;border-top:1px solid #eff3f4;';
 // emoji按钮
-var emojiBtn=ce('button');emojiBtn.style.cssText='border:none;background:none;font-size:22px;cursor:pointer;padding:2px 4px;border-radius:8px;line-height:1;';emojiBtn.textContent='😊';
+var emojiBtn=ce('button');emojiBtn.style.cssText='border:none;background:none;cursor:pointer;padding:3px 5px;border-radius:8px;line-height:1;display:flex;align-items:center;justify-content:center;color:#536471;';
+emojiBtn.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>';
 // 常用emoji列表
 var emojiList=['😂','🥺','😭','❤️','🤣','✨','😍','🙏','😊','🥰','😘','👀','😩','💕','😔','🌹','🤗','😁','💔','🤔','😌','💪','🙈','😤','🔥','💯','🥲','👏','😅','🫶','💀','🎉'];
 var emojiPicker=ce('div');emojiPicker.style.cssText='display:none;position:absolute;bottom:calc(100% - 0px);left:0;right:0;background:#fff;border-top:1px solid #eff3f4;padding:10px 12px;flex-wrap:wrap;gap:6px;z-index:10;max-height:120px;overflow-y:auto;box-shadow:0 -4px 12px rgba(0,0,0,0.1);border-radius:12px 12px 0 0;';
@@ -26072,7 +26094,8 @@ var _pickerOpen=false;
 emojiBtn.onclick=function(e){e.stopPropagation();_pickerOpen=!_pickerOpen;emojiPicker.style.display=_pickerOpen?'flex':'none';};
 document.addEventListener('click',function(){if(_pickerOpen){_pickerOpen=false;emojiPicker.style.display='none';}});
 // 图片上传
-var imgBtn=ce('button');imgBtn.style.cssText='border:none;background:none;font-size:20px;cursor:pointer;padding:2px 4px;border-radius:8px;line-height:1;';imgBtn.textContent='🖼️';
+var imgBtn=ce('button');imgBtn.style.cssText='border:none;background:none;cursor:pointer;padding:3px 5px;border-radius:8px;line-height:1;display:flex;align-items:center;justify-content:center;color:#536471;';
+imgBtn.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
 var imgFileInp=document.createElement('input');imgFileInp.type='file';imgFileInp.accept='image/*';imgFileInp.style.display='none';
 imgFileInp.onchange=function(){
   var file=this.files[0];if(!file)return;
@@ -26144,7 +26167,7 @@ var dmRefresh=ce('div');dmRefresh.style.cssText='font-size:20px;cursor:pointer;c
   }catch(e){toast('私信生成失败：'+(e.message||'').slice(0,25));}
   dmRefresh.classList.remove('spinning');dmRefresh.style.opacity='';
 };
-dmHdr.appendChild(dmBack);dmHdr.appendChild(dmTitle);dmHdr.appendChild(dmNew);dmHdr.appendChild(dmRefresh);
+dmRefresh.style.marginLeft='auto';dmHdr.appendChild(dmBack);dmHdr.appendChild(dmTitle);dmHdr.appendChild(dmRefresh);
 var dmList=ce('div','fDMList');dmList.style.cssText='flex:1;overflow-y:auto;';
 dm.appendChild(dmHdr);dm.appendChild(dmList);
 
