@@ -25309,6 +25309,7 @@ wrap.appendChild(w);wrap.appendChild(drOv);wrap.appendChild(drawer);wrap.appendC
 
 async function init(){
 buildUI();
+try{
 var s=await fL('settings',null);if(s){var wv=document.getElementById('fWvArea'),pr=document.getElementById('fPrArea'),dt=document.getElementById('fDtInp');if(wv&&s.wv)wv.value=s.wv;if(pr&&s.pr)pr.value=s.pr;if(dt&&s.dt)dt.value=s.dt;}
 var boards=await fL('boards',[]);if(Array.isArray(boards))_customTabs=boards;
 var wbi=await fL('wbItems',[]);if(Array.isArray(wbi))_wbItems=wbi;
@@ -25317,6 +25318,7 @@ var fl=await fL('following',[]);if(Array.isArray(fl))_following=fl;
 var posts=await fL('posts',[]);if(Array.isArray(posts))_posts=posts;
 var htags=await fL('hotTags',[]);
 if(htags.length){var bar=document.getElementById('forumHotTags');if(bar){bar.innerHTML='';htags.forEach(function(tag,i){var el=ce('span');el.style.cssText='flex-shrink:0;padding:3px 10px;margin-right:5px;border-radius:20px;font-size:12px;cursor:pointer;white-space:nowrap;background:'+(i<3?'rgba(249,24,128,.1)':'rgba(29,155,240,.08)')+';color:'+(i<3?'#f91880':'#1d9bf0')+';';el.textContent=(i+1)+'. '+tag.text;el.onclick=function(){doSearch(tag.text);};bar.appendChild(el);});}}
+}catch(e){console.error('论坛init数据加载出错:',e);}
 renderTabs();
 switchBottom('home');
 }
