@@ -24375,19 +24375,40 @@ async function fCall(cfg,prompt,maxT){
 }
 function fJson(raw){
   raw = raw.replace(/```json|```/g,'').trim();
-  // 尝试找到JSON数组
   var s = raw.indexOf('['), e = raw.lastIndexOf(']');
   if(s>=0 && e>s) raw = raw.slice(s, e+1);
-  // 修复尾随逗号
+  else if(s>=0) raw = raw.slice(s); // 只找到了 [ 没找到 ]，截断了
   raw = raw.replace(/,(\s*[}\]])/g, '$1');
-  // 修复可能的单引号
-  raw = raw.replace(/'/g, '"');
-  // 修复不带引号的key
-  raw = raw.replace(/(\{|\,)\s*([a-zA-Z_]\w*)\s*:/g, '$1"$2":');
-  try{ return JSON.parse(raw); }catch(e){
-    // 最后尝试用eval（仅限数组）
-    console.log('JSON.parse failed, raw:', raw.slice(0,200));
-    throw e;
+  // 尝试修复截断的JSON：移除最后一个不完整的对象
+  function tryRepair(str){
+    // 去掉尾部不完整的对象/字符串
+    str = str.replace(/,?\s*\{[^}]*$/,'');  // 移除最后不完整的 {...
+    str = str.replace(/,?\s*"[^"]*$/,'');   // 移除最后不完整的 "...
+    if(!str.endsWith(']')) str += ']';
+    str = str.replace(/,\s*\]/g,']');       // 修复尾逗号
+    return str;
+  }
+  try{ return JSON.parse(raw); }catch(e1){
+    // 第一次失败，尝试修复截断
+    try{
+      var repaired = tryRepair(raw);
+      var result = JSON.parse(repaired);
+      if(Array.isArray(result)&&result.length>0) return result;
+    }catch(e2){}
+    // 第二次尝试：更激进的修复
+    try{
+      var items=[];
+      var re=/\{[^{}]*?"name"\s*:\s*"([^"]+)"[^{}]*?"title"\s*:\s*"([^"]+)"[^{}]*?\}/g;
+      var m;
+      while((m=re.exec(raw))!==null){
+        try{items.push(JSON.parse(m[0]));}catch(e3){
+          items.push({name:m[1],title:m[2],preview:'',type:'net',hot:false});
+        }
+      }
+      if(items.length>0) return items;
+    }catch(e4){}
+    console.log('JSON修复失败, raw:', raw.slice(0,300));
+    throw new Error('JSON解析失败（可能API返回被截断）');
   }
 }
 var _posts=[],_following=[],_curTab='推荐',_bottomTab='home',_wbItems=[],_extraChars=[],_extraCharsData=[],_charOverrides={},_customTabs=[],_tabDescs={},_curPostIdx=null,_replyTarget=null,_acc='#1d9bf0';
@@ -24683,7 +24704,7 @@ async function genPosts(cfg,board){
     '只输出JSON数组：[{"name":"发帖人","type":"char或net","title":"标题（15字内）","preview":"简介（30字内）","hot":false},...]  不要其他任何文字。';
 
   try{
-    var raw = await fCall(cfg, pr, 800);
+    var raw = await fCall(cfg, pr, 1500);
     var items = fJson(raw);
     if(!Array.isArray(items)||!items.length) throw new Error('解析失败');
     var charMap={};chars.forEach(function(c){charMap[c.name]=c;});
@@ -24726,27 +24747,29 @@ function renderProfile(){
   var myName=localStorage.getItem('fMyName')||getMyName();
   var myPosts=_posts.filter(function(p){return p.name===myName;});
   body.innerHTML='';
-  // banner - taller to avoid overlap
-  var banner=ce('div');banner.style.cssText='height:110px;background:linear-gradient(135deg,#1d9bf0,#a29bfe);flex-shrink:0;position:relative;';
-  // 编辑按钮
-  var editProfileBtn=ce('button');editProfileBtn.textContent='编辑资料';editProfileBtn.style.cssText='position:absolute;right:14px;bottom:14px;padding:6px 14px;background:transparent;border:1.5px solid #fff;border-radius:20px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;';
-  editProfileBtn.onclick=function(){showEditProfileDialog();};
-  banner.appendChild(editProfileBtn);
+  // banner
+  var banner=ce('div');banner.style.cssText='height:120px;background:linear-gradient(135deg,#1d9bf0,#a29bfe);flex-shrink:0;';
   body.appendChild(banner);
-  var aa=ce('div');aa.style.cssText='padding:0 14px 14px;background:#fff;border-bottom:1px solid #eff3f4;position:relative;';
-  // 头像 - positioned properly with z-index
-  var avEl=ce('div');avEl.style.cssText='width:72px;height:72px;border-radius:50%;background:'+aColor(myName)+';border:4px solid #fff;margin-top:-38px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#fff;overflow:hidden;background-size:cover;background-position:center;position:relative;z-index:2;';
-  // 优先从localforage读头像
+  // info area with avatar + edit button row
+  var aa=ce('div');aa.style.cssText='padding:0 14px 14px;background:#fff;border-bottom:1px solid #eff3f4;';
+  // avatar row: avatar left, edit button right
+  var avaRow=ce('div');avaRow.style.cssText='display:flex;align-items:flex-end;justify-content:space-between;';
+  var avEl=ce('div');avEl.style.cssText='width:72px;height:72px;border-radius:50%;background:'+aColor(myName)+';border:4px solid #fff;margin-top:-38px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#fff;overflow:hidden;background-size:cover;background-position:center;position:relative;z-index:2;flex-shrink:0;';
   var myAva=localStorage.getItem('fMyAva')||'';
   if(myAva){avEl.style.backgroundImage='url('+myAva+')';avEl.style.backgroundColor='transparent';}
   else{avEl.textContent=myName.slice(0,1);}
-  // 异步从localforage补充头像
   localforage.getItem('fMyAva').then(function(lfAva){
     if(lfAva&&!myAva){avEl.style.backgroundImage='url('+lfAva+')';avEl.style.backgroundColor='transparent';avEl.textContent='';}
   }).catch(function(){});
+  // 编辑按钮 - 放在头像右边同一行
+  var editProfileBtn=ce('button');editProfileBtn.textContent='编辑资料';editProfileBtn.style.cssText='padding:6px 16px;background:transparent;border:1.5px solid #536471;border-radius:20px;color:#0f1419;font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0;margin-top:8px;';
+  editProfileBtn.onclick=function(){showEditProfileDialog();};
+  avaRow.appendChild(avEl);avaRow.appendChild(editProfileBtn);
+  aa.appendChild(avaRow);
+  // name
   var ne=ce('div');ne.style.cssText='font-size:19px;font-weight:700;color:#0f1419;margin-top:8px;';ne.textContent=myName;
   var he=ce('div');he.style.cssText='font-size:14px;color:#536471;';he.textContent=hdl(myName);
-  aa.appendChild(avEl);aa.appendChild(ne);aa.appendChild(he);
+  aa.appendChild(ne);aa.appendChild(he);
   var bio=localStorage.getItem('fMyBio')||'';
   if(bio){var bioEl=ce('div');bioEl.style.cssText='font-size:14px;color:#0f1419;margin-top:6px;line-height:1.5;';bioEl.textContent=bio;aa.appendChild(bioEl);}
   var st=ce('div');st.style.cssText='display:flex;gap:20px;margin-top:12px;font-size:14px;color:#0f1419;';
@@ -24886,7 +24909,7 @@ window.fNewDM=function(){var chars=getChars();var opts=chars.map(function(c){ret
 function addTab(){var ov=ce('div');ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;';var box=ce('div');box.style.cssText='background:#fff;border-radius:18px;padding:18px 16px;width:80vw;max-width:300px;';box.innerHTML='<div style="font-size:16px;font-weight:700;margin-bottom:12px;color:#0f1419;">添加板块</div><input id="_ftN" placeholder="板块名称" maxlength="12" style="width:100%;padding:9px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;outline:none;box-sizing:border-box;margin-bottom:8px;"><textarea id="_ftD" placeholder="板块描述（AI据此生成内容）" style="width:100%;height:60px;padding:9px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;resize:none;box-sizing:border-box;outline:none;margin-bottom:12px;"></textarea><div style="display:flex;gap:8px;"><button id="_ftCan" style="flex:1;padding:10px;border:1.5px solid #cfd9de;border-radius:12px;background:#fff;font-size:14px;cursor:pointer;color:#536471;">取消</button><button id="_ftOk" style="flex:2;padding:10px;background:#1d9bf0;color:#fff;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:700;">添加</button></div>';ov.appendChild(box);document.body.appendChild(ov);box.querySelector('#_ftCan').onclick=function(){ov.remove();};box.querySelector('#_ftOk').onclick=function(){var n=(box.querySelector('#_ftN')||{}).value.trim(),d=(box.querySelector('#_ftD')||{}).value.trim();if(!n){toast('请输入板块名称');return;}ov.remove();if(!_customTabs.includes(n)){_customTabs.push(n);_tabDescs[n]=d;}renderTabs();toast('板块已添加：'+n);};ov.onclick=function(e){if(e.target===ov)ov.remove();};}
 
 function buildDrawer(){
-var dr=document.getElementById('fDrawer');if(!dr)return;if(dr.dataset.built==='1'){setTimeout(function(){renderWbList();renderCharList2();var s=dr.querySelector('#fDrawerCharSel');if(s){s.innerHTML='<option value="">从已有角色中选择…</option>';try{var op=JSON.parse(originalGetItem.call(localStorage,'cs_opened_chars')||'[]');op.forEach(function(cid){var n=originalGetItem.call(localStorage,'cN_'+cid);if(n){var o=document.createElement('option');o.value=n;o.textContent=n;s.appendChild(o);}});op.forEach(function(cid){var raw=originalGetItem.call(localStorage,'npcList_'+cid);if(raw){try{JSON.parse(raw).forEach(function(n){if(n.name){var o=document.createElement('option');o.value=n.name;o.textContent=n.name+'（NPC）';s.appendChild(o);}});}catch(e){}}});}catch(e){}var _selEx2={};s.querySelectorAll('option').forEach(function(o){if(o.value)_selEx2[o.value]=true;});_extraCharsData.forEach(function(d){if(d.name&&!_selEx2[d.name]){var o=document.createElement('option');o.value=d.name;o.textContent=d.name+'（已绑定）';s.appendChild(o);}});}},50);return;}dr.dataset.built='1';
+var dr=document.getElementById('fDrawer');if(!dr)return;if(dr.dataset.built==='1'){setTimeout(function(){renderWbList();renderCharList2();var s=dr.querySelector('#fDrawerCharSel');if(s){s.innerHTML='<option value="">从已有角色中选择…</option>';var _rc=getChars();var _ra={};_rc.forEach(function(c){if(c.name&&!_ra[c.name]){_ra[c.name]=true;var o=document.createElement('option');o.value=c.name;o.textContent=c.name+(c.type==='npc'?' （NPC）':c.type==='extra'?' （已绑定）':'');s.appendChild(o);}});}},50);return;}dr.dataset.built='1';
 var hdr=ce('div');hdr.style.cssText='padding:max(env(safe-area-inset-top,20px),20px) 16px 14px;font-size:20px;font-weight:700;color:#0f1419;border-bottom:1px solid #eff3f4;';hdr.textContent='论坛设置';dr.appendChild(hdr);
 function sec(t){var d=ce('div');d.className='fDrSec';d.textContent=t;return d;}
 function item(ico,txt,fn){var d=ce('div');d.className='fDrItem';d.innerHTML='<div class="fDrIco">'+ico+'</div><span>'+txt+'</span>';d.onclick=fn;return d;}
@@ -24918,19 +24941,25 @@ var charSelRow=ce('div');charSelRow.style.cssText='padding:4px 16px 8px;display:
 var charSel=document.createElement('select');charSel.id='fDrawerCharSel';
 charSel.style.cssText='flex:1;padding:9px 10px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;outline:none;background:#fff;';
 charSel.innerHTML='<option value="">从已有角色中选择…</option>';
-// 填充char选项 - 使用originalGetItem确保读取正确
-try{var opened=JSON.parse(originalGetItem.call(localStorage,'cs_opened_chars')||'[]');opened.forEach(function(cid){var n=originalGetItem.call(localStorage,'cN_'+cid);if(n){var o=document.createElement('option');o.value=n;o.textContent=n;charSel.appendChild(o);}});opened.forEach(function(cid){var raw=originalGetItem.call(localStorage,'npcList_'+cid);if(raw){try{JSON.parse(raw).forEach(function(n){if(n.name){var o=document.createElement('option');o.value=n.name;o.textContent=n.name+'（NPC）';charSel.appendChild(o);}});}catch(e){}}});}catch(e){}
-// 也把已绑定的extraChars显示（避免重复）
-var _selExisting={};charSel.querySelectorAll('option').forEach(function(o){if(o.value)_selExisting[o.value]=true;});
-_extraCharsData.forEach(function(d){if(d.name&&!_selExisting[d.name]){var o=document.createElement('option');o.value=d.name;o.textContent=d.name+'（已绑定）';charSel.appendChild(o);}});
+// 使用getChars()获取所有角色（该函数已验证可正常工作）
+var _allCharsForSel = getChars();
+var _selAdded = {};
+_allCharsForSel.forEach(function(c){
+  if(c.name && !_selAdded[c.name]){
+    _selAdded[c.name] = true;
+    var o = document.createElement('option');
+    o.value = c.name;
+    o.textContent = c.name + (c.type==='npc'?' （NPC）':c.type==='extra'?' （已绑定）':'');
+    charSel.appendChild(o);
+  }
+});
 var charSelBtn=document.createElement('button');charSelBtn.textContent='绑定';
 charSelBtn.style.cssText='padding:9px 14px;background:#1d9bf0;color:#fff;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:700;flex-shrink:0;';
 charSelBtn.onclick=function(){
   var val=charSel.value;if(!val)return;
   if(!_extraChars.includes(val)){
-    var ava='';try{var opened2=JSON.parse(originalGetItem.call(localStorage,'cs_opened_chars')||'[]');opened2.forEach(function(cid){if(originalGetItem.call(localStorage,'cN_'+cid)===val)ava=originalGetItem.call(localStorage,'charAva_'+cid)||'';});}catch(e){}
+    var ava='';var _bc=getChars();_bc.forEach(function(c){if(c.name===val&&c.ava)ava=c.ava;});
     _extraChars.push(val);_extraCharsData.push({name:val,ava:ava,bio:'',handle:val.toLowerCase().replace(/\s/g,'_'),following:'',followers:''});
-    // 立即保存
     fS('extraChars',_extraChars);fS('extraCharsData',_extraCharsData);
   }
   charSel.value='';setTimeout(function(){renderCharList2();},50);toast('已绑定：'+val);
