@@ -24417,7 +24417,7 @@ function fJson(raw){
     throw new Error('JSON解析失败（可能API返回被截断）');
   }
 }
-var _posts=[],_following=[],_curTab='推荐',_bottomTab='home',_wbItems=[],_extraChars=[],_extraCharsData=[],_charOverrides={},_customTabs=[],_tabDescs={},_curPostIdx=null,_replyTarget=null,_acc='#1d9bf0';
+var _posts=[],_following=[],_curTab='推荐',_bottomTab='home',_wbItems=[],_extraChars=[],_extraCharsData=[],_charOverrides={},_customTabs=[],_tabDescs={},_curPostIdx=null,_replyTarget=null,_acc='#1d9bf0',_topics=[];
 function injectCSS(){if(document.getElementById('fCSS3'))return;var st=document.createElement('style');st.id='fCSS3';st.textContent='#scrForum{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f7f9f9;color:#0f1419;}#fWrap{display:flex;flex-direction:column;width:100%;height:100%;}#fHeader{background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-bottom:1px solid #eff3f4;flex-shrink:0;padding-top:max(env(safe-area-inset-top,20px),20px);}#fHeaderTop{display:flex;align-items:center;padding:8px 14px;}#fMenuBtn{width:34px;height:34px;border-radius:50%;background:#eff3f4;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;}#fHeaderTitle{flex:1;text-align:center;font-size:17px;font-weight:700;color:#0f1419;}#fRefreshBtn{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;background:#ffd6e0;color:#e84393;transition:.3s;}#fRefreshBtn.spinning{animation:fSpin .8s linear infinite;}@keyframes fSpin{to{transform:rotate(360deg);}}#fSearchBar{padding:6px 14px 8px;display:flex;gap:8px;align-items:center;}#fSearchInp{flex:1;padding:9px 14px;background:#eff3f4;border:none;border-radius:24px;font-size:15px;outline:none;color:#0f1419;}#fTabBar{display:flex;overflow-x:auto;border-bottom:1px solid #eff3f4;scrollbar-width:none;}#fTabBar::-webkit-scrollbar{display:none;}.fTab{flex-shrink:0;padding:13px 16px;font-size:15px;font-weight:600;color:#536471;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;}.fTab.on{color:#0f1419;border-bottom-color:#1d9bf0;}.fTab.add{color:#1d9bf0;font-size:20px;padding:10px 12px;}#fFeed{flex:1;overflow-y:auto;background:#f7f9f9;}.fPost{background:#fff;border-bottom:1px solid #eff3f4;padding:12px 14px;display:flex;gap:10px;cursor:pointer;}.fPost:active{background:#f7f9f9;}.fAva{width:42px;height:42px;border-radius:50%;flex-shrink:0;background:#ccc;overflow:hidden;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#fff;cursor:pointer;}.fBody{flex:1;min-width:0;}.fName{font-size:15px;font-weight:700;color:#0f1419;}.fHandle,.fTime{font-size:14px;color:#536471;margin-left:3px;}.fText{font-size:15px;color:#0f1419;line-height:1.6;margin:4px 0 8px;word-break:break-word;}.fStats{display:flex;gap:20px;}.fStat{font-size:14px;color:#536471;}.fBadge{display:inline-block;padding:1px 7px;border-radius:10px;font-size:12px;margin-bottom:4px;background:rgba(29,155,240,.1);color:#1d9bf0;}.fBadge.hot{background:rgba(249,24,128,.1);color:#f91880;}#fBottomNav{display:flex;background:#fff;border-top:1px solid #eff3f4;flex-shrink:0;}.fBNav{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 0 8px;cursor:pointer;color:#536471;}.fBNav.on{color:#1d9bf0;}.fBNavIco{font-size:22px;line-height:1;}.fBNavLbl{font-size:10px;margin-top:2px;}#fFab{position:absolute;right:16px;bottom:74px;width:52px;height:52px;border-radius:50%;background:#1d9bf0;color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;box-shadow:0 4px 14px rgba(29,155,240,.4);z-index:10;}#fFab:active{transform:scale(.92);}#fDrawer{position:absolute;top:0;left:0;width:80%;max-width:300px;height:100%;background:#fff;z-index:50;transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow-y:auto;box-shadow:4px 0 24px rgba(0,0,0,.15);}#fDrawer.on{transform:translateX(0);}#fDrawOv{position:absolute;inset:0;background:rgba(0,0,0,.35);z-index:49;display:none;}#fDrawOv.on{display:block;}#fDetail{display:none;flex-direction:column;position:absolute;top:0;width:100%;height:100%;z-index:55;background:#fff;}#fDetHeader{background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-bottom:1px solid #eff3f4;padding:max(env(safe-area-inset-top,20px),20px) 14px 10px;display:flex;align-items:center;gap:10px;flex-shrink:0;}#fDetBack{font-size:20px;cursor:pointer;color:#0f1419;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;}#fDetTitle{font-size:17px;font-weight:700;color:#0f1419;}#fDetBody{flex:1;overflow-y:auto;}.fCmt{background:#fff;border-bottom:1px solid #eff3f4;padding:12px 14px;display:flex;gap:10px;}.fCmtAva{width:36px;height:36px;border-radius:50%;flex-shrink:0;background:#ccc;overflow:hidden;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;}.fCmtBody{flex:1;min-width:0;}.fCmtName{font-size:14px;font-weight:700;color:#0f1419;}.fCmtTime{font-size:12px;color:#536471;margin-left:4px;}.fCmtText{font-size:14px;color:#0f1419;line-height:1.6;margin-top:3px;}.fReplyChip{margin-left:0;background:#f7f9f9;border-radius:8px;padding:6px 10px;margin-top:5px;font-size:13px;}#fReplyBar{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#fff;border-top:1px solid #eff3f4;flex-shrink:0;}#fReplyInp{flex:1;padding:9px 14px;border:1.5px solid #cfd9de;border-radius:24px;font-size:14px;outline:none;background:#fff;font-family:inherit;color:#0f1419;}#fReplySend{padding:8px 18px;background:#1d9bf0;color:#fff;border:none;border-radius:24px;font-size:14px;cursor:pointer;font-weight:700;flex-shrink:0;}#fProfilePage,#fDMPage{display:none;flex-direction:column;position:absolute;top:0;width:100%;height:100%;z-index:30;background:#fff;}.fDrSec{padding:12px 16px 4px;font-size:12px;color:#536471;font-weight:700;letter-spacing:.5px;}.fDrItem{display:flex;align-items:center;gap:12px;padding:12px 16px;font-size:15px;color:#0f1419;cursor:pointer;}.fDrItem:active{background:#f7f9f9;}.fDrIco{width:34px;height:34px;border-radius:10px;background:#eff3f4;display:flex;align-items:center;justify-content:center;font-size:17px;}';
 document.head.appendChild(st);}
 function ce(tag,id){var el=document.createElement(tag||'div');if(id)el.id=id;return el;}
@@ -24436,7 +24436,30 @@ window.fToggleDrawer=toggleDrawer;
 
 function renderTabs(){var bar=document.getElementById('fTabBar');if(!bar)return;bar.innerHTML='';['推荐','热搜','文娱','社会'].concat(_customTabs).forEach(function(t){var el=ce('div');el.className='fTab'+(t===_curTab?' on':'');el.textContent=t;el.onclick=function(){_curTab=t;renderTabs();loadFeed();};bar.appendChild(el);});var add=ce('div');add.className='fTab add';add.textContent='＋';add.onclick=addTab;bar.appendChild(add);}
 
-function loadFeed(){var feed=document.getElementById('fFeed');if(!feed)return;feed.innerHTML='';var list=_posts.filter(function(p){if(_curTab==='推荐')return true;if(_curTab==='热搜')return p.hot;return p.board===_curTab;});if(!list.length){var tip=ce('div');tip.style.cssText='text-align:center;padding:48px 20px;color:#536471;font-size:15px;line-height:2.2;';tip.innerHTML='还没有内容<br><span style="color:#1d9bf0;cursor:pointer;" onclick="window.fRefresh()">点这里生成内容 🔄</span>';feed.appendChild(tip);return;}list.forEach(function(p){feed.appendChild(buildCard(p,_posts.indexOf(p)));});}
+function loadFeed(){var feed=document.getElementById('fFeed');if(!feed)return;feed.innerHTML='';
+  // 第1层：显示话题标题列表
+  var list=_topics.filter(function(t){if(_curTab==='推荐')return true;if(_curTab==='热搜')return true;return t.category===_curTab;});
+  if(!list.length){var tip=ce('div');tip.style.cssText='text-align:center;padding:48px 20px;color:#536471;font-size:15px;line-height:2.2;';tip.innerHTML='还没有内容<br><span style="color:#1d9bf0;cursor:pointer;" onclick="window.fRefresh()">点这里生成内容 🔄</span>';feed.appendChild(tip);return;}
+  list.forEach(function(topic,i){
+    var card=ce('div');card.style.cssText='padding:16px 14px;border-bottom:1px solid #eff3f4;cursor:pointer;background:#fff;';
+    card.onclick=function(){openTopic(topic);};
+    // 分类标签
+    var catRow=ce('div');catRow.style.cssText='display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;';
+    var catTag=ce('span');catTag.style.cssText='font-size:13px;font-weight:700;color:'+(i<3?'#f91880':'#1d9bf0')+';';
+    catTag.textContent=(topic.category||'综合')+' · '+(i<3?'热门':'热议');
+    var dots=ce('span');dots.style.cssText='font-size:16px;color:#536471;cursor:pointer;';dots.textContent='⋮';
+    catRow.appendChild(catTag);catRow.appendChild(dots);
+    card.appendChild(catRow);
+    // 标题
+    var title=ce('div');title.style.cssText='font-size:16px;font-weight:700;color:#0f1419;line-height:1.4;margin-bottom:4px;';
+    title.textContent=topic.title;card.appendChild(title);
+    // 帖子数
+    var count=ce('div');count.style.cssText='font-size:13px;color:#536471;';
+    count.textContent=(topic.postCount||Math.floor(Math.random()*80+5))+' 条帖子';
+    card.appendChild(count);
+    feed.appendChild(card);
+  });
+}
 function loadFollowFeed(){var feed=document.getElementById('fFeed');if(!feed)return;feed.innerHTML='';var list=_posts.filter(function(p){return _following.find(function(f){return f.name===p.name;});});if(!list.length){var tip=ce('div');tip.style.cssText='text-align:center;padding:48px 20px;color:#536471;font-size:15px;';tip.textContent='还没有关注的人\n点帖子头像可关注';feed.appendChild(tip);return;}list.forEach(function(p){feed.appendChild(buildCard(p,_posts.indexOf(p)));});}
 
 function buildCard(post,idx){
@@ -24683,99 +24706,116 @@ window.fLoadMoreComments=loadMoreCmts;
 async function doRefresh(){
   var rBtn=document.getElementById('fRefreshBtn');
   if(rBtn) rBtn.classList.add('spinning');
+  var feed=document.getElementById('fFeed');
+  if(feed){feed.innerHTML='<div style="text-align:center;padding:40px 20px;color:#536471;font-size:14px;"><div style="font-size:28px;margin-bottom:8px;">⏳</div>正在生成话题…</div>';}
   try{
     var cfg = await fApi();
-    if(!cfg){ toast('请先在设置页配置API密钥和代理地址'); if(rBtn) rBtn.classList.remove('spinning'); return; }
-    // genHot failure should not block genPosts
-    try{ await genHot(cfg); }catch(e){ console.log('热搜生成失败（非致命）:',e); }
-    await genPosts(cfg, _curTab);
+    if(!cfg){ toast('请先在设置页配置API密钥和代理地址'); if(rBtn) rBtn.classList.remove('spinning'); loadFeed(); return; }
+    await genTopics(cfg, _curTab);
   }catch(e){
     toast('刷新出错：'+(e.message||String(e)).slice(0,30));
     console.error('refresh:', e);
+    if(feed){feed.innerHTML='<div style="text-align:center;padding:40px 20px;color:#e74c3c;font-size:14px;line-height:2;"><div style="font-size:28px;margin-bottom:8px;">⚠️</div>生成失败<br><div style="font-size:12px;color:#999;margin:8px 0;">'+((e.message||'').slice(0,50))+'</div><span style="color:#1d9bf0;cursor:pointer;" onclick="window.fRefresh()">点击重试 🔄</span></div>';}
   }finally{
     if(rBtn) rBtn.classList.remove('spinning');
   }
 }
 window.fRefresh=doRefresh;
 
-async function genHot(cfg){
+// 第1层：生成话题标题列表（显示在feed）
+async function genTopics(cfg, tab){
   var s=getS();
-  var extra = (s.wv?'背景：'+s.wv+' ':'')+( s.dt?'时间：'+s.dt+' ':'');
-  var pr = extra+'请生成10条热搜词条（每条不超过12字，中文）。只输出JSON数组：[{"text":"词条"},...] 不要其他任何文字。';
-  try{
-    var raw = await fCall(cfg, pr);
-    var tags = fJson(raw);
-    if(!Array.isArray(tags)) return;
-    var bar = document.getElementById('forumHotTags');
-    if(bar){
-      bar.innerHTML='';
-      tags.forEach(function(tag,i){
-        if(!tag.text) return;
-        var el=ce('span');
-        el.style.cssText='flex-shrink:0;padding:3px 10px;margin-right:5px;border-radius:20px;font-size:12px;cursor:pointer;white-space:nowrap;'+(i<3?'background:rgba(249,24,128,.1);color:#f91880;':'background:rgba(29,155,240,.08);color:#1d9bf0;');
-        el.textContent=(i+1)+'. '+tag.text;
-        el.onclick=function(){doSearch(tag.text);};
-        bar.appendChild(el);
-      });
-    }
-    fS('hotTags',tags);
-  }catch(e){ console.log('热搜失败',e); }
-}
-async function genPosts(cfg,board){
-  var feed=document.getElementById('fFeed');
-  if(feed){feed.innerHTML='<div style="text-align:center;padding:40px 20px;color:#536471;font-size:14px;"><div style="font-size:28px;margin-bottom:8px;">⏳</div>正在生成帖子…</div>';}
-  var s=getS();
-  var chars=getChars();
-  var charNames=chars.length ? chars.slice(0,5).map(function(c){return c.name;}).join('、') : '普通网友';
-  var boardName = board==='推荐'?'综合':board;
+  var boardName = (tab==='推荐'||tab==='热搜')?'综合热门':tab;
   var extra = '';
   if(s.wv) extra+='背景：'+s.wv+'\n';
   if(s.dt) extra+='时间：'+s.dt+'\n';
   if(_wbItems.length) extra+='设定：'+_wbItems.map(function(i){return i.title+':'+i.content;}).join('；')+'\n';
   if(s.pr) extra+=s.pr+'\n';
 
-  var pr = extra+'生成10条"'+boardName+'"话题帖子，发帖人包含：'+charNames+'以及普通网友。\n'+
-    '只输出JSON数组：[{"name":"发帖人","title":"标题15字内","preview":"简介30字内","hot":false}]\n不要其他文字。';
+  var pr = extra+'生成10条"'+boardName+'"相关的热门话题标题，涵盖不同类别。\n'+
+    '只输出JSON数组：[{"category":"分类如娱乐/社会/生活/音乐等","title":"话题标题15字内","postCount":"如42.1万"}]\n不要其他文字。';
 
+  var raw = await fCall(cfg, pr);
+  var items = fJson(raw);
+  if(!Array.isArray(items)||!items.length) throw new Error('解析结果为空');
+  _topics = items.map(function(item){
+    return {category:item.category||'综合',title:item.title||'',postCount:item.postCount||Math.floor(Math.random()*80+2)+'万'};
+  }).filter(function(t){return t.title;});
+  await fS('topics',_topics);
+  loadFeed();
+  toast('已加载'+_topics.length+'条话题 ✓');
+}
+
+// 第2层：点击话题 → 生成该话题下的帖子列表
+async function openTopic(topic){
+  var forum=document.getElementById('scrForum');if(!forum)return;
+  var ex=document.getElementById('fTopicPage');if(ex)ex.remove();
+  var pg=ce('div','fTopicPage');pg.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;z-index:56;background:#f7f9f9;display:flex;flex-direction:column;';
+  // header
+  var hd=ce('div');hd.style.cssText='display:flex;align-items:center;gap:10px;padding:max(env(safe-area-inset-top,20px),20px) 14px 10px;background:#fff;border-bottom:1px solid #eff3f4;flex-shrink:0;';
+  var bk=ce('div');bk.style.cssText='width:34px;height:34px;border-radius:50%;background:#eff3f4;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;';bk.innerHTML='&#8592;';bk.onclick=function(){pg.remove();};
+  var ht=ce('div');ht.style.cssText='flex:1;font-size:16px;font-weight:700;color:#0f1419;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';ht.textContent=topic.title;
+  hd.appendChild(bk);hd.appendChild(ht);
+  // body
+  var bd=ce('div');bd.style.cssText='flex:1;overflow-y:auto;';
+  bd.innerHTML='<div style="text-align:center;padding:60px 20px;color:#536471;font-size:14px;"><div style="font-size:28px;margin-bottom:8px;">⏳</div>正在生成"'+topic.title+'"相关帖子…</div>';
+  pg.appendChild(hd);pg.appendChild(bd);forum.appendChild(pg);
+
+  // 调API生成帖子
   try{
-    var raw = await fCall(cfg, pr);
-    console.log('genPosts raw response:', raw.slice(0,200));
-    var items = fJson(raw);
-    if(!Array.isArray(items)||!items.length) throw new Error('解析结果为空');
+    var cfg=await fApi();if(!cfg){bd.innerHTML='<div style="text-align:center;padding:40px;color:#e74c3c;">请先配置API</div>';return;}
+    var s=getS();var chars=getChars();
+    var charNames=chars.length?chars.slice(0,5).map(function(c){return c.name;}).join('、'):'普通网友';
+    var extra2='';if(s.wv)extra2+='背景：'+s.wv+'\n';if(s.dt)extra2+='时间：'+s.dt+'\n';
+    if(_wbItems.length)extra2+='设定：'+_wbItems.map(function(i){return i.title+':'+i.content;}).join('；')+'\n';
+    if(s.pr)extra2+=s.pr+'\n';
+
+    var pr=extra2+'围绕话题"'+topic.title+'"，生成5条不同用户发的帖子（发帖人包含：'+charNames+'和随机网友）。\n'+
+      '要求：每条200-350字，口语化有活人感，包含#话题标签，涉及图片场景用【图片描述：xxx】格式描述。\n'+
+      '只输出JSON数组：[{"name":"发帖人","title":"帖子标题","content":"正文内容"}]\n不要其他文字。';
+    var raw=await fCall(cfg,pr);
+    var items=fJson(raw);
+    if(!Array.isArray(items)||!items.length) throw new Error('解析为空');
     var charMap={};chars.forEach(function(c){charMap[c.name]=c;});
-    var tstr = new Date().toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'});
-    var added = 0;
+    var tstr=new Date().toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'});
+    bd.innerHTML='';
     items.forEach(function(item){
-      if(!item.name||!item.title) return;
-      var c = charMap[item.name];
-      _posts.unshift({
-        name:item.name, type:item.type||'net',
-        ava: c?c.ava||null:null,
-        title: item.title,
-        content: item.preview||'',
-        fullContent: null,
-        board: boardName,
-        likes: Math.floor(Math.random()*500+10),
-        hot: !!item.hot,
-        time: tstr,
-        comments: [],
-        isStub: true
-      });
-      added++;
+      if(!item.name||!item.content)return;
+      var c=charMap[item.name];
+      var post={name:item.name,type:c?'char':'net',ava:c?c.ava||null:null,title:item.title||topic.title,content:item.content.slice(0,60),fullContent:item.content,board:topic.category||'综合',likes:Math.floor(Math.random()*500+10),hot:false,time:tstr,comments:[],isStub:false};
+      _posts.unshift(post);
+      var pidx=0; // first item
+      // 构建帖子卡片
+      var card=ce('div');card.style.cssText='background:#fff;border-bottom:1px solid #eff3f4;padding:14px;cursor:pointer;';
+      card.onclick=function(){openPost(_posts.indexOf(post));};
+      var hRow=ce('div');hRow.style.cssText='display:flex;gap:10px;align-items:center;margin-bottom:8px;';
+      var av=ce('div');av.className='fAva';
+      if(post.ava){av.style.backgroundImage='url('+post.ava+')';av.style.backgroundColor='transparent';}
+      else if(post.type==='net'){av.style.background='#ccc';av.textContent=post.name.slice(0,1);}
+      else{av.style.background=aColor(post.name);av.textContent=post.name.slice(0,1);}
+      var nameC=ce('div');nameC.innerHTML='<div class="fName">'+post.name+'</div><div class="fHandle">'+hdl(post.name)+' · '+post.time+'</div>';
+      hRow.appendChild(av);hRow.appendChild(nameC);card.appendChild(hRow);
+      // 正文预览（解析图片描述和tag）
+      var rawTxt=post.fullContent||'';
+      var imgM=rawTxt.match(/【图片描述[：:](.+?)】/);
+      var mainTxt=rawTxt.replace(/【图片描述[：:].+?】/g,'').trim();
+      var txtEl=ce('div');txtEl.style.cssText='font-size:15px;color:#0f1419;line-height:1.7;margin-bottom:8px;word-break:break-word;';
+      txtEl.innerHTML=mainTxt.replace(/(#[^\s#]+)/g,'<span style="color:#1d9bf0;">$1</span>').replace(/(@[^\s@]+)/g,'<span style="color:#1d9bf0;">$1</span>');
+      card.appendChild(txtEl);
+      if(imgM&&imgM[1]){var imgC=ce('div');imgC.style.cssText='background:#f7f9f9;border:1px solid #eff3f4;border-radius:14px;padding:12px;margin-bottom:8px;font-size:13px;color:#536471;line-height:1.5;';imgC.textContent=imgM[1].trim();card.appendChild(imgC);}
+      // stats
+      var stats=ce('div');stats.style.cssText='display:flex;gap:16px;font-size:13px;color:#536471;';
+      stats.innerHTML='<span>💬 '+Math.floor(Math.random()*200+5)+'</span><span>🔁 '+Math.floor(Math.random()*100+2)+'</span><span>❤️ '+post.likes+'</span><span>📊 '+Math.floor(Math.random()*50+1)+'万</span>';
+      card.appendChild(stats);
+      bd.appendChild(card);
     });
-    await fS('posts',_posts);
-    loadFeed();
-    toast('已加载'+added+'条 ✓');
+    fS('posts',_posts);
   }catch(e){
-    var errMsg = (e.message||String(e)).slice(0,50);
-    console.error('genPosts error:', e);
-    // 在feed中显示错误，不只是toast
-    if(feed){feed.innerHTML='<div style="text-align:center;padding:40px 20px;color:#e74c3c;font-size:14px;line-height:2;">'+
-      '<div style="font-size:28px;margin-bottom:8px;">⚠️</div>帖子生成失败<br>'+
-      '<div style="font-size:12px;color:#999;margin:8px 0;word-break:break-all;">'+errMsg+'</div>'+
-      '<span style="color:#1d9bf0;cursor:pointer;" onclick="window.fRefresh()">点击重试 🔄</span></div>';}
+    console.error('openTopic error:',e);
+    bd.innerHTML='<div style="text-align:center;padding:40px 20px;color:#e74c3c;font-size:14px;line-height:2;"><div style="font-size:28px;margin-bottom:8px;">⚠️</div>生成失败<br><div style="font-size:12px;color:#999;">'+((e.message||'').slice(0,50))+'</div></div>';
   }
 }
+window.fOpenTopic=openTopic;
 async function doSearch(q){if(!q)return;var feed=document.getElementById('fFeed');if(!feed)return;var local=_posts.filter(function(p){return p.content&&p.content.includes(q);});feed.innerHTML='<div style="padding:10px 14px;font-size:14px;font-weight:700;color:#536471;border-bottom:1px solid #eff3f4;">搜索：'+q+'</div>';if(local.length)local.forEach(function(p){feed.appendChild(buildCard(p,_posts.indexOf(p)));});var cfg=await fApi();if(!cfg)return;var s=getS();var pr='生成5条关于"'+q+'"的帖子，时间：'+s.dt+'\n输出JSON：[{"name":"网友名","type":"net","content":"60字内","board":"综合","likes":数字,"hot":false,"comments":[]}]\n只输出JSON数组。';try{var raw=await fCall(cfg,pr);var items=fJson(raw);var tstr=new Date().toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'});items.forEach(function(item){var p={name:item.name,type:'net',ava:null,content:item.content,board:item.board||'综合',likes:item.likes||0,hot:false,time:tstr,comments:[]};feed.appendChild(buildCard(p,_posts.length));_posts.push(p);});fS('posts',_posts);}catch(e){}}
 window.fDoSearch=doSearch;
 
@@ -25281,7 +25321,7 @@ var sInp=ce('input','fSearchInp');sInp.placeholder='搜索论坛…';
 sInp.addEventListener('keydown',function(e){if(e.key==='Enter')doSearch(sInp.value.trim());});
 sBar.appendChild(sIco);sBar.appendChild(sInp);
 var tabBar=ce('div','fTabBar');
-hdr.appendChild(htop);hdr.appendChild(hotBar);hdr.appendChild(sBar);hdr.appendChild(tabBar);
+hdr.appendChild(htop);hdr.appendChild(sBar);hdr.appendChild(tabBar);
 // feed
 var feed=ce('div','fFeed');
 // fab
@@ -25336,8 +25376,7 @@ var wbi=await fL('wbItems',[]);if(Array.isArray(wbi))_wbItems=wbi;
 var ec=await fL('extraChars',[]);if(Array.isArray(ec))_extraChars=ec;var ecd=await fL('extraCharsData',[]);if(Array.isArray(ecd))_extraCharsData=ecd;var co=await fL('charOverrides',{});if(co&&typeof co==='object')_charOverrides=co;
 var fl=await fL('following',[]);if(Array.isArray(fl))_following=fl;
 var posts=await fL('posts',[]);if(Array.isArray(posts))_posts=posts;
-var htags=await fL('hotTags',[]);
-if(htags.length){var bar=document.getElementById('forumHotTags');if(bar){bar.innerHTML='';htags.forEach(function(tag,i){var el=ce('span');el.style.cssText='flex-shrink:0;padding:3px 10px;margin-right:5px;border-radius:20px;font-size:12px;cursor:pointer;white-space:nowrap;background:'+(i<3?'rgba(249,24,128,.1)':'rgba(29,155,240,.08)')+';color:'+(i<3?'#f91880':'#1d9bf0')+';';el.textContent=(i+1)+'. '+tag.text;el.onclick=function(){doSearch(tag.text);};bar.appendChild(el);});}}
+var topics=await fL('topics',[]);if(Array.isArray(topics))_topics=topics;
 }catch(e){console.error('论坛init数据加载出错:',e);}
 renderTabs();
 switchBottom('home');
