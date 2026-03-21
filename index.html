@@ -24480,9 +24480,8 @@ function renderRecommendFeed(container){
   list.forEach(function(p){container.appendChild(buildCard(p,_posts.indexOf(p)));});
 }
 function renderFollowingFeed(container){
-  var hdr=ce('div');hdr.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#fff;border-bottom:1px solid #eff3f4;';
-  var lbl=ce('div');lbl.style.cssText='font-size:16px;font-weight:700;color:#0f1419;';lbl.textContent='正在关注';
-  var rfBtn=ce('div');rfBtn.style.cssText='font-size:20px;cursor:pointer;color:#1d9bf0;transition:.3s;';rfBtn.textContent='↻';rfBtn.id='fFollowRefreshBtn';
+  // 刷新按钮放在右上角（悬浮）
+  var rfBtn=ce('div');rfBtn.style.cssText='position:absolute;top:8px;right:14px;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;color:#1d9bf0;transition:.3s;z-index:2;';rfBtn.textContent='↻';rfBtn.id='fFollowRefreshBtn';
   rfBtn.onclick=async function(){
     rfBtn.classList.add('spinning');
     try{
@@ -24514,11 +24513,12 @@ function renderFollowingFeed(container){
     }catch(e){toast('刷新失败：'+(e.message||'').slice(0,25));}
     rfBtn.classList.remove('spinning');
   };
-  hdr.appendChild(lbl);hdr.appendChild(rfBtn);container.appendChild(hdr);
+  container.style.position='relative';
+  container.appendChild(rfBtn);
   // 只显示关注动态（topicKey='_follow'），且不显示"我"自己的帖子
   var myName=originalGetItem.call(localStorage,'fMyName')||getMyName();
   var list=_posts.filter(function(p){return p.topicKey==='_follow'&&p.name!==myName;});
-  if(!list.length){var tip=ce('div');tip.style.cssText='text-align:center;padding:40px;color:#536471;font-size:14px;line-height:1.8;';tip.innerHTML='还没有动态<br><span style="font-size:12px;color:#aaa;">点右上角 ↻ 刷新生成</span>';container.appendChild(tip);return;}
+  if(!list.length){var tip=ce('div');tip.style.cssText='text-align:center;padding:48px 20px;color:#536471;font-size:14px;line-height:2.2;';tip.innerHTML='还没有动态<br><span style="color:#1d9bf0;cursor:pointer;" onclick="document.getElementById(\'fFollowRefreshBtn\')&&document.getElementById(\'fFollowRefreshBtn\').onclick()">点这里刷新生成 🔄</span>';container.appendChild(tip);return;}
   list.forEach(function(p){container.appendChild(buildCard(p,_posts.indexOf(p)));});
 }
 
@@ -24829,7 +24829,7 @@ function buildCmt(cmt,pi,ci){
   var card=ce('div');card.className='fCmt';
   var ava=ce('div');ava.className='fCmtAva';
   if(cmt.ava){ava.style.backgroundImage='url('+cmt.ava+')';ava.style.backgroundColor='transparent';}
-  else if(cmt.type==='net'){ava.style.background='#ccc';ava.textContent=cmt.name.slice(0,1);}
+  else if(cmt.type==='net'){ava.style.background='#9aa0a6';ava.innerHTML='<svg viewBox="0 0 40 40" width="100%" height="100%" fill="none"><circle cx="20" cy="20" r="20" fill="#9aa0a6"/><circle cx="20" cy="15" r="7" fill="#fff"/><ellipse cx="20" cy="32" rx="12" ry="9" fill="#fff"/></svg>';}
   else{ava.style.background=aColor(cmt.name);ava.textContent=cmt.name.slice(0,1);}
   ava.style.cursor='pointer';
   ava.onclick=function(e){e.stopPropagation();openCharProfile({name:cmt.name,ava:cmt.ava,type:cmt.type||'net'});};
@@ -24878,12 +24878,39 @@ function buildCmt(cmt,pi,ci){
   var sh=ce('span');sh.style.cssText='font-size:13px;color:#536471;display:flex;align-items:center;gap:3px;cursor:pointer;';
   sh.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>';
   sr.appendChild(rb);sr.appendChild(rt);sr.appendChild(lk);sr.appendChild(vw);sr.appendChild(bk);sr.appendChild(sh);bd.appendChild(sr);
-  // sub-replies
-  if(cmt.replies&&cmt.replies.length){cmt.replies.forEach(function(rep){
-    var rd=ce('div');rd.style.cssText='margin-top:8px;padding:8px 10px;background:#f7f9f9;border-radius:10px;border-left:3px solid #1d9bf0;';
-    rd.innerHTML='<div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;"><span style="font-size:13px;font-weight:700;">'+rep.name+'</span><span style="font-size:12px;color:#536471;">'+hdl(rep.name)+'</span></div>'+(rep.replyTo?'<div style="font-size:12px;color:#1d9bf0;margin-bottom:2px;">回复 '+hdl(rep.replyTo)+'</div>':'')+'<div style="font-size:13px;color:#0f1419;line-height:1.5;">'+rep.text+'</div>';
-    bd.appendChild(rd);
-  });}
+  // sub-replies 楼中楼
+  var subArea=ce('div');subArea.id='fSubReply_'+pi+'_'+ci;
+  if(cmt.replies&&cmt.replies.length){
+    var subWrap=ce('div');subWrap.style.cssText='margin-top:8px;background:#f7f9f9;border-radius:10px;overflow:hidden;';
+    cmt.replies.forEach(function(rep,ri){
+      var repRow=ce('div');repRow.style.cssText='padding:8px 10px;border-bottom:1px solid #eff3f4;';
+      // 头像+名字行
+      var repH=ce('div');repH.style.cssText='display:flex;align-items:center;gap:6px;margin-bottom:4px;';
+      var repAv=ce('div');repAv.style.cssText='width:22px;height:22px;border-radius:50%;flex-shrink:0;overflow:hidden;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;';
+      if(rep.ava){repAv.style.backgroundImage='url('+rep.ava+')';repAv.style.backgroundColor='transparent';}
+      else if(rep.type==='net'){repAv.style.background='#9aa0a6';repAv.innerHTML='<svg viewBox="0 0 40 40" width="100%" height="100%" fill="none"><circle cx="20" cy="20" r="20" fill="#9aa0a6"/><circle cx="20" cy="15" r="7" fill="#fff"/><ellipse cx="20" cy="32" rx="12" ry="9" fill="#fff"/></svg>';}
+      else{repAv.style.background=aColor(rep.name);repAv.textContent=rep.name.slice(0,1);}
+      var repNm=ce('span');repNm.style.cssText='font-size:13px;font-weight:700;color:#0f1419;';repNm.textContent=rep.name;
+      var repAt=ce('span');repAt.style.cssText='font-size:12px;color:#536471;';repAt.textContent=hdl(rep.name);
+      repH.appendChild(repAv);repH.appendChild(repNm);repH.appendChild(repAt);
+      if(rep.replyTo){var repTo=ce('span');repTo.style.cssText='font-size:12px;color:#1d9bf0;margin-left:4px;';repTo.textContent='回复 '+hdl(rep.replyTo);repH.appendChild(repTo);}
+      repRow.appendChild(repH);
+      var repTxt=ce('div');repTxt.style.cssText='font-size:13px;color:#0f1419;line-height:1.5;padding-left:28px;';repTxt.textContent=rep.text;
+      repRow.appendChild(repTxt);
+      // 楼中楼的小stats
+      var repS=ce('div');repS.style.cssText='display:flex;gap:16px;margin-top:6px;padding-left:28px;';
+      var repRb=ce('span');repRb.style.cssText='font-size:12px;color:#536471;cursor:pointer;display:flex;align-items:center;gap:2px;';
+      repRb.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>回复';
+      repRb.onclick=function(){_replyTarget={pi:pi,ci:ci,name:rep.name};var inp2=document.getElementById('fReplyInp');if(inp2){inp2.placeholder='回复 '+hdl(rep.name)+'…';inp2.focus();}};
+      var repLk=ce('span');repLk.style.cssText='font-size:12px;color:#536471;cursor:pointer;display:flex;align-items:center;gap:2px;';
+      repLk.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'+(rep.likes||0);
+      repLk.onclick=function(e){e.stopPropagation();rep.likes=(rep.likes||0)+1;repLk.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f91880" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="#f91880"/></svg>'+rep.likes;fS('posts',_posts);};
+      repS.appendChild(repRb);repS.appendChild(repLk);repRow.appendChild(repS);
+      subWrap.appendChild(repRow);
+    });
+    subArea.appendChild(subWrap);
+  }
+  bd.appendChild(subArea);
   card.appendChild(ava);card.appendChild(bd);return card;
 }
 
@@ -24894,6 +24921,8 @@ async function sendReply(){
   var inp=document.getElementById('fReplyInp');if(!inp||!inp.value.trim())return;
   var text=inp.value.trim();
   var myName=getMyName();
+  // 保存replyTarget（后面清空前先存）
+  var _replyTarget_saved=_replyTarget?{pi:_replyTarget.pi,ci:_replyTarget.ci,name:_replyTarget.name}:null;
   // 优先从localStorage取，再异步从localforage取
   var myAva=originalGetItem.call(localStorage,'fMyAva')||getMyAva()||'';
   // 检查是否有pending图片
@@ -24909,7 +24938,7 @@ async function sendReply(){
   inp.value='';inp.style.height='auto';
   if(imgFileInp){imgFileInp._pendingImg=null;var pr=document.getElementById('_replyImgPreview');if(pr)pr.remove();}
   fS('posts',_posts);if(_curPostIdx!==null)openPost(_curPostIdx);
-  // AI自动回复
+  // AI自动回复 - 楼中楼 + 随机其他角色/网友掉落
   toast('正在等待回复中…');
   try{
     var cfg=await fApi();if(!cfg)return;var post=_posts[_curPostIdx];if(!post)return;
@@ -24917,15 +24946,42 @@ async function sendReply(){
     var ctx='';if(s.wv)ctx+='背景：'+s.wv+'\n';
     var activeWb=_wbItems.filter(function(i){return i.active!==false;});
     if(activeWb.length)ctx+='设定：'+activeWb.map(function(i){return i.title+'：'+i.content;}).join('\n')+'\n';
-    var charBios='';chars.slice(0,4).forEach(function(c){var ov=_charOverrides&&_charOverrides[c.name];var bio=(ov&&ov.bio)||c.bio||'';charBios+=c.name+(bio?'('+bio+')':'')+' ';});
-    if(charBios)ctx+='角色：'+charBios+'\n';
-    ctx+='帖子"'+(post.title||'')+'（'+post.name+'发的）"下，'+myName+'评论了："'+text+'"\n';
-    ctx+='生成2条回复，贴合人设有活人感。只输出JSON：[{"name":"回复者","type":"char或net","text":"内容20-40字","likes":数字}]';
+    var charBios='';chars.slice(0,6).forEach(function(c){var ov=_charOverrides&&_charOverrides[c.name];var bio=(ov&&ov.bio)||c.bio||'';charBios+=c.name+(bio?'（'+bio+'）':'')+'\n';});
+    if(charBios)ctx+='角色人设（必须严格遵守）：\n'+charBios;
+    ctx+='帖子："'+(post.title||post.content||'')+'"（'+post.name+'发的）\n';
+    // 判断是楼中楼回复还是新评论
+    var isNested=(_replyTarget_saved!==null);
+    var targetName=_replyTarget_saved?_replyTarget_saved.name:null;
+    if(isNested){
+      ctx+=myName+'在评论区回复了'+hdl(targetName||'')+'："'+text+'"\n';
+      ctx+='生成2-3条楼中楼回复（其他角色或网友加入讨论这条回复），要求：\n';
+      ctx+='1. 可以是@到'+myName+'或@'+targetName+'，互相回应\n';
+      ctx+='2. 随机1-2个网友也可以掉进来吃瓜凑热闹\n';
+      ctx+='3. 每条15-40字，口语化，有活人感\n';
+    }else{
+      ctx+=myName+'评论了："'+text+'"\n';
+      ctx+='生成2-3条评论区回复，要求：\n';
+      ctx+='1. 主要角色/网友直接回复这条评论\n';
+      ctx+='2. 有1个网友（有趣网名）可以旁观吃瓜评论\n';
+      ctx+='3. 每条15-40字，贴合人设，有活人感\n';
+    }
+    ctx+='只输出JSON：[{"name":"回复者","type":"char或net","text":"内容","likes":数字,"replyTo":"被回复的人名（可选）"}]\n不要其他文字。';
     var raw=await fCall(cfg,ctx);var items=fJson(raw);
     var charMap={};chars.forEach(function(c){charMap[c.name]=c;});
     var tstr=new Date().toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'});
-    items.forEach(function(item){if(!item.name||!item.text)return;var c=charMap[item.name];
-      post.comments.push({name:item.name,type:item.type||'net',ava:c?c.ava||null:null,text:item.text,time:tstr,likes:parseInt(item.likes)||0,replies:[],replyTo:myName});});
+    // 找到目标评论索引
+    var targetCi=isNested&&_replyTarget_saved?_replyTarget_saved.ci:null;
+    items.forEach(function(item){
+      if(!item.name||!item.text)return;
+      var c=charMap[item.name];
+      var repObj={name:item.name,type:item.type||'net',ava:c?c.ava||null:null,text:item.text,time:tstr,likes:parseInt(item.likes)||0,replyTo:item.replyTo||myName};
+      if(isNested&&targetCi!==null&&post.comments[targetCi]){
+        if(!post.comments[targetCi].replies)post.comments[targetCi].replies=[];
+        post.comments[targetCi].replies.push(repObj);
+      }else{
+        post.comments.push({name:item.name,type:item.type||'net',ava:c?c.ava||null:null,text:item.text,time:tstr,likes:parseInt(item.likes)||0,replies:[],replyTo:item.replyTo||myName});
+      }
+    });
     fS('posts',_posts);if(_curPostIdx!==null){var body=document.getElementById('fDetBody');if(body)renderPostDetail(post,body);}
     toast('收到'+items.length+'条回复 💬');
   }catch(e){console.log('自动回复失败:',e);}
@@ -25136,7 +25192,7 @@ function renderTopicPosts(postList, bd){
     var hRow=ce('div');hRow.style.cssText='display:flex;gap:10px;align-items:center;margin-bottom:8px;';
     var av=ce('div');av.className='fAva';
     if(post.ava){av.style.backgroundImage='url('+post.ava+')';av.style.backgroundColor='transparent';}
-    else if(post.type==='net'){av.style.background='#ccc';av.textContent=post.name.slice(0,1);}
+    else if(post.type==='net'){av.style.background='#9aa0a6';av.innerHTML='<svg viewBox="0 0 40 40" width="100%" height="100%" fill="none"><circle cx="20" cy="20" r="20" fill="#9aa0a6"/><circle cx="20" cy="15" r="7" fill="#fff"/><ellipse cx="20" cy="32" rx="12" ry="9" fill="#fff"/></svg>';}
     else{av.style.background=aColor(post.name);av.textContent=post.name.slice(0,1);}
     var nameC=ce('div');nameC.innerHTML='<div class="fName">'+post.name+'</div><div class="fHandle">'+hdl(post.name)+' · '+post.time+'</div>';
     hRow.appendChild(av);hRow.appendChild(nameC);card.appendChild(hRow);
@@ -25322,7 +25378,9 @@ function buildDMRow(name,ava,type,lastMsg){
   var row=ce('div');row.style.cssText='display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid #eff3f4;cursor:pointer;';
   row.onclick=function(){openDMChat(name,ava,type);};
   var av=ce('div');av.style.cssText='width:42px;height:42px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#fff;overflow:hidden;background-size:cover;background-position:center;';
-  if(ava){av.style.backgroundImage='url('+ava+')';av.style.backgroundColor='transparent';}else{av.style.background=aColor(name);av.textContent=name.slice(0,1);}
+  if(ava){av.style.backgroundImage='url('+ava+')';av.style.backgroundColor='transparent';}
+  else if(type==='net'){av.style.background='#9aa0a6';av.innerHTML='<svg viewBox="0 0 40 40" width="100%" height="100%" fill="none"><circle cx="20" cy="20" r="20" fill="#9aa0a6"/><circle cx="20" cy="15" r="7" fill="#fff"/><ellipse cx="20" cy="32" rx="12" ry="9" fill="#fff"/></svg>';}
+  else{av.style.background=aColor(name);av.textContent=name.slice(0,1);}
   var info=ce('div');info.style.cssText='flex:1;min-width:0;';
   info.innerHTML='<div style="font-size:15px;font-weight:700;color:#0f1419;">'+name+'</div>'+(lastMsg?'<div style="font-size:13px;color:#536471;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+lastMsg+'</div>':'');
   row.appendChild(av);row.appendChild(info);return row;
@@ -25397,16 +25455,34 @@ function openDMChat(name,ava,type,initialMsg){
 
   function showTyping(){typingEl.textContent='正在输入…';return setTimeout(function(){typingEl.textContent='';},3000);}
 
+  // 待发队列
+  var _pendingMsgs=[];
+
   // 输入区
   var ib=ce('div');ib.style.cssText='display:flex;gap:8px;padding:10px 12px;background:#fff;border-top:1px solid #eff3f4;flex-shrink:0;align-items:center;';
   var inp=ce('input');inp.placeholder='发布你的回复…';inp.style.cssText='flex:1;padding:10px 14px;border:1.5px solid #cfd9de;border-radius:24px;font-size:14px;outline:none;';
   var sb=ce('button');sb.textContent='回复';sb.style.cssText='padding:9px 18px;background:#1d9bf0;color:#fff;border:none;border-radius:24px;font-size:14px;cursor:pointer;font-weight:700;flex-shrink:0;';
 
+  // Enter键：把当前消息追加显示，加入待发队列
+  inp.addEventListener('keydown',function(e){
+    if(e.key==='Enter'){
+      e.preventDefault();
+      var txt=inp.value.trim();if(!txt)return;
+      inp.value='';
+      _pendingMsgs.push(txt);
+      appendMsg(txt,true);
+    }
+  });
+
+  // 点"回复"：触发AI回复所有待发消息
   sb.onclick=async function(){
-    var txt=inp.value.trim();if(!txt)return;
-    inp.value='';inp.disabled=true;sb.disabled=true;
-    appendMsg(txt,true);
-    // 显示正在输入
+    // 如果输入框还有内容，也一并发出
+    var txt=inp.value.trim();
+    if(txt){inp.value='';_pendingMsgs.push(txt);appendMsg(txt,true);}
+    if(!_pendingMsgs.length)return;
+    var allMsgs=_pendingMsgs.slice();
+    _pendingMsgs=[];
+    inp.disabled=true;sb.disabled=true;
     setTimeout(function(){showTyping();},400);
     try{
       var cfg=await fApi();
@@ -25423,22 +25499,28 @@ function openDMChat(name,ava,type,initialMsg){
       if(activeWb.length)ctx+='设定：'+activeWb.map(function(i){return i.title+'：'+i.content;}).join('；')+'\n';
       if(bio)ctx+=name+'的人设：'+bio+'\n';
       ctx+='你现在扮演"'+name+'"，正在和"'+myName+'"私信聊天。\n';
-      // 把近5条历史带进去
-      var recentHist=_chatHistory.slice(-6);
-      if(recentHist.length>1){
-        ctx+='最近对话记录：\n';
-        recentHist.slice(0,-1).forEach(function(m){ctx+=(m.isMe?myName:name)+'：'+m.text+'\n';});
-      }
-      ctx+=myName+'刚刚说："'+txt+'"\n';
-      ctx+='请以"'+name+'"的语气回复一条私信，20-50字，口语化自然，贴合人设。只输出回复内容，不要任何前缀。';
+      var recentHist=_chatHistory.slice(-8);
+      if(recentHist.length){ctx+='最近对话记录：\n';recentHist.forEach(function(m){ctx+=(m.isMe?myName:name)+'：'+m.text+'\n';});}
+      ctx+='\n'+myName+'刚刚连续发了这些消息：\n'+allMsgs.map(function(m,i){return (i+1)+'、'+m;}).join('\n')+'\n';
+      ctx+='请以"'+name+'"的语气，像真实好友聊天那样，一次性回复1-3条消息（可以是连续短句），每条20-40字，口语化。\n只输出JSON：[{"text":"消息内容"}]，不要其他文字。';
       var raw=await fCall(cfg,ctx);
-      var reply=(raw||'').trim().replace(/^("|"|"|'|「|【)?/,'').replace(/("|"|"|'|」|】)?$/,'').trim();
+      var replies=[];
+      try{
+        var parsed=fJson(raw);
+        if(Array.isArray(parsed))replies=parsed.map(function(r){return r.text||r;}).filter(Boolean);
+      }catch(e){replies=[raw.trim()];}
       typingEl.textContent='';
-      if(reply)appendMsg(reply,false);
+      // 分批显示，模拟真实打字节奏
+      var delay=600;
+      replies.forEach(function(r,i){
+        setTimeout(function(){
+          if(r)appendMsg(r,false);
+          if(i<replies.length-1){setTimeout(function(){showTyping();},200);}
+        },delay*i);
+      });
     }catch(e){typingEl.textContent='';appendMsg('（消息发送失败）',false);}
     inp.disabled=false;sb.disabled=false;inp.focus();
   };
-  inp.addEventListener('keydown',function(e){if(e.key==='Enter')sb.onclick();});
   ib.appendChild(inp);ib.appendChild(sb);
   pg.appendChild(tb);pg.appendChild(ma);pg.appendChild(ib);
   forum.appendChild(pg);
