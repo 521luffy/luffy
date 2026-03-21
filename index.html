@@ -24360,18 +24360,24 @@ setTimeout(hp2Init,300);
 <script>
 (function(){
 'use strict';
-async function fS(k,v){try{await localforage.setItem('f_'+k,v);}catch(e){}try{localStorage.setItem('f_'+k,typeof v==='string'?v:JSON.stringify(v));}catch(e){}}
-async function fL(k,d){var r=null;try{r=await localforage.getItem('f_'+k);}catch(e){}if(r===null||r===undefined){try{var ls=localStorage.getItem('f_'+k);if(ls!=null){try{r=JSON.parse(ls);}catch(e){r=ls;}}}catch(e){}}return(r===null||r===undefined)?d:r;}
+async function fS(k,v){try{await localforage.setItem('f_'+k,v);}catch(e){console.warn('localforage save failed for f_'+k,e);}try{localStorage.setItem('f_'+k,typeof v==='string'?v:JSON.stringify(v));}catch(e){console.warn('localStorage save failed for f_'+k+'(可能数据太大)',e);}}
+async function fL(k,d){var r=null;try{r=await localforage.getItem('f_'+k);}catch(e){console.warn('localforage read failed for f_'+k,e);}if(r===null||r===undefined){try{var ls=localStorage.getItem('f_'+k);if(ls!=null){try{r=JSON.parse(ls);}catch(e){r=ls;}}}catch(e){}}return(r===null||r===undefined)?d:r;}
 async function fApi(){var p='',k='',m='';try{p=originalGetItem.call(localStorage,'pxy')||'';}catch(e){}try{k=originalGetItem.call(localStorage,'key')||'';}catch(e){}try{m=originalGetItem.call(localStorage,'mod')||'';}catch(e){}if(!p){try{p=await localforage.getItem('pxy')||'';}catch(e){}}if(!k){try{k=await localforage.getItem('key')||'';}catch(e){}}if(!m){try{m=await localforage.getItem('mod')||'';}catch(e){}}if(!p||!k)return null;if(!p.includes('chat/completions')&&!p.includes('/v1/messages'))p=p.replace(/\/$/,'')+'/chat/completions';if(!m)m='claude-sonnet-4-20250514';return{p,k,m};}
 async function fCall(cfg,prompt,maxT){
-  var res=await fetch(cfg.p,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+cfg.k},body:JSON.stringify({model:cfg.m,max_tokens:maxT||4096,temperature:0.9,messages:[{role:'user',content:prompt}]})});
-  if(!res.ok){var errTxt='';try{var errD=await res.json();errTxt=errD.error&&errD.error.message||JSON.stringify(errD).slice(0,60);}catch(e){errTxt=res.status+' '+res.statusText;}throw new Error('API错误: '+errTxt);}
+  var ctrl=new AbortController();var tid=setTimeout(function(){ctrl.abort();},60000);
+  try{
+  var body={model:cfg.m,temperature:0.9,messages:[{role:'user',content:prompt}]};
+  if(maxT)body.max_tokens=maxT;
+  var res=await fetch(cfg.p,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+cfg.k},body:JSON.stringify(body),signal:ctrl.signal});
+  clearTimeout(tid);
+  if(!res.ok){var errTxt='';try{var errD=await res.json();errTxt=errD.error&&errD.error.message||JSON.stringify(errD).slice(0,80);}catch(e){errTxt=res.status+' '+res.statusText;}throw new Error('API错误: '+errTxt);}
   var d=await res.json();var t='';
   if(d.content&&Array.isArray(d.content)){for(var i=0;i<d.content.length;i++){if(d.content[i].type==='text'&&d.content[i].text){t=d.content[i].text;break;}}}
   else if(d.choices&&d.choices[0])t=(d.choices[0].message&&d.choices[0].message.content)||'';
-  if(!t&&d.error)throw new Error('API返回错误: '+(d.error.message||'').slice(0,40));
-  if(!t)throw new Error('API返回为空');
+  if(!t&&d.error)throw new Error('API返回错误: '+(d.error.message||'').slice(0,60));
+  if(!t)throw new Error('API返回为空，完整响应:'+JSON.stringify(d).slice(0,100));
   return t.trim();
+  }catch(e){clearTimeout(tid);if(e.name==='AbortError')throw new Error('请求超时（60秒）');throw e;}
 }
 function fJson(raw){
   raw = raw.replace(/```json|```/g,'').trim();
@@ -24516,7 +24522,11 @@ function openCharProfile(post){
   var isFollowed=_following.some(function(f){return f.name===post.name;});
   var fBtn=ce('button');fBtn.textContent=isFollowed?'已关注':'关注';fBtn.style.cssText='margin-top:12px;padding:8px 24px;border-radius:24px;font-size:14px;font-weight:700;cursor:pointer;border:1.5px solid '+(isFollowed?'#cfd9de':'#1d9bf0')+';background:'+(isFollowed?'#fff':'#1d9bf0')+';color:'+(isFollowed?'#0f1419':'#fff')+';';
   fBtn.onclick=function(){tFollow(post);isFollowed=!isFollowed;fBtn.textContent=isFollowed?'已关注':'关注';fBtn.style.borderColor=isFollowed?'#cfd9de':'#1d9bf0';fBtn.style.background=isFollowed?'#fff':'#1d9bf0';fBtn.style.color=isFollowed?'#0f1419':'#fff';};
-  ia.appendChild(fBtn);
+  // 私信按钮
+  var dmBtn=ce('button');dmBtn.textContent='✉ 私信';dmBtn.style.cssText='margin-top:12px;margin-left:8px;padding:8px 20px;border-radius:24px;font-size:14px;font-weight:700;cursor:pointer;border:1.5px solid #cfd9de;background:#fff;color:#0f1419;';
+  dmBtn.onclick=function(){pg.remove();openDMChat(post.name,avaUrl,post.type);};
+  var btnRow2=ce('div');btnRow2.style.cssText='display:flex;gap:8px;';btnRow2.appendChild(fBtn);btnRow2.appendChild(dmBtn);
+  ia.appendChild(btnRow2);
   bd.appendChild(ia);
   // post list
   var plHdr=ce('div');plHdr.style.cssText='padding:13px 14px;font-size:15px;font-weight:600;color:#0f1419;background:#fff;border-bottom:1px solid #eff3f4;';plHdr.textContent='帖子';bd.appendChild(plHdr);
@@ -24712,7 +24722,8 @@ async function genHot(cfg){
   }catch(e){ console.log('热搜失败',e); }
 }
 async function genPosts(cfg,board){
-  toast('加载中…');
+  var feed=document.getElementById('fFeed');
+  if(feed){feed.innerHTML='<div style="text-align:center;padding:40px 20px;color:#536471;font-size:14px;"><div style="font-size:28px;margin-bottom:8px;">⏳</div>正在生成帖子…</div>';}
   var s=getS();
   var chars=getChars();
   var charNames=chars.length ? chars.slice(0,5).map(function(c){return c.name;}).join('、') : '普通网友';
@@ -24723,14 +24734,14 @@ async function genPosts(cfg,board){
   if(_wbItems.length) extra+='设定：'+_wbItems.map(function(i){return i.title+':'+i.content;}).join('；')+'\n';
   if(s.pr) extra+=s.pr+'\n';
 
-  // 只生成标题+简介，不生成正文和评论，速度快
-  var pr = extra+'请生成10条"'+boardName+'"话题帖子标题和简介，发帖人包含：'+charNames+'以及普通网友。\n'+
-    '只输出JSON数组：[{"name":"发帖人","type":"char或net","title":"标题（15字内）","preview":"简介（30字内）","hot":false},...]  不要其他任何文字。';
+  var pr = extra+'生成10条"'+boardName+'"话题帖子，发帖人包含：'+charNames+'以及普通网友。\n'+
+    '只输出JSON数组：[{"name":"发帖人","title":"标题15字内","preview":"简介30字内","hot":false}]\n不要其他文字。';
 
   try{
     var raw = await fCall(cfg, pr);
+    console.log('genPosts raw response:', raw.slice(0,200));
     var items = fJson(raw);
-    if(!Array.isArray(items)||!items.length) throw new Error('解析失败');
+    if(!Array.isArray(items)||!items.length) throw new Error('解析结果为空');
     var charMap={};chars.forEach(function(c){charMap[c.name]=c;});
     var tstr = new Date().toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'});
     var added = 0;
@@ -24740,24 +24751,29 @@ async function genPosts(cfg,board){
       _posts.unshift({
         name:item.name, type:item.type||'net',
         ava: c?c.ava||null:null,
-        title: item.title,           // 标题
-        content: item.preview||'',   // 简介（列表页用）
-        fullContent: null,           // 正文（点进去再生成）
+        title: item.title,
+        content: item.preview||'',
+        fullContent: null,
         board: boardName,
         likes: Math.floor(Math.random()*500+10),
         hot: !!item.hot,
         time: tstr,
         comments: [],
-        isStub: true  // 标记为待生成详情
+        isStub: true
       });
       added++;
     });
-    fS('posts',_posts);
+    await fS('posts',_posts);
     loadFeed();
     toast('已加载'+added+'条 ✓');
   }catch(e){
-    toast('加载失败：'+String(e.message||e).slice(0,30));
+    var errMsg = (e.message||String(e)).slice(0,50);
     console.error('genPosts error:', e);
+    // 在feed中显示错误，不只是toast
+    if(feed){feed.innerHTML='<div style="text-align:center;padding:40px 20px;color:#e74c3c;font-size:14px;line-height:2;">'+
+      '<div style="font-size:28px;margin-bottom:8px;">⚠️</div>帖子生成失败<br>'+
+      '<div style="font-size:12px;color:#999;margin:8px 0;word-break:break-all;">'+errMsg+'</div>'+
+      '<span style="color:#1d9bf0;cursor:pointer;" onclick="window.fRefresh()">点击重试 🔄</span></div>';}
   }
 }
 async function doSearch(q){if(!q)return;var feed=document.getElementById('fFeed');if(!feed)return;var local=_posts.filter(function(p){return p.content&&p.content.includes(q);});feed.innerHTML='<div style="padding:10px 14px;font-size:14px;font-weight:700;color:#536471;border-bottom:1px solid #eff3f4;">搜索：'+q+'</div>';if(local.length)local.forEach(function(p){feed.appendChild(buildCard(p,_posts.indexOf(p)));});var cfg=await fApi();if(!cfg)return;var s=getS();var pr='生成5条关于"'+q+'"的帖子，时间：'+s.dt+'\n输出JSON：[{"name":"网友名","type":"net","content":"60字内","board":"综合","likes":数字,"hot":false,"comments":[]}]\n只输出JSON数组。';try{var raw=await fCall(cfg,pr);var items=fJson(raw);var tstr=new Date().toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'});items.forEach(function(item){var p={name:item.name,type:'net',ava:null,content:item.content,board:item.board||'综合',likes:item.likes||0,hot:false,time:tstr,comments:[]};feed.appendChild(buildCard(p,_posts.length));_posts.push(p);});fS('posts',_posts);}catch(e){}}
@@ -24771,8 +24787,9 @@ function renderProfile(){
   var myName=localStorage.getItem('fMyName')||getMyName();
   var myPosts=_posts.filter(function(p){return p.name===myName;});
   body.innerHTML='';
-  // banner
-  var banner=ce('div');banner.style.cssText='height:120px;background:linear-gradient(135deg,#1d9bf0,#a29bfe);flex-shrink:0;';
+  // banner with optional background image
+  var bannerBg=localStorage.getItem('fMyBannerUrl')||'';
+  var banner=ce('div');banner.style.cssText='height:120px;flex-shrink:0;'+(bannerBg?'background-image:url('+bannerBg+');background-size:cover;background-position:center;':'background:linear-gradient(135deg,#1d9bf0,#a29bfe);');
   body.appendChild(banner);
   // info area with avatar + edit button row
   var aa=ce('div');aa.style.cssText='padding:0 14px 14px;background:#fff;border-bottom:1px solid #eff3f4;';
@@ -24845,6 +24862,7 @@ function showEditProfileDialog(){
   function addField(lbl,id,ph,val,ta){var row=ce('div');row.style.marginBottom='10px';var l=ce('div');l.style.cssText='font-size:13px;font-weight:700;margin-bottom:5px;';l.textContent=lbl;var el=document.createElement(ta?'textarea':'input');el.id=id;el.placeholder=ph;el.style.cssText='width:100%;padding:9px 12px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;outline:none;font-family:inherit;box-sizing:border-box;'+(ta?'height:72px;resize:none;display:block;':'');if(val)el.value=val;row.appendChild(l);row.appendChild(el);box.appendChild(row);}
   addField('昵称','_epName','你的昵称',myName);
   addField('个性签名','_epBio','介绍一下自己…',localStorage.getItem('fMyBio')||'',true);
+  addField('背景图链接','_epBanner','粘贴图片URL（留空使用默认渐变）',localStorage.getItem('fMyBannerUrl')||'');
   addField('正在关注数','_epFollowing','',localStorage.getItem('fMyFollowing')||'');
   addField('粉丝数','_epFollowers','',localStorage.getItem('fMyFollowers')||'');
   var btnRow=ce('div');btnRow.style.cssText='display:flex;gap:8px;margin-top:6px;';
@@ -24855,6 +24873,7 @@ function showEditProfileDialog(){
     var newName=(box.querySelector('#_epName')||{}).value.trim()||myName;
     localStorage.setItem('fMyName',newName);
     localStorage.setItem('fMyBio',(box.querySelector('#_epBio')||{}).value||'');
+    localStorage.setItem('fMyBannerUrl',(box.querySelector('#_epBanner')||{}).value.trim()||'');
     localStorage.setItem('fMyFollowing',(box.querySelector('#_epFollowing')||{}).value||'');
     localStorage.setItem('fMyFollowers',(box.querySelector('#_epFollowers')||{}).value||'');
     // 保存头像到localStorage和localforage
@@ -25299,7 +25318,8 @@ var dmHdr=ce('div');dmHdr.style.cssText='display:flex;align-items:center;gap:10p
 var dmBack=ce('div');dmBack.style.cssText='width:34px;height:34px;border-radius:50%;background:#eff3f4;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;';dmBack.innerHTML='&#8592;';dmBack.onclick=function(){switchBottom('home');};
 var dmTitle=ce('div');dmTitle.style.cssText='font-size:17px;font-weight:700;color:#0f1419;';dmTitle.textContent='私信';
 var dmNew=ce('div');dmNew.style.cssText='margin-left:auto;font-size:20px;cursor:pointer;color:#1d9bf0;';dmNew.textContent='✏️';dmNew.onclick=window.fNewDM;
-dmHdr.appendChild(dmBack);dmHdr.appendChild(dmTitle);dmHdr.appendChild(dmNew);
+var dmRefresh=ce('div');dmRefresh.style.cssText='font-size:18px;cursor:pointer;color:#1d9bf0;margin-left:8px;';dmRefresh.textContent='🔄';dmRefresh.onclick=function(){renderDM();toast('已刷新');};
+dmHdr.appendChild(dmBack);dmHdr.appendChild(dmTitle);dmHdr.appendChild(dmNew);dmHdr.appendChild(dmRefresh);
 var dmList=ce('div','fDMList');dmList.style.cssText='flex:1;overflow-y:auto;';
 dm.appendChild(dmHdr);dm.appendChild(dmList);
 
