@@ -24567,29 +24567,33 @@ function renderFollowingFeed(container){
 // 时间显示辅助函数：把日期字符串转成"刚刚/X分钟前/X小时前/X天前"
 function timeAgo(timeStr){
   if(!timeStr)return'刚刚';
-  // 如果已经是相对时间格式，直接返回
   if(/(前|刚刚|小时|分钟|天|周)/.test(timeStr))return timeStr;
-  // 尝试解析日期
   var now=new Date();
   var d=null;
-  // 格式如 "3/21" 或 "12月17日"
-  var m1=timeStr.match(/^(\d+)\/(\d+)$/);
-  if(m1){d=new Date(now.getFullYear(),parseInt(m1[1])-1,parseInt(m1[2]));}
+  // ISO格式：2026-03-21T17:00:02.582Z
+  if(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(timeStr)){d=new Date(timeStr);}
+  // M/D格式
+  if(!d||isNaN(d)){var m1=timeStr.match(/^(\d+)\/(\d+)$/);if(m1){d=new Date(now.getFullYear(),parseInt(m1[1])-1,parseInt(m1[2]));}}
   if(!d||isNaN(d)){d=new Date(timeStr);}
   if(!d||isNaN(d))return timeStr;
   var diff=Math.floor((now-d)/1000);
+  if(diff<0)diff=0;
   if(diff<60)return'刚刚';
   if(diff<3600)return Math.floor(diff/60)+'分钟前';
   if(diff<86400)return Math.floor(diff/3600)+'小时前';
   if(diff<604800)return Math.floor(diff/86400)+'天前';
-  return Math.floor(diff/604800)+'周前';
+  // 超过一周，显示月/日格式
+  var dm=d.getMonth()+1;var dd=d.getDate();return dm+'/'+dd;
 }
 
 function postHash(post){var s=(post.name||'')+(post.title||'')+(post.content||'').slice(0,20);var h=0;for(var i=0;i<s.length;i++)h=((h<<5)-h+s.charCodeAt(i))|0;return Math.abs(h);}
 function postStats(post){
   var h=postHash(post);
   var base=post.likes||Math.floor((h%400)+20);
-  var cmts=post.comments&&post.comments.length>0?post.comments.length:Math.floor((h%80)+5);
+  // 评论数：始终显示虚拟数（不因为没有评论就显示0）
+  var realCmts=post.comments?post.comments.length:0;
+  var fakeCmts=Math.floor((h%80)+3);
+  var cmts=Math.max(realCmts,fakeCmts);
   var rts=Math.floor(base*(0.3+(h%10)*0.03));
   var views=base>500?Math.floor(base/100)*100+'K':Math.floor(base*8/1000*10)/10+'万';
   var bks=Math.floor(base*(0.08+(h%8)*0.01));
@@ -25515,11 +25519,6 @@ function renderDM(){
           var row=buildDMRow(s.name,s.ava||'',s.type||'net',s.lastMsg||'');
           row.onclick=function(){openDMChat(s.name,s.ava||'',s.type||'net',s.lastMsg||'');};
           dmContent.appendChild(row);
-          // 同步读最新消息（localStorage更快）
-          try{
-            var lsR=localStorage.getItem('f_'+chatKey);
-            if(lsR){var h2=JSON.parse(lsR);if(h2&&h2.length){var last=h2[h2.length-1];var preview=row.querySelector('div:last-child');if(preview&&preview.style.fontSize==='13px'){preview.textContent=(last.isMe?'我：':'')+last.text;}}}
-          }catch(e){}
         });
       }
     } else {
@@ -25533,10 +25532,6 @@ function renderDM(){
           var chatKey2='dmChat_'+c.name.replace(/\s/g,'_');
           var row=buildDMRow(c.name,c.ava||'',c.type||'char',c.greeting||'');
           dmContent.appendChild(row);
-          try{
-            var lsR2=localStorage.getItem('f_dmChat_'+c.name.replace(/\s/g,'_'));
-            if(lsR2){var h3=JSON.parse(lsR2);if(h3&&h3.length){var last2=h3[h3.length-1];var preview2=row.querySelector('div:last-child');if(preview2&&preview2.style.fontSize==='13px'){preview2.textContent=(last2.isMe?'我：':'')+last2.text;}}}
-          }catch(e){}
         });
       }
     }
@@ -25554,7 +25549,16 @@ function buildDMRow(name,ava,type,lastMsg){
   var av=ce('div');av.style.cssText='width:42px;height:42px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#fff;overflow:hidden;background-size:cover;background-position:center;';
   setAva(av,ava,name,type);
   var info=ce('div');info.style.cssText='flex:1;min-width:0;';
-  info.innerHTML='<div style="font-size:15px;font-weight:700;color:#0f1419;">'+name+'</div>'+(lastMsg?'<div style="font-size:13px;color:#536471;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+lastMsg+'</div>':'');
+  var nameEl=ce('div');nameEl.style.cssText='font-size:15px;font-weight:700;color:#0f1419;';nameEl.textContent=name;
+  var previewEl=ce('div');previewEl.className='_dmPreview';previewEl.style.cssText='font-size:13px;color:#536471;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px;';
+  // 先显示初始消息，再同步读localStorage最新
+  previewEl.textContent=lastMsg||'';
+  var safeKey='dmChat_'+name.replace(/[\s]+/g,'_');
+  try{
+    var raw=localStorage.getItem('f_'+safeKey);
+    if(raw){var hist=JSON.parse(raw);if(Array.isArray(hist)&&hist.length){var last=hist[hist.length-1];previewEl.textContent=(last.isMe?'我：':'')+last.text;}}
+  }catch(e){}
+  info.appendChild(nameEl);if(previewEl.textContent)info.appendChild(previewEl);
   row.appendChild(av);row.appendChild(info);return row;
 }
 function openDMChat(name,ava,type,initialMsg){
@@ -25591,10 +25595,12 @@ function openDMChat(name,ava,type,initialMsg){
   }
 
   function appendMsgBubble(txt,isMe,scroll){
-    var bub=ce('div');
+    var bub=ce('div');bub.dataset.idx=_chatHistory.length;
+    var _msgIdx=_chatHistory.length-1;
     if(isMe){
       bub.style.cssText='display:flex;justify-content:flex-end;';
-      bub.innerHTML='<div style="background:#1d9bf0;color:#fff;padding:9px 13px;border-radius:18px 18px 4px 18px;font-size:14px;max-width:68%;line-height:1.5;word-break:break-word;">'+txt+'</div>';
+      var bubble=ce('div');bubble.style.cssText='background:#1d9bf0;color:#fff;padding:9px 13px;border-radius:18px 18px 4px 18px;font-size:14px;max-width:68%;line-height:1.5;word-break:break-word;';bubble.textContent=txt;
+      bub.appendChild(bubble);
     } else {
       bub.style.cssText='display:flex;align-items:flex-end;gap:8px;';
       var leftAv=ce('div');leftAv.style.cssText='width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;overflow:hidden;background-size:cover;background-position:center;';
@@ -25602,8 +25608,29 @@ function openDMChat(name,ava,type,initialMsg){
       var leftTxt=ce('div');leftTxt.style.cssText='background:#fff;color:#0f1419;padding:9px 13px;border-radius:18px 18px 18px 4px;font-size:14px;max-width:68%;line-height:1.5;box-shadow:0 1px 3px rgba(0,0,0,0.08);word-break:break-word;';leftTxt.textContent=txt;
       bub.appendChild(leftAv);bub.appendChild(leftTxt);
     }
+    // 长按删除
+    var _pressTimer=null;
+    bub.addEventListener('touchstart',function(){_pressTimer=setTimeout(function(){showMsgMenu(bub,_msgIdx);},600);});
+    bub.addEventListener('touchend',function(){clearTimeout(_pressTimer);});
+    bub.addEventListener('touchmove',function(){clearTimeout(_pressTimer);});
     ma.appendChild(bub);
     if(scroll!==false)ma.scrollTop=ma.scrollHeight;
+  }
+  function showMsgMenu(bubEl,idx){
+    var menu=ce('div');menu.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.3);display:flex;align-items:flex-end;justify-content:center;';
+    var box=ce('div');box.style.cssText='background:#fff;border-radius:16px 16px 0 0;padding:8px 0 20px;width:100%;max-width:400px;';
+    var delItem=ce('div');delItem.style.cssText='padding:14px 20px;font-size:15px;color:#e74c3c;cursor:pointer;text-align:center;font-weight:600;';delItem.textContent='删除这条消息';
+    delItem.onclick=function(){
+      if(idx>=0&&idx<_chatHistory.length){_chatHistory.splice(idx,1);}
+      var _j=JSON.stringify(_chatHistory);
+      try{localStorage.setItem('f_'+chatKey,_j);}catch(e){}
+      try{sessionStorage.setItem('f_'+chatKey,_j);}catch(e){}
+      fS(chatKey,_chatHistory);
+      bubEl.remove();menu.remove();toast('已删除');
+    };
+    var canItem=ce('div');canItem.style.cssText='padding:14px 20px;font-size:15px;color:#536471;cursor:pointer;text-align:center;border-top:1px solid #eff3f4;';canItem.textContent='取消';canItem.onclick=function(){menu.remove();};
+    box.appendChild(delItem);box.appendChild(canItem);menu.appendChild(box);document.body.appendChild(menu);
+    menu.onclick=function(ev){if(ev.target===menu)menu.remove();};
   }
 
   function appendMsg(txt,isMe){
@@ -25643,7 +25670,76 @@ function openDMChat(name,ava,type,initialMsg){
   var _pendingMsgs=[];
 
   // 输入区
-  var ib=ce('div');ib.style.cssText='display:flex;gap:8px;padding:10px 12px;background:#fff;border-top:1px solid #eff3f4;flex-shrink:0;align-items:center;';
+  // +号小抽屉
+  var plusDrawer=ce('div');plusDrawer.style.cssText='display:none;position:absolute;bottom:100%;left:0;right:0;background:#fff;border-top:1px solid #eff3f4;padding:16px 12px;z-index:5;';
+  var plusGrid=ce('div');plusGrid.style.cssText='display:flex;gap:20px;';
+  function makePlusItem(icon,label,onclick){
+    var item=ce('div');item.style.cssText='display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;';
+    var iconBox=ce('div');iconBox.style.cssText='width:52px;height:52px;background:#f0f2f5;border-radius:14px;display:flex;align-items:center;justify-content:center;';
+    iconBox.innerHTML=icon;
+    var lbl=ce('div');lbl.style.cssText='font-size:11px;color:#536471;';lbl.textContent=label;
+    item.appendChild(iconBox);item.appendChild(lbl);item.onclick=onclick;
+    return item;
+  }
+  // 语音
+  plusGrid.appendChild(makePlusItem('<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#536471" stroke-width="1.8"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>','语音',function(){
+    plusDrawer.style.display='none';
+    // 语音弹窗
+    var vov=ce('div');vov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center;';
+    var vbox=ce('div');vbox.style.cssText='background:#fff;border-radius:20px 20px 0 0;padding:16px 16px 32px;width:100%;max-width:480px;';
+    vbox.innerHTML='<div style="font-size:16px;font-weight:700;color:#0f1419;margin-bottom:12px;">发送语音</div>'+
+      '<textarea id="_dmVoiceTxt" placeholder="输入语音内容..." style="width:100%;height:100px;padding:10px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;resize:none;outline:none;box-sizing:border-box;font-family:inherit;"></textarea>'+
+      '<div style="display:flex;gap:8px;margin-top:12px;"><button id="_dmVCan" style="flex:1;padding:11px;border:1.5px solid #cfd9de;border-radius:12px;background:#fff;font-size:14px;cursor:pointer;color:#536471;">取消</button><button id="_dmVOk" style="flex:2;padding:11px;background:#1d9bf0;color:#fff;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:700;">发送</button></div>';
+    vov.appendChild(vbox);document.body.appendChild(vov);
+    vbox.querySelector('#_dmVCan').onclick=function(){vov.remove();};
+    vbox.querySelector('#_dmVOk').onclick=function(){
+      var txt=(vbox.querySelector('#_dmVoiceTxt')||{}).value.trim();if(!txt)return;
+      var sec=Math.max(1,Math.min(60,Math.ceil(txt.length/3)));
+      appendMsg('[语音消息：'+sec+'秒] '+txt,true);
+      _pendingMsgs.push('[语音消息：'+sec+'秒] '+txt);vov.remove();
+    };
+    vov.onclick=function(e){if(e.target===vov)vov.remove();};
+  }));
+  // 发图
+  var dmImgInp=document.createElement('input');dmImgInp.type='file';dmImgInp.accept='image/*';dmImgInp.style.display='none';
+  dmImgInp.onchange=function(){
+    var file=this.files[0];if(!file)return;
+    if(file.size>5*1024*1024){toast('图片不能超过5MB');return;}
+    var reader=new FileReader();reader.onload=function(ev){
+      var imgMsg='[图片]';
+      // 在气泡里显示缩略图
+      var bub=ce('div');bub.style.cssText='display:flex;justify-content:flex-end;';
+      var imgEl=ce('img');imgEl.src=ev.target.result;imgEl.style.cssText='max-width:180px;max-height:180px;border-radius:12px;border:1px solid #eff3f4;';
+      bub.appendChild(imgEl);ma.appendChild(bub);ma.scrollTop=ma.scrollHeight;
+      appendMsg(imgMsg,true);
+    };reader.readAsDataURL(file);
+    plusDrawer.style.display='none';
+  };
+  plusGrid.appendChild(makePlusItem('<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#536471" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>','图片',function(){dmImgInp.click();plusDrawer.style.display='none';}));
+  // 重新生成
+  plusGrid.appendChild(makePlusItem('<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#536471" stroke-width="1.8"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>','重新生成',async function(){
+    plusDrawer.style.display='none';
+    if(!_chatHistory.length){toast('还没有对话');return;}
+    // 找最后一条我发的消息
+    var lastMine=null;for(var _i=_chatHistory.length-1;_i>=0;_i--){if(_chatHistory[_i].isMe){lastMine=_chatHistory[_i].text;break;}}
+    if(!lastMine){toast('没有找到你的消息');return;}
+    // 删掉最后的AI回复，重新生成
+    while(_chatHistory.length&&!_chatHistory[_chatHistory.length-1].isMe){_chatHistory.pop();}
+    renderHistory(_chatHistory);
+    _pendingMsgs=[lastMine];
+    sb.onclick();
+  }));
+  plusDrawer.appendChild(plusGrid);plusDrawer.appendChild(dmImgInp);
+
+  var ibWrap=ce('div');ibWrap.style.cssText='position:relative;flex-shrink:0;';
+  ibWrap.appendChild(plusDrawer);
+  var ib=ce('div');ib.style.cssText='display:flex;gap:8px;padding:10px 12px;background:#fff;border-top:1px solid #eff3f4;align-items:center;';
+  // +按钮
+  var plusBtn=ce('button');plusBtn.style.cssText='width:34px;height:34px;border-radius:50%;border:1.5px solid #cfd9de;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;';
+  plusBtn.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#536471" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+  var _plusOpen=false;
+  plusBtn.onclick=function(e){e.stopPropagation();_plusOpen=!_plusOpen;plusDrawer.style.display=_plusOpen?'block':'none';};
+  document.addEventListener('click',function(){if(_plusOpen){_plusOpen=false;plusDrawer.style.display='none';}});
   var inp=ce('input');inp.placeholder='发布你的回复…';inp.style.cssText='flex:1;padding:10px 14px;border:1.5px solid #cfd9de;border-radius:24px;font-size:14px;outline:none;';
   var sb=ce('button');sb.textContent='回复';sb.style.cssText='padding:9px 18px;background:#1d9bf0;color:#fff;border:none;border-radius:24px;font-size:14px;cursor:pointer;font-weight:700;flex-shrink:0;';
 
@@ -25705,8 +25801,9 @@ function openDMChat(name,ava,type,initialMsg){
     }catch(e){typingEl.textContent='';appendMsg('（消息发送失败）',false);}
     inp.disabled=false;sb.disabled=false;inp.focus();
   };
-  ib.appendChild(inp);ib.appendChild(sb);
-  pg.appendChild(tb);pg.appendChild(ma);pg.appendChild(ib);
+  ib.appendChild(plusBtn);ib.appendChild(inp);ib.appendChild(sb);
+  ibWrap.appendChild(ib);
+  pg.appendChild(tb);pg.appendChild(ma);pg.appendChild(ibWrap);
   forum.appendChild(pg);
   setTimeout(function(){inp.focus();},200);
 }
