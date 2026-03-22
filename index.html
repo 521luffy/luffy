@@ -24680,6 +24680,11 @@ function postStats(post){
 }
 
 function buildCard(post,idx){
+  // idx可能因对象引用不同而为-1，用内容匹配兜底
+  if(idx<0||idx===undefined){
+    idx=_posts.findIndex(function(p){return p.name===post.name&&(p.content||'')===(post.content||'')&&(p.title||'')===(post.title||'');});
+    if(idx<0){_posts.push(post);idx=_posts.length-1;}
+  }
   var card=ce('div'); card.className='fPost';
   var ava=ce('div'); ava.className='fAva';
   setAva(ava,post.ava,post.name,post.type);
@@ -25310,7 +25315,10 @@ async function sendReply(){
   if(imgFileInp){imgFileInp._pendingImg=null;var pr2=document.getElementById('_replyImgPreview');if(pr2)pr2.remove();}
   // 用 renderPostDetail 局部刷新，不重建整页（openPost会重置det导致评论丢失）
   fS('posts',_posts);
-  if(_curPostIdx!==null){var _body2=document.getElementById('fDetBody');if(_body2)renderPostDetail(_posts[_curPostIdx],_body2);}
+  if(_curPostIdx!==null){
+    var _body2=document.getElementById('fDetBody');
+    if(_body2){renderPostDetail(_posts[_curPostIdx],_body2);_body2.scrollTop=_body2.scrollHeight;}
+  }
   // AI自动回复 - 楼中楼 + 随机其他角色/网友掉落
   toast('正在等待回复中…');
   try{
