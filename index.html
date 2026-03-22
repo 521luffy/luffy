@@ -24361,7 +24361,6 @@ setTimeout(hp2Init,300);
 (function(){
 'use strict';
 async function fS(k,v){
-  // 如果是posts数据，先剥离imgData（base64图片体积太大会撑爆localStorage）
   var vToStore=v;
   if((k==='posts'||k==='recommendPosts')&&Array.isArray(v)){
     vToStore=v.map(function(p){
@@ -24371,22 +24370,38 @@ async function fS(k,v){
       return pc;
     });
   }
+  // 直接写localforage，绝不经过被override的localStorage.setItem（那个会把对象覆盖成字符串）
   try{await localforage.setItem('f_'+k,vToStore);}catch(e){console.warn('localforage save failed for f_'+k,e);}
+  // 用originalSetItem绕过override，直接写原生localStorage作为缓存
   try{
     var json=typeof vToStore==='string'?vToStore:JSON.stringify(vToStore);
-    localStorage.setItem('f_'+k,json);
+    if(typeof originalSetItem==='function'){originalSetItem.call(localStorage,'f_'+k,json);}
+    else{localStorage.setItem('f_'+k,json);}
   }catch(e){
-    // localStorage满了，尝试清理旧数据
     try{
       var keysToClean=[];
       for(var i=0;i<localStorage.length;i++){var lk=localStorage.key(i);if(lk&&lk.startsWith('f_')&&lk!=='f_'+k)keysToClean.push(lk);}
-      // 先删非关键数据，保护聊天记录不被误删
       keysToClean.sort();keysToClean.filter(function(lk){return !lk.startsWith('f_dmChat_');}).slice(0,Math.floor(keysToClean.length/2)).forEach(function(lk){localStorage.removeItem(lk);});
-      localStorage.setItem('f_'+k,typeof vToStore==='string'?vToStore:JSON.stringify(vToStore));
-    }catch(e2){console.warn('localStorage save still failed after cleanup:',k);}
+      if(typeof originalSetItem==='function'){originalSetItem.call(localStorage,'f_'+k,typeof vToStore==='string'?vToStore:JSON.stringify(vToStore));}
+    }catch(e2){console.warn('localStorage cache save failed:',k);}
   }
 }
-async function fL(k,d){var r=null;try{r=await localforage.getItem('f_'+k);}catch(e){console.warn('localforage read failed for f_'+k,e);}if(r===null||r===undefined){try{var ls=localStorage.getItem('f_'+k);if(ls!=null){try{r=JSON.parse(ls);}catch(e){r=ls;}}}catch(e){}}return(r===null||r===undefined)?d:r;}
+async function fL(k,d){
+  var r=null;
+  // 优先从localforage读（权威来源，对象不会被stringify污染）
+  try{r=await localforage.getItem('f_'+k);}catch(e){console.warn('localforage read failed for f_'+k,e);}
+  // 如果拿到字符串（被override污染过），尝试解析成对象
+  if(typeof r==='string'){try{r=JSON.parse(r);}catch(e){}}
+  // localforage为空时，用originalGetItem绕过override读localStorage缓存
+  if(r===null||r===undefined){
+    try{
+      var rawFn=typeof originalGetItem==='function'?originalGetItem:localStorage.getItem.bind(localStorage);
+      var ls=rawFn.call(localStorage,'f_'+k);
+      if(ls!=null){try{r=JSON.parse(ls);}catch(e){r=ls;}}
+    }catch(e){}
+  }
+  return(r===null||r===undefined)?d:r;
+}
 async function fApi(){var p='',k='',m='';try{p=originalGetItem.call(localStorage,'pxy')||'';}catch(e){}try{k=originalGetItem.call(localStorage,'key')||'';}catch(e){}try{m=originalGetItem.call(localStorage,'mod')||'';}catch(e){}if(!p){try{p=await localforage.getItem('pxy')||'';}catch(e){}}if(!k){try{k=await localforage.getItem('key')||'';}catch(e){}}if(!m){try{m=await localforage.getItem('mod')||'';}catch(e){}}if(!p||!k)return null;if(!p.includes('chat/completions')&&!p.includes('/v1/messages'))p=p.replace(/\/$/,'')+'/chat/completions';if(!m)m='claude-sonnet-4-20250514';return{p,k,m};}
 async function fCall(cfg,prompt,maxT){
   var ctrl=new AbortController();var tid=setTimeout(function(){ctrl.abort();},180000);
