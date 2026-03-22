@@ -25159,10 +25159,32 @@ function buildCmt(cmt,pi,ci){
   // 评论点赞按人气类型限制，user也要给合理数字
   var myNameCmt=getMyName();
   var _isUserCmt=(cmt.type==='user'&&cmt.name===myNameCmt);
-  var _myFwersCmt=parseInt(originalGetItem.call(localStorage,'fMyFollowers')||'0')||0;
-  var _cMaxLikes=_isUserCmt?Math.max(50,Math.floor(_myFwersCmt*0.08)):( cmt.type==='net'?300:800);
-  var _cBase=Math.max(_isUserCmt?10:20, Math.floor((cmtH%_cMaxLikes)+Math.floor(_cMaxLikes*0.15)));
-  var _cLikes=cmt.likes||_cBase;
+  // 统一归一化函数：按发评论人fame档强制校正likes，防止AI随手给大数
+  function normalizeCmtLikes(cmtName,cmtType,rawLikes,h2){
+    var isMeCmt=(cmtType==='user'&&cmtName===myNameCmt);
+    var cmtFame=1;
+    if(isMeCmt){
+      var mf=parseInt(originalGetItem.call(localStorage,'fMyFollowers')||'0')||0;
+      cmtFame=mf>10000?2:1;
+    } else if(cmtType==='char'||cmtType==='npc'||cmtType==='extra'){
+      var _ov3=(_charOverrides&&_charOverrides[cmtName])||{};
+      var _ec3=((_extraCharsData||[]).find(function(d){return d.name===cmtName;}))||{};
+      var cf=parseInt(_ov3.followers||_ec3.followers||0)||0;
+      if(cf>50000)cmtFame=3;
+      else if(cf>5000)cmtFame=2;
+      else cmtFame=1;
+    }
+    // 评论热度比帖子低1档，且有上限
+    var maxArr=[999,500,8000,80000];
+    var minArr=[0,5,50,500];
+    var baseArr=[0,30,200,2000];
+    var bse=baseArr[cmtFame]||30;
+    var seed=Math.floor((h2%bse)+Math.floor(bse*0.2));
+    return Math.min(Math.max(seed,minArr[cmtFame]),maxArr[cmtFame]);
+  }
+  var _cNorm=normalizeCmtLikes(cmt.name,cmt.type||'net',cmt.likes,cmtH);
+  // 强制用归一化值，不管AI给多少
+  var _cLikes=_cNorm;
   var cmtRts=Math.max(1,Math.floor(_cLikes*(0.1+(cmtH%5)*0.03)));
   var _cRawViews=Math.floor(_cLikes*(2+(cmtH%4)));
   var cmtViews=_cRawViews>=10000?Math.floor(_cRawViews/1000)+'K':_cRawViews+'';
@@ -25209,11 +25231,11 @@ function buildCmt(cmt,pi,ci){
         var rtsT=document.createElement('span');rtsT.textContent=rep.text;repTxt.appendChild(rtsT);
       }else{repTxt.textContent=rep.text;}
       repRow.appendChild(repTxt);
-      // 楼中楼 stats - 跟外层评论格式一致
+      // 楼中楼 stats - 用归一化函数，防止AI随手大数
       var repH2=postHash({name:rep.name,content:rep.text||'',title:''});
-      var _rLikes=Math.min(rep.likes||0,800);
+      var _rLikes=normalizeCmtLikes(rep.name,rep.type||'net',rep.likes,repH2);
       var repRts=Math.max(0,Math.floor(_rLikes*(0.08+(repH2%5)*0.02)));
-      var _rViews=Math.floor(_rLikes*(1.5+(repH2%3)));
+      var _rViews=Math.floor(_rLikes*(2+(repH2%4)));
       var repViews=_rViews>=10000?Math.floor(_rViews/1000)+'K':_rViews+'';
       var repBks=Math.max(0,Math.floor(_rLikes*0.03));
       var repS=ce('div');repS.style.cssText='display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding-left:28px;padding-right:4px;';
@@ -25225,8 +25247,8 @@ function buildCmt(cmt,pi,ci){
       repRt2.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>'+repRts;
       var repLk2=ce('span');repLk2.style.cssText='font-size:12px;color:#536471;cursor:pointer;display:flex;align-items:center;gap:2px;';
       var repLiked2=rep._liked||false;
-      repLk2.innerHTML=(repLiked2?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f91880" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="#f91880"/>':'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>')+'</svg>'+(rep.likes||0);
-      repLk2.onclick=function(e){e.stopPropagation();repLiked2=!repLiked2;rep._liked=repLiked2;if(repLiked2){rep.likes=(rep.likes||0)+1;}else{rep.likes=Math.max(0,(rep.likes||1)-1);}repLk2.innerHTML=(repLiked2?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f91880" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="#f91880"/>':'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>')+'</svg>'+(rep.likes||0);fS('posts',_posts);};
+      repLk2.innerHTML=(repLiked2?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f91880" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="#f91880"/>':'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>')+'</svg>'+_rLikes;
+      repLk2.onclick=function(e){e.stopPropagation();repLiked2=!repLiked2;rep._liked=repLiked2;if(repLiked2){rep.likes=_rLikes+1;}else{rep.likes=Math.max(0,_rLikes-1);}repLk2.innerHTML=(repLiked2?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f91880" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="#f91880"/>':'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>')+'</svg>'+rep.likes;fS('posts',_posts);};
       var repVw2=ce('span');repVw2.style.cssText='font-size:12px;color:#536471;display:flex;align-items:center;gap:2px;';
       repVw2.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>'+repViews;
       var repBk2=ce('span');repBk2.style.cssText='font-size:12px;color:#536471;display:flex;align-items:center;gap:2px;';
