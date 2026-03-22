@@ -24473,11 +24473,14 @@ function getChars(){var names=[];try{var opened=JSON.parse(localStorage.getItem(
 function getS(){return{wv:(document.getElementById('fWvArea')||{}).value||'',pr:(document.getElementById('fPrArea')||{}).value||'',dt:(document.getElementById('fDtInp')||{}).value||'2026年3月'};}
 function aColor(name){var c=['#1d9bf0','#e17055','#00b894','#a29bfe','#e84393','#f39c12'],h=0;for(var i=0;i<name.length;i++)h=(h*31+name.charCodeAt(i))&0xffff;return c[h%c.length];}
 // ── 分级人设读取：不同关系的角色对玩家了解程度不同 ──
+var _cachedMyPersona='';
+// 启动时从localforage加载
+localforage.getItem('fMyPersona').then(function(v){if(v)_cachedMyPersona=v;}).catch(function(){});
 function getUserPersonaCtx(){
   try{
   var _g=window._origLSGet||localStorage.getItem.bind(localStorage);
   var myN=getMyName();
-  var fullPersona=_g.call(localStorage,'fMyPersona')||'';
+  var fullPersona=_g.call(localStorage,'fMyPersona')||_cachedMyPersona||'';
   var bio=_g.call(localStorage,'fMyBio')||'';
   if(!fullPersona&&!bio)return '';
   var publicInfo=myN+(bio?'（签名：'+bio+'）':'');
@@ -26101,6 +26104,13 @@ function showEditProfileDialog(){
   addField('加入时间','_epJoinDate','如：2025年1月',(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyJoinDate')||'');
   addField('正在关注数','_epFollowing','',(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyFollowing')||'');
   addField('粉丝数','_epFollowers','',(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyFollowers')||'');
+  // localStorage可能满了读不到，从localforage异步补填
+  var _lfFields={fMyBio:'_epBio',fMyPersona:'_epPersona',fMyJoinDate:'_epJoinDate',fMyFollowing:'_epFollowing',fMyFollowers:'_epFollowers',fMyName:'_epName'};
+  Object.keys(_lfFields).forEach(function(lfKey){
+    localforage.getItem(lfKey).then(function(v){
+      if(v){var el=box.querySelector('#'+_lfFields[lfKey]);if(el&&!el.value)el.value=v;}
+    }).catch(function(){});
+  });
   var btnRow=ce('div');btnRow.style.cssText='display:flex;gap:8px;margin-top:6px;';
   var canBtn=document.createElement('button');canBtn.textContent='取消';canBtn.style.cssText='flex:1;padding:11px;border:1.5px solid #cfd9de;border-radius:12px;background:#fff;font-size:14px;cursor:pointer;color:#536471;';
   var okBtn=document.createElement('button');okBtn.textContent='保存';okBtn.style.cssText='flex:2;padding:11px;background:#1d9bf0;color:#fff;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:700;';
@@ -26116,6 +26126,7 @@ function showEditProfileDialog(){
     localforage.setItem('fMyName',newName).catch(function(){});
     localforage.setItem('fMyBio',newBio).catch(function(){});
     localforage.setItem('fMyPersona',newPersona).catch(function(){});
+    _cachedMyPersona=newPersona; // 更新内存缓存
     localforage.setItem('fMyJoinDate',newJoin).catch(function(){});
     localforage.setItem('fMyFollowing',newFollowing).catch(function(){});
     localforage.setItem('fMyFollowers',newFollowers).catch(function(){});
