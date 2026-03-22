@@ -24479,7 +24479,79 @@ window.fSwitchBottom=switchBottom;
 function toggleDrawer(){var dr=document.getElementById('fDrawer'),ov=document.getElementById('fDrawOv');if(!dr)return;var on=dr.classList.contains('on');dr.classList.toggle('on',!on);ov.classList.toggle('on',!on);if(!on&&!document.getElementById('fWvArea'))buildDrawer();}
 window.fToggleDrawer=toggleDrawer;
 
-function renderTabs(){var bar=document.getElementById('fTabBar');if(!bar)return;bar.innerHTML='';['推荐','热搜','文娱','社会'].concat(_customTabs).forEach(function(t){var el=ce('div');el.className='fTab'+(t===_curTab?' on':'');el.textContent=t;el.onclick=function(){_curTab=t;renderTabs();loadFeed();};bar.appendChild(el);});var add=ce('div');add.className='fTab add';add.textContent='＋';add.onclick=addTab;bar.appendChild(add);}
+function renderTabs(){var bar=document.getElementById('fTabBar');if(!bar)return;bar.innerHTML='';var fixedTabs=['推荐','热搜','文娱','社会'];fixedTabs.concat(_customTabs).forEach(function(t){var el=ce('div');el.className='fTab'+(t===_curTab?' on':'');el.textContent=t;el.onclick=function(){_curTab=t;renderTabs();loadFeed();};
+// 自定义tab支持长按编辑
+if(!fixedTabs.includes(t)){var _lpt=null;el.addEventListener('touchstart',function(e){_lpt=setTimeout(function(){_lpt=null;editTab(t);},500);},{passive:true});el.addEventListener('touchend',function(){if(_lpt){clearTimeout(_lpt);_lpt=null;}});el.addEventListener('touchmove',function(){if(_lpt){clearTimeout(_lpt);_lpt=null;}});el.addEventListener('contextmenu',function(e){e.preventDefault();editTab(t);});}
+bar.appendChild(el);});var add=ce('div');add.className='fTab add';add.textContent='＋';add.onclick=addTab;bar.appendChild(add);}
+function editTab(tabName){
+  var ov=ce('div');ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;';
+  var box=ce('div');box.style.cssText='background:#fff;border-radius:18px;padding:18px 16px;width:80vw;max-width:320px;';
+  box.innerHTML='<div style="font-size:16px;font-weight:700;margin-bottom:12px;color:#0f1419;">编辑板块「'+tabName+'」</div>'+
+    '<div style="font-size:13px;color:#536471;margin-bottom:8px;">板块名称</div>'+
+    '<input id="_etN" value="'+tabName+'" maxlength="12" style="width:100%;padding:9px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;outline:none;box-sizing:border-box;margin-bottom:10px;">'+
+    '<div style="font-size:13px;color:#536471;margin-bottom:8px;">板块描述（AI据此生成内容）</div>'+
+    '<textarea id="_etD" style="width:100%;height:70px;padding:9px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;resize:none;box-sizing:border-box;outline:none;margin-bottom:14px;">'+ (_tabDescs[tabName]||'') +'</textarea>'+
+    '<div style="display:flex;gap:8px;">'+
+      '<button id="_etDel" style="flex:1;padding:10px;border:1.5px solid #e74c3c;border-radius:12px;background:#fff;font-size:14px;cursor:pointer;color:#e74c3c;font-weight:600;">删除</button>'+
+      '<button id="_etCan" style="flex:1;padding:10px;border:1.5px solid #cfd9de;border-radius:12px;background:#fff;font-size:14px;cursor:pointer;color:#536471;">取消</button>'+
+      '<button id="_etOk" style="flex:1.5;padding:10px;background:#1d9bf0;color:#fff;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:700;">保存</button>'+
+    '</div>';
+  ov.appendChild(box);document.body.appendChild(ov);
+  ov.onclick=function(e){if(e.target===ov)ov.remove();};
+  box.querySelector('#_etCan').onclick=function(){ov.remove();};
+  box.querySelector('#_etOk').onclick=function(){
+    var newName=(box.querySelector('#_etN')||{}).value.trim();
+    var newDesc=(box.querySelector('#_etD')||{}).value.trim();
+    if(!newName){toast('板块名称不能为空');return;}
+    ov.remove();
+    var idx=_customTabs.indexOf(tabName);
+    if(idx>=0){
+      // 更新名称
+      if(newName!==tabName){
+        _customTabs[idx]=newName;
+        // 迁移相关数据
+        if(_tabDescs[tabName]){_tabDescs[newName]=_tabDescs[tabName];delete _tabDescs[tabName];}
+        if(_topicsByTab[tabName]){_topicsByTab[newName]=_topicsByTab[tabName];delete _topicsByTab[tabName];}
+        // 迁移帖子的topicKey
+        _posts.forEach(function(p){if(p.topicKey===tabName)p.topicKey=newName;if(p.board===tabName)p.board=newName;});
+        if(_curTab===tabName)_curTab=newName;
+      }
+      _tabDescs[newName]=newDesc;
+      fS('boards',_customTabs);fS('tabDescs',_tabDescs);fS('posts',_posts);
+      renderTabs();loadFeed();
+      toast('板块已更新 ✓');
+    }
+  };
+  box.querySelector('#_etDel').onclick=function(){
+    ov.remove();
+    // 二次确认
+    var ov2=ce('div');ov2.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;';
+    var box2=ce('div');box2.style.cssText='background:#fff;border-radius:18px;padding:20px 16px;width:75vw;max-width:280px;text-align:center;';
+    box2.innerHTML='<div style="font-size:16px;font-weight:700;color:#e74c3c;margin-bottom:10px;">确认删除</div>'+
+      '<div style="font-size:14px;color:#536471;margin-bottom:16px;line-height:1.5;">确定要删除板块「'+tabName+'」吗？<br>该板块下的帖子也会一并删除。</div>'+
+      '<div style="display:flex;gap:8px;">'+
+        '<button id="_edCan2" style="flex:1;padding:10px;border:1.5px solid #cfd9de;border-radius:12px;background:#fff;font-size:14px;cursor:pointer;color:#536471;">取消</button>'+
+        '<button id="_edOk2" style="flex:1;padding:10px;background:#e74c3c;color:#fff;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:700;">删除</button>'+
+      '</div>';
+    ov2.appendChild(box2);document.body.appendChild(ov2);
+    ov2.onclick=function(e){if(e.target===ov2)ov2.remove();};
+    box2.querySelector('#_edCan2').onclick=function(){ov2.remove();};
+    box2.querySelector('#_edOk2').onclick=function(){
+      ov2.remove();
+      var idx2=_customTabs.indexOf(tabName);
+      if(idx2>=0)_customTabs.splice(idx2,1);
+      delete _tabDescs[tabName];
+      delete _topicsByTab[tabName];
+      // 删除该板块下的所有帖子
+      _posts=_posts.filter(function(p){return p.topicKey!==tabName&&p.board!==tabName;});
+      fS('posts',_posts);
+      if(_curTab===tabName)_curTab='推荐';
+      fS('boards',_customTabs);fS('tabDescs',_tabDescs);
+      renderTabs();loadFeed();
+      toast('板块「'+tabName+'」已删除');
+    };
+  };
+}
 
 function loadFeed(){var feed=document.getElementById('fFeed');if(!feed)return;feed.innerHTML='';
   var list=_topicsByTab[_curTab]||[];
@@ -25121,7 +25193,9 @@ function openPost(idx){
     fApi().then(function(cfg){
       if(!cfg){ loading.textContent='请先配置API'; return; }
       var s=getS();
-      var pr=(s.wv?'背景：'+s.wv+'\n':'')+(s.dt?'时间：'+s.dt+'\n':'')+
+      var _stubTabDesc='';
+      if(post.topicKey&&_tabDescs[post.topicKey])_stubTabDesc='【板块背景】'+post.topicKey+'：'+_tabDescs[post.topicKey]+'\n帖子内容必须围绕此板块背景展开！\n';
+      var pr=(s.wv?'背景：'+s.wv+'\n':'')+(s.dt?'时间：'+s.dt+'\n':'')+_stubTabDesc+
         '请围绕标题"'+post.title+'"写一篇论坛帖子正文，发帖人是'+post.name+'。\n'+
         '要求：200-350字，口语化有活人感，包含具体细节和情绪。末尾可以加1-3个#话题标签。\n'+
         '【极重要-附件】正文末尾必须附加至少一种媒体标记（不能省略！）：\n'+
@@ -25557,7 +25631,9 @@ async function genTopics(cfg, tab){
     var desc=_tabDescs[tab]||tab;
     if(s.wv) extra+='世界观：'+s.wv+'\n';
     if(activeWb.length) extra+='设定：'+activeWb.map(function(i){return i.title+':'+i.content;}).join('；')+'\n';
-    pr=extra+'生成10条关于"'+desc+'"的热门话题。\n'+
+    var charNames2=chars.length?chars.slice(0,5).map(function(c){return c.name;}).join('、'):'';
+    if(charNames2)extra+='角色：'+charNames2+'\n';
+    pr=extra+'板块名称：「'+tab+'」\n板块详细描述：'+desc+'\n\n请严格围绕以上板块描述，生成10条该板块内的热门话题。话题必须与板块描述的主题强相关！\n'+
       '只输出JSON：[{"category":"'+tab+'","title":"话题15字内","postCount":"如66万"}]\n不要其他文字。';
   }
 
@@ -25613,7 +25689,12 @@ async function openTopic(topic){
     if(charDesc)extra2+='角色人设（发帖内容必须贴合人设）：\n'+charDesc;
     if(s.pr)extra2+=s.pr+'\n';
 
-    var pr=extra2+'围绕话题"'+topic.title+'"，生成5条帖子（发帖人包含：'+charNames+'和随机网友如"吃瓜专业户"等有趣网名）。\n'+
+    var pr=extra2;
+    // 注入板块描述，让AI理解自定义板块的上下文
+    var _topicTab=topic.tab||_curTab;
+    var _topicDesc=_tabDescs[_topicTab];
+    if(_topicDesc)pr+='【板块背景】当前板块是「'+_topicTab+'」，板块描述：'+_topicDesc+'\n所有帖子内容必须围绕此板块背景展开！\n';
+    pr+='围绕话题"'+topic.title+'"，生成5条帖子（发帖人包含：'+charNames+'和随机网友如"吃瓜专业户"等有趣网名）。\n'+
       '【禁止】发帖人绝对不能是"'+getMyName()+'"！\n'+
       '极其重要：角色发帖必须完全贴合各自人设和性格！沉默寡言的角色只说简短的话；文艺的角色用文艺语气；冷淡的角色不会长篇大论！\n'+
       '网友发帖要有真实活人感。字数跟人设走，不强求长度。\n'+
@@ -26384,7 +26465,7 @@ function openProfilePage(name,ava,type){
 window.fNewDM=function(){var chars=getChars();var opts=chars.map(function(c){return '<option value="'+c.name+'">'+c.name+'</option>';}).join('');var ov=ce('div');ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;';var box=ce('div');box.style.cssText='background:#fff;border-radius:18px;padding:18px 16px;width:80vw;max-width:300px;';box.innerHTML='<div style="font-size:16px;font-weight:700;margin-bottom:12px;color:#0f1419;">新私信</div><select id="_fdmS" style="width:100%;padding:9px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;outline:none;background:#fff;margin-bottom:8px;"><option>选择联系人…</option>'+opts+'</select><input id="_fdmC" placeholder="或输入名字" style="width:100%;padding:9px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;outline:none;box-sizing:border-box;margin-bottom:12px;"><div style="display:flex;gap:8px;"><button id="_fdmCan" style="flex:1;padding:10px;border:1.5px solid #cfd9de;border-radius:12px;background:#fff;font-size:14px;cursor:pointer;color:#536471;">取消</button><button id="_fdmOk" style="flex:2;padding:10px;background:#1d9bf0;color:#fff;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:700;">开始聊天</button></div>';ov.appendChild(box);document.body.appendChild(ov);box.querySelector('#_fdmCan').onclick=function(){ov.remove();};box.querySelector('#_fdmOk').onclick=function(){var n=(box.querySelector('#_fdmC')||{}).value.trim()||(box.querySelector('#_fdmS')||{}).value||'';if(!n){toast('请选择联系人');return;}ov.remove();toast('即将与 '+hdl(n)+' 私信…');};ov.onclick=function(e){if(e.target===ov)ov.remove();};}
 
 
-function addTab(){var ov=ce('div');ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;';var box=ce('div');box.style.cssText='background:#fff;border-radius:18px;padding:18px 16px;width:80vw;max-width:300px;';box.innerHTML='<div style="font-size:16px;font-weight:700;margin-bottom:12px;color:#0f1419;">添加板块</div><input id="_ftN" placeholder="板块名称" maxlength="12" style="width:100%;padding:9px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;outline:none;box-sizing:border-box;margin-bottom:8px;"><textarea id="_ftD" placeholder="板块描述（AI据此生成内容）" style="width:100%;height:60px;padding:9px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;resize:none;box-sizing:border-box;outline:none;margin-bottom:12px;"></textarea><div style="display:flex;gap:8px;"><button id="_ftCan" style="flex:1;padding:10px;border:1.5px solid #cfd9de;border-radius:12px;background:#fff;font-size:14px;cursor:pointer;color:#536471;">取消</button><button id="_ftOk" style="flex:2;padding:10px;background:#1d9bf0;color:#fff;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:700;">添加</button></div>';ov.appendChild(box);document.body.appendChild(ov);box.querySelector('#_ftCan').onclick=function(){ov.remove();};box.querySelector('#_ftOk').onclick=function(){var n=(box.querySelector('#_ftN')||{}).value.trim(),d=(box.querySelector('#_ftD')||{}).value.trim();if(!n){toast('请输入板块名称');return;}ov.remove();if(!_customTabs.includes(n)){_customTabs.push(n);_tabDescs[n]=d;}renderTabs();toast('板块已添加：'+n);};ov.onclick=function(e){if(e.target===ov)ov.remove();};}
+function addTab(){var ov=ce('div');ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;';var box=ce('div');box.style.cssText='background:#fff;border-radius:18px;padding:18px 16px;width:80vw;max-width:300px;';box.innerHTML='<div style="font-size:16px;font-weight:700;margin-bottom:12px;color:#0f1419;">添加板块</div><input id="_ftN" placeholder="板块名称" maxlength="12" style="width:100%;padding:9px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;outline:none;box-sizing:border-box;margin-bottom:8px;"><textarea id="_ftD" placeholder="板块描述（AI据此生成内容）" style="width:100%;height:60px;padding:9px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;resize:none;box-sizing:border-box;outline:none;margin-bottom:12px;"></textarea><div style="display:flex;gap:8px;"><button id="_ftCan" style="flex:1;padding:10px;border:1.5px solid #cfd9de;border-radius:12px;background:#fff;font-size:14px;cursor:pointer;color:#536471;">取消</button><button id="_ftOk" style="flex:2;padding:10px;background:#1d9bf0;color:#fff;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:700;">添加</button></div>';ov.appendChild(box);document.body.appendChild(ov);box.querySelector('#_ftCan').onclick=function(){ov.remove();};box.querySelector('#_ftOk').onclick=function(){var n=(box.querySelector('#_ftN')||{}).value.trim(),d=(box.querySelector('#_ftD')||{}).value.trim();if(!n){toast('请输入板块名称');return;}ov.remove();if(!_customTabs.includes(n)){_customTabs.push(n);_tabDescs[n]=d;fS('boards',_customTabs);fS('tabDescs',_tabDescs);}renderTabs();toast('板块已添加：'+n);};ov.onclick=function(e){if(e.target===ov)ov.remove();};}
 
 function buildDrawer(){
 var dr=document.getElementById('fDrawer');if(!dr)return;if(dr.dataset.built==='1'){setTimeout(function(){renderWbList();renderCharList2();},50);return;}dr.dataset.built='1';
@@ -26702,7 +26783,7 @@ async function showCharPickerDialog(){
 }
 
 
-async function saveSettings(){var s=getS();await fS('settings',s);await fS('boards',_customTabs);await fS('wbItems',_wbItems);await fS('extraChars',_extraChars);await fS('extraCharsData',_extraCharsData);await fS('charOverrides',_charOverrides);await fS('following',_following);toast('设置已保存 ✓');}
+async function saveSettings(){var s=getS();await fS('settings',s);await fS('boards',_customTabs);await fS('tabDescs',_tabDescs);await fS('wbItems',_wbItems);await fS('extraChars',_extraChars);await fS('extraCharsData',_extraCharsData);await fS('charOverrides',_charOverrides);await fS('following',_following);toast('设置已保存 ✓');}
 
 function renderWbList(){
   var el=document.getElementById('fWbList');if(!el)return;
@@ -26920,6 +27001,7 @@ if(!document.getElementById('fWvArea'))buildDrawer();
 try{
 var s=await fL('settings',null);if(s){var wv=document.getElementById('fWvArea'),pr=document.getElementById('fPrArea'),dt=document.getElementById('fDtInp');if(wv&&s.wv)wv.value=s.wv;if(pr&&s.pr)pr.value=s.pr;if(dt&&s.dt)dt.value=s.dt;}
 var boards=await fL('boards',[]);if(Array.isArray(boards))_customTabs=boards;
+var _savedTabDescs=await fL('tabDescs',{});if(_savedTabDescs&&typeof _savedTabDescs==='object')_tabDescs=_savedTabDescs;
 var wbi=await fL('wbItems',[]);if(Array.isArray(wbi))_wbItems=wbi;
 var ec=await fL('extraChars',[]);if(Array.isArray(ec))_extraChars=ec;var ecd=await fL('extraCharsData',[]);if(Array.isArray(ecd))_extraCharsData=ecd;var co=await fL('charOverrides',{});if(co&&typeof co==='object')_charOverrides=co;
 var fl=await fL('following',[]);if(Array.isArray(fl))_following=fl;
