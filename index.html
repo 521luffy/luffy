@@ -25021,7 +25021,7 @@ function openCharProfile(post){
     localforage.getItem('fMyAva').then(function(lfA){if(lfA)setAva(av,lfA,post.name,'user');}).catch(function(){});
     localforage.getItem('fMyBannerUrl').then(function(lfB){if(lfB){banner.style.backgroundImage='url('+lfB+')';banner.style.backgroundSize='cover';banner.style.backgroundPosition='center';}}).catch(function(){});
   }
-  var bio=ov.persona||ov.bio||charInfo.bio||'';
+  var bio=ov.bio||charInfo.bio||'';
   var handle=ov.handle?ov.handle:post.name.toLowerCase().replace(/\s/g,'_').replace(/[^\w]/g,'');
 
   // 用角色名生成固定banner颜色方案
