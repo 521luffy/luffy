@@ -25225,7 +25225,7 @@ function buildCmt(cmt,pi,ci){
   var rt=ce('span');rt.style.cssText='font-size:13px;color:#536471;display:flex;align-items:center;gap:3px;';
   rt.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>'+cmtRts;
   var lk=ce('span');lk.style.cssText='font-size:13px;color:#536471;display:flex;align-items:center;gap:3px;cursor:pointer;';
-  if(!cmt.likes&&_cBase)cmt.likes=_cBase; // 初始化存储值
+  if(!cmt.likes&&_cLikes)cmt.likes=_cLikes; // 初始化存储值
   lk.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'+(cmt.likes||0);
   var _lkd=cmt._liked||false;
   lk.innerHTML=(_lkd?'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f91880" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="#f91880"/>':'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>')+'</svg>'+(cmt.likes||0);
