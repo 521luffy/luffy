@@ -25850,21 +25850,6 @@ function openDMChat(name,ava,type,initialMsg){
 
   // 加载历史：直接用localforage大仓库（最可靠，不受localStorage拦截影响）
   var _histLoaded=false;
-  inp.disabled=true;sb.disabled=true;inp.style.opacity='0.5';
-  fL(chatKey,[]).then(function(hist){
-    if(Array.isArray(hist)&&hist.length){
-      _chatHistory=hist;_histLoaded=true;
-      renderHistory(_chatHistory);
-    } else if(!_histLoaded&&initialMsg){
-      _histLoaded=true;
-      appendMsg(initialMsg,false);
-    } else {_histLoaded=true;}
-    inp.disabled=false;sb.disabled=false;inp.style.opacity='';inp.focus();
-  }).catch(function(){
-    if(!_histLoaded&&initialMsg){_histLoaded=true;appendMsg(initialMsg,false);}
-    else{_histLoaded=true;}
-    inp.disabled=false;sb.disabled=false;inp.style.opacity='';
-  });
 
   function showTyping(){typingEl.textContent='正在输入…';return setTimeout(function(){typingEl.textContent='';},3000);}
 
@@ -25948,6 +25933,23 @@ function openDMChat(name,ava,type,initialMsg){
   // 发送按钮：参考图的圆形蓝色箭头
   var sb=ce('button');sb.style.cssText='width:36px;height:36px;border-radius:50%;background:#1d9bf0;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;';
   sb.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>';
+
+  // 加载历史：inp/sb已创建，现在才能安全禁用
+  inp.disabled=true;sb.disabled=true;inp.style.opacity='0.5';
+  fL(chatKey,[]).then(function(hist){
+    if(Array.isArray(hist)&&hist.length){
+      _chatHistory=hist;_histLoaded=true;
+      renderHistory(_chatHistory);
+    } else if(!_histLoaded&&initialMsg){
+      _histLoaded=true;
+      appendMsg(initialMsg,false);
+    } else {_histLoaded=true;}
+    inp.disabled=false;sb.disabled=false;inp.style.opacity='';
+  }).catch(function(){
+    if(!_histLoaded&&initialMsg){_histLoaded=true;appendMsg(initialMsg,false);}
+    else{_histLoaded=true;}
+    inp.disabled=false;sb.disabled=false;inp.style.opacity='';
+  });
 
   // Enter键：把当前消息追加显示，加入待发队列
   inp.addEventListener('keydown',function(e){
