@@ -24472,6 +24472,31 @@ function getMyAva(){var a=(window._origLSGet||localStorage.getItem.bind(localSto
 function getChars(){var names=[];try{var opened=JSON.parse(localStorage.getItem('cs_opened_chars')||'[]');opened.forEach(function(cid){var n=localStorage.getItem('cN_'+cid);var ava=localStorage.getItem('charAva_'+cid)||'';if(n){var ov=_charOverrides&&_charOverrides[n];names.push({name:n,type:'char',ava:(ov&&ov.ava)||ava,handle:ov&&ov.handle,bio:ov&&ov.bio,persona:ov&&ov.persona,following:ov&&ov.following,followers:ov&&ov.followers});}});opened.forEach(function(cid){var raw=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'npcList_'+cid);if(raw){try{JSON.parse(raw).forEach(function(n){if(n.name){var ov=_charOverrides&&_charOverrides[n.name];names.push({name:n.name,type:'npc',ava:(ov&&ov.ava)||n.avatar||''});}});}catch(e){}}});}catch(e){}_extraCharsData.forEach(function(d){if(!names.find(function(c){return c.name===d.name;}))names.push({name:d.name,type:'extra',ava:d.ava||'',bio:d.bio||'',persona:d.persona||''});});return names;}
 function getS(){return{wv:(document.getElementById('fWvArea')||{}).value||'',pr:(document.getElementById('fPrArea')||{}).value||'',dt:(document.getElementById('fDtInp')||{}).value||'2026年3月'};}
 function aColor(name){var c=['#1d9bf0','#e17055','#00b894','#a29bfe','#e84393','#f39c12'],h=0;for(var i=0;i<name.length;i++)h=(h*31+name.charCodeAt(i))&0xffff;return c[h%c.length];}
+// ── 分级人设读取：不同关系的角色对玩家了解程度不同 ──
+function getUserPersonaCtx(){
+  var _g=window._origLSGet||localStorage.getItem.bind(localStorage);
+  var myN=getMyName();
+  var fullPersona=_g.call(localStorage,'fMyPersona')||'';
+  var bio=_g.call(localStorage,'fMyBio')||'';
+  if(!fullPersona&&!bio)return '';
+  // 分三层
+  var publicInfo=myN+(bio?'（签名：'+bio+'）':''); // 所有人可见
+  var partialInfo=''; // 认识但不太熟的人
+  var fullInfo=''; // 亲密关系
+  if(fullPersona){
+    // 把人设拆成句子，前40%算公开，中间30%算半公开，全部给亲密
+    var sentences=fullPersona.split(/[。！？\n]+/).filter(function(s){return s.trim();});
+    var pub=Math.max(1,Math.ceil(sentences.length*0.35));
+    var mid=Math.max(pub+1,Math.ceil(sentences.length*0.65));
+    partialInfo=sentences.slice(0,pub).join('。')+'。';
+    fullInfo=fullPersona;
+  }
+  return '\n【玩家"'+myN+'"的信息分级（必须严格遵守！）】\n'+
+    '- 与'+myN+'关系亲密的角色（恋人/闺蜜/家人/亲密朋友）了解全部人设：'+( fullInfo||bio||publicInfo)+'\n'+
+    '- 与'+myN+'关系一般的角色（同学/同事/认识的人）只了解公开信息：'+(partialInfo||bio||publicInfo)+'\n'+
+    '- 陌生网友/路人只能看到主页签名：'+publicInfo+'\n'+
+    '角色发帖和评论时，体现的对'+myN+'的了解程度必须匹配关系亲密度！陌生人不可能知道'+myN+'的私事！\n';
+}
 
 function switchBottom(tab){_bottomTab=tab;document.querySelectorAll('.fBNav').forEach(function(b){b.classList.toggle('on',b.dataset.tab===tab);});var feed=document.getElementById('fFeed'),tb=document.getElementById('fTabBar'),sb=document.getElementById('fSearchBar'),fab=document.getElementById('fFab'),prof=document.getElementById('fProfilePage'),dm=document.getElementById('fDMPage');if(feed)feed.style.display=(tab==='home'||tab==='follow')?'block':'none';if(tb)tb.style.display=tab==='home'?'flex':'none';if(sb)sb.style.display=tab==='home'?'flex':'none';if(fab)fab.style.display=(tab==='home'||tab==='follow')?'flex':'none';if(prof)prof.style.display=tab==='profile'?'flex':'none';if(dm)dm.style.display=tab==='dm'?'flex':'none';if(tab==='home')loadFeed();if(tab==='follow')loadFollowFeed();if(tab==='profile')renderProfile();if(tab==='dm')renderDM();}
 window.fSwitchBottom=switchBottom;
@@ -24611,6 +24636,7 @@ function renderRecommendFeed(container){
         if(_myBio2)ctx+='签名："'+_myBio2+'"。';
         ctx+='\n【严格限制】10条帖子中最多只有1-2条可以与玩家动态相关！其余8-9条必须是角色自己的独立日常，与玩家无关！如果有帖子要回应玩家的帖子，必须用引用格式：在正文开头加「转推 @'+_myName2+'：原帖内容摘要」然后再写自己的评论。\n';
       }
+      ctx+=getUserPersonaCtx();
       var pr=ctx+'【重要】你们所在的平台是"推特"（Twitter），所有人都认为自己在推特上发推。\n'+
         '【禁止】发帖人绝对不能是"'+_myName2+'"！\n'+
         '生成10条"为你推荐"的帖子。这是推荐页，不是关注页！\n'+
@@ -24671,6 +24697,7 @@ function renderFollowingFeed(container){
       if(activeWb.length)ctx+='【设定】'+activeWb.map(function(i){return i.title+'：'+i.content;}).join('\n')+'\n';
       if(s.pr)ctx+=s.pr+'\n';
       ctx+='【角色人设（必须严格遵守）】\n'+charBios+'\n';
+      ctx+=getUserPersonaCtx();
       var pr=ctx+'【重要】所有角色认为自己在"推特"（Twitter）上发推，平台叫推特。\n'+
         '为以上每个角色各生成1条日常动态（心情、碎碎念、分享日常）。\n'+
         '极其重要：发帖风格、语气、内容必须100%贴合各自人设！\n'+
@@ -25549,6 +25576,7 @@ async function sendReply(){
     var cfg=await fApi();if(!cfg)return;var post=_posts[_curPostIdx];if(!post)return;
     var chars=getChars();var s=getS();
     var ctx='';if(s.wv)ctx+='背景：'+s.wv+'\n';
+    ctx+=getUserPersonaCtx();
     var activeWb=_wbItems.filter(function(i){return i.active!==false;});
     if(activeWb.length)ctx+='设定：'+activeWb.map(function(i){return i.title+'：'+i.content;}).join('\n')+'\n';
     var charBios='';chars.slice(0,6).forEach(function(c){var ov=_charOverrides&&_charOverrides[c.name];var bio=(ov&&(ov.persona||ov.bio))||c.persona||c.bio||'';charBios+=c.name+(bio?'（'+bio+'）':'')+'\n';});
@@ -25611,6 +25639,7 @@ async function loadMoreCmts(btn){
   if(s.pr) ctx+='【提示】'+s.pr+'\n\n';
   var charBios='';chars.slice(0,6).forEach(function(c){var ov=_charOverrides&&_charOverrides[c.name];var bio=(ov&&(ov.persona||ov.bio))||c.persona||c.bio||'';charBios+=c.name+(bio?'：'+bio:'')+'\n';});
   if(charBios) ctx+='【角色人设（评论必须严格贴合）】\n'+charBios+'\n';
+  ctx+=getUserPersonaCtx();
   ctx+='【帖子】发帖人：'+post.name+'\n标题：'+(post.title||'')+'\n正文：'+(post.fullContent||post.content||'').slice(0,300)+'\n\n';
   if(post.comments.length){ctx+='【已有评论】\n';post.comments.slice(-5).forEach(function(c){ctx+=c.name+'：'+c.text+'\n';});ctx+='\n';}
   var _cmtMyName=getMyName();
@@ -25783,6 +25812,7 @@ async function openTopic(topic){
     var activeWb=_wbItems.filter(function(i){return i.active!==false;});
     if(activeWb.length)extra2+='设定：'+activeWb.map(function(i){return i.title+':'+i.content;}).join('；')+'\n';
     if(charDesc)extra2+='角色人设（发帖内容必须贴合人设）：\n'+charDesc;
+    extra2+=getUserPersonaCtx();
     if(s.pr)extra2+=s.pr+'\n';
 
     var pr=extra2;
@@ -25914,6 +25944,7 @@ function newPost(){
       var charBios='';chars.slice(0,5).forEach(function(c){var ov2=_charOverrides&&_charOverrides[c.name];var bio=(ov2&&(ov2.persona||ov2.bio))||c.persona||c.bio||'';charBios+=c.name+(bio?'('+bio+')':'')+' ';});
       var ctx='';if(s.wv)ctx+='背景：'+s.wv+'\n';
       ctx+='【平台】推特（Twitter）\n角色：'+charBios+'\n';
+      ctx+=getUserPersonaCtx();
       ctx+=myName+'刚发推："'+fullContent.slice(0,100)+'"\n';
       ctx+='【禁止】评论者绝对不能是"'+myName+'"！\n';
       ctx+='生成3-4条评论（'+charNames+'和路人网友），贴合人设，有活人感，互相可能有楼中楼互动。\n'+
@@ -25953,8 +25984,8 @@ function renderProfile(){
   body.innerHTML='';
   var bannerBg=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyBannerUrl')||'';
   // 同时从localforage读最新数据
-  Promise.all([localforage.getItem('fMyAva'),localforage.getItem('fMyBannerUrl'),localforage.getItem('fMyBio'),localforage.getItem('fMyName'),localforage.getItem('fMyJoinDate'),localforage.getItem('fMyFollowing'),localforage.getItem('fMyFollowers')]).then(function(vals){
-    var lfAva=vals[0]||'',lfBanner=vals[1]||'',lfBio=vals[2]||'',lfName=vals[3]||'',lfJoin=vals[4]||'',lfFollowing=vals[5]||'',lfFollowers=vals[6]||'';
+  Promise.all([localforage.getItem('fMyAva'),localforage.getItem('fMyBannerUrl'),localforage.getItem('fMyBio'),localforage.getItem('fMyName'),localforage.getItem('fMyJoinDate'),localforage.getItem('fMyFollowing'),localforage.getItem('fMyFollowers'),localforage.getItem('fMyPersona')]).then(function(vals){
+    var lfAva=vals[0]||'',lfBanner=vals[1]||'',lfBio=vals[2]||'',lfName=vals[3]||'',lfJoin=vals[4]||'',lfFollowing=vals[5]||'',lfFollowers=vals[6]||'',lfPersona=vals[7]||'';
     var _s=window._origLSSet||localStorage.setItem.bind(localStorage);
     if(lfAva){try{_s('fMyAva',lfAva);}catch(e){}}
     if(lfBanner){try{_s('fMyBannerUrl',lfBanner);}catch(e){}}
@@ -25963,6 +25994,7 @@ function renderProfile(){
     if(lfJoin){try{_s('fMyJoinDate',lfJoin);}catch(e){}}
     if(lfFollowing){try{_s('fMyFollowing',lfFollowing);}catch(e){}}
     if(lfFollowers){try{_s('fMyFollowers',lfFollowers);}catch(e){}}
+    if(lfPersona){try{_s('fMyPersona',lfPersona);}catch(e){}}
     // 如果有变化就重新渲染
     var curBio=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyBio')||'';
     var curName=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyName')||'';
@@ -26065,6 +26097,8 @@ function showEditProfileDialog(){
   function addField(lbl,id,ph,val,ta){var row=ce('div');row.style.marginBottom='10px';var l=ce('div');l.style.cssText='font-size:13px;font-weight:700;margin-bottom:5px;';l.textContent=lbl;var el=document.createElement(ta?'textarea':'input');el.id=id;el.placeholder=ph;el.style.cssText='width:100%;padding:9px 12px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;outline:none;font-family:inherit;box-sizing:border-box;'+(ta?'height:72px;resize:none;display:block;':'');if(val)el.value=val;row.appendChild(l);row.appendChild(el);box.appendChild(row);}
   addField('昵称','_epName','你的昵称',myName);
   addField('个性签名','_epBio','介绍一下自己…',(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyBio')||'',true);
+  addField('人设（角色们据此了解你）','_epPersona','你的性格、身份、经历、和角色们的关系等……',(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyPersona')||'',true);
+  var personaEl=box.querySelector('#_epPersona');if(personaEl)personaEl.style.height='120px';
   addField('加入时间','_epJoinDate','如：2025年1月',(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyJoinDate')||'');
   addField('正在关注数','_epFollowing','',(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyFollowing')||'');
   addField('粉丝数','_epFollowers','',(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyFollowers')||'');
@@ -26077,6 +26111,7 @@ function showEditProfileDialog(){
     var newName=(box.querySelector('#_epName')||{}).value.trim()||myName;
     _lsSet('fMyName',newName);
     _lsSet('fMyBio',(box.querySelector('#_epBio')||{}).value||'');
+    _lsSet('fMyPersona',(box.querySelector('#_epPersona')||{}).value||'');
     _lsSet('fMyJoinDate',(box.querySelector('#_epJoinDate')||{}).value.trim()||'');
     _lsSet('fMyFollowing',(box.querySelector('#_epFollowing')||{}).value||'');
     _lsSet('fMyFollowers',(box.querySelector('#_epFollowers')||{}).value||'');
@@ -26090,6 +26125,7 @@ function showEditProfileDialog(){
       try{localStorage.setItem('fMyBannerUrl',_newBannerData);}catch(e){}
     }
     localforage.setItem('fMyBio',(box.querySelector('#_epBio')||{}).value||'').catch(function(){});
+    localforage.setItem('fMyPersona',(box.querySelector('#_epPersona')||{}).value||'').catch(function(){});
     localforage.setItem('fMyName',newName).catch(function(){});
     localforage.setItem('fMyJoinDate',(box.querySelector('#_epJoinDate')||{}).value.trim()||'').catch(function(){});
     localforage.setItem('fMyFollowing',(box.querySelector('#_epFollowing')||{}).value||'').catch(function(){});
