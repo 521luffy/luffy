@@ -25570,8 +25570,10 @@ async function sendReply(){
       ctx+='2. 有1个网友（有趣网名）可以旁观吃瓜评论\n';
       ctx+='3. 每条15-40字，贴合人设，有活人感\n';
     }
+    ctx+='【禁止】回复者绝对不能是"'+myName+'"！\n';
     ctx+='只输出JSON：[{"name":"回复者","type":"char或net","text":"内容","likes":数字,"replyTo":"被回复的人名（可选）"}]\n不要其他文字。';
     var raw=await fCall(cfg,ctx);var items=fJson(raw);
+    items=items.filter(function(item){return item.name!==myName;}); // 过滤user
     var charMap={};chars.forEach(function(c){charMap[c.name]=c;});
     var tstr=new Date().toISOString();
     // 找到目标评论索引
@@ -25611,12 +25613,15 @@ async function loadMoreCmts(btn){
   if(charBios) ctx+='【角色人设（评论必须严格贴合）】\n'+charBios+'\n';
   ctx+='【帖子】发帖人：'+post.name+'\n标题：'+(post.title||'')+'\n正文：'+(post.fullContent||post.content||'').slice(0,300)+'\n\n';
   if(post.comments.length){ctx+='【已有评论】\n';post.comments.slice(-5).forEach(function(c){ctx+=c.name+'：'+c.text+'\n';});ctx+='\n';}
+  var _cmtMyName=getMyName();
   var pr=ctx+'【平台背景】所有人都在"推特"（Twitter）上互动，发推、回推。\n'+
+    '【禁止】评论者绝对不能是"'+_cmtMyName+'"！这是玩家本人！\n'+
     '生成5条新评论（评论者包含'+charNames+'和路人网友如"吃瓜专业户"等有趣网名）。\n'+
     '要求：角色100%贴合人设语气，评论间可互相回复吐槽，网友要有活人感，每条20-60字。\n'+
     '只输出JSON：[{"name":"评论人","type":"char或net","text":"内容","likes":数字}]';
   try{
     var raw=await fCall(cfg,pr);var items=fJson(raw);
+    items=items.filter(function(item){return item.name!==_cmtMyName;}); // 过滤user
     var charMap={};chars.forEach(function(c){charMap[c.name]=c;});
     var tstr=new Date().toISOString();
     // 先创建没有replyTo的顶层评论，再把有replyTo的加进楼中楼
@@ -25910,9 +25915,11 @@ function newPost(){
       var ctx='';if(s.wv)ctx+='背景：'+s.wv+'\n';
       ctx+='【平台】推特（Twitter）\n角色：'+charBios+'\n';
       ctx+=myName+'刚发推："'+fullContent.slice(0,100)+'"\n';
+      ctx+='【禁止】评论者绝对不能是"'+myName+'"！\n';
       ctx+='生成3-4条评论（'+charNames+'和路人网友），贴合人设，有活人感，互相可能有楼中楼互动。\n'+
            '只输出JSON：[{"name":"评论人","type":"char或net","text":"内容","likes":数字,"replyTo":"被回复人名或空"}]';
       var raw=await fCall(cfg,ctx);var items=fJson(raw);
+      items=items.filter(function(item){return item.name!==myName;}); // 过滤user
       var charMap={};chars.forEach(function(c){charMap[c.name]=c;});
       var tstr2=new Date().toISOString();
       var newCmtMap={};
