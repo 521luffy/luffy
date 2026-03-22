@@ -24380,8 +24380,8 @@ async function fS(k,v){
     try{
       var keysToClean=[];
       for(var i=0;i<localStorage.length;i++){var lk=localStorage.key(i);if(lk&&lk.startsWith('f_')&&lk!=='f_'+k)keysToClean.push(lk);}
-      // 先删非关键数据
-      keysToClean.sort();keysToClean.slice(0,Math.floor(keysToClean.length/2)).forEach(function(lk){localStorage.removeItem(lk);});
+      // 先删非关键数据，保护聊天记录不被误删
+      keysToClean.sort();keysToClean.filter(function(lk){return !lk.startsWith('f_dmChat_');}).slice(0,Math.floor(keysToClean.length/2)).forEach(function(lk){localStorage.removeItem(lk);});
       localStorage.setItem('f_'+k,typeof vToStore==='string'?vToStore:JSON.stringify(vToStore));
     }catch(e2){console.warn('localStorage save still failed after cleanup:',k);}
   }
@@ -25615,8 +25615,9 @@ function renderDM(){
         dmContent.appendChild(tip2);
       } else {
         chars.forEach(function(c){
-          var chatKey2='dmChat_'+c.name.replace(/[^\w\u4e00-\u9fa5]/g,'_');
-          var row=buildDMRow(c.name,c.ava||'',c.type||'char',c.greeting||'');
+          var ov3=_charOverrides&&_charOverrides[c.name]||{};
+          var row=buildDMRow(c.name,c.ava||ov3.ava||'',c.type||'char',c.greeting||'');
+          row.onclick=function(){openDMChat(c.name,c.ava||ov3.ava||'',c.type||'char');};
           dmContent.appendChild(row);
         });
       }
@@ -25629,28 +25630,39 @@ function renderDM(){
   list.appendChild(tabBar);list.appendChild(dmContent);
   showDMTab(0);
 }
+function _dmDateStr(ts){
+  if(!ts)return'';
+  var d=new Date(ts);if(isNaN(d.getTime()))return'';
+  var now=new Date();var diff=now-d;
+  if(diff<60000)return'刚刚';
+  if(diff<3600000)return Math.floor(diff/60000)+'分钟前';
+  if(now.toDateString()===d.toDateString())return d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes();
+  return(d.getMonth()+1)+'月'+d.getDate()+'日';
+}
 function buildDMRow(name,ava,type,lastMsg){
-  var row=ce('div');row.style.cssText='display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid #eff3f4;cursor:pointer;';
+  var row=ce('div');row.style.cssText='display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid #eff3f4;cursor:pointer;background:#fff;';
   row.onclick=function(){openDMChat(name,ava,type);};
-  var av=ce('div');av.style.cssText='width:42px;height:42px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#fff;overflow:hidden;background-size:cover;background-position:center;';
+  var av=ce('div');av.style.cssText='width:48px;height:48px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;overflow:hidden;background-size:cover;background-position:center;';
   setAva(av,ava,name,type);
   var info=ce('div');info.style.cssText='flex:1;min-width:0;';
-  var nameEl=ce('div');nameEl.style.cssText='font-size:15px;font-weight:700;color:#0f1419;';nameEl.textContent=name;
-  var previewEl=ce('div');previewEl.className='_dmPreview';previewEl.style.cssText='font-size:13px;color:#536471;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px;';
-  // 先显示初始消息，再同步读localStorage最新
+  var topRow=ce('div');topRow.style.cssText='display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;';
+  var nameEl=ce('div');nameEl.style.cssText='font-size:15px;font-weight:700;color:#0f1419;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60%;';nameEl.textContent=name;
+  var dateEl=ce('div');dateEl.style.cssText='font-size:12px;color:#8899a6;flex-shrink:0;margin-left:6px;';dateEl.textContent='';
+  topRow.appendChild(nameEl);topRow.appendChild(dateEl);
+  var previewEl=ce('div');previewEl.style.cssText='font-size:13px;color:#536471;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;';
   previewEl.textContent=lastMsg||'';
+  info.appendChild(topRow);info.appendChild(previewEl);
+  row.appendChild(av);row.appendChild(info);
   var safeKey='dmChat_'+name.replace(/[^\w\u4e00-\u9fa5]/g,'_');
-  // 用localforage读（不被localStorage拦截）
   fL(safeKey,[]).then(function(hist){
     if(Array.isArray(hist)&&hist.length){
       var last=hist[hist.length-1];
-      var _prevTxt=(last.isMe?'我：':'')+(last.isVoice?'[语音]':last.text||'');
-      previewEl.textContent=_prevTxt;
-      if(_prevTxt&&!info.contains(previewEl))info.appendChild(previewEl);
+      var _prevTxt=(last.isMe?'我：':'')+(last.isVoice?'[语音]':(last.isImg?'[图片]':last.text||''));
+      if(_prevTxt)previewEl.textContent=_prevTxt;
+      if(last.ts)dateEl.textContent=_dmDateStr(last.ts);
     }
   }).catch(function(){});
-  info.appendChild(nameEl);if(previewEl.textContent)info.appendChild(previewEl);
-  row.appendChild(av);row.appendChild(info);return row;
+  return row;
 }
 function openDMChat(name,ava,type,initialMsg){
   var forum=document.getElementById('scrForum');if(!forum)return;
@@ -25662,32 +25674,48 @@ function openDMChat(name,ava,type,initialMsg){
   var chatKey='dmChat_'+name.replace(/[^\w\u4e00-\u9fa5]/g,'_');
 
   // 顶部导航 - 参考图风格
-  var tb=ce('div');tb.style.cssText='display:flex;align-items:center;gap:10px;padding:max(env(safe-area-inset-top,20px),20px) 14px 10px;background:#fff;border-bottom:1px solid #eff3f4;flex-shrink:0;';
+  var tb=ce('div');tb.style.cssText='display:flex;align-items:center;gap:10px;padding:max(env(safe-area-inset-top,20px),20px) 14px 10px;background:rgba(255,255,255,0.95);backdrop-filter:blur(10px);border-bottom:1px solid #eff3f4;flex-shrink:0;';
   var bk=ce('div');bk.style.cssText='width:34px;height:34px;border-radius:50%;background:#eff3f4;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;flex-shrink:0;';bk.innerHTML='&#8592;';bk.onclick=function(){pg.remove();};
-  var av2=ce('div');av2.style.cssText='width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;overflow:hidden;background-size:cover;background-position:center;flex-shrink:0;';
+  var av2=ce('div');av2.style.cssText='width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;overflow:hidden;background-size:cover;background-position:center;flex-shrink:0;cursor:pointer;';
   setAva(av2,ava,name,type);
+  // 点击头像跳转到个人主页
+  av2.onclick=function(e){e.stopPropagation();openProfilePage(name,ava,type);};
   var ntWrap=ce('div');ntWrap.style.cssText='flex:1;';
-  var nt=ce('div');nt.style.cssText='font-size:16px;font-weight:700;color:#0f1419;line-height:1.2;';nt.textContent=name;
+  var nt=ce('div');nt.style.cssText='font-size:16px;font-weight:700;color:#0f1419;line-height:1.2;cursor:pointer;';nt.textContent=name;
+  nt.onclick=function(){openProfilePage(name,ava,type);};
   var typingEl=ce('div');typingEl.id='_dmTyping';typingEl.style.cssText='font-size:12px;color:#1d9bf0;height:16px;';typingEl.textContent='';
   ntWrap.appendChild(nt);ntWrap.appendChild(typingEl);
-  tb.appendChild(bk);tb.appendChild(av2);tb.appendChild(ntWrap);
+  // 右侧图标
+  var hdrIcons=ce('div');hdrIcons.style.cssText='display:flex;gap:8px;flex-shrink:0;';
+  var vidBtn=ce('div');vidBtn.style.cssText='width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#536471;';
+  vidBtn.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>';
+  var phoneBtn=ce('div');phoneBtn.style.cssText='width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#536471;';
+  phoneBtn.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13 19.79 19.79 0 0 1 1.61 4.38 2 2 0 0 1 3.58 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>';
+  hdrIcons.appendChild(vidBtn);hdrIcons.appendChild(phoneBtn);
+  tb.appendChild(bk);tb.appendChild(av2);tb.appendChild(ntWrap);tb.appendChild(hdrIcons);
 
   // 消息区
   var ma=ce('div');ma.style.cssText='flex:1;overflow-y:auto;padding:0 0 8px;display:flex;flex-direction:column;background:#f5f6fa;';
 
-  // 首次打开显示的联系人名片（参考图风格：头像+名字+handle+粉丝数）
+  // 首次打开显示的联系人名片（参考图风格：头像+名字+handle+粉丝数+日期）
   var _chars2=typeof getChars==='function'?getChars():[];
   var _cInfo2=_chars2.find(function(c){return c.name===name;})||{};
   var _ov2=_charOverrides&&_charOverrides[name]||{};
-  var _handle2=(_ov2.handle||name).toLowerCase().replace(/\s/g,'_');
+  var _handle2=(_ov2.handle||_cInfo2.handle||name).toLowerCase().replace(/\s/g,'_');
   var _followers2=parseInt(_ov2.followers)||parseInt(_cInfo2.followers)||0;
-  var nameCard=ce('div');nameCard.style.cssText='display:flex;flex-direction:column;align-items:center;padding:24px 16px 16px;background:#f5f6fa;';
-  var ncAva=ce('div');ncAva.style.cssText='width:72px;height:72px;border-radius:50%;overflow:hidden;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:#fff;margin-bottom:10px;';
+  var nameCard=ce('div');nameCard.style.cssText='display:flex;flex-direction:column;align-items:center;padding:28px 16px 20px;background:#f7f9f9;';
+  var ncAva=ce('div');ncAva.style.cssText='width:76px;height:76px;border-radius:50%;overflow:hidden;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700;color:#fff;margin-bottom:12px;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,0.12);';
   setAva(ncAva,ava,name,type);
-  var ncName=ce('div');ncName.style.cssText='font-size:18px;font-weight:700;color:#0f1419;';ncName.textContent=name;
-  var ncHandle=ce('div');ncHandle.style.cssText='font-size:14px;color:#536471;margin-top:2px;';ncHandle.textContent=_handle2;
+  ncAva.onclick=function(){openProfilePage(name,ava,type);};
+  var ncName=ce('div');ncName.style.cssText='font-size:18px;font-weight:700;color:#0f1419;cursor:pointer;';ncName.textContent=name;
+  ncName.onclick=function(){openProfilePage(name,ava,type);};
+  var ncHandle=ce('div');ncHandle.style.cssText='font-size:14px;color:#536471;margin-top:3px;';ncHandle.textContent='@'+_handle2;
   nameCard.appendChild(ncAva);nameCard.appendChild(ncName);nameCard.appendChild(ncHandle);
-  if(_followers2){var ncFan=ce('div');ncFan.style.cssText='font-size:13px;color:#536471;margin-top:4px;';ncFan.textContent=_followers2+' 位关注者';nameCard.appendChild(ncFan);}
+  if(_followers2){var ncFan=ce('div');ncFan.style.cssText='font-size:13px;color:#536471;margin-top:5px;';ncFan.textContent=_followers2.toLocaleString()+' 位关注者';nameCard.appendChild(ncFan);}
+  // 今天日期
+  var ncDate=ce('div');ncDate.style.cssText='font-size:12px;color:#aaa;margin-top:10px;background:rgba(0,0,0,0.04);padding:3px 12px;border-radius:20px;';
+  var _now=new Date();ncDate.textContent=_now.getFullYear()+'年'+(_now.getMonth()+1)+'月'+_now.getDate()+'日';
+  nameCard.appendChild(ncDate);
   ma.appendChild(nameCard);
 
   // 日期分隔线
@@ -25758,8 +25786,7 @@ function openDMChat(name,ava,type,initialMsg){
   }
 
   function appendMsg(txt,isMe){
-    _chatHistory.push({text:txt,isMe:isMe});
-    // 只用fS（直接走localforage大仓库，不被主app的localStorage拦截干扰）
+    _chatHistory.push({text:txt,isMe:isMe,ts:Date.now()});
     fS(chatKey,_chatHistory);
     appendMsgBubble(txt,isMe,true);
   }
@@ -25823,6 +25850,7 @@ function openDMChat(name,ava,type,initialMsg){
 
   // 加载历史：直接用localforage大仓库（最可靠，不受localStorage拦截影响）
   var _histLoaded=false;
+  inp.disabled=true;sb.disabled=true;inp.style.opacity='0.5';
   fL(chatKey,[]).then(function(hist){
     if(Array.isArray(hist)&&hist.length){
       _chatHistory=hist;_histLoaded=true;
@@ -25830,9 +25858,12 @@ function openDMChat(name,ava,type,initialMsg){
     } else if(!_histLoaded&&initialMsg){
       _histLoaded=true;
       appendMsg(initialMsg,false);
-    }
+    } else {_histLoaded=true;}
+    inp.disabled=false;sb.disabled=false;inp.style.opacity='';inp.focus();
   }).catch(function(){
     if(!_histLoaded&&initialMsg){_histLoaded=true;appendMsg(initialMsg,false);}
+    else{_histLoaded=true;}
+    inp.disabled=false;sb.disabled=false;inp.style.opacity='';
   });
 
   function showTyping(){typingEl.textContent='正在输入…';return setTimeout(function(){typingEl.textContent='';},3000);}
@@ -25982,7 +26013,44 @@ function openDMChat(name,ava,type,initialMsg){
   forum.appendChild(pg);
   setTimeout(function(){inp.focus();},200);
 }
+// 从私信页跳转到个人主页
+function openProfilePage(name,ava,type){
+  // 尝试调用已有的个人页打开逻辑（复用论坛的openProfile）
+  if(typeof window.fOpenProfile==='function'){window.fOpenProfile(name,ava,type);return;}
+  // 降级：弹出简单资料卡
+  var forum=document.getElementById('scrForum');if(!forum)return;
+  var ex=document.getElementById('_dmProfileQuick');if(ex)ex.remove();
+  var pg=ce('div');pg.id='_dmProfileQuick';pg.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;z-index:70;background:#fff;display:flex;flex-direction:column;overflow-y:auto;';
+  var chars=typeof getChars==='function'?getChars():[];
+  var cInfo=chars.find(function(c){return c.name===name;})||{};
+  var ov2=_charOverrides&&_charOverrides[name]||{};
+  var handle=(ov2.handle||cInfo.handle||name).toLowerCase().replace(/\s/g,'_');
+  var followers=parseInt(ov2.followers)||parseInt(cInfo.followers)||0;
+  var bio=(ov2.bio||cInfo.bio||'');
+  var banner=ov2.banner||cInfo.banner||'';
+  // header
+  var hdr=ce('div');hdr.style.cssText='display:flex;align-items:center;gap:10px;padding:max(env(safe-area-inset-top,20px),20px) 14px 10px;background:#fff;border-bottom:1px solid #eff3f4;flex-shrink:0;position:sticky;top:0;z-index:2;';
+  var bk2=ce('div');bk2.style.cssText='width:34px;height:34px;border-radius:50%;background:#eff3f4;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;';bk2.innerHTML='&#8592;';bk2.onclick=function(){pg.remove();};
+  var hdrName=ce('div');hdrName.style.cssText='font-size:17px;font-weight:700;color:#0f1419;';hdrName.textContent=name;
+  hdr.appendChild(bk2);hdr.appendChild(hdrName);
+  // banner
+  var bannerEl=ce('div');bannerEl.style.cssText='height:120px;background:'+(banner?'url('+banner+') center/cover no-repeat':'#1d9bf0')+';flex-shrink:0;';
+  // profile area
+  var profArea=ce('div');profArea.style.cssText='padding:0 16px 20px;';
+  var avaWrap=ce('div');avaWrap.style.cssText='margin-top:-38px;margin-bottom:12px;';
+  var avaEl=ce('div');avaEl.style.cssText='width:76px;height:76px;border-radius:50%;border:4px solid #fff;overflow:hidden;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:#fff;';
+  setAva(avaEl,ava,name,type);
+  avaWrap.appendChild(avaEl);
+  var pName=ce('div');pName.style.cssText='font-size:20px;font-weight:700;color:#0f1419;margin-bottom:2px;';pName.textContent=name;
+  var pHandle=ce('div');pHandle.style.cssText='font-size:14px;color:#536471;margin-bottom:8px;';pHandle.textContent='@'+handle;
+  var pBio=ce('div');pBio.style.cssText='font-size:15px;color:#0f1419;line-height:1.6;margin-bottom:12px;';pBio.textContent=bio||'这个人很神秘，什么都没有留下~';
+  var pFan=ce('div');pFan.style.cssText='font-size:14px;color:#536471;';pFan.innerHTML='<span style="font-weight:700;color:#0f1419;">'+(followers?followers.toLocaleString():'—')+'</span> 位关注者';
+  profArea.appendChild(avaWrap);profArea.appendChild(pName);profArea.appendChild(pHandle);profArea.appendChild(pBio);profArea.appendChild(pFan);
+  pg.appendChild(hdr);pg.appendChild(bannerEl);pg.appendChild(profArea);
+  forum.appendChild(pg);
+}
 window.fNewDM=function(){var chars=getChars();var opts=chars.map(function(c){return '<option value="'+c.name+'">'+c.name+'</option>';}).join('');var ov=ce('div');ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;';var box=ce('div');box.style.cssText='background:#fff;border-radius:18px;padding:18px 16px;width:80vw;max-width:300px;';box.innerHTML='<div style="font-size:16px;font-weight:700;margin-bottom:12px;color:#0f1419;">新私信</div><select id="_fdmS" style="width:100%;padding:9px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;outline:none;background:#fff;margin-bottom:8px;"><option>选择联系人…</option>'+opts+'</select><input id="_fdmC" placeholder="或输入名字" style="width:100%;padding:9px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;outline:none;box-sizing:border-box;margin-bottom:12px;"><div style="display:flex;gap:8px;"><button id="_fdmCan" style="flex:1;padding:10px;border:1.5px solid #cfd9de;border-radius:12px;background:#fff;font-size:14px;cursor:pointer;color:#536471;">取消</button><button id="_fdmOk" style="flex:2;padding:10px;background:#1d9bf0;color:#fff;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:700;">开始聊天</button></div>';ov.appendChild(box);document.body.appendChild(ov);box.querySelector('#_fdmCan').onclick=function(){ov.remove();};box.querySelector('#_fdmOk').onclick=function(){var n=(box.querySelector('#_fdmC')||{}).value.trim()||(box.querySelector('#_fdmS')||{}).value||'';if(!n){toast('请选择联系人');return;}ov.remove();toast('即将与 '+hdl(n)+' 私信…');};ov.onclick=function(e){if(e.target===ov)ov.remove();};}
+
 
 function addTab(){var ov=ce('div');ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;';var box=ce('div');box.style.cssText='background:#fff;border-radius:18px;padding:18px 16px;width:80vw;max-width:300px;';box.innerHTML='<div style="font-size:16px;font-weight:700;margin-bottom:12px;color:#0f1419;">添加板块</div><input id="_ftN" placeholder="板块名称" maxlength="12" style="width:100%;padding:9px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;outline:none;box-sizing:border-box;margin-bottom:8px;"><textarea id="_ftD" placeholder="板块描述（AI据此生成内容）" style="width:100%;height:60px;padding:9px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;resize:none;box-sizing:border-box;outline:none;margin-bottom:12px;"></textarea><div style="display:flex;gap:8px;"><button id="_ftCan" style="flex:1;padding:10px;border:1.5px solid #cfd9de;border-radius:12px;background:#fff;font-size:14px;cursor:pointer;color:#536471;">取消</button><button id="_ftOk" style="flex:2;padding:10px;background:#1d9bf0;color:#fff;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:700;">添加</button></div>';ov.appendChild(box);document.body.appendChild(ov);box.querySelector('#_ftCan').onclick=function(){ov.remove();};box.querySelector('#_ftOk').onclick=function(){var n=(box.querySelector('#_ftN')||{}).value.trim(),d=(box.querySelector('#_ftD')||{}).value.trim();if(!n){toast('请输入板块名称');return;}ov.remove();if(!_customTabs.includes(n)){_customTabs.push(n);_tabDescs[n]=d;}renderTabs();toast('板块已添加：'+n);};ov.onclick=function(e){if(e.target===ov)ov.remove();};}
 
