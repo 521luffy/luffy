@@ -25306,8 +25306,10 @@ async function sendReply(){
     }_replyTarget=null;inp.placeholder='发表评论…';
   }else if(_curPostIdx!==null){_posts[_curPostIdx].comments.push(cmt);}
   inp.value='';inp.style.height='auto';
-  if(imgFileInp){imgFileInp._pendingImg=null;var pr=document.getElementById('_replyImgPreview');if(pr)pr.remove();}
-  fS('posts',_posts);if(_curPostIdx!==null)openPost(_curPostIdx);
+  if(imgFileInp){imgFileInp._pendingImg=null;var pr2=document.getElementById('_replyImgPreview');if(pr2)pr2.remove();}
+  // 用 renderPostDetail 局部刷新，不重建整页（openPost会重置det导致评论丢失）
+  fS('posts',_posts);
+  if(_curPostIdx!==null){var _body2=document.getElementById('fDetBody');if(_body2)renderPostDetail(_posts[_curPostIdx],_body2);}
   // AI自动回复 - 楼中楼 + 随机其他角色/网友掉落
   toast('正在等待回复中…');
   try{
