@@ -24868,23 +24868,28 @@ function buildCard(post,idx){
     body.insertBefore(pinBadge,body.firstChild);
   }
   card.appendChild(ava); card.appendChild(body);
-  // user帖子支持长按：删除/置顶
+  // user帖子：右上角⋮菜单按钮 + 长按备用
   var _myN=getMyName();
   var _longPressed=false;
-  if(post.type==='user'&&post.name===_myN){
-    var _lpt2=null;
+  if(post.name===_myN){
+    // 右上角⋮按钮（最可靠的触发方式）
+    var dotsBtn=ce('div');dotsBtn.style.cssText='position:absolute;top:12px;right:10px;font-size:18px;color:#536471;cursor:pointer;padding:4px 8px;z-index:5;';
+    dotsBtn.textContent='⋮';
+    dotsBtn.onclick=function(e){e.stopPropagation();showUserPostMenu(post,idx);};
+    card.style.position='relative';
+    card.appendChild(dotsBtn);
+    // 长按备用（允许5px微动）
+    var _lpt2=null,_sx=0,_sy=0;
     card.addEventListener('touchstart',function(e){
-      _longPressed=false;
-      _lpt2=setTimeout(function(){_lpt2=null;_longPressed=true;showUserPostMenu(post,idx);},500);
+      _longPressed=false;_sx=e.touches[0].clientX;_sy=e.touches[0].clientY;
+      _lpt2=setTimeout(function(){_lpt2=null;_longPressed=true;showUserPostMenu(post,idx);},600);
     },{passive:true});
-    card.addEventListener('touchend',function(e){
-      if(_lpt2){clearTimeout(_lpt2);_lpt2=null;}
-      if(_longPressed){e.preventDefault();_longPressed=false;}
+    card.addEventListener('touchend',function(){if(_lpt2){clearTimeout(_lpt2);_lpt2=null;}});
+    card.addEventListener('touchmove',function(e){
+      if(_lpt2&&e.touches[0]){var dx=e.touches[0].clientX-_sx,dy=e.touches[0].clientY-_sy;if(Math.abs(dx)>5||Math.abs(dy)>5){clearTimeout(_lpt2);_lpt2=null;}}
     });
-    card.addEventListener('touchmove',function(){if(_lpt2){clearTimeout(_lpt2);_lpt2=null;}});
-    card.addEventListener('contextmenu',function(e){e.preventDefault();e.stopPropagation();showUserPostMenu(post,idx);});
   }
-  card.onclick=function(){ if(!_longPressed) openPost(idx); };
+  card.onclick=function(){ if(!_longPressed){openPost(idx);}else{_longPressed=false;} };
   return card;
 }
 function showUserPostMenu(post,idx){
