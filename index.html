@@ -24627,13 +24627,10 @@ function postStats(post){
   var h=postHash(post);
   var myName=getMyName();
   var isMe=(post.type==='user'&&post.name===myName)||(post.topicKey==='_user');
-  // 根据发帖人粉丝量设定热度基准
-  var fame=1; // 默认网友
+  var fame=1;
   if(isMe){
-    // user：普通人水平，几十到几百
     var myFwers=parseInt(originalGetItem.call(localStorage,'fMyFollowers')||'0')||0;
-    if(myFwers>10000)fame=2;
-    else fame=1; // 用户粉丝不多时和普通网友同档
+    fame=myFwers>10000?2:1;
   } else if(post.type==='char'||post.type==='npc'||post.type==='extra'){
     var _ov2=(_charOverrides&&_charOverrides[post.name])||{};
     var _ec2=((_extraCharsData||[]).find(function(d){return d.name===post.name;}))||{};
@@ -24642,11 +24639,15 @@ function postStats(post){
     else if(fwers>5000)fame=2;
     else fame=1;
   }
-  // 基准点赞数：普通网友30-200，小char100-800，大char500-5000，超级char2000-20000
+  // 关键修复：始终根据fame基准推算一致的点赞数，不直接用post.likes（否则会出现同一角色几十万vs几百的矛盾）
+  // post.likes仅作为初始种子，最终按fame档统一校正
   var fameBases=[0,80,600,3000];
   var fameBase=fameBases[fame]||80;
-  var rawLikes=post.likes||Math.floor((h%fameBase)+Math.floor(fameBase*0.3));
-  var base=Math.max(rawLikes,isMe?5:fame===3?200:fame===2?50:10);
+  var seed=post.likes||Math.floor((h%fameBase)+Math.floor(fameBase*0.3));
+  // 强制在fame区间内归一化（防止AI生成的likes数字突破档位）
+  var maxLikes=[999,999,9999,999999];
+  var minLikes=[0,10,200,2000];
+  var base=Math.min(Math.max(seed,minLikes[fame]),maxLikes[fame]);
   var realCmts=post.comments?post.comments.length:0;
   var fakeCmts=Math.floor((h%(fame===3?80:fame===2?25:12))+2);
   var cmts=Math.max(realCmts,fakeCmts);
@@ -24654,42 +24655,50 @@ function postStats(post){
   var rawViews=Math.floor(base*(3+(h%4)));
   var views=rawViews>=10000?Math.floor(rawViews/1000)+'K':rawViews+'';
   var bks=Math.floor(base*(0.02+(h%4)*0.005));
-  return {cmts:cmts,rts:rts,views:views,bks:bks};
+  return {cmts:cmts,rts:rts,likes:base,views:views,bks:bks};
 }
 
 function buildCard(post,idx){
   var card=ce('div'); card.className='fPost';
-  // 头像
   var ava=ce('div'); ava.className='fAva';
   setAva(ava,post.ava,post.name,post.type);
   ava.onclick=function(e){ e.stopPropagation(); openCharProfile(post); };
-  // 主体
   var body=ce('div'); body.className='fBody';
-  // 板块+热度标签
   if(post.board&&post.board!=='推荐'){
     var badge=ce('div'); badge.className='fBadge'+(post.hot?' hot':''); badge.textContent=post.board;
     body.appendChild(badge);
   }
-  // 名字行
   var nr=ce('div'); nr.style.cssText='display:flex;align-items:center;flex-wrap:wrap;margin-bottom:3px;';
   nr.innerHTML='<span class="fName">'+post.name+'</span><span class="fHandle"> '+hdl(post.name)+'</span><span class="fTime"> · '+timeAgo(post.time)+'</span>';
   body.appendChild(nr);
-  // 标题（大字）
   if(post.title){
     var tl=ce('div'); tl.style.cssText='font-size:16px;font-weight:700;color:#0f1419;line-height:1.4;margin-bottom:4px;';
     tl.textContent=post.title; body.appendChild(tl);
   }
-  // 简介（小字）
-  if(post.content){
-    var pv=ce('div'); pv.style.cssText='font-size:14px;color:#536471;line-height:1.5;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;';
-    pv.textContent=post.content; body.appendChild(pv);
+  // 显示完整正文内容（不截断）
+  var fullText=post.fullContent||post.content||'';
+  if(fullText){
+    // 解析【图片描述：xxx】标记，转为图片描述卡片
+    var imgReg=/【图片描述[：:]([^】]+)】/g;
+    var imgMatches=[];var m;
+    while((m=imgReg.exec(fullText))!==null){imgMatches.push(m[1]);}
+    var cleanText=fullText.replace(/【图片描述[：:][^】]+】/g,'').trim();
+    if(cleanText){
+      var pv=ce('div');pv.style.cssText='font-size:14px;color:#0f1419;line-height:1.7;margin-bottom:6px;white-space:pre-wrap;word-break:break-word;';
+      pv.textContent=cleanText;body.appendChild(pv);
+    }
+    imgMatches.forEach(function(desc){
+      var imgCard=ce('div');imgCard.style.cssText='background:#f7f9f9;border:1px solid #eff3f4;border-radius:12px;padding:10px 12px;margin-bottom:8px;font-size:13px;color:#536471;line-height:1.5;';
+      imgCard.innerHTML='<span style="color:#1d9bf0;font-weight:600;">📷 </span>'+desc;
+      body.appendChild(imgCard);
+    });
   }
-  // 底部统计 - X风格
+  // 底部统计 - 用postStats保证一致性
   var stats=ce('div'); stats.className='fStats';stats.style.cssText='display:flex;justify-content:space-between;padding:2px 0;';
   var ps=postStats(post);
   stats.innerHTML='<span class="fStat" style="display:flex;align-items:center;gap:3px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'+ps.cmts+'</span>'+
     '<span class="fStat" style="display:flex;align-items:center;gap:3px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>'+ps.rts+'</span>'+
-    '<span class="fStat" style="display:flex;align-items:center;gap:3px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'+post.likes+'</span>'+
+    '<span class="fStat" style="display:flex;align-items:center;gap:3px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'+ps.likes+'</span>'+
     '<span class="fStat" style="display:flex;align-items:center;gap:3px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>'+ps.views+'</span>'+
     '<span class="fStat" style="display:flex;align-items:center;gap:3px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></span>'+
     '<span class="fStat" style="display:flex;align-items:center;gap:3px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></span>';
@@ -25229,10 +25238,10 @@ async function sendReply(){
   var inp=document.getElementById('fReplyInp');if(!inp||!inp.value.trim())return;
   var text=inp.value.trim();
   var myName=getMyName();
-  // 保存replyTarget（后面清空前先存）
   var _replyTarget_saved=_replyTarget?{pi:_replyTarget.pi,ci:_replyTarget.ci,name:_replyTarget.name}:null;
-  // 优先从localStorage取，再异步从localforage取
-  var myAva=originalGetItem.call(localStorage,'fMyAva')||getMyAva()||'';
+  // 优先从localforage取头像（base64头像只存这里）
+  var myAva=originalGetItem.call(localStorage,'fMyAva')||'';
+  try{var lfA=await localforage.getItem('fMyAva');if(lfA)myAva=lfA;}catch(e){}
   // 检查是否有pending图片
   var imgFileInp=document.getElementById('_replyImgInp')||document.querySelector('input[type=file][accept="image/*"]');
   var pendingImg=imgFileInp&&imgFileInp._pendingImg||null;
@@ -25961,13 +25970,13 @@ function openDMChat(name,ava,type,initialMsg){
     var _msgIdx=_chatHistory.length-1;
     if(isMe){
       bub.style.cssText='display:flex;justify-content:flex-end;padding:3px 12px;';
-      var bubble=ce('div');bubble.style.cssText='background:#1d9bf0;color:#fff;padding:10px 14px;border-radius:20px 20px 4px 20px;font-size:15px;max-width:60%;line-height:1.55;word-break:break-word;';bubble.textContent=txt;
+      var bubble=ce('div');bubble.style.cssText='background:#1d9bf0;color:#fff;padding:8px 12px;border-radius:18px 18px 4px 18px;font-size:13px;max-width:60%;line-height:1.5;word-break:break-word;';bubble.textContent=txt;
       bub.appendChild(bubble);
     } else {
       bub.style.cssText='display:flex;align-items:flex-end;gap:8px;padding:3px 12px;';
       var leftAv=ce('div');leftAv.style.cssText='width:32px;height:32px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;overflow:hidden;background-size:cover;background-position:center;';
       setAva(leftAv,ava,name,type);
-      var leftTxt=ce('div');leftTxt.style.cssText='background:#fff;color:#0f1419;padding:10px 14px;border-radius:20px 20px 20px 4px;font-size:15px;max-width:60%;line-height:1.55;box-shadow:0 1px 4px rgba(0,0,0,0.08);word-break:break-word;';leftTxt.textContent=txt;
+      var leftTxt=ce('div');leftTxt.style.cssText='background:#fff;color:#0f1419;padding:8px 12px;border-radius:18px 18px 18px 4px;font-size:13px;max-width:60%;line-height:1.5;box-shadow:0 1px 4px rgba(0,0,0,0.08);word-break:break-word;';leftTxt.textContent=txt;
       bub.appendChild(leftAv);bub.appendChild(leftTxt);
     }
     // 长按删除
@@ -26007,7 +26016,7 @@ function openDMChat(name,ava,type,initialMsg){
     // 语音条样式
     var _w=Math.min(200,80+sec*3);
     var voiceBar=ce('div');
-    voiceBar.style.cssText='display:flex;align-items:center;gap:8px;background:'+(isMe?'#1d9bf0':'#fff')+';color:'+(isMe?'#fff':'#0f1419')+';padding:10px 14px;border-radius:'+(isMe?'18px 18px 4px 18px':'18px 18px 18px 4px')+';width:100%;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.08);box-sizing:border-box;';
+    voiceBar.style.cssText='display:flex;align-items:center;gap:6px;background:'+(isMe?'#1d9bf0':'#fff')+';color:'+(isMe?'#fff':'#0f1419')+';padding:8px 12px;border-radius:'+(isMe?'16px 16px 4px 16px':'16px 16px 16px 4px')+';width:100%;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.08);box-sizing:border-box;';
     // 播放图标
     var playBtn=ce('div');playBtn.style.cssText='width:28px;height:28px;border-radius:50%;background:'+(isMe?'rgba(255,255,255,0.25)':'#1d9bf0')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;';
     playBtn.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="'+(isMe?'#fff':'#fff')+'" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
@@ -26065,10 +26074,10 @@ function openDMChat(name,ava,type,initialMsg){
   // 输入区
   // +号小抽屉
   var plusDrawer=ce('div');plusDrawer.style.cssText='display:none;position:absolute;bottom:100%;left:0;right:0;background:#fff;border-top:1px solid #eff3f4;padding:16px 12px;z-index:5;';
-  var plusGrid=ce('div');plusGrid.style.cssText='display:flex;gap:20px;';
+  var plusGrid=ce('div');plusGrid.style.cssText='display:flex;gap:14px;';
   function makePlusItem(icon,label,onclick){
     var item=ce('div');item.style.cssText='display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;';
-    var iconBox=ce('div');iconBox.style.cssText='width:52px;height:52px;background:#f0f2f5;border-radius:14px;display:flex;align-items:center;justify-content:center;';
+    var iconBox=ce('div');iconBox.style.cssText='width:40px;height:40px;background:#f0f2f5;border-radius:12px;display:flex;align-items:center;justify-content:center;';
     iconBox.innerHTML=icon;
     var lbl=ce('div');lbl.style.cssText='font-size:11px;color:#536471;';lbl.textContent=label;
     item.appendChild(iconBox);item.appendChild(lbl);item.onclick=onclick;
@@ -26289,7 +26298,20 @@ fsSizes.forEach(function(s){
   btn.style.cssText='flex:1;padding:9px 0;border-radius:12px;font-size:13px;cursor:pointer;font-weight:600;border:1.5px solid #cfd9de;background:'+(s.val===_curFs?'#1d9bf0':'#fff')+';color:'+(s.val===_curFs?'#fff':'#536471')+';transition:.2s;';
   btn.onclick=function(){
     _curFs=s.val;
-    document.getElementById('scrForum').style.fontSize=s.val+'px';
+    var fo=document.getElementById('scrForum');
+    if(fo)fo.style.fontSize=s.val+'px';
+    // 注入动态CSS覆盖所有硬编码字号
+    var dynSt=document.getElementById('_fDynFont');
+    if(!dynSt){dynSt=document.createElement('style');dynSt.id='_fDynFont';document.head.appendChild(dynSt);}
+    var sc=s.val;var sc1=sc-1;var sc2=sc+1;var sc3=sc+2;
+    dynSt.textContent='#scrForum .fName{font-size:'+sc2+'px!important}'+
+      '#scrForum .fHandle,#scrForum .fTime{font-size:'+sc1+'px!important}'+
+      '#scrForum .fText,#scrForum .fBody>div{font-size:'+sc+'px!important}'+
+      '#scrForum .fStat{font-size:'+(sc-2)+'px!important}'+
+      '#scrForum .fCmtName{font-size:'+sc1+'px!important}'+
+      '#scrForum .fCmtText{font-size:'+sc1+'px!important}'+
+      '#scrForum .fBadge{font-size:'+(sc-3)+'px!important}'+
+      '#scrForum .fTab{font-size:'+sc+'px!important}';
     try{localStorage.setItem('f_forumFontSize',s.val);}catch(e){}
     fsRow.querySelectorAll('button').forEach(function(b,i){
       b.style.background=fsSizes[i].val===_curFs?'#1d9bf0':'#fff';
@@ -26300,7 +26322,20 @@ fsSizes.forEach(function(s){
   fsRow.appendChild(btn);
 });
 // 初始化字体
-setTimeout(function(){document.getElementById('scrForum').style.fontSize=_curFs+'px';},50);
+setTimeout(function(){
+  var fo=document.getElementById('scrForum');if(fo)fo.style.fontSize=_curFs+'px';
+  var dynSt=document.getElementById('_fDynFont');
+  if(!dynSt){dynSt=document.createElement('style');dynSt.id='_fDynFont';document.head.appendChild(dynSt);}
+  var sc=_curFs;var sc1=sc-1;var sc2=sc+1;
+  dynSt.textContent='#scrForum .fName{font-size:'+sc2+'px!important}'+
+    '#scrForum .fHandle,#scrForum .fTime{font-size:'+sc1+'px!important}'+
+    '#scrForum .fText,#scrForum .fBody>div{font-size:'+sc+'px!important}'+
+    '#scrForum .fStat{font-size:'+(sc-2)+'px!important}'+
+    '#scrForum .fCmtName{font-size:'+sc1+'px!important}'+
+    '#scrForum .fCmtText{font-size:'+sc1+'px!important}'+
+    '#scrForum .fBadge{font-size:'+(sc-3)+'px!important}'+
+    '#scrForum .fTab{font-size:'+sc+'px!important}';
+},50);
 dr.appendChild(fsRow);
 
 dr.appendChild(item('💾','保存',function(){saveSettings();toggleDrawer();}));
