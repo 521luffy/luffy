@@ -24673,7 +24673,7 @@ function postStats(post){
   var fakeCmts=Math.floor((h%(fame===3?80:fame===2?25:12))+2);
   var cmts=Math.max(realCmts,fakeCmts);
   var rts=Math.floor(base*(0.08+(h%5)*0.018));
-  var rawViews=Math.floor(base*(3+(h%4)));
+  var rawViews=Math.floor(base*(8+(h%8)));
   var views=rawViews>=10000?Math.floor(rawViews/1000)+'K':rawViews+'';
   var bks=Math.floor(base*(0.02+(h%4)*0.005));
   return {cmts:cmts,rts:rts,likes:base,views:views,bks:bks};
@@ -25118,7 +25118,7 @@ function renderPostDetail(post, body){
   statsRow.innerHTML=
     '<span style="display:flex;align-items:center;gap:4px;color:#536471;font-size:13px;cursor:pointer;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'+ps2.cmts+'</span>'+
     '<span style="display:flex;align-items:center;gap:4px;color:#536471;font-size:13px;cursor:pointer;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>'+ps2.rts+'</span>'+
-    '<span style="display:flex;align-items:center;gap:4px;color:#536471;font-size:13px;cursor:pointer;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'+post.likes+'</span>'+
+    '<span style="display:flex;align-items:center;gap:4px;color:#536471;font-size:13px;cursor:pointer;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'+ps2.likes+'</span>'+
     '<span style="display:flex;align-items:center;gap:4px;color:#536471;font-size:13px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>'+ps2.views+'</span>'+
     '<span style="display:flex;align-items:center;gap:4px;color:#536471;font-size:13px;cursor:pointer;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>'+ps2.bks+'</span>'+
     '<span style="display:flex;align-items:center;gap:4px;color:#536471;font-size:13px;cursor:pointer;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></span>';
@@ -25193,7 +25193,9 @@ function buildCmt(cmt,pi,ci){
     var cmtFame=1;
     if(isMeCmt){
       var mf=parseInt((window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyFollowers')||'0')||0;
-      cmtFame=mf>10000?2:1;
+      if(mf>50000)cmtFame=3;
+      else if(mf>5000)cmtFame=2;
+      else cmtFame=1;
     } else if(cmtType==='char'||cmtType==='npc'||cmtType==='extra'){
       var _ov3=(_charOverrides&&_charOverrides[cmtName])||{};
       var _ec3=((_extraCharsData||[]).find(function(d){return d.name===cmtName;}))||{};
@@ -25202,21 +25204,23 @@ function buildCmt(cmt,pi,ci){
       else if(cf>5000)cmtFame=2;
       else cmtFame=1;
     }
-    // 评论热度比帖子低1档，且有上限
-    var maxArr=[999,500,8000,80000];
-    var minArr=[0,5,50,500];
-    var baseArr=[0,30,200,2000];
-    var bse=baseArr[cmtFame]||30;
-    var seed=Math.floor((h2%bse)+Math.floor(bse*0.2));
+    // 评论热度应比帖子低，按fame档给合理区间
+    // fame1=普通人(10-200) fame2=小有名气(80-800) fame3=大明星(300-5000)
+    var maxArr=[200,200,800,5000];
+    var minArr=[3,10,80,300];
+    var baseArr=[40,40,200,1200];
+    var bse=baseArr[cmtFame]||40;
+    var seed=Math.floor((h2%bse)+Math.floor(bse*0.25));
     return Math.min(Math.max(seed,minArr[cmtFame]),maxArr[cmtFame]);
   }
   var _cNorm=normalizeCmtLikes(cmt.name,cmt.type||'net',cmt.likes,cmtH);
-  // 强制用归一化值，不管AI给多少
+  // 强制用归一化值，不管AI给多少——所有展示统一用_cLikes
   var _cLikes=_cNorm;
-  var cmtRts=Math.max(1,Math.floor(_cLikes*(0.1+(cmtH%5)*0.03)));
-  var _cRawViews=Math.floor(_cLikes*(2+(cmtH%4)));
+  cmt.likes=_cLikes; // 强制覆盖，保证点赞按钮也从归一化值开始
+  var cmtRts=Math.max(1,Math.floor(_cLikes*(0.08+(cmtH%5)*0.02)));
+  var _cRawViews=Math.floor(_cLikes*(8+(cmtH%8)));
   var cmtViews=_cRawViews>=10000?Math.floor(_cRawViews/1000)+'K':_cRawViews+'';
-  var cmtBks=Math.max(0,Math.floor(_cLikes*(0.03+(cmtH%4)*0.008)));
+  var cmtBks=Math.max(0,Math.floor(_cLikes*(0.02+(cmtH%4)*0.008)));
   var sr=ce('div');sr.style.cssText='display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:4px;';
   var rb=ce('span');rb.style.cssText='font-size:13px;color:#536471;cursor:pointer;display:flex;align-items:center;gap:3px;';
   var _cmtFakeReplies=Math.max(cmt.replies&&cmt.replies.length||0, Math.floor((cmtH%12)+1));
@@ -25225,11 +25229,9 @@ function buildCmt(cmt,pi,ci){
   var rt=ce('span');rt.style.cssText='font-size:13px;color:#536471;display:flex;align-items:center;gap:3px;';
   rt.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>'+cmtRts;
   var lk=ce('span');lk.style.cssText='font-size:13px;color:#536471;display:flex;align-items:center;gap:3px;cursor:pointer;';
-  if(!cmt.likes&&_cLikes)cmt.likes=_cLikes; // 初始化存储值
-  lk.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'+(cmt.likes||0);
   var _lkd=cmt._liked||false;
-  lk.innerHTML=(_lkd?'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f91880" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="#f91880"/>':'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>')+'</svg>'+(cmt.likes||0);
-  lk.onclick=function(e){e.stopPropagation();_lkd=!_lkd;cmt._liked=_lkd;if(_lkd){cmt.likes=(cmt.likes||0)+1;}else{cmt.likes=Math.max(0,(cmt.likes||1)-1);}lk.innerHTML=(_lkd?'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f91880" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="#f91880"/>':'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>')+'</svg>'+(cmt.likes||0);fS('posts',_posts);};
+  lk.innerHTML=(_lkd?'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f91880" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="#f91880"/>':'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>')+'</svg>'+cmt.likes;
+  lk.onclick=function(e){e.stopPropagation();_lkd=!_lkd;cmt._liked=_lkd;if(_lkd){cmt.likes=cmt.likes+1;}else{cmt.likes=Math.max(0,cmt.likes-1);}lk.innerHTML=(_lkd?'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f91880" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="#f91880"/>':'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>')+'</svg>'+cmt.likes;fS('posts',_posts);};
   var vw=ce('span');vw.style.cssText='font-size:13px;color:#536471;display:flex;align-items:center;gap:3px;';
   vw.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>'+cmtViews;
   var bk=ce('span');bk.style.cssText='font-size:13px;color:#536471;display:flex;align-items:center;gap:3px;cursor:pointer;';
@@ -25262,10 +25264,11 @@ function buildCmt(cmt,pi,ci){
       // 楼中楼 stats - 用归一化函数，防止AI随手大数
       var repH2=postHash({name:rep.name,content:rep.text||'',title:''});
       var _rLikes=normalizeCmtLikes(rep.name,rep.type||'net',rep.likes,repH2);
-      var repRts=Math.max(0,Math.floor(_rLikes*(0.08+(repH2%5)*0.02)));
-      var _rViews=Math.floor(_rLikes*(2+(repH2%4)));
+      rep.likes=_rLikes; // 强制覆盖，防止AI给的大数显示
+      var repRts=Math.max(0,Math.floor(_rLikes*(0.06+(repH2%5)*0.02)));
+      var _rViews=Math.floor(_rLikes*(8+(repH2%8)));
       var repViews=_rViews>=10000?Math.floor(_rViews/1000)+'K':_rViews+'';
-      var repBks=Math.max(0,Math.floor(_rLikes*0.03));
+      var repBks=Math.max(0,Math.floor(_rLikes*0.02));
       var repS=ce('div');repS.style.cssText='display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding-left:28px;padding-right:4px;';
       var repRb2=ce('span');repRb2.style.cssText='font-size:12px;color:#536471;cursor:pointer;display:flex;align-items:center;gap:2px;';
       var _repFakeReplies=Math.floor((repH2%8)+1);
@@ -25610,7 +25613,7 @@ function renderTopicPosts(postList, bd){
     var stats=ce('div');stats.className='fStats';stats.style.cssText='display:flex;justify-content:space-around;align-items:center;padding-top:4px;';
     stats.innerHTML='<span class="fStat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'+ps3.cmts+'</span>'+
       '<span class="fStat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>'+ps3.rts+'</span>'+
-      '<span class="fStat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'+post.likes+'</span>'+
+      '<span class="fStat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'+ps3.likes+'</span>'+
       '<span class="fStat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>'+ps3.views+'</span>'+
       '<span class="fStat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></span>'+
       '<span class="fStat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></span>';
