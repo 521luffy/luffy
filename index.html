@@ -24541,16 +24541,22 @@ function renderRecommendFeed(container){
         ctx+='\n可以让角色或网友基于以上内容发帖评论、八卦、猜测、回应。\n';
       }
       var pr=ctx+'【重要】你们所在的平台是"推特"（Twitter），所有角色和网友都认为自己在推特上发推。\n'+
+        '【禁止】发帖人绝对不能是"'+_myName2+'"！这是玩家本人，不是NPC！\n'+
         '生成10条"为你推荐"的帖子，发帖人包含：'+charNames+'和普通网友。\n'+
         '内容多样化：包含日常生活、情感、追星、八卦、吐槽等，角色发帖贴合人设，网友要有真实活人感。\n'+
         '每条正文100-250字，口语化，带#话题标签，内容要完整有细节。\n'+
-        '【必须】每条帖子都要在正文后加【图片描述：xxx】，描述至少80字，详细描述画面构图、人物表情姿态、色调光线氛围，让读者有代入感。\n'+
-        '只输出JSON：[{"name":"发帖人","type":"char或net","title":"标题(可选)","content":"正文+图片描述","board":"板块如日常/情感/八卦/吐槽等","likes":数字}]\n不要其他文字。';
+        '【极重要-附件】每条帖子正文末尾必须附加至少一种媒体标记（不能省略！）：\n'+
+        '选项A 图片：【图片描述：详细描述画面构图、人物表情姿态、色调光线氛围，至少60字】\n'+
+        '选项B 音乐：【分享音乐：歌名|歌手|专辑名】（角色分享最近在听的歌，要符合人设）\n'+
+        '选项C 书籍：【推荐书籍：书名|作者】（角色分享最近在看的书）\n'+
+        '建议10条中6-7条用图片描述，2-3条用音乐，0-1条用书籍，让内容更丰富多彩。\n'+
+        '只输出JSON：[{"name":"发帖人","type":"char或net","title":"标题(可选)","content":"正文+媒体标记","board":"板块如日常/情感/八卦/吐槽等","likes":数字}]\n不要其他文字。';
       var raw=await fCall(cfg,pr);var items=fJson(raw);
       var charMap={};chars.forEach(function(c){charMap[c.name]=c;});
       _recommendPosts=[];
       var now=new Date();var toffs=[0,15,40,80,150,240,360,500,700,900];
       items.forEach(function(item,idx){if(!item.name||!item.content)return;
+        if(item.name===_myName2)return; // 禁止user出现在推荐中
         var c=charMap[item.name];
         var pt=new Date(now.getTime()-toffs[idx%toffs.length]*60000);
         _recommendPosts.push({name:item.name,type:item.type||(c?'char':'net'),ava:c?c.ava||null:null,title:item.title||'',content:item.content.slice(0,80),fullContent:item.content,board:item.board||'推荐',likes:item.likes||Math.floor((postHash({name:item.name,content:item.content})%480)+30),hot:false,time:timeAgo(pt.toISOString()),comments:[],isStub:false,topicKey:'_recommend'});
@@ -24596,14 +24602,20 @@ function renderFollowingFeed(container){
         '极其重要：发帖风格、语气、内容必须100%贴合各自人设！\n'+
         '沉默寡言的角色发帖要简短克制；活泼的角色可以多说；冷淡的角色绝对不会写长篇大论。\n'+
         '正文100-200字，口语化，必须带#话题标签，内容要有细节和画面感。\n'+
-        '【必须】每条帖子都要在正文后加【图片描述：xxx】，描述至少80字，详细描述画面构图、光线、色调、人物细节、氛围。\n'+
-        '只输出JSON：[{"name":"角色名","content":"动态正文+图片描述"}]\n不要其他文字。';
+        '【极重要-附件】每条帖子正文末尾必须附加至少一种媒体标记（不能省略！）：\n'+
+        '选项A 图片：【图片描述：详细描述画面，至少60字】\n'+
+        '选项B 音乐：【分享音乐：歌名|歌手|专辑名】（分享最近在听的歌，符合人设心境）\n'+
+        '选项C 书籍：【推荐书籍：书名|作者】\n'+
+        '让不同角色用不同类型的附件，让内容更丰富。\n'+
+        '只输出JSON：[{"name":"角色名","content":"动态正文+媒体标记"}]\n不要其他文字。';
       var raw=await fCall(cfg,pr);var items=fJson(raw);
       var charMap={};allChars.forEach(function(c){charMap[c.name]=c;});
       // 生成散开的时间（让帖子看起来不是同时发的）
       var timeOffsets=[0,25,60,120,180,300];
       var now=new Date();
       items.forEach(function(item,idx){if(!item.name||!item.content)return;var c=charMap[item.name];
+        var _mn2=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyName')||getMyName();
+        if(item.name===_mn2)return; // 禁止user出现
         var postTime=new Date(now.getTime()-timeOffsets[idx%timeOffsets.length]*60000);
         var tstr=timeAgo(postTime.toISOString());
         _posts.unshift({name:item.name,type:c?'char':'net',ava:c?c.ava||null:null,title:'',content:item.content.slice(0,60),fullContent:item.content,board:'关注',likes:Math.floor((postHash({name:item.name,content:item.content})%480)+20),hot:false,time:tstr,comments:[],isStub:false,topicKey:'_follow'});});
@@ -24679,6 +24691,60 @@ function postStats(post){
   return {cmts:cmts,rts:rts,likes:base,views:views,bks:bks};
 }
 
+// ── 通用多媒体卡片解析器：图片描述、音乐、书籍、视频 ──
+function parseMediaCards(fullText,container){
+  var imgMatches=[];var musicMatches=[];var bookMatches=[];var videoMatches=[];
+  var m;
+  var imgReg=/【图片描述[：:]([^】]+)】/g;
+  while((m=imgReg.exec(fullText))!==null){imgMatches.push(m[1]);}
+  var musicReg=/【分享音乐[：:]([^|｜]+)[|｜]([^|｜]+)[|｜]?([^】]*)】/g;
+  while((m=musicReg.exec(fullText))!==null){musicMatches.push({song:m[1].trim(),artist:m[2].trim(),album:(m[3]||'').trim()});}
+  var bookReg=/【推荐书籍[：:]([^|｜]+)[|｜]([^】]+)】/g;
+  while((m=bookReg.exec(fullText))!==null){bookMatches.push({title:m[1].trim(),author:m[2].trim()});}
+  var videoReg=/【分享视频[：:]([^|｜]+)[|｜]([^】]+)】/g;
+  while((m=videoReg.exec(fullText))!==null){videoMatches.push({title:m[1].trim(),desc:m[2].trim()});}
+  var cleanText=fullText
+    .replace(/【图片描述[：:][^】]+】/g,'')
+    .replace(/【分享音乐[：:][^】]+】/g,'')
+    .replace(/【推荐书籍[：:][^】]+】/g,'')
+    .replace(/【分享视频[：:][^】]+】/g,'')
+    .trim();
+  // 渲染图片描述卡片
+  imgMatches.forEach(function(desc){
+    var c=ce('div');c.style.cssText='background:#f7f9f9;border:1px solid #eff3f4;border-radius:14px;padding:12px 14px;margin-bottom:8px;font-size:13px;color:#536471;line-height:1.6;';
+    c.innerHTML='<span style="color:#1d9bf0;font-weight:600;">📷 </span>'+desc;
+    container.appendChild(c);
+  });
+  // 渲染音乐卡片
+  musicMatches.forEach(function(mu){
+    var c=ce('div');c.style.cssText='display:flex;align-items:center;gap:12px;background:#f7f9f9;border:1px solid #eff3f4;border-radius:14px;padding:10px 14px;margin-bottom:8px;cursor:pointer;';
+    var colors=['#e17055','#a29bfe','#00b894','#fd79a8','#6c5ce7','#f39c12'];
+    var h=0;for(var i=0;i<mu.song.length;i++)h=(h*31+mu.song.charCodeAt(i))&0xffff;
+    var bg=colors[h%colors.length];
+    c.innerHTML='<div style="width:48px;height:48px;border-radius:10px;background:'+bg+';display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span style="font-size:22px;">🎵</span></div>'+
+      '<div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:700;color:#0f1419;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+mu.song+'</div>'+
+      '<div style="font-size:12px;color:#536471;margin-top:2px;">'+mu.artist+(mu.album?' - '+mu.album:'')+'</div></div>'+
+      '<div style="width:36px;height:36px;border-radius:50%;background:#1d9bf0;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span style="color:#fff;font-size:14px;margin-left:2px;">▶</span></div>';
+    container.appendChild(c);
+  });
+  // 渲染书籍卡片
+  bookMatches.forEach(function(bk){
+    var c=ce('div');c.style.cssText='display:flex;align-items:center;gap:12px;background:#f7f9f9;border:1px solid #eff3f4;border-radius:14px;padding:10px 14px;margin-bottom:8px;';
+    c.innerHTML='<div style="width:40px;height:52px;border-radius:6px;background:linear-gradient(135deg,#dfe6e9,#b2bec3);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span style="font-size:20px;">📖</span></div>'+
+      '<div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:700;color:#0f1419;">'+bk.title+'</div>'+
+      '<div style="font-size:12px;color:#536471;margin-top:2px;">'+bk.author+'</div></div>';
+    container.appendChild(c);
+  });
+  // 渲染视频卡片
+  videoMatches.forEach(function(vd){
+    var c=ce('div');c.style.cssText='background:#f7f9f9;border:1px solid #eff3f4;border-radius:14px;padding:12px 14px;margin-bottom:8px;';
+    c.innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;"><span style="font-size:16px;">🎬</span><span style="font-size:14px;font-weight:700;color:#0f1419;">'+vd.title+'</span></div>'+
+      '<div style="font-size:13px;color:#536471;line-height:1.5;">'+vd.desc+'</div>';
+    container.appendChild(c);
+  });
+  return cleanText;
+}
+
 function buildCard(post,idx){
   // idx可能因对象引用不同而为-1，用内容匹配兜底
   if(idx<0||idx===undefined){
@@ -24701,23 +24767,16 @@ function buildCard(post,idx){
     var tl=ce('div'); tl.style.cssText='font-size:16px;font-weight:700;color:#0f1419;line-height:1.4;margin-bottom:4px;';
     tl.textContent=post.title; body.appendChild(tl);
   }
-  // 显示完整正文内容（不截断）
+  // 显示完整正文内容（不截断）+ 多媒体卡片
   var fullText=post.fullContent||post.content||'';
   if(fullText){
-    // 解析【图片描述：xxx】标记，转为图片描述卡片
-    var imgReg=/【图片描述[：:]([^】]+)】/g;
-    var imgMatches=[];var m;
-    while((m=imgReg.exec(fullText))!==null){imgMatches.push(m[1]);}
-    var cleanText=fullText.replace(/【图片描述[：:][^】]+】/g,'').trim();
+    var mediaWrap=ce('div');
+    var cleanText=parseMediaCards(fullText,mediaWrap);
     if(cleanText){
       var pv=ce('div');pv.style.cssText='font-size:14px;color:#0f1419;line-height:1.7;margin-bottom:6px;white-space:pre-wrap;word-break:break-word;';
       pv.textContent=cleanText;body.appendChild(pv);
     }
-    imgMatches.forEach(function(desc){
-      var imgCard=ce('div');imgCard.style.cssText='background:#f7f9f9;border:1px solid #eff3f4;border-radius:12px;padding:10px 12px;margin-bottom:8px;font-size:13px;color:#536471;line-height:1.5;';
-      imgCard.innerHTML='<span style="color:#1d9bf0;font-weight:600;">📷 </span>'+desc;
-      body.appendChild(imgCard);
-    });
+    body.appendChild(mediaWrap);
   }
   // 底部统计 - 用postStats保证一致性
   var stats=ce('div'); stats.className='fStats';stats.style.cssText='display:flex;justify-content:space-between;padding:2px 0;';
@@ -25065,7 +25124,11 @@ function openPost(idx){
       var pr=(s.wv?'背景：'+s.wv+'\n':'')+(s.dt?'时间：'+s.dt+'\n':'')+
         '请围绕标题"'+post.title+'"写一篇论坛帖子正文，发帖人是'+post.name+'。\n'+
         '要求：200-350字，口语化有活人感，包含具体细节和情绪。末尾可以加1-3个#话题标签。\n'+
-        '如果内容涉及图片/视频场景，请在正文后用【图片描述：xxx】格式描述，至少60字，详细描述画面构图、人物表情/姿态、色调、背景氛围、光线等细节。\n'+
+        '【极重要-附件】正文末尾必须附加至少一种媒体标记（不能省略！）：\n'+
+        '选项A 图片：【图片描述：详细描述画面构图、人物表情/姿态、色调、背景氛围、光线等，至少60字】\n'+
+        '选项B 音乐：【分享音乐：歌名|歌手|专辑名】\n'+
+        '选项C 书籍：【推荐书籍：书名|作者】\n'+
+        '大部分帖子用图片描述，偶尔用音乐或书籍。\n'+
         '只输出正文内容，不要标题，不要JSON。';
       fCall(cfg, pr).then(function(raw){
         post.fullContent = raw.trim()||post.title;
@@ -25098,20 +25161,15 @@ function renderPostDetail(post, body){
   orig.appendChild(hRow);
   // title
   if(post.title){ var tl=ce('div'); tl.style.cssText='font-size:18px;font-weight:700;color:#0f1419;margin:12px 0 8px;line-height:1.4;'; tl.textContent=post.title; orig.appendChild(tl); }
-  // content - parse image descriptions and tags
+  // content - parse all media cards (images, music, books, videos) and tags
   var rawContent = post.fullContent||post.content||'';
-  var imgMatch = rawContent.match(/【图片描述[：:](.+?)】/);
-  var mainText = rawContent.replace(/【图片描述[：:].+?】/g,'').trim();
+  var mediaWrap=ce('div');
+  var mainText = parseMediaCards(rawContent, mediaWrap);
   // render text with #tags highlighted
   var textEl=ce('div');textEl.style.cssText='font-size:15px;color:#0f1419;line-height:1.7;margin-bottom:12px;word-break:break-word;';
   textEl.innerHTML=mainText.replace(/#([^#\s]{1,20})#?/g,'<span style="color:#1d9bf0;">#$1</span>').replace(/@([^\s@]{1,15})/g,'<span style="color:#1d9bf0;">@$1</span>');
   orig.appendChild(textEl);
-  // image description card
-  if(imgMatch&&imgMatch[1]){
-    var imgCard=ce('div');imgCard.style.cssText='background:#f7f9f9;border:1px solid #eff3f4;border-radius:14px;padding:14px;margin-bottom:12px;font-size:14px;color:#536471;line-height:1.6;';
-    imgCard.textContent=imgMatch[1].trim();
-    orig.appendChild(imgCard);
-  }
+  orig.appendChild(mediaWrap);
   // stats row - X风格（横向，图标+数字对齐）
   var ps2=postStats(post);
   var statsRow=ce('div');statsRow.style.cssText='display:flex;justify-content:space-around;align-items:center;padding:10px 0;border-top:1px solid #eff3f4;border-bottom:1px solid #eff3f4;margin-top:8px;';
@@ -25155,7 +25213,7 @@ function buildCmt(cmt,pi,ci){
   var bd=ce('div');bd.className='fCmtBody';
   // header row with name + 3-dot menu
   var cmtHdr=ce('div');cmtHdr.style.cssText='display:flex;align-items:center;justify-content:space-between;';
-  var cmtLeft=ce('span');cmtLeft.innerHTML='<span class="fCmtName">'+cmt.name+'</span><span class="fCmtTime">'+hdl(cmt.name)+' · '+cmt.time+'</span>';
+  var cmtLeft=ce('span');cmtLeft.innerHTML='<span class="fCmtName">'+cmt.name+'</span><span class="fCmtTime">'+hdl(cmt.name)+' · '+timeAgo(cmt.time)+'</span>';
   var dots=ce('span');dots.style.cssText='font-size:16px;color:#536471;cursor:pointer;padding:2px 6px;';dots.textContent='⋮';
   dots.onclick=function(e){
     e.stopPropagation();
@@ -25250,7 +25308,7 @@ function buildCmt(cmt,pi,ci){
       var repAv=ce('div');repAv.style.cssText='width:22px;height:22px;border-radius:50%;flex-shrink:0;overflow:hidden;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;';
       setAva(repAv,rep.ava,rep.name,rep.type);
       var repNm=ce('span');repNm.style.cssText='font-size:13px;font-weight:700;color:#0f1419;';repNm.textContent=rep.name;
-      var repAt=ce('span');repAt.style.cssText='font-size:12px;color:#536471;';repAt.textContent=hdl(rep.name);
+      var repAt=ce('span');repAt.style.cssText='font-size:12px;color:#536471;';repAt.textContent=hdl(rep.name)+' · '+timeAgo(rep.time);
       repH.appendChild(repAv);repH.appendChild(repNm);repH.appendChild(repAt);
       // replyTo shown inline in text
       repRow.appendChild(repH);
@@ -25347,7 +25405,7 @@ async function sendReply(){
     ctx+='只输出JSON：[{"name":"回复者","type":"char或net","text":"内容","likes":数字,"replyTo":"被回复的人名（可选）"}]\n不要其他文字。';
     var raw=await fCall(cfg,ctx);var items=fJson(raw);
     var charMap={};chars.forEach(function(c){charMap[c.name]=c;});
-    var tstr=new Date().toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'});
+    var tstr=new Date().toISOString();
     // 找到目标评论索引
     var targetCi=isNested&&_replyTarget_saved?_replyTarget_saved.ci:null;
     items.forEach(function(item){
@@ -25556,10 +25614,12 @@ async function openTopic(topic){
     if(s.pr)extra2+=s.pr+'\n';
 
     var pr=extra2+'围绕话题"'+topic.title+'"，生成5条帖子（发帖人包含：'+charNames+'和随机网友如"吃瓜专业户"等有趣网名）。\n'+
+      '【禁止】发帖人绝对不能是"'+getMyName()+'"！\n'+
       '极其重要：角色发帖必须完全贴合各自人设和性格！沉默寡言的角色只说简短的话；文艺的角色用文艺语气；冷淡的角色不会长篇大论！\n'+
       '网友发帖要有真实活人感。字数跟人设走，不强求长度。\n'+
       '每条正文末尾必须带上 #'+topic.title+' 的话题标签。\n'+
       '涉及配图必须用【图片描述：xxx】格式，图片描述要详细生动，至少60字，描述画面构图、色彩、氛围、细节等。\n'+
+      '也可以用【分享音乐：歌名|歌手|专辑名】或【推荐书籍：书名|作者】代替图片描述，让内容更丰富。每条帖子至少附加一种媒体标记。\n'+
       '只输出JSON数组：[{"name":"发帖人","title":"帖子标题","content":"正文含图片描述"}]\n不要其他文字。';
     var raw=await fCall(cfg,pr);
     var items=fJson(raw);
@@ -25571,6 +25631,7 @@ async function openTopic(topic){
     var newPosts=[];
     items.forEach(function(item,idx){
       if(!item.name||!item.content)return;
+      var _mn=getMyName();if(item.name===_mn)return; // 禁止user出现
       var c=charMap[item.name];
       var postTime2=new Date(now2.getTime()-timeOff2[idx%timeOff2.length]*60000);
       var post={name:item.name,type:c?'char':'net',ava:c?c.ava||null:null,title:item.title||topic.title,content:item.content.slice(0,60),fullContent:item.content,board:topic.category||'综合',likes:Math.floor((postHash({name:item.name,content:item.content})%480)+20),hot:false,time:timeAgo(postTime2.toISOString()),comments:[],isStub:false,topicKey:topic.title};
@@ -25603,12 +25664,12 @@ function renderTopicPosts(postList, bd){
     var nameC=ce('div');nameC.innerHTML='<div class="fName">'+post.name+'</div><div class="fHandle">'+hdl(post.name)+' · '+post.time+'</div>';
     hRow.appendChild(av);hRow.appendChild(nameC);card.appendChild(hRow);
     var rawTxt=post.fullContent||post.content||'';
-    var imgM=rawTxt.match(/【图片描述[：:](.+?)】/);
-    var mainTxt=rawTxt.replace(/【图片描述[：:].+?】/g,'').trim();
+    var mediaW=ce('div');
+    var mainTxt=parseMediaCards(rawTxt,mediaW);
     var txtEl=ce('div');txtEl.style.cssText='font-size:15px;color:#0f1419;line-height:1.7;margin-bottom:8px;word-break:break-word;';
     txtEl.innerHTML=mainTxt.replace(/#([^#\s]{1,20})#?/g,'<span style="color:#1d9bf0;">#$1</span>').replace(/@([^\s@]{1,15})/g,'<span style="color:#1d9bf0;">@$1</span>');
     card.appendChild(txtEl);
-    if(imgM&&imgM[1]){var imgC=ce('div');imgC.style.cssText='background:#f7f9f9;border:1px solid #eff3f4;border-radius:14px;padding:12px;margin-bottom:8px;font-size:13px;color:#536471;line-height:1.5;';imgC.textContent=imgM[1].trim();card.appendChild(imgC);}
+    card.appendChild(mediaW);
     var ps3=postStats(post);
     var stats=ce('div');stats.className='fStats';stats.style.cssText='display:flex;justify-content:space-around;align-items:center;padding-top:4px;';
     stats.innerHTML='<span class="fStat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'+ps3.cmts+'</span>'+
@@ -25621,7 +25682,7 @@ function renderTopicPosts(postList, bd){
     bd.appendChild(card);
   });
 }
-async function doSearch(q){if(!q)return;var feed=document.getElementById('fFeed');if(!feed)return;var local=_posts.filter(function(p){return p.content&&p.content.includes(q);});feed.innerHTML='<div style="padding:10px 14px;font-size:14px;font-weight:700;color:#536471;border-bottom:1px solid #eff3f4;">搜索：'+q+'</div>';if(local.length)local.forEach(function(p){feed.appendChild(buildCard(p,_posts.indexOf(p)));});var cfg=await fApi();if(!cfg)return;var s=getS();var pr='生成5条关于"'+q+'"的帖子，时间：'+s.dt+'\n输出JSON：[{"name":"网友名","type":"net","content":"60字内","board":"综合","likes":数字,"hot":false,"comments":[]}]\n只输出JSON数组。';try{var raw=await fCall(cfg,pr);var items=fJson(raw);var tstr=new Date().toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'});items.forEach(function(item){var p={name:item.name,type:'net',ava:null,content:item.content,board:item.board||'综合',likes:item.likes||0,hot:false,time:tstr,comments:[]};feed.appendChild(buildCard(p,_posts.length));_posts.push(p);});fS('posts',_posts);}catch(e){}}
+async function doSearch(q){if(!q)return;var feed=document.getElementById('fFeed');if(!feed)return;var local=_posts.filter(function(p){return p.content&&p.content.includes(q);});feed.innerHTML='<div style="padding:10px 14px;font-size:14px;font-weight:700;color:#536471;border-bottom:1px solid #eff3f4;">搜索：'+q+'</div>';if(local.length)local.forEach(function(p){feed.appendChild(buildCard(p,_posts.indexOf(p)));});var cfg=await fApi();if(!cfg)return;var s=getS();var pr='生成5条关于"'+q+'"的帖子，时间：'+s.dt+'\n输出JSON：[{"name":"网友名","type":"net","content":"60字内","board":"综合","likes":数字,"hot":false,"comments":[]}]\n只输出JSON数组。';try{var raw=await fCall(cfg,pr);var items=fJson(raw);var tstr=new Date().toISOString();items.forEach(function(item){var p={name:item.name,type:'net',ava:null,content:item.content,board:item.board||'综合',likes:item.likes||0,hot:false,time:tstr,comments:[]};feed.appendChild(buildCard(p,_posts.length));_posts.push(p);});fS('posts',_posts);}catch(e){}}
 window.fDoSearch=doSearch;
 
 function newPost(){
