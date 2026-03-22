@@ -24521,11 +24521,12 @@ function renderRecommendFeed(container){
         if(_myPosts2)ctx+='最近发帖："'+_myPosts2+'"；';
         ctx+='\n可以让角色或网友基于以上内容发帖评论、八卦、猜测、回应。\n';
       }
-      var pr=ctx+'生成10条"为你推荐"的帖子，发帖人包含：'+charNames+'和普通网友。\n'+
-        '内容多样化：包含日常生活、学习工作、追星、动漫、情感树洞等，不一定要围绕同一话题。\n'+
-        '角色发帖贴合人设，网友要有真实活人感。\n'+
-        '每条80-200字，可带#标签，涉及配图用【图片描述：xxx】至少50字详细描述。\n'+
-        '只输出JSON：[{"name":"发帖人","type":"char或net","title":"标题(可选)","content":"正文","board":"板块如爆料/情感树洞/日常/学习/追星等","likes":数字}]\n不要其他文字。';
+      var pr=ctx+'【重要】你们所在的平台是"推特"（Twitter），所有角色和网友都认为自己在推特上发推。\n'+
+        '生成10条"为你推荐"的帖子，发帖人包含：'+charNames+'和普通网友。\n'+
+        '内容多样化：包含日常生活、情感、追星、八卦、吐槽等，角色发帖贴合人设，网友要有真实活人感。\n'+
+        '每条正文100-250字，口语化，带#话题标签，内容要完整有细节。\n'+
+        '【必须】每条帖子都要在正文后加【图片描述：xxx】，描述至少80字，详细描述画面构图、人物表情姿态、色调光线氛围，让读者有代入感。\n'+
+        '只输出JSON：[{"name":"发帖人","type":"char或net","title":"标题(可选)","content":"正文+图片描述","board":"板块如日常/情感/八卦/吐槽等","likes":数字}]\n不要其他文字。';
       var raw=await fCall(cfg,pr);var items=fJson(raw);
       var charMap={};chars.forEach(function(c){charMap[c.name]=c;});
       _recommendPosts=[];
@@ -24571,12 +24572,13 @@ function renderFollowingFeed(container){
       if(activeWb.length)ctx+='【设定】'+activeWb.map(function(i){return i.title+'：'+i.content;}).join('\n')+'\n';
       if(s.pr)ctx+=s.pr+'\n';
       ctx+='【角色人设（必须严格遵守）】\n'+charBios+'\n';
-      var pr=ctx+'为以上每个角色各生成1条日常动态（心情、碎碎念、分享日常）。\n'+
+      var pr=ctx+'【重要】所有角色认为自己在"推特"（Twitter）上发推，平台叫推特。\n'+
+        '为以上每个角色各生成1条日常动态（心情、碎碎念、分享日常）。\n'+
         '极其重要：发帖风格、语气、内容必须100%贴合各自人设！\n'+
         '沉默寡言的角色发帖要简短克制；活泼的角色可以多说；冷淡的角色绝对不会写长篇大论。\n'+
-        '这是微博动态，不需要标题！正文内容，真实活人感。\n'+
-        '每条30-120字，口语化，必须带#话题标签。\n'+      '涉及配图用【图片描述：xxx】描述，图片描述至少50字，要详细描述画面细节、色彩、氛围。\n'+
-        '只输出JSON：[{"name":"角色名","content":"动态正文"}]\n不要其他文字。';
+        '正文100-200字，口语化，必须带#话题标签，内容要有细节和画面感。\n'+
+        '【必须】每条帖子都要在正文后加【图片描述：xxx】，描述至少80字，详细描述画面构图、光线、色调、人物细节、氛围。\n'+
+        '只输出JSON：[{"name":"角色名","content":"动态正文+图片描述"}]\n不要其他文字。';
       var raw=await fCall(cfg,pr);var items=fJson(raw);
       var charMap={};allChars.forEach(function(c){charMap[c.name]=c;});
       // 生成散开的时间（让帖子看起来不是同时发的）
@@ -24878,6 +24880,8 @@ function openCharProfile(post){
   var _profKey='charProf_'+post.name.replace(/[^\w\u4e00-\u9fa5]/g,'_');
 
   async function loadOrGenProfContent(){
+    // user自己的主页不自动生成帖子
+    if(_isUserPost)return null;
     var stored=null;
     try{stored=await localforage.getItem(_profKey);}catch(e){}
     if(stored&&stored.posts&&stored.posts.length){return stored;}
@@ -25152,9 +25156,13 @@ function buildCmt(cmt,pi,ci){
   bd.appendChild(txt);
   // actions - 完整X风格stats bar
   var cmtH=postHash({name:cmt.name,content:cmt.text||'',title:''});
-  // 评论点赞按人气类型限制
-  var _cMaxLikes=cmt.type==='user'?50:(cmt.type==='net'?300:800);
-  var _cLikes=Math.min(cmt.likes||0,_cMaxLikes);
+  // 评论点赞按人气类型限制，user也要给合理数字
+  var myNameCmt=getMyName();
+  var _isUserCmt=(cmt.type==='user'&&cmt.name===myNameCmt);
+  var _myFwersCmt=parseInt(originalGetItem.call(localStorage,'fMyFollowers')||'0')||0;
+  var _cMaxLikes=_isUserCmt?Math.max(50,Math.floor(_myFwersCmt*0.08)):( cmt.type==='net'?300:800);
+  var _cBase=Math.max(_isUserCmt?10:20, Math.floor((cmtH%_cMaxLikes)+Math.floor(_cMaxLikes*0.15)));
+  var _cLikes=cmt.likes||_cBase;
   var cmtRts=Math.max(1,Math.floor(_cLikes*(0.1+(cmtH%5)*0.03)));
   var _cRawViews=Math.floor(_cLikes*(2+(cmtH%4)));
   var cmtViews=_cRawViews>=10000?Math.floor(_cRawViews/1000)+'K':_cRawViews+'';
@@ -25167,6 +25175,7 @@ function buildCmt(cmt,pi,ci){
   var rt=ce('span');rt.style.cssText='font-size:13px;color:#536471;display:flex;align-items:center;gap:3px;';
   rt.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>'+cmtRts;
   var lk=ce('span');lk.style.cssText='font-size:13px;color:#536471;display:flex;align-items:center;gap:3px;cursor:pointer;';
+  if(!cmt.likes&&_cBase)cmt.likes=_cBase; // 初始化存储值
   lk.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'+(cmt.likes||0);
   var _lkd=cmt._liked||false;
   lk.innerHTML=(_lkd?'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f91880" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="#f91880"/>':'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>')+'</svg>'+(cmt.likes||0);
@@ -25323,7 +25332,8 @@ async function loadMoreCmts(btn){
   if(charBios) ctx+='【角色人设（评论必须严格贴合）】\n'+charBios+'\n';
   ctx+='【帖子】发帖人：'+post.name+'\n标题：'+(post.title||'')+'\n正文：'+(post.fullContent||post.content||'').slice(0,300)+'\n\n';
   if(post.comments.length){ctx+='【已有评论】\n';post.comments.slice(-5).forEach(function(c){ctx+=c.name+'：'+c.text+'\n';});ctx+='\n';}
-  var pr=ctx+'生成5条新评论（评论者包含'+charNames+'和路人网友如"吃瓜专业户"等有趣网名）。\n'+
+  var pr=ctx+'【平台背景】所有人都在"推特"（Twitter）上互动，发推、回推。\n'+
+    '生成5条新评论（评论者包含'+charNames+'和路人网友如"吃瓜专业户"等有趣网名）。\n'+
     '要求：角色100%贴合人设语气，评论间可互相回复吐槽，网友要有活人感，每条20-60字。\n'+
     '只输出JSON：[{"name":"评论人","type":"char或net","text":"内容","likes":数字}]';
   try{
@@ -25399,7 +25409,7 @@ async function genTopics(cfg, tab){
   var s=getS();
   var chars=getChars();
   var charNames=chars.length?chars.slice(0,5).map(function(c){return c.name;}).join('、'):'';
-  var extra='';
+  var extra='【平台】所有角色和网友都在"推特"（Twitter）上，发帖叫发推。\n';
   if(s.dt) extra+='时间设定：'+s.dt+'\n';
   var activeWb=_wbItems.filter(function(i){return i.active!==false;});
   // 注入user最新动态
@@ -25485,7 +25495,7 @@ async function openTopic(topic){
       var ov=_charOverrides&&_charOverrides[c.name];var bio=(ov&&ov.bio)||c.bio||'';
       if(bio)charDesc+=c.name+'：'+bio.slice(0,40)+'\n';
     });
-    var extra2='';if(s.wv)extra2+='背景：'+s.wv+'\n';if(s.dt)extra2+='时间：'+s.dt+'\n';
+    var extra2='【平台】推特（Twitter），发帖叫发推。\n';if(s.wv)extra2+='背景：'+s.wv+'\n';if(s.dt)extra2+='时间：'+s.dt+'\n';
     // 只使用启用的世界书
     var activeWb=_wbItems.filter(function(i){return i.active!==false;});
     if(activeWb.length)extra2+='设定：'+activeWb.map(function(i){return i.title+':'+i.content;}).join('；')+'\n';
@@ -25612,8 +25622,8 @@ function newPost(){
       var charNames=chars.length?chars.slice(0,5).map(function(c){return c.name;}).join('、'):'网友';
       var charBios='';chars.slice(0,5).forEach(function(c){var ov2=_charOverrides&&_charOverrides[c.name];var bio=(ov2&&ov2.bio)||c.bio||'';charBios+=c.name+(bio?'('+bio+')':'')+' ';});
       var ctx='';if(s.wv)ctx+='背景：'+s.wv+'\n';
-      ctx+='角色：'+charBios+'\n';
-      ctx+=myName+'刚发帖："'+fullContent.slice(0,100)+'"\n';
+      ctx+='【平台】推特（Twitter）\n角色：'+charBios+'\n';
+      ctx+=myName+'刚发推："'+fullContent.slice(0,100)+'"\n';
       ctx+='生成3-4条评论（'+charNames+'和路人网友），贴合人设，有活人感，互相可能有楼中楼互动。\n'+
            '只输出JSON：[{"name":"评论人","type":"char或net","text":"内容","likes":数字,"replyTo":"被回复人名或空"}]';
       var raw=await fCall(cfg,ctx);var items=fJson(raw);
@@ -26053,13 +26063,21 @@ function openDMChat(name,ava,type,initialMsg){
       }
     };
     var wrap=ce('div');wrap.style.cssText='max-width:58%;min-width:120px;';wrap.appendChild(voiceBar);
-    if(isMe){bub.style.cssText='display:flex;justify-content:flex-end;';bub.appendChild(wrap);}
+    if(isMe){bub.style.cssText='display:flex;justify-content:flex-end;padding:3px 12px;';bub.appendChild(wrap);}
     else{
-      bub.style.cssText='display:flex;align-items:flex-end;gap:8px;';
+      bub.style.cssText='display:flex;align-items:flex-end;gap:8px;padding:3px 12px;';
       var lAv=ce('div');lAv.style.cssText='width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;overflow:hidden;background-size:cover;background-position:center;';
       setAva(lAv,ava,name,type);
       bub.appendChild(lAv);bub.appendChild(wrap);
     }
+    // 长按删除
+    var _vPt=null;
+    bub.addEventListener('touchstart',function(){_vPt=setTimeout(function(){
+      var vIdx=_chatHistory.findIndex(function(m){return m.isVoice&&m.voiceTxt===txt&&m.isMe===isMe;});
+      showMsgMenu(bub,vIdx);
+    },600);});
+    bub.addEventListener('touchend',function(){clearTimeout(_vPt);});
+    bub.addEventListener('touchmove',function(){clearTimeout(_vPt);});
     ma.appendChild(bub);ma.scrollTop=ma.scrollHeight;
   }
 
@@ -26114,7 +26132,13 @@ function openDMChat(name,ava,type,initialMsg){
       // 在气泡里显示缩略图
       var bub=ce('div');bub.style.cssText='display:flex;justify-content:flex-end;';
       var imgEl=ce('img');imgEl.src=ev.target.result;imgEl.style.cssText='max-width:180px;max-height:180px;border-radius:12px;border:1px solid #eff3f4;';
-      bub.appendChild(imgEl);ma.appendChild(bub);ma.scrollTop=ma.scrollHeight;
+      bub.appendChild(imgEl);
+      // 长按删除
+      var _iPt=null;
+      bub.addEventListener('touchstart',function(){_iPt=setTimeout(function(){var iIdx=_chatHistory.findIndex(function(m){return m.isImg&&m.isMe;});showMsgMenu(bub,iIdx);},600);});
+      bub.addEventListener('touchend',function(){clearTimeout(_iPt);});
+      bub.addEventListener('touchmove',function(){clearTimeout(_iPt);});
+      ma.appendChild(bub);ma.scrollTop=ma.scrollHeight;
       _chatHistory.push({text:imgMsg,isMe:true,isImg:true,imgSrc:ev.target.result,ts:Date.now()});
       localforage.setItem('dmhist_'+chatKey,_chatHistory).catch(function(){});
     };reader.readAsDataURL(file);
@@ -26750,9 +26774,9 @@ var dmRefresh=ce('div');dmRefresh.style.cssText='font-size:20px;cursor:pointer;c
     var myInfo='';
     if(myBio)myInfo+='ta的个性签名："'+myBio+'"；';
     if(myRecentPosts)myInfo+='ta最近发的帖子："'+myRecentPosts+'"；';
-    var pr='背景：'+myName+(myInfo?'，'+myInfo:'')+'\n'+
+    var pr='【平台】推特（Twitter）\n背景：'+myName+(myInfo?'，'+myInfo:'')+'\n'+
       (recentTopics?recentTopics:'')+
-      '生成6-8条陌生网友给"'+myName+'"发的私信（不是'+charNames+'，是陌生网友），要求：\n'+
+      '生成6-8条陌生网友给"'+myName+'"发的推特私信（不是'+charNames+'，是陌生网友），要求：\n'+
       '1. 其中4-5条是正常粉丝：看了热搜/帖子来搭讪，或者老粉打招呼，或者被签名吸引\n'+
       '2. 其中2-3条要有负面内容，包括：黑粉酸言、阴阳怪气、不怀好意的撩骚或骚扰（真实网络环境）\n'+
       '3. 每条20-40字，口语化，网名有趣真实\n'+
