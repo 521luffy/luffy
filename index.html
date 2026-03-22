@@ -24602,26 +24602,28 @@ function renderRecommendFeed(container){
       var activeWb=_wbItems.filter(function(i){return i.active!==false;});
       if(activeWb.length)ctx+='设定：'+activeWb.map(function(i){return i.title+':'+i.content;}).join('；')+'\n';
       if(charBios)ctx+='角色：\n'+charBios;
-      // 注入user最新动态，让其他角色可以基于此八卦
+      // 注入user最新动态（仅作为背景参考，不能全部围绕它）
       var _myName2=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyName')||getMyName();
       var _myBio2=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyBio')||'';
       var _myPosts2=_posts.filter(function(p){return p.type==='user';}).slice(-2).map(function(p){return p.title||p.content||'';}).filter(Boolean).join('；');
-      if(_myBio2||_myPosts2){
-        ctx+='【重要背景】论坛主角"'+_myName2+'"的最新动态：';
-        if(_myBio2)ctx+='签名已更新为"'+_myBio2+'"；';
-        if(_myPosts2)ctx+='最近发帖："'+_myPosts2+'"；';
-        ctx+='\n可以让角色或网友基于以上内容发帖评论、八卦、猜测、回应。\n';
+      if(_myPosts2){
+        ctx+='【背景参考】玩家"'+_myName2+'"最近发了帖："'+_myPosts2+'"。';
+        if(_myBio2)ctx+='签名："'+_myBio2+'"。';
+        ctx+='\n【严格限制】10条帖子中最多只有1-2条可以与玩家动态相关！其余8-9条必须是角色自己的独立日常，与玩家无关！如果有帖子要回应玩家的帖子，必须用引用格式：在正文开头加「转推 @'+_myName2+'：原帖内容摘要」然后再写自己的评论。\n';
       }
-      var pr=ctx+'【重要】你们所在的平台是"推特"（Twitter），所有角色和网友都认为自己在推特上发推。\n'+
-        '【禁止】发帖人绝对不能是"'+_myName2+'"！这是玩家本人，不是NPC！\n'+
-        '生成10条"为你推荐"的帖子，发帖人包含：'+charNames+'和普通网友。\n'+
-        '内容多样化：包含日常生活、情感、追星、八卦、吐槽等，角色发帖贴合人设，网友要有真实活人感。\n'+
+      var pr=ctx+'【重要】你们所在的平台是"推特"（Twitter），所有人都认为自己在推特上发推。\n'+
+        '【禁止】发帖人绝对不能是"'+_myName2+'"！\n'+
+        '生成10条"为你推荐"的帖子。这是推荐页，不是关注页！\n'+
+        '【发帖人构成——极重要】：\n'+
+        '- 7-8条来自玩家不认识的人：大V博主、公众号、明星、搞笑博主、情感博主、知识科普号、新闻媒体、路人网友等（必须起真实有趣的网名/昵称，不要用"网友A"这种）\n'+
+        '- 最多2-3条来自玩家认识的角色（'+charNames+'），让玩家偶尔刷到熟人\n'+
+        '内容多样化：热点新闻、搞笑段子、美食分享、旅游打卡、职场吐槽、情感故事、知识科普、追星、开箱测评等，模拟真实推荐流。\n'+
         '每条正文100-250字，口语化，带#话题标签，内容要完整有细节。\n'+
         '【极重要-附件】每条帖子正文末尾必须附加至少一种媒体标记（不能省略！）：\n'+
         '选项A 图片：【图片描述：详细描述画面构图、人物表情姿态、色调光线氛围，至少60字】\n'+
-        '选项B 音乐：【分享音乐：歌名|歌手|专辑名】（角色分享最近在听的歌，要符合人设）\n'+
-        '选项C 书籍：【推荐书籍：书名|作者】（角色分享最近在看的书）\n'+
-        '建议10条中6-7条用图片描述，2-3条用音乐，0-1条用书籍，让内容更丰富多彩。\n'+
+        '选项B 音乐：【分享音乐：歌名|歌手|专辑名】\n'+
+        '选项C 书籍：【推荐书籍：书名|作者】\n'+
+        '建议10条中6-7条用图片描述，2-3条用音乐，0-1条用书籍。\n'+
         '只输出JSON：[{"name":"发帖人","type":"char或net","title":"标题(可选)","content":"正文+媒体标记","board":"板块如日常/情感/八卦/吐槽等","likes":数字}]\n不要其他文字。';
       var raw=await fCall(cfg,pr);var items=fJson(raw);
       var charMap={};chars.forEach(function(c){charMap[c.name]=c;});
@@ -24749,9 +24751,12 @@ function postStats(post){
   var fameBases=[0,80,600,3000];
   var fameBase=fameBases[fame]||80;
   var seed=post.likes||Math.floor((h%fameBase)+Math.floor(fameBase*0.3));
+  // 用hash产生更大变化，避免所有同档角色点赞数一样
+  var h2=(h*7+13)&0xffff;
+  seed=seed+Math.floor((h2%fameBase)*0.5);
   // 强制在fame区间内归一化（防止AI生成的likes数字突破档位）
   var maxLikes=[999,999,9999,999999];
-  var minLikes=[0,10,200,2000];
+  var minLikes=[0,10,100,500];
   var base=Math.min(Math.max(seed,minLikes[fame]),maxLikes[fame]);
   var realCmts=post.comments?post.comments.length:0;
   var fakeCmts=Math.floor((h%(fame===3?80:fame===2?25:12))+2);
@@ -24781,6 +24786,11 @@ function parseMediaCards(fullText,container){
     .replace(/【推荐书籍[：:][^】]+】/g,'')
     .replace(/【分享视频[：:][^】]+】/g,'')
     .trim();
+  // 解析转推/引用格式：「转推 @xxx：引用内容」
+  var quoteReg=/[「]?转推\s*@([^\s：:]+)[：:]([^」\n]+)[」]?/g;
+  var quoteMatches=[];
+  while((m=quoteReg.exec(cleanText))!==null){quoteMatches.push({name:m[1].trim(),text:m[2].trim()});}
+  cleanText=cleanText.replace(/[「]?转推\s*@[^\s：:]+[：:][^」\n]+[」]?/g,'').trim();
   // 渲染图片描述卡片
   imgMatches.forEach(function(desc){
     var c=ce('div');c.style.cssText='background:#f7f9f9;border:1px solid #eff3f4;border-radius:14px;padding:12px 14px;margin-bottom:8px;font-size:13px;color:#536471;line-height:1.6;';
@@ -24812,6 +24822,13 @@ function parseMediaCards(fullText,container){
     var c=ce('div');c.style.cssText='background:#f7f9f9;border:1px solid #eff3f4;border-radius:14px;padding:12px 14px;margin-bottom:8px;';
     c.innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;"><span style="font-size:16px;">🎬</span><span style="font-size:14px;font-weight:700;color:#0f1419;">'+vd.title+'</span></div>'+
       '<div style="font-size:13px;color:#536471;line-height:1.5;">'+vd.desc+'</div>';
+    container.appendChild(c);
+  });
+  // 渲染引用/转推卡片
+  quoteMatches.forEach(function(qt){
+    var c=ce('div');c.style.cssText='background:#fff;border:1.5px solid #cfd9de;border-radius:16px;padding:12px 14px;margin-bottom:8px;';
+    c.innerHTML='<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;"><div style="width:20px;height:20px;border-radius:50%;background:#1d9bf0;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;font-weight:700;color:#fff;">'+qt.name.slice(0,1)+'</div><span style="font-size:13px;font-weight:700;color:#0f1419;">'+qt.name+'</span><span style="font-size:12px;color:#536471;">@'+qt.name+'</span></div>'+
+      '<div style="font-size:13px;color:#536471;line-height:1.5;">'+qt.text+'</div>';
     container.appendChild(c);
   });
   return cleanText;
@@ -25674,15 +25691,12 @@ async function genTopics(cfg, tab){
   var extra='【平台】所有角色和网友都在"推特"（Twitter）上，发帖叫发推。\n';
   if(s.dt) extra+='时间设定：'+s.dt+'\n';
   var activeWb=_wbItems.filter(function(i){return i.active!==false;});
-  // 注入user最新动态
+  // 注入user最新动态（仅作为轻量背景参考）
   var _myNameT=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyName')||getMyName();
   var _myBioT=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyBio')||'';
   var _myPostsT=_posts.filter(function(p){return p.type==='user';}).slice(-2).map(function(p){return p.title||p.content||'';}).filter(Boolean).join('；');
-  if(_myBioT||_myPostsT){
-    extra+='【主角"'+_myNameT+'"最新动态】';
-    if(_myBioT)extra+='签名："'+_myBioT+'"；';
-    if(_myPostsT)extra+='近期帖子："'+_myPostsT+'"；';
-    extra+='\n';
+  if(_myPostsT){
+    extra+='【轻量参考】玩家"'+_myNameT+'"近期发帖："'+_myPostsT+'"（仅供偶尔参考，绝大多数话题不要与此相关）\n';
   }
 
   // 每个tab不同的prompt
