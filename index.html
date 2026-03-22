@@ -5673,7 +5673,6 @@ let currentChatId ="default";
 let originalSetItem = ls.setItem;
 window._origLSSet = ls.setItem.bind(ls);
 window._origLSGet = ls.getItem.bind(ls);
-window._origLSGetItem = ls.getItem.bind(ls);
 let isolatedKeys = ["cMyN", "myI", "chatHistory", "aiStatus", "bgI", "aiI", "cMP", "cN", "cR", "cAP", "cCtx", "cT", "cAMem", "cMemT", "cMemP", "linkedWb", "lastMemCount", "memories", "cStatusTxt", "cStatusColor", "cSign", "cBubbleCss", "cCTon", "cCTy", "cCTm", "cCTd", "cCTh", "cCTmin", "cStatusBarOn", "cStatusBar", "cStatusBarTpl"];
 
 // ===== 名字内存缓存（绕开 localStorage 满的问题）=====
@@ -24406,7 +24405,7 @@ async function fL(k,d){
   }
   return(r===null||r===undefined)?d:r;
 }
-async function fApi(){var p='',k='',m='';try{p=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'pxy')||'';}catch(e){}try{k=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'key')||'';}catch(e){}try{m=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'mod')||'';}catch(e){}if(!p){try{p=await localforage.getItem('pxy')||'';}catch(e){}}if(!k){try{k=await localforage.getItem('key')||'';}catch(e){}}if(!m){try{m=await localforage.getItem('mod')||'';}catch(e){}}if(!p||!k)return null;if(!p.includes('chat/completions')&&!p.includes('/v1/messages'))p=p.replace(/\/$/,'')+'/chat/completions';if(!m)m='claude-sonnet-4-20250514';return{p,k,m};}
+async function fApi(){var p='',k='',m='';try{p=originalGetItem.call(localStorage,'pxy')||'';}catch(e){}try{k=originalGetItem.call(localStorage,'key')||'';}catch(e){}try{m=originalGetItem.call(localStorage,'mod')||'';}catch(e){}if(!p){try{p=await localforage.getItem('pxy')||'';}catch(e){}}if(!k){try{k=await localforage.getItem('key')||'';}catch(e){}}if(!m){try{m=await localforage.getItem('mod')||'';}catch(e){}}if(!p||!k)return null;if(!p.includes('chat/completions')&&!p.includes('/v1/messages'))p=p.replace(/\/$/,'')+'/chat/completions';if(!m)m='claude-sonnet-4-20250514';return{p,k,m};}
 async function fCall(cfg,prompt,maxT){
   var ctrl=new AbortController();var tid=setTimeout(function(){ctrl.abort();},180000);
   try{
@@ -24467,9 +24466,9 @@ document.head.appendChild(st);}
 function ce(tag,id){var el=document.createElement(tag||'div');if(id)el.id=id;return el;}
 function hdl(name){return '@'+name.replace(/\s/g,'_').toLowerCase();}
 function toast(msg){var t=ce('div');t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(15,20,25,.88);color:#fff;padding:9px 18px;border-radius:20px;font-size:14px;z-index:99999;pointer-events:none;white-space:nowrap;';t.textContent=msg;document.body.appendChild(t);setTimeout(function(){t.remove();},2000);}
-function getMyName(){var fn=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyName');if(fn)return fn;return (window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'cMyN_'+((window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'cs_active_char')||''))||'我';}
-function getMyAva(){var a=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyAva');return a||'';}
-function getChars(){var names=[];try{var opened=JSON.parse(localStorage.getItem('cs_opened_chars')||'[]');opened.forEach(function(cid){var n=localStorage.getItem('cN_'+cid);var ava=localStorage.getItem('charAva_'+cid)||'';if(n){var ov=_charOverrides&&_charOverrides[n];names.push({name:n,type:'char',ava:(ov&&ov.ava)||ava,handle:ov&&ov.handle,bio:ov&&ov.bio,following:ov&&ov.following,followers:ov&&ov.followers});}});opened.forEach(function(cid){var raw=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'npcList_'+cid);if(raw){try{JSON.parse(raw).forEach(function(n){if(n.name){var ov=_charOverrides&&_charOverrides[n.name];names.push({name:n.name,type:'npc',ava:(ov&&ov.ava)||n.avatar||''});}});}catch(e){}}});}catch(e){}_extraCharsData.forEach(function(d){if(!names.find(function(c){return c.name===d.name;}))names.push({name:d.name,type:'extra',ava:d.ava||''});});return names;}
+function getMyName(){var fn=originalGetItem.call(localStorage,'fMyName');if(fn)return fn;return originalGetItem.call(localStorage,'cMyN_'+(originalGetItem.call(localStorage,'cs_active_char')||''))||'我';}
+function getMyAva(){var a=originalGetItem.call(localStorage,'fMyAva');return a||'';}
+function getChars(){var names=[];try{var opened=JSON.parse(localStorage.getItem('cs_opened_chars')||'[]');opened.forEach(function(cid){var n=localStorage.getItem('cN_'+cid);var ava=localStorage.getItem('charAva_'+cid)||'';if(n){var ov=_charOverrides&&_charOverrides[n];names.push({name:n,type:'char',ava:(ov&&ov.ava)||ava,handle:ov&&ov.handle,bio:ov&&ov.bio,following:ov&&ov.following,followers:ov&&ov.followers});}});opened.forEach(function(cid){var raw=originalGetItem.call(localStorage,'npcList_'+cid);if(raw){try{JSON.parse(raw).forEach(function(n){if(n.name){var ov=_charOverrides&&_charOverrides[n.name];names.push({name:n.name,type:'npc',ava:(ov&&ov.ava)||n.avatar||''});}});}catch(e){}}});}catch(e){}_extraCharsData.forEach(function(d){if(!names.find(function(c){return c.name===d.name;}))names.push({name:d.name,type:'extra',ava:d.ava||''});});return names;}
 function getS(){return{wv:(document.getElementById('fWvArea')||{}).value||'',pr:(document.getElementById('fPrArea')||{}).value||'',dt:(document.getElementById('fDtInp')||{}).value||'2026年3月'};}
 function aColor(name){var c=['#1d9bf0','#e17055','#00b894','#a29bfe','#e84393','#f39c12'],h=0;for(var i=0;i<name.length;i++)h=(h*31+name.charCodeAt(i))&0xffff;return c[h%c.length];}
 
@@ -24531,8 +24530,8 @@ function renderRecommendFeed(container){
       if(activeWb.length)ctx+='设定：'+activeWb.map(function(i){return i.title+':'+i.content;}).join('；')+'\n';
       if(charBios)ctx+='角色：\n'+charBios;
       // 注入user最新动态，让其他角色可以基于此八卦
-      var _myName2=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyName')||getMyName();
-      var _myBio2=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyBio')||'';
+      var _myName2=originalGetItem.call(localStorage,'fMyName')||getMyName();
+      var _myBio2=originalGetItem.call(localStorage,'fMyBio')||'';
       var _myPosts2=_posts.filter(function(p){return p.type==='user';}).slice(-2).map(function(p){return p.title||p.content||'';}).filter(Boolean).join('；');
       if(_myBio2||_myPosts2){
         ctx+='【重要背景】论坛主角"'+_myName2+'"的最新动态：';
@@ -24615,7 +24614,7 @@ function renderFollowingFeed(container){
   container.style.position='relative';
   container.appendChild(rfBtn);
   // 只显示关注动态（topicKey='_follow'），且不显示"我"自己的帖子
-  var myName=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyName')||getMyName();
+  var myName=originalGetItem.call(localStorage,'fMyName')||getMyName();
   var list=_posts.filter(function(p){return p.topicKey==='_follow'&&p.name!==myName;});
   if(!list.length){var tip=ce('div');tip.style.cssText='text-align:center;padding:48px 20px;color:#536471;font-size:14px;line-height:2.2;';tip.innerHTML='还没有动态<br><span style="color:#1d9bf0;cursor:pointer;" onclick="document.getElementById(\'fFollowRefreshBtn\')&&document.getElementById(\'fFollowRefreshBtn\').onclick()">点这里刷新生成 🔄</span>';container.appendChild(tip);return;}
   list.forEach(function(p){container.appendChild(buildCard(p,_posts.indexOf(p)));});
@@ -24650,7 +24649,7 @@ function postStats(post){
   var isMe=(post.type==='user'&&post.name===myName)||(post.topicKey==='_user');
   var fame=1;
   if(isMe){
-    var myFwers=parseInt((window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyFollowers')||'0')||0;
+    var myFwers=parseInt(originalGetItem.call(localStorage,'fMyFollowers')||'0')||0;
     fame=myFwers>10000?2:1;
   } else if(post.type==='char'||post.type==='npc'||post.type==='extra'){
     var _ov2=(_charOverrides&&_charOverrides[post.name])||{};
@@ -24680,11 +24679,6 @@ function postStats(post){
 }
 
 function buildCard(post,idx){
-  // idx可能因对象引用不同而为-1，用内容匹配兜底
-  if(idx<0||idx===undefined){
-    idx=_posts.findIndex(function(p){return p.name===post.name&&(p.content||'')===(post.content||'')&&(p.title||'')===(post.title||'');});
-    if(idx<0){_posts.push(post);idx=_posts.length-1;}
-  }
   var card=ce('div'); card.className='fPost';
   var ava=ce('div'); ava.className='fAva';
   setAva(ava,post.ava,post.name,post.type);
@@ -24785,13 +24779,13 @@ function openCharProfile(post){
   var avaUrl=ov.ava||post.ava||charInfo.ava||'';
   if(_isUserPost){
     // 读user头像（localforage优先）
-    try{var _ua=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyAva')||'';if(_ua)avaUrl=_ua;}catch(e){}
+    try{var _ua=originalGetItem.call(localStorage,'fMyAva')||'';if(_ua)avaUrl=_ua;}catch(e){}
     // 读user banner
-    try{var _ub=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyBannerUrl')||'';if(_ub)ov.banner=_ub;}catch(e){}
+    try{var _ub=originalGetItem.call(localStorage,'fMyBannerUrl')||'';if(_ub)ov.banner=_ub;}catch(e){}
     // 读user bio/following/followers
-    try{var _ubio=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyBio')||'';if(_ubio)ov.bio=_ubio;}catch(e){}
-    try{var _ufw=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyFollowing')||'';if(_ufw)ov.following=_ufw;}catch(e){}
-    try{var _ufwers=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyFollowers')||'';if(_ufwers)ov.followers=_ufwers;}catch(e){}
+    try{var _ubio=originalGetItem.call(localStorage,'fMyBio')||'';if(_ubio)ov.bio=_ubio;}catch(e){}
+    try{var _ufw=originalGetItem.call(localStorage,'fMyFollowing')||'';if(_ufw)ov.following=_ufw;}catch(e){}
+    try{var _ufwers=originalGetItem.call(localStorage,'fMyFollowers')||'';if(_ufwers)ov.followers=_ufwers;}catch(e){}
     // 异步补充localforage里的头像
     localforage.getItem('fMyAva').then(function(lfA){if(lfA)setAva(av,lfA,post.name,'user');}).catch(function(){});
     localforage.getItem('fMyBannerUrl').then(function(lfB){if(lfB){banner.style.backgroundImage='url('+lfB+')';banner.style.backgroundSize='cover';banner.style.backgroundPosition='center';}}).catch(function(){});
@@ -25021,10 +25015,6 @@ function openCharProfile(post){
 }
 
 function openPost(idx){
-  // 清理可能遮挡 fDetail 的悬浮页面
-  var _cp=document.getElementById('fCharProfilePage');if(_cp)_cp.remove();
-  var _lm=document.getElementById('_profLoadMask');if(_lm)_lm.remove();
-  var _qp=document.getElementById('_dmProfileQuick');if(_qp)_qp.remove();
   _curPostIdx=idx; _replyTarget=null;
   var post=_posts[idx]; if(!post) return;
   var det=document.getElementById('fDetail');
@@ -25192,7 +25182,7 @@ function buildCmt(cmt,pi,ci){
     var isMeCmt=(cmtType==='user'&&cmtName===myNameCmt);
     var cmtFame=1;
     if(isMeCmt){
-      var mf=parseInt((window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyFollowers')||'0')||0;
+      var mf=parseInt(originalGetItem.call(localStorage,'fMyFollowers')||'0')||0;
       cmtFame=mf>10000?2:1;
     } else if(cmtType==='char'||cmtType==='npc'||cmtType==='extra'){
       var _ov3=(_charOverrides&&_charOverrides[cmtName])||{};
@@ -25299,7 +25289,7 @@ async function sendReply(){
   var myName=getMyName();
   var _replyTarget_saved=_replyTarget?{pi:_replyTarget.pi,ci:_replyTarget.ci,name:_replyTarget.name}:null;
   // 优先从localforage取头像（base64头像只存这里）
-  var myAva=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyAva')||'';
+  var myAva=originalGetItem.call(localStorage,'fMyAva')||'';
   try{var lfA=await localforage.getItem('fMyAva');if(lfA)myAva=lfA;}catch(e){}
   // 检查是否有pending图片
   var imgFileInp=document.getElementById('_replyImgInp')||document.querySelector('input[type=file][accept="image/*"]');
@@ -25312,13 +25302,8 @@ async function sendReply(){
     }_replyTarget=null;inp.placeholder='发表评论…';
   }else if(_curPostIdx!==null){_posts[_curPostIdx].comments.push(cmt);}
   inp.value='';inp.style.height='auto';
-  if(imgFileInp){imgFileInp._pendingImg=null;var pr2=document.getElementById('_replyImgPreview');if(pr2)pr2.remove();}
-  // 用 renderPostDetail 局部刷新，不重建整页（openPost会重置det导致评论丢失）
-  fS('posts',_posts);
-  if(_curPostIdx!==null){
-    var _body2=document.getElementById('fDetBody');
-    if(_body2){renderPostDetail(_posts[_curPostIdx],_body2);_body2.scrollTop=_body2.scrollHeight;}
-  }
+  if(imgFileInp){imgFileInp._pendingImg=null;var pr=document.getElementById('_replyImgPreview');if(pr)pr.remove();}
+  fS('posts',_posts);if(_curPostIdx!==null)openPost(_curPostIdx);
   // AI自动回复 - 楼中楼 + 随机其他角色/网友掉落
   toast('正在等待回复中…');
   try{
@@ -25468,8 +25453,8 @@ async function genTopics(cfg, tab){
   if(s.dt) extra+='时间设定：'+s.dt+'\n';
   var activeWb=_wbItems.filter(function(i){return i.active!==false;});
   // 注入user最新动态
-  var _myNameT=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyName')||getMyName();
-  var _myBioT=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyBio')||'';
+  var _myNameT=originalGetItem.call(localStorage,'fMyName')||getMyName();
+  var _myBioT=originalGetItem.call(localStorage,'fMyBio')||'';
   var _myPostsT=_posts.filter(function(p){return p.type==='user';}).slice(-2).map(function(p){return p.title||p.content||'';}).filter(Boolean).join('；');
   if(_myBioT||_myPostsT){
     extra+='【主角"'+_myNameT+'"最新动态】';
@@ -25664,7 +25649,7 @@ function newPost(){
     if(imgDesc)fullContent+=('\n【图片描述：'+imgDesc+'】');
     ov.remove();
     var myName=getMyName();
-    var myAva=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyAva')||'';
+    var myAva=originalGetItem.call(localStorage,'fMyAva')||'';
     var tstr=new Date().toISOString(); // 用ISO存储，timeAgo会转成刚刚/X分钟前
     var newPost2={name:myName,type:'user',ava:myAva||null,content:txt.slice(0,80),fullContent:fullContent,imgData:_postImgData||null,board:_curTab==='推荐'?'日常':_curTab,likes:0,hot:false,time:tstr,comments:[],topicKey:'_user'};
     _posts.unshift(newPost2);fS('posts',_posts);
@@ -25710,10 +25695,10 @@ window.fNewPost=newPost;
 
 function renderProfile(){
   var body=document.getElementById('fProfileBody');if(!body)return;
-  var myName=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyName')||getMyName();
+  var myName=originalGetItem.call(localStorage,'fMyName')||getMyName();
   var myPosts=_posts.filter(function(p){return p.name===myName;});
   body.innerHTML='';
-  var bannerBg=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyBannerUrl')||'';
+  var bannerBg=originalGetItem.call(localStorage,'fMyBannerUrl')||'';
   // 同时从localforage读最新数据
   Promise.all([localforage.getItem('fMyAva'),localforage.getItem('fMyBannerUrl'),localforage.getItem('fMyBio'),localforage.getItem('fMyName')]).then(function(vals){
     var lfAva=vals[0]||'',lfBanner=vals[1]||'',lfBio=vals[2]||'',lfName=vals[3]||'';
@@ -25722,7 +25707,7 @@ function renderProfile(){
     if(lfBio){try{localStorage.setItem('fMyBio',lfBio);}catch(e){}}
     if(lfName){try{localStorage.setItem('fMyName',lfName);}catch(e){}}
     // 如果有变化就重新渲染
-    var curName=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyName')||'';
+    var curName=originalGetItem.call(localStorage,'fMyName')||'';
     if(lfName&&lfName!==curName)renderProfile();
   }).catch(function(){});
   var banner=ce('div');banner.style.cssText='height:120px;flex-shrink:0;'+(bannerBg?'background-image:url('+bannerBg+');background-size:cover;background-position:center;':'background:linear-gradient(135deg,#1d9bf0,#a29bfe);');
@@ -25732,7 +25717,7 @@ function renderProfile(){
   // avatar row: avatar left, edit button right
   var avaRow=ce('div');avaRow.style.cssText='display:flex;align-items:flex-end;justify-content:space-between;';
   var avEl=ce('div');avEl.style.cssText='width:72px;height:72px;border-radius:50%;background:'+aColor(myName)+';border:4px solid #fff;margin-top:-38px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#fff;overflow:hidden;background-size:cover;background-position:center;position:relative;z-index:2;flex-shrink:0;';
-  var myAva=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyAva')||'';
+  var myAva=originalGetItem.call(localStorage,'fMyAva')||'';
   if(myAva){avEl.style.backgroundImage='url('+myAva+')';avEl.style.backgroundColor='transparent';}
   else{avEl.textContent=myName.slice(0,1);}
   localforage.getItem('fMyAva').then(function(lfAva){
@@ -25751,13 +25736,13 @@ function renderProfile(){
   var ne=ce('div');ne.style.cssText='font-size:19px;font-weight:700;color:#0f1419;margin-top:8px;';ne.textContent=myName;
   var he=ce('div');he.style.cssText='font-size:14px;color:#536471;';he.textContent=hdl(myName);
   aa.appendChild(ne);aa.appendChild(he);
-  var bio=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyBio')||'';
+  var bio=originalGetItem.call(localStorage,'fMyBio')||'';
   if(bio){var bioEl=ce('div');bioEl.style.cssText='font-size:14px;color:#0f1419;margin-top:6px;line-height:1.5;';bioEl.textContent=bio;aa.appendChild(bioEl);}
-  var joinDate=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyJoinDate')||'';
+  var joinDate=originalGetItem.call(localStorage,'fMyJoinDate')||'';
   if(joinDate){var joinEl=ce('div');joinEl.style.cssText='display:flex;align-items:center;gap:5px;font-size:13px;color:#536471;margin-top:6px;';joinEl.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'+joinDate+' 加入';aa.appendChild(joinEl);}
   var st=ce('div');st.style.cssText='display:flex;gap:20px;margin-top:12px;font-size:14px;color:#0f1419;';
-  var myFollowing=parseInt((window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyFollowing')||'0')||_following.length;
-  var myFollowers=parseInt((window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyFollowers')||'0')||0;
+  var myFollowing=parseInt(originalGetItem.call(localStorage,'fMyFollowing')||'0')||_following.length;
+  var myFollowers=parseInt(originalGetItem.call(localStorage,'fMyFollowers')||'0')||0;
   st.innerHTML='<span style="cursor:pointer;"><b>'+myFollowing+'</b> <span style="color:#536471;">正在关注</span></span>'+
     '<span style="cursor:pointer;"><b>'+myFollowers+'</b> <span style="color:#536471;">粉丝</span></span>'+
     '<span><b>'+myPosts.length+'</b> <span style="color:#536471;">帖子</span></span>';
@@ -25787,7 +25772,7 @@ function renderProfile(){
 }
 // 编辑自己的资料
 function showEditProfileDialog(){
-  var myName=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyName')||getMyName();
+  var myName=originalGetItem.call(localStorage,'fMyName')||getMyName();
   var ov=ce('div');ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center;';
   var box=ce('div');box.style.cssText='background:#fff;border-radius:20px 20px 0 0;padding:16px 16px 32px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;';
   box.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;"><span style="font-size:17px;font-weight:700;">编辑资料</span><span id="_epClose" style="font-size:22px;cursor:pointer;color:#536471;">✕</span></div>';
@@ -25799,7 +25784,7 @@ function showEditProfileDialog(){
   avaHint.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>';
   avaPrev.appendChild(avaHint);
   // 从localforage读现有头像
-  localforage.getItem('fMyAva').then(function(v){var a=v||(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyAva')||'';if(a){_newAvaData=a;avaPrev.style.backgroundImage='url('+a+')';avaPrev.style.backgroundColor='transparent';}else{avaPrev.textContent=myName.slice(0,1);}}).catch(function(){});
+  localforage.getItem('fMyAva').then(function(v){var a=v||originalGetItem.call(localStorage,'fMyAva')||'';if(a){_newAvaData=a;avaPrev.style.backgroundImage='url('+a+')';avaPrev.style.backgroundColor='transparent';}else{avaPrev.textContent=myName.slice(0,1);}}).catch(function(){});
   var avaInp=document.createElement('input');avaInp.type='file';avaInp.accept='image/*';avaInp.style.display='none';
   avaInp.onchange=function(){var f=this.files[0];if(!f)return;var r=new FileReader();r.onload=function(e){_newAvaData=e.target.result;avaPrev.style.backgroundImage='url('+e.target.result+')';avaPrev.style.backgroundColor='transparent';avaPrev.innerHTML='';avaPrev.appendChild(avaHint);};r.readAsDataURL(f);};
   avaPrev.onclick=function(){avaInp.click();};
@@ -25810,7 +25795,7 @@ function showEditProfileDialog(){
   var bannerHint=ce('div');bannerHint.style.cssText='display:flex;flex-direction:column;align-items:center;gap:4px;color:#536471;font-size:12px;';
   bannerHint.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>背景图';
   bannerPrev.appendChild(bannerHint);
-  localforage.getItem('fMyBannerUrl').then(function(v){var b=v||(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyBannerUrl')||'';if(b){_newBannerData=b;bannerPrev.style.backgroundImage='url('+b+')';bannerPrev.style.border='none';bannerHint.style.display='none';}}).catch(function(){});
+  localforage.getItem('fMyBannerUrl').then(function(v){var b=v||originalGetItem.call(localStorage,'fMyBannerUrl')||'';if(b){_newBannerData=b;bannerPrev.style.backgroundImage='url('+b+')';bannerPrev.style.border='none';bannerHint.style.display='none';}}).catch(function(){});
   var bannerInp=document.createElement('input');bannerInp.type='file';bannerInp.accept='image/*';bannerInp.style.display='none';
   bannerInp.onchange=function(){var f=this.files[0];if(!f)return;var r=new FileReader();r.onload=function(e){_newBannerData=e.target.result;bannerPrev.style.backgroundImage='url('+e.target.result+')';bannerPrev.style.border='none';bannerHint.style.display='none';};r.readAsDataURL(f);};
   bannerPrev.onclick=function(){bannerInp.click();};
@@ -25821,10 +25806,10 @@ function showEditProfileDialog(){
 
   function addField(lbl,id,ph,val,ta){var row=ce('div');row.style.marginBottom='10px';var l=ce('div');l.style.cssText='font-size:13px;font-weight:700;margin-bottom:5px;';l.textContent=lbl;var el=document.createElement(ta?'textarea':'input');el.id=id;el.placeholder=ph;el.style.cssText='width:100%;padding:9px 12px;border:1.5px solid #cfd9de;border-radius:12px;font-size:14px;outline:none;font-family:inherit;box-sizing:border-box;'+(ta?'height:72px;resize:none;display:block;':'');if(val)el.value=val;row.appendChild(l);row.appendChild(el);box.appendChild(row);}
   addField('昵称','_epName','你的昵称',myName);
-  addField('个性签名','_epBio','介绍一下自己…',(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyBio')||'',true);
-  addField('加入时间','_epJoinDate','如：2025年1月',(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyJoinDate')||'');
-  addField('正在关注数','_epFollowing','',(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyFollowing')||'');
-  addField('粉丝数','_epFollowers','',(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyFollowers')||'');
+  addField('个性签名','_epBio','介绍一下自己…',originalGetItem.call(localStorage,'fMyBio')||'',true);
+  addField('加入时间','_epJoinDate','如：2025年1月',originalGetItem.call(localStorage,'fMyJoinDate')||'');
+  addField('正在关注数','_epFollowing','',originalGetItem.call(localStorage,'fMyFollowing')||'');
+  addField('粉丝数','_epFollowers','',originalGetItem.call(localStorage,'fMyFollowers')||'');
   var btnRow=ce('div');btnRow.style.cssText='display:flex;gap:8px;margin-top:6px;';
   var canBtn=document.createElement('button');canBtn.textContent='取消';canBtn.style.cssText='flex:1;padding:11px;border:1.5px solid #cfd9de;border-radius:12px;background:#fff;font-size:14px;cursor:pointer;color:#536471;';
   var okBtn=document.createElement('button');okBtn.textContent='保存';okBtn.style.cssText='flex:2;padding:11px;background:#1d9bf0;color:#fff;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:700;';
@@ -26277,7 +26262,7 @@ function openDMChat(name,ava,type,initialMsg){
       var cfg=await fApi();
       if(!cfg){appendMsg('（对方暂时无法回复）',false);inp.disabled=false;sb.disabled=false;return;}
       var chars=getChars();var s=getS();
-      var myName=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyName')||getMyName();
+      var myName=originalGetItem.call(localStorage,'fMyName')||getMyName();
       var charInfo=chars.find(function(c){return c.name===name;})||{};
       var ov2=_charOverrides&&_charOverrides[name];
       var bio=(ov2&&ov2.bio)||charInfo.bio||'';
@@ -26526,22 +26511,22 @@ async function showCharPickerDialog(){
   var seen = {};
   // 方法1: 从myContacts读（主要来源）
   try{
-    var mc = (window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'myContacts');
+    var mc = originalGetItem.call(localStorage,'myContacts');
     if(!mc){try{var lfmc=await localforage.getItem('myContacts');if(lfmc)mc=typeof lfmc==='string'?lfmc:JSON.stringify(lfmc);}catch(e){}}
     if(mc){
       var contacts = typeof mc==='string'? JSON.parse(mc) : mc;
       if(Array.isArray(contacts)){
         contacts.forEach(function(c){
           var cid = c.id||'';
-          var n = (window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'cN_'+cid) || c.name || '';
-          var ava = (window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'charAva_'+cid) || '';
-          if(!ava){try{ava=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'aiI_'+cid)||'';}catch(e){}}
+          var n = originalGetItem.call(localStorage,'cN_'+cid) || c.name || '';
+          var ava = originalGetItem.call(localStorage,'charAva_'+cid) || '';
+          if(!ava){try{ava=originalGetItem.call(localStorage,'aiI_'+cid)||'';}catch(e){}}
           if(n && !seen[n]){
             seen[n]=true;
             allAvailable.push({name:n, ava:ava, type:'char', cid:cid});
           }
           // NPC of this char
-          var npcRaw = (window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'npcList_'+cid);
+          var npcRaw = originalGetItem.call(localStorage,'npcList_'+cid);
           if(npcRaw){try{JSON.parse(npcRaw).forEach(function(npc){
             if(npc.name && !seen[npc.name]){
               seen[npc.name]=true;
@@ -26554,13 +26539,13 @@ async function showCharPickerDialog(){
   }catch(e){ console.log('myContacts读取失败:',e); }
   // 方法2: 从cs_opened_chars补充
   try{
-    var opened = JSON.parse((window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'cs_opened_chars')||'[]');
+    var opened = JSON.parse(originalGetItem.call(localStorage,'cs_opened_chars')||'[]');
     opened.forEach(function(cid){
-      var n = (window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'cN_'+cid);
-      var ava = (window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'charAva_'+cid)||'';
-      if(!ava){try{ava=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'aiI_'+cid)||'';}catch(e){}}
+      var n = originalGetItem.call(localStorage,'cN_'+cid);
+      var ava = originalGetItem.call(localStorage,'charAva_'+cid)||'';
+      if(!ava){try{ava=originalGetItem.call(localStorage,'aiI_'+cid)||'';}catch(e){}}
       if(n && !seen[n]){ seen[n]=true; allAvailable.push({name:n, ava:ava, type:'char', cid:cid}); }
-      var npcRaw = (window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'npcList_'+cid);
+      var npcRaw = originalGetItem.call(localStorage,'npcList_'+cid);
       if(npcRaw){try{JSON.parse(npcRaw).forEach(function(npc){
         if(npc.name && !seen[npc.name]){ seen[npc.name]=true; allAvailable.push({name:npc.name, ava:npc.avatar||'', type:'npc'}); }
       });}catch(e){}}
@@ -26568,8 +26553,8 @@ async function showCharPickerDialog(){
   }catch(e){}
   // 方法3: default角色
   try{
-    var defName = (window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'cN_default')||(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'cN')||'';
-    var defAva = (window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'charAva_default')||(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'aiI_default')||'';
+    var defName = originalGetItem.call(localStorage,'cN_default')||originalGetItem.call(localStorage,'cN')||'';
+    var defAva = originalGetItem.call(localStorage,'charAva_default')||originalGetItem.call(localStorage,'aiI_default')||'';
     if(defName && !seen[defName]){ seen[defName]=true; allAvailable.push({name:defName, ava:defAva, type:'char', cid:'default'}); }
   }catch(e){}
   // 加上extraChars
@@ -26742,12 +26727,12 @@ function refreshReplyAva(){
   localforage.getItem('fMyAva').then(function(lf){
     if(lf){rMyAva.style.backgroundImage='url('+lf+')';rMyAva.style.backgroundColor='transparent';rMyAva.textContent='';}
     else{
-      var _rAvaLS=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyAva')||'';
+      var _rAvaLS=originalGetItem.call(localStorage,'fMyAva')||'';
       if(_rAvaLS){rMyAva.style.backgroundImage='url('+_rAvaLS+')';rMyAva.style.backgroundColor='transparent';rMyAva.textContent='';}
       else{rMyAva.style.backgroundImage='';rMyAva.style.background=aColor(_rName);rMyAva.textContent=_rName.slice(0,1);}
     }
   }).catch(function(){
-    var _rAvaLS=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyAva')||'';
+    var _rAvaLS=originalGetItem.call(localStorage,'fMyAva')||'';
     if(_rAvaLS){rMyAva.style.backgroundImage='url('+_rAvaLS+')';rMyAva.style.backgroundColor='transparent';rMyAva.textContent='';}
     else{rMyAva.style.backgroundImage='';rMyAva.style.background=aColor(_rName);rMyAva.textContent=_rName.slice(0,1);}
   });
@@ -26822,9 +26807,9 @@ var dmRefresh=ce('div');dmRefresh.style.cssText='font-size:20px;cursor:pointer;c
     var recentTopics='';
     var allTopics=[];Object.values(_topicsByTab||{}).forEach(function(arr){if(Array.isArray(arr))allTopics=allTopics.concat(arr.slice(0,2));});
     if(allTopics.length)recentTopics='最近热搜：'+allTopics.slice(0,3).map(function(t){return t.title;}).join('、')+'\n';
-    var myName=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyName')||getMyName();
+    var myName=originalGetItem.call(localStorage,'fMyName')||getMyName();
     // 获取user最新签名和最近帖子
-    var myBio=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyBio')||'';
+    var myBio=originalGetItem.call(localStorage,'fMyBio')||'';
     var myRecentPosts=_posts.filter(function(p){return p.type==='user';}).slice(-3).map(function(p){return p.title||p.content||'';}).filter(Boolean).join('；');
     var myInfo='';
     if(myBio)myInfo+='ta的个性签名："'+myBio+'"；';
