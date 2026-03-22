@@ -24868,16 +24868,23 @@ function buildCard(post,idx){
     body.insertBefore(pinBadge,body.firstChild);
   }
   card.appendChild(ava); card.appendChild(body);
-  card.onclick=function(){ openPost(idx); };
   // user帖子支持长按：删除/置顶
   var _myN=getMyName();
+  var _longPressed=false;
   if(post.type==='user'&&post.name===_myN){
     var _lpt2=null;
-    card.addEventListener('touchstart',function(e){_lpt2=setTimeout(function(){_lpt2=null;e.preventDefault();showUserPostMenu(post,idx);},500);},{passive:false});
-    card.addEventListener('touchend',function(){if(_lpt2){clearTimeout(_lpt2);_lpt2=null;}});
+    card.addEventListener('touchstart',function(e){
+      _longPressed=false;
+      _lpt2=setTimeout(function(){_lpt2=null;_longPressed=true;showUserPostMenu(post,idx);},500);
+    },{passive:true});
+    card.addEventListener('touchend',function(e){
+      if(_lpt2){clearTimeout(_lpt2);_lpt2=null;}
+      if(_longPressed){e.preventDefault();_longPressed=false;}
+    });
     card.addEventListener('touchmove',function(){if(_lpt2){clearTimeout(_lpt2);_lpt2=null;}});
     card.addEventListener('contextmenu',function(e){e.preventDefault();e.stopPropagation();showUserPostMenu(post,idx);});
   }
+  card.onclick=function(){ if(!_longPressed) openPost(idx); };
   return card;
 }
 function showUserPostMenu(post,idx){
@@ -24894,7 +24901,11 @@ function showUserPostMenu(post,idx){
       _posts.forEach(function(p){if(p._pinned)p._pinned=false;});
       post._pinned=true;
     }
-    fS('posts',_posts);renderProfile();ov.remove();toast(post._pinned?'已置顶 📌':'已取消置顶');
+    fS('posts',_posts);
+    // 刷新当前可见的页面
+    if(typeof renderProfile==='function'){try{renderProfile();}catch(e){}}
+    if(typeof loadFeed==='function'){try{loadFeed();}catch(e){}}
+    ov.remove();toast(post._pinned?'已置顶 📌':'已取消置顶');
   };
   // 删除
   var delItem=ce('div');delItem.style.cssText='padding:14px 20px;font-size:15px;color:#e74c3c;cursor:pointer;text-align:center;font-weight:600;border-top:1px solid #eff3f4;';
@@ -24910,7 +24921,10 @@ function showUserPostMenu(post,idx){
     box2.querySelector('#_dpOk').onclick=function(){
       ov2.remove();
       var ri=_posts.indexOf(post);if(ri>=0)_posts.splice(ri,1);
-      fS('posts',_posts);renderProfile();toast('帖子已删除');
+      fS('posts',_posts);
+      if(typeof renderProfile==='function'){try{renderProfile();}catch(e){}}
+      if(typeof loadFeed==='function'){try{loadFeed();}catch(e){}}
+      toast('帖子已删除');
     };
   };
   // 取消
