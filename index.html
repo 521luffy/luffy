@@ -25015,6 +25015,10 @@ function openCharProfile(post){
 }
 
 function openPost(idx){
+  // 清理可能遮挡 fDetail 的悬浮页面
+  var _cp=document.getElementById('fCharProfilePage');if(_cp)_cp.remove();
+  var _lm=document.getElementById('_profLoadMask');if(_lm)_lm.remove();
+  var _qp=document.getElementById('_dmProfileQuick');if(_qp)_qp.remove();
   _curPostIdx=idx; _replyTarget=null;
   var post=_posts[idx]; if(!post) return;
   var det=document.getElementById('fDetail');
