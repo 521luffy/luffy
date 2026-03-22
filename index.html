@@ -24474,28 +24474,27 @@ function getS(){return{wv:(document.getElementById('fWvArea')||{}).value||'',pr:
 function aColor(name){var c=['#1d9bf0','#e17055','#00b894','#a29bfe','#e84393','#f39c12'],h=0;for(var i=0;i<name.length;i++)h=(h*31+name.charCodeAt(i))&0xffff;return c[h%c.length];}
 // ── 分级人设读取：不同关系的角色对玩家了解程度不同 ──
 function getUserPersonaCtx(){
+  try{
   var _g=window._origLSGet||localStorage.getItem.bind(localStorage);
   var myN=getMyName();
   var fullPersona=_g.call(localStorage,'fMyPersona')||'';
   var bio=_g.call(localStorage,'fMyBio')||'';
   if(!fullPersona&&!bio)return '';
-  // 分三层
-  var publicInfo=myN+(bio?'（签名：'+bio+'）':''); // 所有人可见
-  var partialInfo=''; // 认识但不太熟的人
-  var fullInfo=''; // 亲密关系
+  var publicInfo=myN+(bio?'（签名：'+bio+'）':'');
+  var partialInfo='';
+  var fullInfo='';
   if(fullPersona){
-    // 把人设拆成句子，前40%算公开，中间30%算半公开，全部给亲密
     var sentences=fullPersona.split(/[。！？\n]+/).filter(function(s){return s.trim();});
     var pub=Math.max(1,Math.ceil(sentences.length*0.35));
-    var mid=Math.max(pub+1,Math.ceil(sentences.length*0.65));
     partialInfo=sentences.slice(0,pub).join('。')+'。';
     fullInfo=fullPersona;
   }
   return '\n【玩家"'+myN+'"的信息分级（必须严格遵守！）】\n'+
-    '- 与'+myN+'关系亲密的角色（恋人/闺蜜/家人/亲密朋友）了解全部人设：'+( fullInfo||bio||publicInfo)+'\n'+
+    '- 与'+myN+'关系亲密的角色（恋人/闺蜜/家人/亲密朋友）了解全部人设：'+(fullInfo||bio||publicInfo)+'\n'+
     '- 与'+myN+'关系一般的角色（同学/同事/认识的人）只了解公开信息：'+(partialInfo||bio||publicInfo)+'\n'+
     '- 陌生网友/路人只能看到主页签名：'+publicInfo+'\n'+
     '角色发帖和评论时，体现的对'+myN+'的了解程度必须匹配关系亲密度！陌生人不可能知道'+myN+'的私事！\n';
+  }catch(e){console.warn('getUserPersonaCtx error:',e);return '';}
 }
 
 function switchBottom(tab){_bottomTab=tab;document.querySelectorAll('.fBNav').forEach(function(b){b.classList.toggle('on',b.dataset.tab===tab);});var feed=document.getElementById('fFeed'),tb=document.getElementById('fTabBar'),sb=document.getElementById('fSearchBar'),fab=document.getElementById('fFab'),prof=document.getElementById('fProfilePage'),dm=document.getElementById('fDMPage');if(feed)feed.style.display=(tab==='home'||tab==='follow')?'block':'none';if(tb)tb.style.display=tab==='home'?'flex':'none';if(sb)sb.style.display=tab==='home'?'flex':'none';if(fab)fab.style.display=(tab==='home'||tab==='follow')?'flex':'none';if(prof)prof.style.display=tab==='profile'?'flex':'none';if(dm)dm.style.display=tab==='dm'?'flex':'none';if(tab==='home')loadFeed();if(tab==='follow')loadFollowFeed();if(tab==='profile')renderProfile();if(tab==='dm')renderDM();}
@@ -26107,6 +26106,7 @@ function showEditProfileDialog(){
   var okBtn=document.createElement('button');okBtn.textContent='保存';okBtn.style.cssText='flex:2;padding:11px;background:#1d9bf0;color:#fff;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:700;';
   canBtn.onclick=function(){ov.remove();};
   okBtn.onclick=function(){
+    try{
     var _lsSet=window._origLSSet||localStorage.setItem.bind(localStorage);
     var newName=(box.querySelector('#_epName')||{}).value.trim()||myName;
     _lsSet('fMyName',newName);
@@ -26115,7 +26115,6 @@ function showEditProfileDialog(){
     _lsSet('fMyJoinDate',(box.querySelector('#_epJoinDate')||{}).value.trim()||'');
     _lsSet('fMyFollowing',(box.querySelector('#_epFollowing')||{}).value||'');
     _lsSet('fMyFollowers',(box.querySelector('#_epFollowers')||{}).value||'');
-    // 头像和背景图存localforage
     if(_newAvaData){
       localforage.setItem('fMyAva',_newAvaData).catch(function(){});
       try{localStorage.setItem('fMyAva',_newAvaData);}catch(e){}
@@ -26131,6 +26130,7 @@ function showEditProfileDialog(){
     localforage.setItem('fMyFollowing',(box.querySelector('#_epFollowing')||{}).value||'').catch(function(){});
     localforage.setItem('fMyFollowers',(box.querySelector('#_epFollowers')||{}).value||'').catch(function(){});
     ov.remove();renderProfile();toast('资料已更新 ✓');
+    }catch(e){console.error('保存资料失败:',e);ov.remove();toast('保存失败，请重试');}
   };
   btnRow.appendChild(canBtn);btnRow.appendChild(okBtn);box.appendChild(btnRow);
   ov.appendChild(box);document.body.appendChild(ov);
