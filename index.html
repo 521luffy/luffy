@@ -5671,6 +5671,8 @@ let stW=$("stW"), stC=$("stC"), stA=$("stA"), stT=$("stT");
 let ls = localStorage;
 let currentChatId ="default";
 let originalSetItem = ls.setItem;
+window._origLSSet = ls.setItem.bind(ls);
+window._origLSGet = ls.getItem.bind(ls);
 let isolatedKeys = ["cMyN", "myI", "chatHistory", "aiStatus", "bgI", "aiI", "cMP", "cN", "cR", "cAP", "cCtx", "cT", "cAMem", "cMemT", "cMemP", "linkedWb", "lastMemCount", "memories", "cStatusTxt", "cStatusColor", "cSign", "cBubbleCss", "cCTon", "cCTy", "cCTm", "cCTd", "cCTh", "cCTmin", "cStatusBarOn", "cStatusBar", "cStatusBarTpl"];
 
 // ===== 名字内存缓存（绕开 localStorage 满的问题）=====
@@ -24372,17 +24374,18 @@ async function fS(k,v){
   }
   // 直接写localforage，绝不经过被override的localStorage.setItem（那个会把对象覆盖成字符串）
   try{await localforage.setItem('f_'+k,vToStore);}catch(e){console.warn('localforage save failed for f_'+k,e);}
-  // 用originalSetItem绕过override，直接写原生localStorage作为缓存
+  // 用window._origLSSet绕过override，直接写原生localStorage作为缓存
   try{
     var json=typeof vToStore==='string'?vToStore:JSON.stringify(vToStore);
-    if(typeof originalSetItem==='function'){originalSetItem.call(localStorage,'f_'+k,json);}
-    else{localStorage.setItem('f_'+k,json);}
+    var _setter=window._origLSSet||localStorage.setItem.bind(localStorage);
+    _setter('f_'+k,json);
   }catch(e){
     try{
       var keysToClean=[];
       for(var i=0;i<localStorage.length;i++){var lk=localStorage.key(i);if(lk&&lk.startsWith('f_')&&lk!=='f_'+k)keysToClean.push(lk);}
       keysToClean.sort();keysToClean.filter(function(lk){return !lk.startsWith('f_dmChat_');}).slice(0,Math.floor(keysToClean.length/2)).forEach(function(lk){localStorage.removeItem(lk);});
-      if(typeof originalSetItem==='function'){originalSetItem.call(localStorage,'f_'+k,typeof vToStore==='string'?vToStore:JSON.stringify(vToStore));}
+      var _setter2=window._origLSSet||localStorage.setItem.bind(localStorage);
+      _setter2('f_'+k,typeof vToStore==='string'?vToStore:JSON.stringify(vToStore));
     }catch(e2){console.warn('localStorage cache save failed:',k);}
   }
 }
@@ -24395,9 +24398,9 @@ async function fL(k,d){
   // localforage为空时，用originalGetItem绕过override读localStorage缓存
   if(r===null||r===undefined){
     try{
-      var rawFn=typeof originalGetItem==='function'?originalGetItem:localStorage.getItem.bind(localStorage);
-      var ls=rawFn.call(localStorage,'f_'+k);
-      if(ls!=null){try{r=JSON.parse(ls);}catch(e){r=ls;}}
+      var _getter=window._origLSGet||localStorage.getItem.bind(localStorage);
+      var ls2=_getter('f_'+k);
+      if(ls2!=null){try{r=JSON.parse(ls2);}catch(e){r=ls2;}}
     }catch(e){}
   }
   return(r===null||r===undefined)?d:r;
