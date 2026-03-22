@@ -24861,9 +24861,64 @@ function buildCard(post,idx){
     '<span class="fStat" style="display:flex;align-items:center;gap:3px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></span>';
   if(post.hot){ var hotTag=ce('span'); hotTag.style.cssText='font-size:11px;color:#f91880;'; hotTag.textContent='🔥'; stats.appendChild(hotTag); }
   body.appendChild(stats);
+  // 置顶标记
+  if(post._pinned){
+    var pinBadge=ce('div');pinBadge.style.cssText='font-size:11px;color:#1d9bf0;display:flex;align-items:center;gap:3px;margin-bottom:4px;';
+    pinBadge.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="#1d9bf0" stroke="none"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></svg>已置顶';
+    body.insertBefore(pinBadge,body.firstChild);
+  }
   card.appendChild(ava); card.appendChild(body);
   card.onclick=function(){ openPost(idx); };
+  // user帖子支持长按：删除/置顶
+  var _myN=getMyName();
+  if(post.type==='user'&&post.name===_myN){
+    var _lpt2=null;
+    card.addEventListener('touchstart',function(e){_lpt2=setTimeout(function(){_lpt2=null;e.preventDefault();showUserPostMenu(post,idx);},500);},{passive:false});
+    card.addEventListener('touchend',function(){if(_lpt2){clearTimeout(_lpt2);_lpt2=null;}});
+    card.addEventListener('touchmove',function(){if(_lpt2){clearTimeout(_lpt2);_lpt2=null;}});
+    card.addEventListener('contextmenu',function(e){e.preventDefault();e.stopPropagation();showUserPostMenu(post,idx);});
+  }
   return card;
+}
+function showUserPostMenu(post,idx){
+  var ov=ce('div');ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.3);display:flex;align-items:flex-end;justify-content:center;';
+  var box=ce('div');box.style.cssText='background:#fff;border-radius:16px 16px 0 0;padding:8px 0 20px;width:100%;max-width:400px;';
+  // 置顶/取消置顶
+  var pinItem=ce('div');pinItem.style.cssText='padding:14px 20px;font-size:15px;color:#0f1419;cursor:pointer;text-align:center;font-weight:600;';
+  pinItem.textContent=post._pinned?'📌 取消置顶':'📌 置顶此帖';
+  pinItem.onclick=function(){
+    if(post._pinned){
+      post._pinned=false;
+    }else{
+      // 取消其他帖子的置顶（只允许一个）
+      _posts.forEach(function(p){if(p._pinned)p._pinned=false;});
+      post._pinned=true;
+    }
+    fS('posts',_posts);renderProfile();ov.remove();toast(post._pinned?'已置顶 📌':'已取消置顶');
+  };
+  // 删除
+  var delItem=ce('div');delItem.style.cssText='padding:14px 20px;font-size:15px;color:#e74c3c;cursor:pointer;text-align:center;font-weight:600;border-top:1px solid #eff3f4;';
+  delItem.textContent='🗑 删除此帖';
+  delItem.onclick=function(){
+    ov.remove();
+    var ov2=ce('div');ov2.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;';
+    var box2=ce('div');box2.style.cssText='background:#fff;border-radius:18px;padding:20px 16px;width:75vw;max-width:280px;text-align:center;';
+    box2.innerHTML='<div style="font-size:16px;font-weight:700;color:#e74c3c;margin-bottom:10px;">确认删除</div><div style="font-size:14px;color:#536471;margin-bottom:16px;">确定要删除这条帖子吗？</div><div style="display:flex;gap:8px;"><button id="_dpCan" style="flex:1;padding:10px;border:1.5px solid #cfd9de;border-radius:12px;background:#fff;font-size:14px;cursor:pointer;color:#536471;">取消</button><button id="_dpOk" style="flex:1;padding:10px;background:#e74c3c;color:#fff;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:700;">删除</button></div>';
+    ov2.appendChild(box2);document.body.appendChild(ov2);
+    ov2.onclick=function(e){if(e.target===ov2)ov2.remove();};
+    box2.querySelector('#_dpCan').onclick=function(){ov2.remove();};
+    box2.querySelector('#_dpOk').onclick=function(){
+      ov2.remove();
+      var ri=_posts.indexOf(post);if(ri>=0)_posts.splice(ri,1);
+      fS('posts',_posts);renderProfile();toast('帖子已删除');
+    };
+  };
+  // 取消
+  var canItem=ce('div');canItem.style.cssText='padding:14px 20px;font-size:15px;color:#536471;cursor:pointer;text-align:center;border-top:1px solid #eff3f4;';
+  canItem.textContent='取消';canItem.onclick=function(){ov.remove();};
+  box.appendChild(pinItem);box.appendChild(delItem);box.appendChild(canItem);
+  ov.appendChild(box);document.body.appendChild(ov);
+  ov.onclick=function(e){if(e.target===ov)ov.remove();};
 }
 function tFollow(post){var i=_following.findIndex(function(f){return f.name===post.name;});if(i>=0){_following.splice(i,1);toast('已取关 '+hdl(post.name));}else{_following.push({name:post.name,type:post.type,ava:post.ava||''});toast('已关注 '+hdl(post.name)+' ✓');}fS('following',_following);}
 
@@ -25851,19 +25906,24 @@ window.fNewPost=newPost;
 function renderProfile(){
   var body=document.getElementById('fProfileBody');if(!body)return;
   var myName=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyName')||getMyName();
-  var myPosts=_posts.filter(function(p){return p.name===myName;});
+  var myPosts=_posts.filter(function(p){return p.name===myName;}).sort(function(a,b){return (b._pinned?1:0)-(a._pinned?1:0);});
   body.innerHTML='';
   var bannerBg=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyBannerUrl')||'';
   // 同时从localforage读最新数据
-  Promise.all([localforage.getItem('fMyAva'),localforage.getItem('fMyBannerUrl'),localforage.getItem('fMyBio'),localforage.getItem('fMyName')]).then(function(vals){
-    var lfAva=vals[0]||'',lfBanner=vals[1]||'',lfBio=vals[2]||'',lfName=vals[3]||'';
-    if(lfAva){try{originalSetItem&&originalSetItem.call(localStorage,'fMyAva',lfAva)||localStorage.setItem('fMyAva',lfAva);}catch(e){}}
-    if(lfBanner){try{localStorage.setItem('fMyBannerUrl',lfBanner);}catch(e){}}
-    if(lfBio){try{localStorage.setItem('fMyBio',lfBio);}catch(e){}}
-    if(lfName){try{localStorage.setItem('fMyName',lfName);}catch(e){}}
+  Promise.all([localforage.getItem('fMyAva'),localforage.getItem('fMyBannerUrl'),localforage.getItem('fMyBio'),localforage.getItem('fMyName'),localforage.getItem('fMyJoinDate'),localforage.getItem('fMyFollowing'),localforage.getItem('fMyFollowers')]).then(function(vals){
+    var lfAva=vals[0]||'',lfBanner=vals[1]||'',lfBio=vals[2]||'',lfName=vals[3]||'',lfJoin=vals[4]||'',lfFollowing=vals[5]||'',lfFollowers=vals[6]||'';
+    var _s=window._origLSSet||localStorage.setItem.bind(localStorage);
+    if(lfAva){try{_s('fMyAva',lfAva);}catch(e){}}
+    if(lfBanner){try{_s('fMyBannerUrl',lfBanner);}catch(e){}}
+    if(lfBio){try{_s('fMyBio',lfBio);}catch(e){}}
+    if(lfName){try{_s('fMyName',lfName);}catch(e){}}
+    if(lfJoin){try{_s('fMyJoinDate',lfJoin);}catch(e){}}
+    if(lfFollowing){try{_s('fMyFollowing',lfFollowing);}catch(e){}}
+    if(lfFollowers){try{_s('fMyFollowers',lfFollowers);}catch(e){}}
     // 如果有变化就重新渲染
+    var curBio=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyBio')||'';
     var curName=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyName')||'';
-    if(lfName&&lfName!==curName)renderProfile();
+    if((lfName&&lfName!==curName)||(lfBio&&lfBio!==curBio))renderProfile();
   }).catch(function(){});
   var banner=ce('div');banner.style.cssText='height:120px;flex-shrink:0;'+(bannerBg?'background-image:url('+bannerBg+');background-size:cover;background-position:center;':'background:linear-gradient(135deg,#1d9bf0,#a29bfe);');
   body.appendChild(banner);
@@ -25970,12 +26030,13 @@ function showEditProfileDialog(){
   var okBtn=document.createElement('button');okBtn.textContent='保存';okBtn.style.cssText='flex:2;padding:11px;background:#1d9bf0;color:#fff;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:700;';
   canBtn.onclick=function(){ov.remove();};
   okBtn.onclick=function(){
+    var _lsSet=window._origLSSet||localStorage.setItem.bind(localStorage);
     var newName=(box.querySelector('#_epName')||{}).value.trim()||myName;
-    localStorage.setItem('fMyName',newName);
-    localStorage.setItem('fMyBio',(box.querySelector('#_epBio')||{}).value||'');
-    localStorage.setItem('fMyJoinDate',(box.querySelector('#_epJoinDate')||{}).value.trim()||'');
-    localStorage.setItem('fMyFollowing',(box.querySelector('#_epFollowing')||{}).value||'');
-    localStorage.setItem('fMyFollowers',(box.querySelector('#_epFollowers')||{}).value||'');
+    _lsSet('fMyName',newName);
+    _lsSet('fMyBio',(box.querySelector('#_epBio')||{}).value||'');
+    _lsSet('fMyJoinDate',(box.querySelector('#_epJoinDate')||{}).value.trim()||'');
+    _lsSet('fMyFollowing',(box.querySelector('#_epFollowing')||{}).value||'');
+    _lsSet('fMyFollowers',(box.querySelector('#_epFollowers')||{}).value||'');
     // 头像和背景图存localforage
     if(_newAvaData){
       localforage.setItem('fMyAva',_newAvaData).catch(function(){});
@@ -25987,6 +26048,9 @@ function showEditProfileDialog(){
     }
     localforage.setItem('fMyBio',(box.querySelector('#_epBio')||{}).value||'').catch(function(){});
     localforage.setItem('fMyName',newName).catch(function(){});
+    localforage.setItem('fMyJoinDate',(box.querySelector('#_epJoinDate')||{}).value.trim()||'').catch(function(){});
+    localforage.setItem('fMyFollowing',(box.querySelector('#_epFollowing')||{}).value||'').catch(function(){});
+    localforage.setItem('fMyFollowers',(box.querySelector('#_epFollowers')||{}).value||'').catch(function(){});
     ov.remove();renderProfile();toast('资料已更新 ✓');
   };
   btnRow.appendChild(canBtn);btnRow.appendChild(okBtn);box.appendChild(btnRow);
