@@ -24475,7 +24475,7 @@ function aColor(name){var c=['#1d9bf0','#e17055','#00b894','#a29bfe','#e84393','
 function switchBottom(tab){_bottomTab=tab;document.querySelectorAll('.fBNav').forEach(function(b){b.classList.toggle('on',b.dataset.tab===tab);});var feed=document.getElementById('fFeed'),tb=document.getElementById('fTabBar'),sb=document.getElementById('fSearchBar'),fab=document.getElementById('fFab'),prof=document.getElementById('fProfilePage'),dm=document.getElementById('fDMPage');if(feed)feed.style.display=(tab==='home'||tab==='follow')?'block':'none';if(tb)tb.style.display=tab==='home'?'flex':'none';if(sb)sb.style.display=tab==='home'?'flex':'none';if(fab)fab.style.display=(tab==='home'||tab==='follow')?'flex':'none';if(prof)prof.style.display=tab==='profile'?'flex':'none';if(dm)dm.style.display=tab==='dm'?'flex':'none';if(tab==='home')loadFeed();if(tab==='follow')loadFollowFeed();if(tab==='profile')renderProfile();if(tab==='dm')renderDM();}
 window.fSwitchBottom=switchBottom;
 
-function toggleDrawer(){var dr=document.getElementById('fDrawer'),ov=document.getElementById('fDrawOv');if(!dr)return;var on=dr.classList.contains('on');dr.classList.toggle('on',!on);ov.classList.toggle('on',!on);if(!on)buildDrawer();}
+function toggleDrawer(){var dr=document.getElementById('fDrawer'),ov=document.getElementById('fDrawOv');if(!dr)return;var on=dr.classList.contains('on');dr.classList.toggle('on',!on);ov.classList.toggle('on',!on);if(!on&&!document.getElementById('fWvArea'))buildDrawer();}
 window.fToggleDrawer=toggleDrawer;
 
 function renderTabs(){var bar=document.getElementById('fTabBar');if(!bar)return;bar.innerHTML='';['推荐','热搜','文娱','社会'].concat(_customTabs).forEach(function(t){var el=ce('div');el.className='fTab'+(t===_curTab?' on':'');el.textContent=t;el.onclick=function(){_curTab=t;renderTabs();loadFeed();};bar.appendChild(el);});var add=ce('div');add.className='fTab add';add.textContent='＋';add.onclick=addTab;bar.appendChild(add);}
@@ -26841,6 +26841,8 @@ wrap.appendChild(w);wrap.appendChild(drOv);wrap.appendChild(drawer);wrap.appendC
 
 async function init(){
 buildUI();
+// 提前构建抽屉，确保 fWvArea/fPrArea/fDtInp 在 DOM 中，settings 才能正常恢复
+if(!document.getElementById('fWvArea'))buildDrawer();
 try{
 var s=await fL('settings',null);if(s){var wv=document.getElementById('fWvArea'),pr=document.getElementById('fPrArea'),dt=document.getElementById('fDtInp');if(wv&&s.wv)wv.value=s.wv;if(pr&&s.pr)pr.value=s.pr;if(dt&&s.dt)dt.value=s.dt;}
 var boards=await fL('boards',[]);if(Array.isArray(boards))_customTabs=boards;
