@@ -26106,31 +26106,32 @@ function showEditProfileDialog(){
   var okBtn=document.createElement('button');okBtn.textContent='保存';okBtn.style.cssText='flex:2;padding:11px;background:#1d9bf0;color:#fff;border:none;border-radius:12px;font-size:14px;cursor:pointer;font-weight:700;';
   canBtn.onclick=function(){ov.remove();};
   okBtn.onclick=function(){
-    try{
-    var _lsSet=window._origLSSet||localStorage.setItem.bind(localStorage);
     var newName=(box.querySelector('#_epName')||{}).value.trim()||myName;
-    _lsSet('fMyName',newName);
-    _lsSet('fMyBio',(box.querySelector('#_epBio')||{}).value||'');
-    _lsSet('fMyPersona',(box.querySelector('#_epPersona')||{}).value||'');
-    _lsSet('fMyJoinDate',(box.querySelector('#_epJoinDate')||{}).value.trim()||'');
-    _lsSet('fMyFollowing',(box.querySelector('#_epFollowing')||{}).value||'');
-    _lsSet('fMyFollowers',(box.querySelector('#_epFollowers')||{}).value||'');
-    if(_newAvaData){
-      localforage.setItem('fMyAva',_newAvaData).catch(function(){});
-      try{localStorage.setItem('fMyAva',_newAvaData);}catch(e){}
-    }
-    if(_newBannerData){
-      localforage.setItem('fMyBannerUrl',_newBannerData).catch(function(){});
-      try{localStorage.setItem('fMyBannerUrl',_newBannerData);}catch(e){}
-    }
-    localforage.setItem('fMyBio',(box.querySelector('#_epBio')||{}).value||'').catch(function(){});
-    localforage.setItem('fMyPersona',(box.querySelector('#_epPersona')||{}).value||'').catch(function(){});
+    var newBio=(box.querySelector('#_epBio')||{}).value||'';
+    var newPersona=(box.querySelector('#_epPersona')||{}).value||'';
+    var newJoin=(box.querySelector('#_epJoinDate')||{}).value.trim()||'';
+    var newFollowing=(box.querySelector('#_epFollowing')||{}).value||'';
+    var newFollowers=(box.querySelector('#_epFollowers')||{}).value||'';
+    // 主存储：localforage（不会满）
     localforage.setItem('fMyName',newName).catch(function(){});
-    localforage.setItem('fMyJoinDate',(box.querySelector('#_epJoinDate')||{}).value.trim()||'').catch(function(){});
-    localforage.setItem('fMyFollowing',(box.querySelector('#_epFollowing')||{}).value||'').catch(function(){});
-    localforage.setItem('fMyFollowers',(box.querySelector('#_epFollowers')||{}).value||'').catch(function(){});
+    localforage.setItem('fMyBio',newBio).catch(function(){});
+    localforage.setItem('fMyPersona',newPersona).catch(function(){});
+    localforage.setItem('fMyJoinDate',newJoin).catch(function(){});
+    localforage.setItem('fMyFollowing',newFollowing).catch(function(){});
+    localforage.setItem('fMyFollowers',newFollowers).catch(function(){});
+    if(_newAvaData)localforage.setItem('fMyAva',_newAvaData).catch(function(){});
+    if(_newBannerData)localforage.setItem('fMyBannerUrl',_newBannerData).catch(function(){});
+    // 辅助缓存：localStorage（可能满，失败不影响）
+    var _lsSet=window._origLSSet||localStorage.setItem.bind(localStorage);
+    try{_lsSet('fMyName',newName);}catch(e){}
+    try{_lsSet('fMyBio',newBio);}catch(e){}
+    try{_lsSet('fMyPersona',newPersona);}catch(e){}
+    try{_lsSet('fMyJoinDate',newJoin);}catch(e){}
+    try{_lsSet('fMyFollowing',newFollowing);}catch(e){}
+    try{_lsSet('fMyFollowers',newFollowers);}catch(e){}
+    if(_newAvaData){try{_lsSet('fMyAva',_newAvaData);}catch(e){}}
+    if(_newBannerData){try{_lsSet('fMyBannerUrl',_newBannerData);}catch(e){}}
     ov.remove();renderProfile();toast('资料已更新 ✓');
-    }catch(e){console.error('保存资料失败:',e);ov.remove();toast('保存失败，请重试');}
   };
   btnRow.appendChild(canBtn);btnRow.appendChild(okBtn);box.appendChild(btnRow);
   ov.appendChild(box);document.body.appendChild(ov);
