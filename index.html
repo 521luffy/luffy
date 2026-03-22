@@ -24685,7 +24685,15 @@ function tFollow(post){var i=_following.findIndex(function(f){return f.name===po
 
 function openCharProfile(post){
   var forum=document.getElementById('scrForum');if(!forum)return;
+
+  // ── 加载提示 ──
+  var loadMask=ce('div');loadMask.id='_profLoadMask';loadMask.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;z-index:65;background:rgba(255,255,255,0.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;';
+  loadMask.innerHTML='<div style="width:36px;height:36px;border:3px solid #eff3f4;border-top-color:#1d9bf0;border-radius:50%;animation:fSpin .8s linear infinite;"></div><div style="font-size:14px;color:#536471;">对方主页生成中……</div>';
+  forum.appendChild(loadMask);
+
+  setTimeout(function(){
   var ex=document.getElementById('fCharProfilePage');if(ex)ex.remove();
+  if(loadMask.parentNode)loadMask.remove();
   var pg=ce('div','fCharProfilePage');pg.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;z-index:60;background:#fff;display:flex;flex-direction:column;overflow:hidden;';
 
   // ── Twitter风格顶部导航 ──
@@ -24715,10 +24723,13 @@ function openCharProfile(post){
   var bd=ce('div');bd.style.cssText='flex:1;overflow-y:auto;';
 
   // ── Banner ──
-  var ov=_charOverrides&&_charOverrides[post.name];
-  var avaUrl=(ov&&ov.ava)||post.ava||charInfo.ava||'';
-  var bio=(ov&&ov.bio)||charInfo.bio||'';
-  var handle=(ov&&ov.handle)?ov.handle:post.name.toLowerCase().replace(/\s/g,'_').replace(/[^\w]/g,'');
+  // 优先级：_charOverrides > _extraCharsData > post自带
+  var _ecBase=(_extraCharsData||[]).find(function(d){return d.name===post.name;})||{};
+  var _ovRaw=(_charOverrides&&_charOverrides[post.name])||{};
+  var ov=Object.assign({},_ecBase,_ovRaw);
+  var avaUrl=ov.ava||post.ava||charInfo.ava||'';
+  var bio=ov.bio||charInfo.bio||'';
+  var handle=ov.handle?ov.handle:post.name.toLowerCase().replace(/\s/g,'_').replace(/[^\w]/g,'');
 
   // 用角色名生成固定banner颜色方案
   var _bci=0;for(var _bi=0;_bi<post.name.length;_bi++)_bci=(_bci+post.name.charCodeAt(_bi))&0xffff;
@@ -24735,7 +24746,7 @@ function openCharProfile(post){
   var bannerStyle=bannerStyles[_bci%bannerStyles.length];
   // 圆点图案叠加
   // 优先用自定义背景图URL
-  var customBanner=(ov&&ov.banner)||'';
+  var customBanner=ov.banner||'';
   var banner=ce('div');banner.style.cssText='height:130px;flex-shrink:0;position:relative;overflow:hidden;'+(customBanner?'background:url('+customBanner+') center/cover no-repeat;':bannerStyle);
   var dotPattern=ce('div');dotPattern.style.cssText='position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,0.15) 1px,transparent 1px);background-size:20px 20px;';
   banner.appendChild(dotPattern);
@@ -24767,12 +24778,12 @@ function openCharProfile(post){
   // 个人简介
   if(bio){var bioEl=ce('div');bioEl.style.cssText='font-size:15px;color:#0f1419;margin-top:10px;line-height:1.6;';bioEl.textContent=bio;ia.appendChild(bioEl);}
   // 加入时间
-  var joinDate2=(ov&&ov.joinDate)||charInfo.joinDate||'';
+  var joinDate2=ov.joinDate||charInfo.joinDate||'';
   if(joinDate2){var joinEl2=ce('div');joinEl2.style.cssText='display:flex;align-items:center;gap:5px;font-size:13px;color:#536471;margin-top:6px;';joinEl2.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'+joinDate2+' 加入';ia.appendChild(joinEl2);}
 
   // 位置/属性信息（如果有）
-  var fwing=parseInt(ov&&ov.following)||parseInt(charInfo.following)||Math.floor((_bci%180)+15);
-  var fwers=parseInt(ov&&ov.followers)||parseInt(charInfo.followers)||Math.floor((_bci%4800)+200);
+  var fwing=parseInt(ov.following)||parseInt(charInfo.following)||Math.floor((_bci%180)+15);
+  var fwers=parseInt(ov.followers)||parseInt(charInfo.followers)||Math.floor((_bci%4800)+200);
 
   // 关注/粉丝数
   var stEl=ce('div');stEl.style.cssText='display:flex;gap:20px;margin-top:12px;font-size:15px;color:#0f1419;';
@@ -24804,6 +24815,7 @@ function openCharProfile(post){
   bd.appendChild(listArea);
 
   pg.appendChild(topBar);pg.appendChild(bd);forum.appendChild(pg);
+  },400);
 }
 
 function openPost(idx){
@@ -25763,13 +25775,13 @@ function openDMChat(name,ava,type,initialMsg){
     var _msgIdx=_chatHistory.length-1;
     if(isMe){
       bub.style.cssText='display:flex;justify-content:flex-end;padding:3px 12px;';
-      var bubble=ce('div');bubble.style.cssText='background:#1d9bf0;color:#fff;padding:10px 14px;border-radius:20px 20px 4px 20px;font-size:15px;max-width:72%;line-height:1.55;word-break:break-word;';bubble.textContent=txt;
+      var bubble=ce('div');bubble.style.cssText='background:#1d9bf0;color:#fff;padding:10px 14px;border-radius:20px 20px 4px 20px;font-size:15px;max-width:60%;line-height:1.55;word-break:break-word;';bubble.textContent=txt;
       bub.appendChild(bubble);
     } else {
       bub.style.cssText='display:flex;align-items:flex-end;gap:8px;padding:3px 12px;';
       var leftAv=ce('div');leftAv.style.cssText='width:32px;height:32px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;overflow:hidden;background-size:cover;background-position:center;';
       setAva(leftAv,ava,name,type);
-      var leftTxt=ce('div');leftTxt.style.cssText='background:#fff;color:#0f1419;padding:10px 14px;border-radius:20px 20px 20px 4px;font-size:15px;max-width:72%;line-height:1.55;box-shadow:0 1px 4px rgba(0,0,0,0.08);word-break:break-word;';leftTxt.textContent=txt;
+      var leftTxt=ce('div');leftTxt.style.cssText='background:#fff;color:#0f1419;padding:10px 14px;border-radius:20px 20px 20px 4px;font-size:15px;max-width:60%;line-height:1.55;box-shadow:0 1px 4px rgba(0,0,0,0.08);word-break:break-word;';leftTxt.textContent=txt;
       bub.appendChild(leftAv);bub.appendChild(leftTxt);
     }
     // 长按删除
@@ -25809,7 +25821,7 @@ function openDMChat(name,ava,type,initialMsg){
     // 语音条样式
     var _w=Math.min(200,80+sec*3);
     var voiceBar=ce('div');
-    voiceBar.style.cssText='display:flex;align-items:center;gap:8px;background:'+(isMe?'#1d9bf0':'#fff')+';color:'+(isMe?'#fff':'#0f1419')+';padding:10px 14px;border-radius:'+(isMe?'18px 18px 4px 18px':'18px 18px 18px 4px')+';min-width:100px;max-width:'+_w+'px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.08);';
+    voiceBar.style.cssText='display:flex;align-items:center;gap:8px;background:'+(isMe?'#1d9bf0':'#fff')+';color:'+(isMe?'#fff':'#0f1419')+';padding:10px 14px;border-radius:'+(isMe?'18px 18px 4px 18px':'18px 18px 18px 4px')+';width:100%;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.08);box-sizing:border-box;';
     // 播放图标
     var playBtn=ce('div');playBtn.style.cssText='width:28px;height:28px;border-radius:50%;background:'+(isMe?'rgba(255,255,255,0.25)':'#1d9bf0')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;';
     playBtn.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="'+(isMe?'#fff':'#fff')+'" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
@@ -25845,7 +25857,7 @@ function openDMChat(name,ava,type,initialMsg){
         setTimeout(function(){if(_playing){_playing=false;wave.querySelectorAll('div').forEach(function(b){b.style.animationPlayState='paused';});playBtn.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="#fff" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>';}},sec*1000);
       }
     };
-    var wrap=ce('div');wrap.style.cssText='max-width:220px;';wrap.appendChild(voiceBar);
+    var wrap=ce('div');wrap.style.cssText='max-width:58%;min-width:120px;';wrap.appendChild(voiceBar);
     if(isMe){bub.style.cssText='display:flex;justify-content:flex-end;';bub.appendChild(wrap);}
     else{
       bub.style.cssText='display:flex;align-items:flex-end;gap:8px;';
@@ -25891,8 +25903,10 @@ function openDMChat(name,ava,type,initialMsg){
       var txt=(vbox.querySelector('#_dmVoiceTxt')||{}).value.trim();if(!txt)return;
       var sec=Math.max(1,Math.min(60,Math.ceil(txt.length/3)));
       vov.remove();
-      // 显示语音气泡
       appendVoiceBubble(txt,sec,true);
+      // 语音也加入待发队列，触发AI回复
+      _pendingMsgs.push('[语音消息] '+txt);
+      sb.onclick();
     };
     vov.onclick=function(e){if(e.target===vov)vov.remove();};
   }));
@@ -26080,9 +26094,28 @@ charAddRow.appendChild(charAddBtn);dr.appendChild(charAddRow);
 
 // 字体大小
 dr.appendChild(sec('字体大小'));
-var fsRow=ce('div');fsRow.style.cssText='padding:4px 16px 12px;display:flex;align-items:center;gap:10px;';
-fsRow.innerHTML='<span style="font-size:12px;color:#536471;">小</span><input type="range" id="fFsRange" min="13" max="18" value="15" style="flex:1;accent-color:#1d9bf0;"><span style="font-size:12px;color:#536471;">大</span>';
-fsRow.querySelector('#fFsRange').oninput=function(){document.getElementById('scrForum').style.fontSize=this.value+'px';};
+var fsRow=ce('div');fsRow.style.cssText='padding:4px 16px 12px;display:flex;gap:8px;';
+var fsSizes=[{lbl:'小',val:13},{lbl:'中',val:15},{lbl:'大',val:17}];
+var _curFs=15;
+try{var _storedFs=parseInt(localStorage.getItem('f_forumFontSize'));if(_storedFs)_curFs=_storedFs;}catch(e){}
+fsSizes.forEach(function(s){
+  var btn=document.createElement('button');
+  btn.textContent=s.lbl+'  '+s.val+'px';
+  btn.style.cssText='flex:1;padding:9px 0;border-radius:12px;font-size:13px;cursor:pointer;font-weight:600;border:1.5px solid #cfd9de;background:'+(s.val===_curFs?'#1d9bf0':'#fff')+';color:'+(s.val===_curFs?'#fff':'#536471')+';transition:.2s;';
+  btn.onclick=function(){
+    _curFs=s.val;
+    document.getElementById('scrForum').style.fontSize=s.val+'px';
+    try{localStorage.setItem('f_forumFontSize',s.val);}catch(e){}
+    fsRow.querySelectorAll('button').forEach(function(b,i){
+      b.style.background=fsSizes[i].val===_curFs?'#1d9bf0':'#fff';
+      b.style.color=fsSizes[i].val===_curFs?'#fff':'#536471';
+      b.style.border='1.5px solid '+(fsSizes[i].val===_curFs?'#1d9bf0':'#cfd9de');
+    });
+  };
+  fsRow.appendChild(btn);
+});
+// 初始化字体
+setTimeout(function(){document.getElementById('scrForum').style.fontSize=_curFs+'px';},50);
 dr.appendChild(fsRow);
 
 dr.appendChild(item('💾','保存',function(){saveSettings();toggleDrawer();}));
