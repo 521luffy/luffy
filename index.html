@@ -23744,21 +23744,19 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     var prompt = '';
     if(mode==='peek'){
       prompt = sysPrefix+'\n\n'+
-        '现在有一个身份是「'+identity+'」的人，通过匿名问答平台向'+cc.name+'发送了一个问题，'+cc.name+'不知道对方是谁。\n'+
-        '问题是：「'+q+'」\n\n'+
-        '请模拟这段匿名问答互动。严格按照'+cc.name+'的人设作答。\n'+
-        '请直接输出这段匿名问答互动，严格按以下纯文本格式输出，不加任何额外说明：\n'+
-        '（'+identity+'提问）：[用符合该身份的口吻提问，30字内]\n'+
-        '（'+cc.name+'回答）：[严格按人设作答，50-100字，真实自然，纯中文]';
+        '现在有一个身份是「'+identity+'」的人，通过匿名问答平台向'+cc.name+'发送了以下问题，'+cc.name+'不知道对方是谁：\n'+
+        '「'+q+'」\n\n'+
+        '请直接以'+cc.name+'的第一人称回答这个问题，严格按人设作答，80-150字，真实自然，纯中文。\n'+
+        '只输出"回答："+回答内容，不要输出问题本身，不要任何其他说明。';
     } else {
       prompt = sysPrefix+'\n\n'+
-        cc.myName+'（用户）现在伪装成「'+identity+'」，匿名向'+cc.name+'提问。'+cc.name+'不知道提问者就是'+cc.myName+'。\n'+
-        '用户的问题是：「'+q+'」\n\n'+
-        '请模拟'+cc.name+'收到这个匿名问题后的真实回应。不知道提问者是'+cc.myName+'。\n'+
-        '请直接输出'+cc.name+'收到这个匿名问题后的回答，50-100字，真实自然，纯中文，不加任何格式前缀标签。';
+        cc.myName+'伪装成「'+identity+'」，匿名向'+cc.name+'提问，问题是：\n'+
+        '「'+q+'」\n\n'+
+        '请直接以'+cc.name+'的第一人称回答，严格按人设作答，80-150字，真实自然，纯中文。\n'+
+        '只输出"回答："+回答内容，不要输出问题本身，不要任何其他说明。';
     }
     try{
-      var reply = await callApi(cfg, prompt, 1500);
+      var reply = await callApi(cfg, prompt, 2000);
       var ts = Date.now();
       var record = {id:ts,mode:mode,identity:identity,question:q,answer:reply,charName:cc.name,ts:ts};
       // Fix2: 先存再渲染
@@ -23813,7 +23811,7 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
       '以'+cc.name+'的真实人设对这个回答做出反应（可以吃醋/惊讶/满意/嘲讽/感动，60-100字，真实自然）。\n'+
       '请直接输出'+cc.name+'揭开身份后的反应，60-100字，包含"其实那个匿名提问的就是我"这个揭示，真实自然，纯中文，不加任何格式前缀。';
     try{
-      var reply = await callApi(cfg, prompt, 1500);
+      var reply = await callApi(cfg, prompt, 2000);
       var ts = Date.now();
       var record = {id:ts,mode:'be',identity:_beCurrentId,question:_beCurrentQ,userAnswer:ans,answer:reply,charName:cc.name,ts:ts};
       var records = await _loadRecords();
