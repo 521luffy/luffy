@@ -9793,13 +9793,19 @@ $(`btnLemon`).onclick = async () =>{
     });
     if(npcCtx !== `\n【关联人物档案】\n`) sys += npcCtx;
 
-    if($(`cfgCustomTime`).checked) { 
-
-                let cy = $(`ctYear`).value, cm = $(`ctMonth`).value, cd = $(`ctDay`).value, ch = $(`ctHour`).value, cmin = $(`ctMinute`).value, cw = $(`ctWeekday`).innerText;
-                sys += `当前设定的时间：` + cy + `年` + cm + `月` + cd + `日 ` + ch + `:` + cmin + ` ` + cw + `，请保持感知。\n`;
-            } else if($(`cfgTime`).checked) {
-                sys += `当前现实时间：` + updTime().toLocaleString() + `，请保持感知。\n`;
-            }
+    // ★ 注入统一虚拟时间（优先剧情追踪>自定义>现实），并初始化_storyCurrentTimeMs
+    {
+        let _vdt = getVirtualTimeObj(currentChatId);
+        let _vdStr = getVirtualFullStr(currentChatId);
+        // 如果_storyCurrentTimeMs未初始化，用当前虚拟时间初始化
+        if(!window._storyCurrentTimeMs || window._storyCurrentTimeMs === 0) {
+            window._storyCurrentTimeMs = _vdt.getTime();
+        }
+        sys += `【当前剧情时间·最高优先级】${_vdStr}。` +
+               `你在回复中提到的所有日期必须以此为基准推算，` +
+               `绝对禁止自行编造与此不符的年月日！` +
+               `如需推进时间，每次最多推进30分钟，不得跨天跳跃（除非用户明确说明）。\n`;
+    }
     // ★ 宠物记忆注入
     try{
         if(window._petContextHint) sys += '\n【宠物信息】'+window._petContextHint+'\n';
@@ -9887,11 +9893,13 @@ if(charStickers.length > 0) {
     // ★ 刚退出线下模式：在sys最开头注入最高优先级线上恢复指令，用完清除flag
     if(window._justExitedOffline) {
         window._justExitedOffline = false;
-        sys = '【最高优先级·格式强制切换】你刚从"线下面对面"模式切换回了普通手机聊天模式。' +
-              '从现在这条回复开始，必须完全恢复正常的手机聊天格式：' +
-              '①禁止使用「」括号；②禁止写动作描写、场景描写、心理描写；' +
-              '③像正常发微信一样，直接说话，简短自然，一两句话即可。' +
-              '这是最高优先级指令，不得以任何理由违反。\n\n' + sys;
+        let _hasSBar = $('cfgStatusBarOn') && $('cfgStatusBarOn').checked;
+        sys = '【最高优先级·模式切换】你已从"线下面对面"模式切换回普通手机聊天模式。' +
+              '从现在这条回复开始必须：' +
+              '①禁止使用「」括号；②禁止写动作/场景/心理描写；' +
+              '③像正常发微信一样直接说话，简短自然。' +
+              (_hasSBar ? '④继续按照强制状态栏格式（【定位与天气】【服装】【表情与动作】【心声】【回复】）输出。' : '') +
+              '这是最高优先级指令。\n\n' + sys;
     }
     if(window._offlineMode) {
         let _olScene = window._offlineScene || '';
@@ -10241,6 +10249,21 @@ let hasAccept = txt.includes(`[收取转账]`);
                         }
                     }
                 }
+                // ★ 强化：从普通对话内容中也提取日期，更新剧情时间（不只靠状态栏）
+                if(!_aiDateMatch) {
+                    let _plainDateMatch = txt.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
+                    if(_plainDateMatch) {
+                        let _py = parseInt(_plainDateMatch[1]), _pm = parseInt(_plainDateMatch[2]), _pd = parseInt(_plainDateMatch[3]);
+                        if(_py >= 2000 && _py <= 2050) {
+                            let _plainMs = new Date(_py, _pm-1, _pd).getTime();
+                            let _baseMs2 = window._storyCurrentTimeMs || 0;
+                            // 只接受合理范围内的日期（不超过3天的推进）
+                            if(_baseMs2 === 0 || (_plainMs >= _baseMs2 && _plainMs - _baseMs2 < 3*24*60*60*1000)) {
+                                window._storyCurrentTimeMs = _plainMs;
+                            }
+                        }
+                    }
+                }
                 // ★ 无论cfgStatusBarOn是否开启，只要有自定义时间，就防止低年份污染
                 // 取当前剧情基准年份（自定义时间或剧情追踪时间）
                 let _refYear = 0;
@@ -10250,11 +10273,10 @@ let hasAccept = txt.includes(`[收取转账]`);
                     _refYear = parseInt($(`ctYear`)?.value || '0');
                 }
                 if(_refYear >= 2000) {
-                    // 替换任何明显低于参考年份的年月日（如2016，而参考年为2017）
+                    // 替换任何明显低于参考年份的年月日
                     txt = txt.replace(/(\d{4})年(\d{1,2})月(\d{1,2})日/g, (m, y, mo, d) => {
                         let _y = parseInt(y);
                         if(_y < _refYear && _refYear - _y > 0) {
-                            // 保留月日，只修正年份到参考年
                             return _refYear + '年' + mo + '月' + d + '日';
                         }
                         return m;
@@ -12918,24 +12940,8 @@ if($(`btnGenSpyDiary`)) $(`btnGenSpyDiary`).onclick = async () => {
     let charId = lastSpyCharId;
     
     // 强制穿透：绕开表面输入框，直接深入小抽屉抓取角色专属的私密时间档案
-    let dateStr = `今天`;
-    let isCustom = originalGetItem.call(ls, `cCTon_` + charId);
-    if (isCustom === null) isCustom = originalGetItem.call(ls, `cCTon`);
-    
-    if (isCustom === `true`) {
-        let y = originalGetItem.call(ls, `cCTy_` + charId) || originalGetItem.call(ls, `cCTy`);
-        let m = originalGetItem.call(ls, `cCTm_` + charId) || originalGetItem.call(ls, `cCTm`);
-        let d = originalGetItem.call(ls, `cCTd_` + charId) || originalGetItem.call(ls, `cCTd`);
-        if (y && m && d) {
-            dateStr = y + `年` + m.padStart(2, `0`) + `月` + d.padStart(2, `0`) + `日`;
-        } else {
-            let now = new Date();
-            dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
-        }
-    } else {
-        let now = new Date();
-        dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
-    }
+    // ★ 统一使用getVirtualDateStr，优先剧情追踪时间>自定义时间>现实时间
+    let dateStr = getVirtualDateStr(charId);
     
     let charN = originalGetItem.call(ls, `cN_` + charId) || `TA`;
     let myN = $(`cfgMyName`) ? $(`cfgMyName`).value : `我`;
@@ -13151,40 +13157,9 @@ if($(`btnGenSpyZhihu`)) $(`btnGenSpyZhihu`).onclick = async () => {
     let targetTab = currentZhTab; 
     let charId = lastSpyCharId;
     
-    let dateStr = `今天`;
-    let timeStr = `12:00`;
-    let isCustom = originalGetItem.call(ls, `cCTon_` + charId);
-    if (isCustom === null) isCustom = originalGetItem.call(ls, `cCTon`);
-    
-    if (isCustom === `true`) {
-        let y = originalGetItem.call(ls, `cCTy_` + charId) || originalGetItem.call(ls, `cCTy`);
-        let m = originalGetItem.call(ls, `cCTm_` + charId) || originalGetItem.call(ls, `cCTm`);
-        let d = originalGetItem.call(ls, `cCTd_` + charId) || originalGetItem.call(ls, `cCTd`);
-        
-        let h = originalGetItem.call(ls, `cCTh_` + charId) || originalGetItem.call(ls, `cCTHour`);
-        if (!h) {
-            let now = new Date();
-            h = now.getHours().toString().padStart(2, `0`);
-        }
-        let min = originalGetItem.call(ls, `cCTmin_` + charId) || originalGetItem.call(ls, `cCTMinute`);
-        if (!min) {
-             let now = new Date();
-             min = now.getMinutes().toString().padStart(2, `0`);
-        }
-        
-        if (y && m && d) {
-            dateStr = y + `年` + m.padStart(2, `0`) + `月` + d.padStart(2, `0`) + `日`;
-            timeStr = h.padStart(2, `0`) + `:` + min.padStart(2, `0`);
-        } else {
-            let now = new Date();
-            dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
-            timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
-        }
-    } else {
-        let now = new Date();
-        dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
-        timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
-    }
+    // ★ 统一使用getVirtualDateStr/getVirtualTimeStr，优先剧情追踪时间>自定义时间>现实时间
+    let dateStr = getVirtualDateStr(charId);
+    let timeStr = getVirtualTimeStr(charId);
 
     let baseSys = typeof getSpyBasePrompt === `function` ? getSpyBasePrompt(charId) : ``;
     
@@ -13538,40 +13513,9 @@ async function fetchSpySecretData(targetTab) {
     
     let charId = lastSpyCharId;
     
-    let dateStr = `今天`;
-    let timeStr = `12:00`;
-    let isCustom = originalGetItem.call(ls, `cCTon_` + charId);
-    if (isCustom === null) isCustom = originalGetItem.call(ls, `cCTon`);
-    
-    if (isCustom === `true`) {
-        let y = originalGetItem.call(ls, `cCTy_` + charId) || originalGetItem.call(ls, `cCTy`);
-        let m = originalGetItem.call(ls, `cCTm_` + charId) || originalGetItem.call(ls, `cCTm`);
-        let d = originalGetItem.call(ls, `cCTd_` + charId) || originalGetItem.call(ls, `cCTd`);
-        
-        let h = originalGetItem.call(ls, `cCTh_` + charId) || originalGetItem.call(ls, `cCTHour`);
-        if (!h) {
-            let now = new Date();
-            h = now.getHours().toString().padStart(2, `0`);
-        }
-        let min = originalGetItem.call(ls, `cCTmin_` + charId) || originalGetItem.call(ls, `cCTMinute`);
-        if (!min) {
-             let now = new Date();
-             min = now.getMinutes().toString().padStart(2, `0`);
-        }
-        
-        if (y && m && d) {
-            dateStr = y + `年` + m.padStart(2, `0`) + `月` + d.padStart(2, `0`) + `日`;
-            timeStr = h.padStart(2, `0`) + `:` + min.padStart(2, `0`);
-        } else {
-            let now = new Date();
-            dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
-            timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
-        }
-    } else {
-        let now = new Date();
-        dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
-        timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
-    }
+    // ★ 统一使用getVirtualDateStr/getVirtualTimeStr，优先剧情追踪时间>自定义时间>现实时间
+    let dateStr = getVirtualDateStr(charId);
+    let timeStr = getVirtualTimeStr(charId);
 
     let baseSys = typeof getSpyBasePrompt === `function` ? getSpyBasePrompt(charId) : ``;
     let charN = originalGetItem.call(ls, `cN_` + charId) || `对方`;
@@ -13915,40 +13859,9 @@ async function generateSpyWechat(isAdvance) {
     
     let charId = currentChatId;
 
-    let dateStr = `今天`;
-    let timeStr = `12:00`;
-    let isCustom = originalGetItem.call(ls, `cCTon_` + charId);
-    if (isCustom === null) isCustom = originalGetItem.call(ls, `cCTon`);
-    
-    if (isCustom === `true`) {
-        let y = originalGetItem.call(ls, `cCTy_` + charId) || originalGetItem.call(ls, `cCTy`);
-        let m = originalGetItem.call(ls, `cCTm_` + charId) || originalGetItem.call(ls, `cCTm`);
-        let d = originalGetItem.call(ls, `cCTd_` + charId) || originalGetItem.call(ls, `cCTd`);
-        
-        let h = originalGetItem.call(ls, `cCTh_` + charId) || originalGetItem.call(ls, `cCTHour`);
-        if (!h) {
-            let now = new Date();
-            h = now.getHours().toString().padStart(2, `0`);
-        }
-        let min = originalGetItem.call(ls, `cCTmin_` + charId) || originalGetItem.call(ls, `cCTMinute`);
-        if (!min) {
-             let now = new Date();
-             min = now.getMinutes().toString().padStart(2, `0`);
-        }
-        
-        if (y && m && d) {
-            dateStr = y + `年` + m.padStart(2, `0`) + `月` + d.padStart(2, `0`) + `日`;
-            timeStr = h.padStart(2, `0`) + `:` + min.padStart(2, `0`);
-        } else {
-            let now = new Date();
-            dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
-            timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
-        }
-    } else {
-        let now = new Date();
-        dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
-        timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
-    }
+    // ★ 统一使用getVirtualDateStr/getVirtualTimeStr，优先剧情追踪时间>自定义时间>现实时间
+    let dateStr = getVirtualDateStr(charId);
+    let timeStr = getVirtualTimeStr(charId);
     
     let charN = originalGetItem.call(ls, `cN_` + charId) || `对方`;
     let myN = $(`cfgMyName`) ? $(`cfgMyName`).value : `我`;
@@ -14109,40 +14022,9 @@ async function generateSpyCall() {
     
     let charId = currentChatId;
 
-    let dateStr = `今天`;
-    let timeStr = `12:00`;
-    let isCustom = originalGetItem.call(ls, `cCTon_` + charId);
-    if (isCustom === null) isCustom = originalGetItem.call(ls, `cCTon`);
-    
-    if (isCustom === `true`) {
-        let y = originalGetItem.call(ls, `cCTy_` + charId) || originalGetItem.call(ls, `cCTy`);
-        let m = originalGetItem.call(ls, `cCTm_` + charId) || originalGetItem.call(ls, `cCTm`);
-        let d = originalGetItem.call(ls, `cCTd_` + charId) || originalGetItem.call(ls, `cCTd`);
-        
-        let h = originalGetItem.call(ls, `cCTh_` + charId) || originalGetItem.call(ls, `cCTHour`);
-        if (!h) {
-            let now = new Date();
-            h = now.getHours().toString().padStart(2, `0`);
-        }
-        let min = originalGetItem.call(ls, `cCTmin_` + charId) || originalGetItem.call(ls, `cCTMinute`);
-        if (!min) {
-             let now = new Date();
-             min = now.getMinutes().toString().padStart(2, `0`);
-        }
-        
-        if (y && m && d) {
-            dateStr = y + `年` + m.padStart(2, `0`) + `月` + d.padStart(2, `0`) + `日`;
-            timeStr = h.padStart(2, `0`) + `:` + min.padStart(2, `0`);
-        } else {
-            let now = new Date();
-            dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
-            timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
-        }
-    } else {
-        let now = new Date();
-        dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
-        timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
-    }
+    // ★ 统一使用getVirtualDateStr/getVirtualTimeStr，优先剧情追踪时间>自定义时间>现实时间
+    let dateStr = getVirtualDateStr(charId);
+    let timeStr = getVirtualTimeStr(charId);
     
     let charN = `对方`;
     let contacts = ls.getItem(`myContacts`) ? JSON.parse(ls.getItem(`myContacts`)) : [];
@@ -14278,40 +14160,9 @@ async function generateSpyAlbum() {
     
     let charId = currentChatId;
 
-    let dateStr = `今天`;
-    let timeStr = `12:00`;
-    let isCustom = originalGetItem.call(ls, `cCTon_` + charId);
-    if (isCustom === null) isCustom = originalGetItem.call(ls, `cCTon`);
-    
-    if (isCustom === `true`) {
-        let y = originalGetItem.call(ls, `cCTy_` + charId) || originalGetItem.call(ls, `cCTy`);
-        let m = originalGetItem.call(ls, `cCTm_` + charId) || originalGetItem.call(ls, `cCTm`);
-        let d = originalGetItem.call(ls, `cCTd_` + charId) || originalGetItem.call(ls, `cCTd`);
-        
-        let h = originalGetItem.call(ls, `cCTh_` + charId) || originalGetItem.call(ls, `cCTHour`);
-        if (!h) {
-            let now = new Date();
-            h = now.getHours().toString().padStart(2, `0`);
-        }
-        let min = originalGetItem.call(ls, `cCTmin_` + charId) || originalGetItem.call(ls, `cCTMinute`);
-        if (!min) {
-             let now = new Date();
-             min = now.getMinutes().toString().padStart(2, `0`);
-        }
-        
-        if (y && m && d) {
-            dateStr = y + `年` + m.padStart(2, `0`) + `月` + d.padStart(2, `0`) + `日`;
-            timeStr = h.padStart(2, `0`) + `:` + min.padStart(2, `0`);
-        } else {
-            let now = new Date();
-            dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
-            timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
-        }
-    } else {
-        let now = new Date();
-        dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
-        timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
-    }
+    // ★ 统一使用getVirtualDateStr/getVirtualTimeStr，优先剧情追踪时间>自定义时间>现实时间
+    let dateStr = getVirtualDateStr(charId);
+    let timeStr = getVirtualTimeStr(charId);
 
     let charN = `对方`;
     let contacts = ls.getItem(`myContacts`) ? JSON.parse(ls.getItem(`myContacts`)) : [];
@@ -14458,40 +14309,9 @@ async function generateSpyMemo() {
     
     let charId = currentChatId;
 
-    let dateStr = `今天`;
-    let timeStr = `12:00`;
-    let isCustom = originalGetItem.call(ls, `cCTon_` + charId);
-    if (isCustom === null) isCustom = originalGetItem.call(ls, `cCTon`);
-    
-    if (isCustom === `true`) {
-        let y = originalGetItem.call(ls, `cCTy_` + charId) || originalGetItem.call(ls, `cCTy`);
-        let m = originalGetItem.call(ls, `cCTm_` + charId) || originalGetItem.call(ls, `cCTm`);
-        let d = originalGetItem.call(ls, `cCTd_` + charId) || originalGetItem.call(ls, `cCTd`);
-        
-        let h = originalGetItem.call(ls, `cCTh_` + charId) || originalGetItem.call(ls, `cCTHour`);
-        if (!h) {
-            let now = new Date();
-            h = now.getHours().toString().padStart(2, `0`);
-        }
-        let min = originalGetItem.call(ls, `cCTmin_` + charId) || originalGetItem.call(ls, `cCTMinute`);
-        if (!min) {
-             let now = new Date();
-             min = now.getMinutes().toString().padStart(2, `0`);
-        }
-        
-        if (y && m && d) {
-            dateStr = y + `年` + m.padStart(2, `0`) + `月` + d.padStart(2, `0`) + `日`;
-            timeStr = h.padStart(2, `0`) + `:` + min.padStart(2, `0`);
-        } else {
-            let now = new Date();
-            dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
-            timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
-        }
-    } else {
-        let now = new Date();
-        dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
-        timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
-    }
+    // ★ 统一使用getVirtualDateStr/getVirtualTimeStr，优先剧情追踪时间>自定义时间>现实时间
+    let dateStr = getVirtualDateStr(charId);
+    let timeStr = getVirtualTimeStr(charId);
 
     let charN = `对方`;
     let contacts = ls.getItem(`myContacts`) ? JSON.parse(ls.getItem(`myContacts`)) : [];
@@ -14844,40 +14664,9 @@ async function generateSpyMeituan() {
 
     let charId = currentChatId;
 
-    let dateStr = `今天`;
-    let timeStr = `12:00`;
-    let isCustom = originalGetItem.call(ls, `cCTon_` + charId);
-    if (isCustom === null) isCustom = originalGetItem.call(ls, `cCTon`);
-    
-    if (isCustom === `true`) {
-        let y = originalGetItem.call(ls, `cCTy_` + charId) || originalGetItem.call(ls, `cCTy`);
-        let m = originalGetItem.call(ls, `cCTm_` + charId) || originalGetItem.call(ls, `cCTm`);
-        let d = originalGetItem.call(ls, `cCTd_` + charId) || originalGetItem.call(ls, `cCTd`);
-        
-        let h = originalGetItem.call(ls, `cCTh_` + charId) || originalGetItem.call(ls, `cCTHour`);
-        if (!h) {
-            let now = new Date();
-            h = now.getHours().toString().padStart(2, `0`);
-        }
-        let min = originalGetItem.call(ls, `cCTmin_` + charId) || originalGetItem.call(ls, `cCTMinute`);
-        if (!min) {
-             let now = new Date();
-             min = now.getMinutes().toString().padStart(2, `0`);
-        }
-        
-        if (y && m && d) {
-            dateStr = y + `年` + m.padStart(2, `0`) + `月` + d.padStart(2, `0`) + `日`;
-            timeStr = h.padStart(2, `0`) + `:` + min.padStart(2, `0`);
-        } else {
-            let now = new Date();
-            dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
-            timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
-        }
-    } else {
-        let now = new Date();
-        dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
-        timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
-    }
+    // ★ 统一使用getVirtualDateStr/getVirtualTimeStr，优先剧情追踪时间>自定义时间>现实时间
+    let dateStr = getVirtualDateStr(charId);
+    let timeStr = getVirtualTimeStr(charId);
 
     let charN = `对方`;
     let contacts = ls.getItem(`myContacts`) ? JSON.parse(ls.getItem(`myContacts`)) : [];
@@ -14984,6 +14773,47 @@ if($(`btnSpyFootprintClear`)) $(`btnSpyFootprintClear`).onclick = async () => {
 };
 
 // 提取当前界面的精准日期（已修复自定义时间逻辑）
+// ★ 统一虚拟时间获取函数 - 所有功能共用，确保日期一致
+// 优先级：剧情追踪时间 > 自定义时间 > 现实时间
+function getVirtualTimeObj(charId) {
+    charId = charId || (typeof currentChatId !== 'undefined' ? currentChatId : 'default');
+    // 1. 优先用剧情追踪时间（_storyCurrentTimeMs）
+    if(window._storyCurrentTimeMs && window._storyCurrentTimeMs > 0) {
+        return new Date(window._storyCurrentTimeMs);
+    }
+    // 2. 用自定义时间
+    let isCustom = originalGetItem.call(ls, 'cCTon_' + charId);
+    if(isCustom === null) isCustom = originalGetItem.call(ls, 'cCTon');
+    if(isCustom === 'true') {
+        let y = originalGetItem.call(ls, 'cCTy_' + charId) || originalGetItem.call(ls, 'cCTy');
+        let m = originalGetItem.call(ls, 'cCTm_' + charId) || originalGetItem.call(ls, 'cCTm');
+        let d = originalGetItem.call(ls, 'cCTd_' + charId) || originalGetItem.call(ls, 'cCTd');
+        let h = originalGetItem.call(ls, 'cCTh_' + charId) || originalGetItem.call(ls, 'cCTh') || '12';
+        let min = originalGetItem.call(ls, 'cCTmin_' + charId) || originalGetItem.call(ls, 'cCTmin') || '0';
+        if(y && m && d) {
+            let dt = new Date(parseInt(y), parseInt(m)-1, parseInt(d), parseInt(h)||0, parseInt(min)||0);
+            if(!isNaN(dt.getTime())) return dt;
+        }
+    }
+    // 3. 现实时间
+    return typeof updTime === 'function' ? updTime() : new Date();
+}
+function getVirtualDateStr(charId) {
+    let dt = getVirtualTimeObj(charId);
+    let days = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+    return dt.getFullYear()+'年'+(dt.getMonth()+1)+'月'+dt.getDate()+'日 '+days[dt.getDay()];
+}
+function getVirtualTimeStr(charId) {
+    let dt = getVirtualTimeObj(charId);
+    return dt.getHours().toString().padStart(2,'0')+':'+dt.getMinutes().toString().padStart(2,'0');
+}
+function getVirtualFullStr(charId) {
+    let dt = getVirtualTimeObj(charId);
+    let days = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+    return dt.getFullYear()+'年'+(dt.getMonth()+1)+'月'+dt.getDate()+'日 '+days[dt.getDay()]+' '+
+           dt.getHours().toString().padStart(2,'0')+':'+dt.getMinutes().toString().padStart(2,'0');
+}
+
 function getFootprintDateStr() {
     let charId = currentChatId;
     let isCustom = originalGetItem.call(ls, `cCTon_` + charId);
@@ -15211,40 +15041,9 @@ async function generateSpyWallet() {
 
     let charId = currentChatId;
 
-    let dateStr = `今天`;
-    let timeStr = `12:00`;
-    let isCustom = originalGetItem.call(ls, `cCTon_` + charId);
-    if (isCustom === null) isCustom = originalGetItem.call(ls, `cCTon`);
-    
-    if (isCustom === `true`) {
-        let y = originalGetItem.call(ls, `cCTy_` + charId) || originalGetItem.call(ls, `cCTy`);
-        let m = originalGetItem.call(ls, `cCTm_` + charId) || originalGetItem.call(ls, `cCTm`);
-        let d = originalGetItem.call(ls, `cCTd_` + charId) || originalGetItem.call(ls, `cCTd`);
-        
-        let h = originalGetItem.call(ls, `cCTh_` + charId) || originalGetItem.call(ls, `cCTHour`);
-        if (!h) {
-            let now = new Date();
-            h = now.getHours().toString().padStart(2, `0`);
-        }
-        let min = originalGetItem.call(ls, `cCTmin_` + charId) || originalGetItem.call(ls, `cCTMinute`);
-        if (!min) {
-             let now = new Date();
-             min = now.getMinutes().toString().padStart(2, `0`);
-        }
-        
-        if (y && m && d) {
-            dateStr = y + `年` + m.padStart(2, `0`) + `月` + d.padStart(2, `0`) + `日`;
-            timeStr = h.padStart(2, `0`) + `:` + min.padStart(2, `0`);
-        } else {
-            let now = new Date();
-            dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
-            timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
-        }
-    } else {
-        let now = new Date();
-        dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
-        timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
-    }
+    // ★ 统一使用getVirtualDateStr/getVirtualTimeStr，优先剧情追踪时间>自定义时间>现实时间
+    let dateStr = getVirtualDateStr(charId);
+    let timeStr = getVirtualTimeStr(charId);
 
     let charN = `对方`;
     let contacts = ls.getItem(`myContacts`) ? JSON.parse(ls.getItem(`myContacts`)) : [];
@@ -15468,40 +15267,9 @@ async function generateSpyShop() {
 
     let charId = currentChatId;
 
-    let dateStr = `今天`;
-    let timeStr = `12:00`;
-    let isCustom = originalGetItem.call(ls, `cCTon_` + charId);
-    if (isCustom === null) isCustom = originalGetItem.call(ls, `cCTon`);
-    
-    if (isCustom === `true`) {
-        let y = originalGetItem.call(ls, `cCTy_` + charId) || originalGetItem.call(ls, `cCTy`);
-        let m = originalGetItem.call(ls, `cCTm_` + charId) || originalGetItem.call(ls, `cCTm`);
-        let d = originalGetItem.call(ls, `cCTd_` + charId) || originalGetItem.call(ls, `cCTd`);
-        
-        let h = originalGetItem.call(ls, `cCTh_` + charId) || originalGetItem.call(ls, `cCTHour`);
-        if (!h) {
-            let now = new Date();
-            h = now.getHours().toString().padStart(2, `0`);
-        }
-        let min = originalGetItem.call(ls, `cCTmin_` + charId) || originalGetItem.call(ls, `cCTMinute`);
-        if (!min) {
-             let now = new Date();
-             min = now.getMinutes().toString().padStart(2, `0`);
-        }
-        
-        if (y && m && d) {
-            dateStr = y + `年` + m.padStart(2, `0`) + `月` + d.padStart(2, `0`) + `日`;
-            timeStr = h.padStart(2, `0`) + `:` + min.padStart(2, `0`);
-        } else {
-            let now = new Date();
-            dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
-            timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
-        }
-    } else {
-        let now = new Date();
-        dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
-        timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
-    }
+    // ★ 统一使用getVirtualDateStr/getVirtualTimeStr，优先剧情追踪时间>自定义时间>现实时间
+    let dateStr = getVirtualDateStr(charId);
+    let timeStr = getVirtualTimeStr(charId);
 
     let charN = `对方`;
     let contacts = ls.getItem(`myContacts`) ? JSON.parse(ls.getItem(`myContacts`)) : [];
@@ -15682,40 +15450,9 @@ async function generateSpyIqiyi() {
     
     let charId = currentChatId;
 
-    let dateStr = `今天`;
-    let timeStr = `12:00`;
-    let isCustom = originalGetItem.call(ls, `cCTon_` + charId);
-    if (isCustom === null) isCustom = originalGetItem.call(ls, `cCTon`);
-    
-    if (isCustom === `true`) {
-        let y = originalGetItem.call(ls, `cCTy_` + charId) || originalGetItem.call(ls, `cCTy`);
-        let m = originalGetItem.call(ls, `cCTm_` + charId) || originalGetItem.call(ls, `cCTm`);
-        let d = originalGetItem.call(ls, `cCTd_` + charId) || originalGetItem.call(ls, `cCTd`);
-        
-        let h = originalGetItem.call(ls, `cCTh_` + charId) || originalGetItem.call(ls, `cCTHour`);
-        if (!h) {
-            let now = new Date();
-            h = now.getHours().toString().padStart(2, `0`);
-        }
-        let min = originalGetItem.call(ls, `cCTmin_` + charId) || originalGetItem.call(ls, `cCTMinute`);
-        if (!min) {
-             let now = new Date();
-             min = now.getMinutes().toString().padStart(2, `0`);
-        }
-        
-        if (y && m && d) {
-            dateStr = y + `年` + m.padStart(2, `0`) + `月` + d.padStart(2, `0`) + `日`;
-            timeStr = h.padStart(2, `0`) + `:` + min.padStart(2, `0`);
-        } else {
-            let now = new Date();
-            dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
-            timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
-        }
-    } else {
-        let now = new Date();
-        dateStr = now.getFullYear() + `年` + (now.getMonth() + 1).toString().padStart(2, `0`) + `月` + now.getDate().toString().padStart(2, `0`) + `日`;
-        timeStr = now.getHours().toString().padStart(2, `0`) + `:` + now.getMinutes().toString().padStart(2, `0`);
-    }
+    // ★ 统一使用getVirtualDateStr/getVirtualTimeStr，优先剧情追踪时间>自定义时间>现实时间
+    let dateStr = getVirtualDateStr(charId);
+    let timeStr = getVirtualTimeStr(charId);
     
     let charN = originalGetItem.call(ls, `cN_` + charId) || `对方`;
     let myN = $(`cfgMyName`) ? $(`cfgMyName`).value : `我`;
