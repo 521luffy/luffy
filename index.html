@@ -10347,10 +10347,18 @@ let hasAccept = txt.includes(`[收取转账]`);
                             _hm ? parseInt(_hm[1]) : 0,
                             _hm ? parseInt(_hm[2]) : 0
                         ).getTime();
-                        // 只接受：合理年份 + 不早于剧情起始时间（防倒退）
-                        let _baseMs = window._storyCurrentTimeMs || 0;
+                        // ★ _baseMs为0时，先用虚拟时间初始化，防止AI乱写的年份被当作基准
+                        if(!window._storyCurrentTimeMs || window._storyCurrentTimeMs === 0) {
+                            if(typeof getVirtualTimeObj === 'function') {
+                                window._storyCurrentTimeMs = getVirtualTimeObj(currentChatId).getTime();
+                            }
+                        }
+                        let _baseMs = window._storyCurrentTimeMs || new Date().getTime();
                         let _year = parseInt(_ym[1]);
-                        if(!isNaN(_parsedMs) && _year >= 2000 && _year <= 2050) {
+                        // 只接受：合理年份 + 不早于剧情起始时间（防倒退）
+                        // ★ 额外校验：年份必须在基准年份-1 到 基准年份+5 范围内，彻底拒绝2016这种离谱年份
+                        let _baseYear = new Date(_baseMs).getFullYear();
+                        if(!isNaN(_parsedMs) && _year >= 2000 && _year <= 2050 && _year >= _baseYear - 1) {
                             // 若AI给的时间在基准时间之后（允许推进），但要限制单次推进量
                             if(_parsedMs >= _baseMs) {
                                 // ★ 关键修复：单条消息最多允许推进2小时（防止AI每条消息跳跃多天）
@@ -10401,10 +10409,10 @@ let hasAccept = txt.includes(`[收取转账]`);
                     _refYear = parseInt($(`ctYear`)?.value || '0');
                 }
                 if(_refYear >= 2000) {
-                    // 替换任何明显低于参考年份的年月日
+                    // ★ 替换所有与参考年份偏差超过1年的日期（防止AI写出2016这种离谱年份）
                     txt = txt.replace(/(\d{4})年(\d{1,2})月(\d{1,2})日/g, (m, y, mo, d) => {
                         let _y = parseInt(y);
-                        if(_y < _refYear && _refYear - _y > 0) {
+                        if(Math.abs(_y - _refYear) > 1) {
                             return _refYear + '年' + mo + '月' + d + '日';
                         }
                         return m;
