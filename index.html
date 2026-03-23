@@ -6069,11 +6069,20 @@ window.syncStatusBarTpl = function() {
         $(`customTimePanel`).style.display = `flex`;
         $(`cfgTime`).checked = false;
     }
-    if(ls.getItem(`cCTy`)) ySel.value = ls.getItem(`cCTy`);
-    if(ls.getItem(`cCTm`)) mSel.value = ls.getItem(`cCTm`);
-    if(ls.getItem(`cCTd`)) dSel.value = ls.getItem(`cCTd`);
-    if(ls.getItem(`cCTh`)) hSel.value = ls.getItem(`cCTh`);
-    if(ls.getItem(`cCTmin`)) minSel.value = ls.getItem(`cCTmin`);
+    // 读取时用原始不带proxy的 originalGetItem，避免key混乱
+    // 必须有 currentChatId 才能正确读到对应char的自定义日期
+    var _ctId = (typeof currentChatId !== 'undefined' && currentChatId) ? '_' + currentChatId : '';
+    var _ry = originalGetItem.call(ls, `cCTy`+_ctId);
+    var _rm = originalGetItem.call(ls, `cCTm`+_ctId);
+    var _rd = originalGetItem.call(ls, `cCTd`+_ctId);
+    var _rh = originalGetItem.call(ls, `cCTh`+_ctId);
+    var _rmin = originalGetItem.call(ls, `cCTmin`+_ctId);
+    // 只有所有值都合理（年份在2000-2100之间）才恢复，否则保持当前真实时间
+    if(_ry && parseInt(_ry) >= 2000 && parseInt(_ry) <= 2100) ySel.value = _ry;
+    if(_rm) mSel.value = _rm;
+    if(_rd) dSel.value = _rd;
+    if(_rh) hSel.value = _rh;
+    if(_rmin) minSel.value = _rmin;
     updateWeekday();
 }
 setTimeout(initCustomTimeUI, 100);
@@ -6225,11 +6234,9 @@ async function applyVis() {
                 if($(`myPreview`)) { $(`myPreview`).style.backgroundImage = `none`; $(`myPreview`).innerText = `👤`; }
             }
 
-            // 我的头像用专属全局键 myI_global，不跟 char 绑定
+            // 我的头像用专属全局键 myI_global，不跟 char 绑定（不fallback到myI，防止被各char头像覆盖）
             let globalMyA = await localforage.getItem(`myI_global`).catch(()=>null)
-                         || await localforage.getItem(`myI`).catch(()=>null)
-                         || originalGetItem.call(ls, `myI_global`)
-                         || originalGetItem.call(ls, `myI`);
+                         || originalGetItem.call(ls, `myI_global`);
             if(globalMyA) {
                 if($(`meAvatar`)) { $(`meAvatar`).style.backgroundImage = `url(${globalMyA})`; $(`meAvatar`).innerHTML = ``; }
                 if($(`spaceAvatar`)) { $(`spaceAvatar`).style.backgroundImage = `url(${globalMyA})`; $(`spaceAvatar`).innerHTML = ``; }
@@ -6317,12 +6324,16 @@ function cmp(id, key) {
                 localforage.setItem(actualKey, dataUrl).then(() => {
                     if(key === `myI`) {
                         window.currentLoadedMyI = dataUrl;
-                        // 额外存 myI_global（我的全局头像，不跟char混）
-                        localforage.setItem(`myI_global`, dataUrl).catch(()=>{});
-                        let _p = $(`meAvaPreview`);
-                        if(_p) { _p.style.backgroundImage=`url(${dataUrl})`; _p.innerText=``; }
-                        if($(`meAvatar`)) { $(`meAvatar`).style.backgroundImage=`url(${dataUrl})`; $(`meAvatar`).innerHTML=``; }
-                        if($(`spaceAvatar`)) { $(`spaceAvatar`).style.backgroundImage=`url(${dataUrl})`; $(`spaceAvatar`).innerHTML=``; }
+                        // 只有从"我的"页面专属上传按钮触发时，才写myI_global（全局头像）
+                        // 防止聊天室设置里上传"我的头像"覆盖全局头像
+                        if(window._upFromMeScreen) {
+                            localforage.setItem(`myI_global`, dataUrl).catch(()=>{});
+                            try { originalSetItem.call(ls, `myI_global`, dataUrl); } catch(e){}
+                            let _p = $(`meAvaPreview`);
+                            if(_p) { _p.style.backgroundImage=`url(${dataUrl})`; _p.innerText=``; }
+                            if($(`meAvatar`)) { $(`meAvatar`).style.backgroundImage=`url(${dataUrl})`; $(`meAvatar`).innerHTML=``; }
+                            if($(`spaceAvatar`)) { $(`spaceAvatar`).style.backgroundImage=`url(${dataUrl})`; $(`spaceAvatar`).innerHTML=``; }
+                        }
                     }
                     if(key === `aiI`) {
                         window.currentLoadedAiI = dataUrl;
@@ -7587,12 +7598,23 @@ async function renderContacts() {
             // 优先用 lastChatTime（更准确）
             let _lct = originalGetItem.call(ls, `lastChatTime_`+c.id);
             if(_lct) _itemTime = Number(_lct) || 0;
-            if(!_itemTime) { try { let _lft = await localforage.getItem(`lastChatTime_`+c.id); if(_lft) _itemTime = Number(_lft) || 0; } catch(e){} }
-            // 兜底：从聊天记录最后一条消息取时间
+            // 兜底：从聊天记录最后一条消息取时间（同步可用时先用这个）
             if(!_itemTime && isoHist && isoHist.length) {
                 let _lm = isoHist[isoHist.length-1];
                 _itemTime = _lm.ts || _lm.time || 0;
             }
+            // 异步从localforage读更精确的时间，读完后更新div并重排
+            (async (_div, _cid, _curT) => {
+                try {
+                    let _lft = await localforage.getItem(`lastChatTime_`+_cid);
+                    let _t = _lft ? Number(_lft)||0 : 0;
+                    if(_t > _curT) {
+                        _div.dataset.lasttime = String(_t);
+                        // 重新排序消息列表
+                        if(typeof _sortMsgListByTime === 'function') _sortMsgListByTime();
+                    }
+                } catch(e){}
+            })(div, c.id, _itemTime);
         } catch(e){}
         div.dataset.lasttime = String(_itemTime);
                 div.onclick = async () => {
@@ -11520,7 +11542,7 @@ if($("btnSaveEditMe")) $("btnSaveEditMe").onclick = async () =>{
     if($("meBio"))  $("meBio").innerText  = newBio  || `请添加你的个性签名吧！`;
     $("editMeModal").style.display = "none";
 };
-if($("btnSetMeAvatar")) $("btnSetMeAvatar").onclick = () => $("upMeAvatar").click();
+if($("btnSetMeAvatar")) $("btnSetMeAvatar").onclick = () => { window._upFromMeScreen = true; $("upMeAvatar").click(); setTimeout(()=>{window._upFromMeScreen=false;},3000); };
 cmp("upMeAvatar","myI");
 // cmp 上传完成后同步更新"我的"头像预览
 if($("upMeAvatar")) {
@@ -16520,7 +16542,7 @@ if($(`momentBgInput`)) $(`momentBgInput`).onchange = e => {
 };
 
 // 头像点击 - 可更换
-if($(`momentUserAvatar`)) $(`momentUserAvatar`).onclick = () => { if($(`upMeAvatar`)) $(`upMeAvatar`).click(); };
+if($(`momentUserAvatar`)) $(`momentUserAvatar`).onclick = () => { window._upFromMeScreen = true; if($(`upMeAvatar`)) $(`upMeAvatar`).click(); setTimeout(()=>{window._upFromMeScreen=false;},3000); };
 
 // 批量管理
 if($(`btnMomentMultiSelect`)) $(`btnMomentMultiSelect`).onclick = () => {
@@ -24510,7 +24532,27 @@ window.labelSave=async function(){
 var _origMeNew=window.showScreen;
 window.showScreen=function(id){
   _origMeNew(id);
-  if(id==='scrMe'){meRefreshStats();meLikesAutoGrow();}
+  if(id==='scrMe'){
+    meRefreshStats();
+    meLikesAutoGrow();
+    // 每次进入"我的"页面时从存储刷新签名和头像，防止签名消失
+    (async function(){
+      try {
+        var _bio = null;
+        try { _bio = await localforage.getItem('myBio'); } catch(e){}
+        if(!_bio) _bio = (typeof originalGetItem==='function'?originalGetItem.call(localStorage,'myBio'):localStorage.getItem('myBio'))||'';
+        if(typeof meBio !== 'undefined') {}
+        var _bioEl = document.getElementById('meBio');
+        if(_bioEl) _bioEl.innerText = _bio || '请添加你的个性签名吧！';
+        // 同步刷新全局头像
+        var _ava = null;
+        try { _ava = await localforage.getItem('myI_global'); } catch(e){}
+        if(!_ava) _ava = (typeof originalGetItem==='function'?originalGetItem.call(localStorage,'myI_global'):localStorage.getItem('myI_global'))||'';
+        var _avaEl = document.getElementById('meAvatar');
+        if(_avaEl && _ava) { _avaEl.style.backgroundImage='url('+_ava+')'; _avaEl.innerHTML=''; }
+      } catch(e){}
+    })();
+  }
   if(id==='scrMoodCal'){_moodYear=new Date().getFullYear();_moodMonth=new Date().getMonth();renderMoodCal();}
   if(id==='scrMeAchieve')renderAchieve();
   if(id==='scrMeCapsule')renderCapsule();
