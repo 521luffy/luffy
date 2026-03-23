@@ -945,88 +945,14 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
     <span id="csCharBtn" title="切换角色">👥</span>
     <span id="csBgBtn" title="情侣空间设置" style="font-size:20px;cursor:pointer;width:30px;text-align:right;line-height:1;">⚙️</span>
     <input type="file" id="csBgInput" accept="image/*" style="display:none">
-
-    <!-- 情侣空间设置面板 -->
-    <div id="csSettingsPanel" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;z-index:200;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);">
-      <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:90%;max-width:380px;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 12px 36px rgba(0,0,0,.2);max-height:82vh;display:flex;flex-direction:column;">
-        <div style="background:linear-gradient(135deg,#ff8fab,#c44f7a);color:white;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
-          <span style="font-weight:700;font-size:15px;">⚙️ 情侣空间设置</span>
-          <span id="csSettingsClose" style="cursor:pointer;font-size:22px;line-height:1;">×</span>
-        </div>
-        <div style="overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:14px;">
-          <!-- 页面壁纸 -->
-          <div style="background:#fff9fb;border-radius:14px;padding:12px;">
-            <div style="font-size:13px;font-weight:700;color:#c44f7a;margin-bottom:10px;">🖼 页面壁纸</div>
-            <div style="display:flex;align-items:center;gap:10px;">
-              <div id="csWallThumb" onclick="document.getElementById('csBgInput').click()" style="width:54px;height:54px;border-radius:10px;background:#f5e0e8;border:2px dashed #ffb6c1;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:22px;overflow:hidden;position:relative;flex-shrink:0;">🌸
-                <img id="csWallThumbImg" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" alt="">
-              </div>
-              <div style="display:flex;flex-direction:column;gap:6px;flex:1;">
-                <button onclick="document.getElementById('csBgInput').click()" style="padding:7px 14px;background:linear-gradient(135deg,#ff8fab,#c44f7a);color:white;border:none;border-radius:10px;font-size:12px;cursor:pointer;font-weight:bold;">换壁纸</button>
-                <button id="csWallRemove" style="padding:7px 14px;background:#fff0f3;color:#e75480;border:1px solid #ffd6e0;border-radius:10px;font-size:12px;cursor:pointer;">恢复默认</button>
-              </div>
-            </div>
-          </div>
-          <!-- 功能图标 -->
-          <div style="background:#fff9fb;border-radius:14px;padding:12px;">
-            <div style="font-size:13px;font-weight:700;color:#c44f7a;margin-bottom:10px;">🎨 功能图标自定义</div>
-            <div style="display:flex;flex-direction:column;gap:10px;">
-              <div class="cs-icon-row" data-func="Period" data-default="🩸" data-lskey="cs_icon_Period">
-                <span class="cs-icon-lbl">大姨妈</span>
-                <div class="cs-icon-preview">🩸<img class="cs-icon-img" style="display:none;" alt=""></div>
-                <input type="file" class="cs-icon-inp" accept="image/*" style="display:none">
-                <button class="cs-icon-change">换图</button>
-                <button class="cs-icon-reset">恢复</button>
-              </div>
-              <div class="cs-icon-row" data-func="LoveList" data-default="📖" data-lskey="cs_icon_LoveList">
-                <span class="cs-icon-lbl">TA的过去</span>
-                <div class="cs-icon-preview">📖<img class="cs-icon-img" style="display:none;" alt=""></div>
-                <input type="file" class="cs-icon-inp" accept="image/*" style="display:none">
-                <button class="cs-icon-change">换图</button>
-                <button class="cs-icon-reset">恢复</button>
-              </div>
-              <div class="cs-icon-row" data-func="Diary" data-default="📒" data-lskey="cs_icon_Diary">
-                <span class="cs-icon-lbl">共享日记</span>
-                <div class="cs-icon-preview">📒<img class="cs-icon-img" style="display:none;" alt=""></div>
-                <input type="file" class="cs-icon-inp" accept="image/*" style="display:none">
-                <button class="cs-icon-change">换图</button>
-                <button class="cs-icon-reset">恢复</button>
-              </div>
-              <div class="cs-icon-row" data-func="Horoscope" data-default="⭐" data-lskey="cs_icon_Horoscope">
-                <span class="cs-icon-lbl">每日星运</span>
-                <div class="cs-icon-preview">⭐<img class="cs-icon-img" style="display:none;" alt=""></div>
-                <input type="file" class="cs-icon-inp" accept="image/*" style="display:none">
-                <button class="cs-icon-change">换图</button>
-                <button class="cs-icon-reset">恢复</button>
-              </div>
-              <div class="cs-icon-row" data-func="Challenge" data-default="💑" data-lskey="cs_icon_Challenge">
-                <span class="cs-icon-lbl">匿名问答</span>
-                <div class="cs-icon-preview">💑<img class="cs-icon-img" style="display:none;" alt=""></div>
-                <input type="file" class="cs-icon-inp" accept="image/*" style="display:none">
-                <button class="cs-icon-change">换图</button>
-                <button class="cs-icon-reset">恢复</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <style>
-    .cs-icon-row{display:flex;align-items:center;gap:8px;}
-    .cs-icon-lbl{font-size:13px;color:#555;width:56px;flex-shrink:0;}
-    .cs-icon-preview{width:38px;height:38px;border-radius:10px;background:#f5e0e8;display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden;position:relative;flex-shrink:0;}
-    .cs-icon-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
-    .cs-icon-change{flex:1;padding:6px;background:linear-gradient(135deg,#ff8fab,#c44f7a);color:white;border:none;border-radius:8px;font-size:11px;cursor:pointer;font-weight:bold;}
-    .cs-icon-reset{padding:6px 10px;background:#fff0f3;color:#e75480;border:1px solid #ffd6e0;border-radius:8px;font-size:11px;cursor:pointer;}
-    </style>
   </div>
 
   <!-- 情侣空间设置面板（fixed全屏遮罩，挂在scrCoupleSpace下） -->
-  <div id="csSettingsPanel" style="display:none;position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);align-items:center;justify-content:center;">
+  <div id="csSettingsPanel2" style="display:none;position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);align-items:center;justify-content:center;">
     <div style="width:90%;max-width:380px;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 12px 36px rgba(0,0,0,.25);max-height:82vh;display:flex;flex-direction:column;">
       <div style="background:linear-gradient(135deg,#ff8fab,#c44f7a);color:white;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
         <span style="font-weight:700;font-size:15px;">⚙️ 情侣空间设置</span>
-        <span id="csSettingsClose" style="cursor:pointer;font-size:26px;line-height:1;padding:0 4px;">×</span>
+        <span id="csSettingsClose2" style="cursor:pointer;font-size:26px;line-height:1;padding:0 4px;">×</span>
       </div>
       <div style="overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:14px;">
         <!-- 页面壁纸 -->
@@ -4287,8 +4213,13 @@ window.wkDelSongRecord=function(idx,cid){
                     <input type=file id=momentUserPhotoInput accept="image/*" style=display:none;>
                     <input type=text id=momentUserPhotoDesc style="flex:1;padding:9px 12px;border:1.5px solid #ffd6e0;border-radius:10px;font-size:13px;outline:none;" placeholder="或输入图片描述（AI风格卡片）">
                 </div>
+                <!-- 谁可以看 -->
+                <div style="border:1px solid #ffd6e0;border-radius:12px;overflow:hidden;">
+                  <div style="background:#fff5f8;padding:10px 12px;font-size:13px;color:#e75480;font-weight:bold;border-bottom:1px solid #ffd6e0;">👁 谁可以看</div>
+                  <div id=momentVisibleList style="display:flex;flex-direction:column;gap:0;max-height:130px;overflow-y:auto;"></div>
+                </div>
                 <div style="font-size:12px;color:#e75480;font-weight:bold;">💌 发布后召唤谁评论？</div>
-                <div id=momentUserSummonList style="display:flex;flex-direction:column;gap:5px;max-height:120px;overflow-y:auto;"></div>
+                <div id=momentUserSummonList style="display:flex;flex-direction:column;gap:5px;max-height:100px;overflow-y:auto;"></div>
                 <button id=btnConfirmMomentUserPost style="padding:12px;border-radius:22px;border:none;background:linear-gradient(135deg,#ff9a9e,#fad0c4);color:white;font-size:14px;font-weight:bold;cursor:pointer;">发布 💕</button>
             </div>
         </div>
@@ -10035,6 +9966,36 @@ if(charStickers.length > 0) {
     }
     // ===== 通话提示词注入（线下模式时不注入，因为线下是面对面，无需"主动打电话"指令）=====
     // ★ 放在最末尾，确保AI最后看到它，不被状态栏提示词覆盖
+    // ★ Bug3: 动态记忆注入 —— 注入char能看到的user动态 + char自己发过的动态
+    try {
+        let _md = [];
+        try { _md = await localforage.getItem(`momentData`) || []; } catch(e) {}
+        if(!Array.isArray(_md)) _md = [];
+        let _now = Date.now();
+        let _twoDaysMs = 2 * 24 * 60 * 60 * 1000;
+        let _charId = String(currentChatId||'default');
+        let _charN = $(`cfgName`)?.value || '对方';
+        let _recentVisible = _md.filter(p => {
+            // 时间限制：两天内
+            let ts = p.postTs || 0;
+            if(_now - ts > _twoDaysMs) return false;
+            // user发的动态：检查char是否在可见列表
+            if(p.authorType === 'user') {
+                if(p.visibleChars === null || p.visibleChars === undefined) return true; // 公开
+                return Array.isArray(p.visibleChars) && p.visibleChars.includes(_charId);
+            }
+            // char自己发的动态：只注入当前char的
+            if(p.authorType === 'char' && String(p.authorId||'') === _charId) return true;
+            return false;
+        }).slice(-5); // 最多5条，避免太长
+        if(_recentVisible.length) {
+            let _dCtx = _recentVisible.map(p => {
+                let who = p.authorType === 'user' ? ($(`cfgMyName`)?.value||'我') : _charN;
+                return `【${p.time||'近期'}】${who}发布了动态："${(p.text||'').slice(0,60)}"`;
+            }).join('\n');
+            sys += `\n\n【近期朋友圈动态（你知道这些内容，可自然地在聊天中提及）】\n` + _dCtx + `\n`;
+        }
+    } catch(e) {}
     if(window._callSysAddon && !window._offlineMode) sys += window._callSysAddon;
                 let arr = sys ? [{role: `system`, content: sys}] : [];
     let ctxHist = history.slice(-(parseInt($(`cfgCtx`).value)||10));
@@ -16701,9 +16662,10 @@ if(!postTxt) continue;
 
             let newPost = {
                 id: `m`+Date.now()+`_`+Math.random().toString(36).slice(2,5),
-                author: name, authorId: val, authorType: type||`char`,
+                author: name, authorId: String(val), authorType: type||`char`,
                 avatar: authorAvatar, text: postTxt, img: null,
-                time: new Date().toLocaleString(`zh-CN`), comments: [], draftPeek: null
+                time: new Date().toLocaleString(`zh-CN`), comments: [], draftPeek: null,
+                postTs: Date.now()
             };
             momentData.push(newPost);
             await saveMoments().catch(()=>{});
@@ -16758,6 +16720,29 @@ async function openMomentUserPostModal() {
     try{let lf=await localforage.getItem(`myContacts`);if(lf) contacts=Array.isArray(lf)?lf:JSON.parse(lf);}catch(e){}
     if(!contacts.length){try{let r=originalGetItem.call(ls,`myContacts`);if(r) contacts=JSON.parse(r);}catch(e){}}
 
+    // 填充"谁可以看"列表（默认全选=所有人）
+    let vl=$(`momentVisibleList`);
+    if(vl){
+        vl.innerHTML=``;
+        let allCV=[{id:`default`,name:originalGetItem.call(ls,`cN_default`)||originalGetItem.call(ls,`cN`)||`角色`}];
+        for(let ct of contacts) allCV.push({id:String(ct.id),name:originalGetItem.call(ls,`cN_`+ct.id)||ct.name});
+        // 全选选项
+        let lblAll=document.createElement(`label`);
+        lblAll.style.cssText=`display:flex;align-items:center;gap:8px;padding:9px 12px;cursor:pointer;font-size:13px;color:#333;border-bottom:1px solid #ffeef5;background:#fff;`;
+        lblAll.innerHTML=`<input type=checkbox id="momentVisAllCheck" style="width:15px;height:15px;" checked> 所有人（公开）`;
+        vl.appendChild(lblAll);
+        allCV.forEach(s=>{
+            let lbl=document.createElement(`label`);
+            lbl.style.cssText=`display:flex;align-items:center;gap:8px;padding:9px 12px;cursor:pointer;font-size:13px;color:#555;border-bottom:1px solid #ffeef5;background:#fff;`;
+            lbl.innerHTML=`<input type=checkbox class="momentVisCheck" data-id="${s.id}" data-name="${s.name}" style="width:15px;height:15px;" checked> ${s.name}`;
+            vl.appendChild(lbl);
+        });
+        // 全选联动
+        let allChk=vl.querySelector(`#momentVisAllCheck`);
+        if(allChk) allChk.onchange=function(){
+            vl.querySelectorAll(`.momentVisCheck`).forEach(c=>c.checked=allChk.checked);
+        };
+    }
     let sl=$(`momentUserSummonList`);
     if(sl){
         sl.innerHTML=``;
@@ -16784,10 +16769,17 @@ if($(`btnConfirmMomentUserPost`)) $(`btnConfirmMomentUserPost`).onclick = async 
     try{uName=await localforage.getItem(`myGlobalName`)||`我`;}catch(e){}
     let uAva=null; try{uAva=await localforage.getItem(`myI_global`);}catch(e){}
 
+    // 收集"谁可以看"
+    let _visChecks=[...(document.querySelectorAll(`.momentVisCheck:checked`)||[])];
+    let _visibleChars=_visChecks.map(c=>c.dataset.id);
+    let _isPublic=!!(document.getElementById(`momentVisAllCheck`)?.checked);
+
     let newPost={
         id:`m`+Date.now(), author:uName, authorId:`user`, authorType:`user`,
         avatar:uAva, text:txt, img:_userPostImg||null, photoDesc:photoDesc||null,
-        time:new Date().toLocaleString(`zh-CN`), comments:[], draftPeek:null
+        time:new Date().toLocaleString(`zh-CN`), comments:[], draftPeek:null,
+        visibleChars: _isPublic ? null : _visibleChars,  // null=所有人可见
+        postTs: Date.now()
     };
     momentData.push(newPost);
     await saveMoments().catch(()=>{});
@@ -17706,9 +17698,10 @@ ${charRel ? `【你的身份关系】${charRel}` : ``}${recentCtx}
 
             let newPost = {
                 id: `m`+Date.now()+`_`+Math.random().toString(36).slice(2,5),
-                author: name, authorId: val, authorType: type||`char`,
+                author: name, authorId: String(val), authorType: type||`char`,
                 avatar: authorAvatar, text: postTxt, img: null,
-                time: new Date().toLocaleString(`zh-CN`), comments: [], draftPeek: null
+                time: new Date().toLocaleString(`zh-CN`), comments: [], draftPeek: null,
+                postTs: Date.now()
             };
             momentData.push(newPost);
             await saveMoments().catch(()=>{});
@@ -19290,41 +19283,35 @@ async function _callAIConnect(type, isIncoming) {
           ? '\n请根据你的性格和当前情绪状态决定是否接听！\n如接听（大多数情况下应该接）：回复最开头写 [接听通话]，随后用「」写出接起电话后第一句自然的开场白，自然真实（100字以内），就像真实打电话一样，纯中文，禁止英文。\n如拒接（仅在正在吵架或心情极差时才拒接）：回复最开头写 [拒接通话]，随后说明原因（60字以内），不能说成是对方挂了你电话。\n注意：只要不是关系极度僵化，你都应该接听。'
           : '\n你是主动打来的，所以直接以 [接听通话] 开头，然后说出你打来的第一句话（说出你打过来的理由/情绪/目的），100字以内，纯中文，禁止英文。');
 
-    try {
-        let res = await fetch(pxy, { method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer '+key}, body:JSON.stringify({model:mod, temperature:tp, max_tokens:(type==='video'?1600:1200), messages:[{role:'user', content:connectSys}]}) });
-        let dat = await res.json();
-        let reply = (dat.choices?.[0]?.message?.content || '').trim();
-        // ★ 关键修复：先提取命令标签，再净化（防止sanitizer把标签清掉）
-        let _hasAccept = reply.includes('[接听通话]');
-        let _hasReject = reply.includes('[拒接通话]');
-        reply = reply.replace('[接听通话]', '').replace('[拒接通话]', '').trim();
-        reply = _sanitizeCallReply(reply);
-        // 净化后若为空，给一个保底的符合角色的开场白
-        if(!reply) reply = '喂？';
-        if(_hasAccept) {
-            _startCallConnected(type);
-            window._callState.msgs.push({isUser:false, txt:reply}); // ★ 存入msgs供后续对话使用
-            setTimeout(() => _addCallMsg(reply, false, true), 800);
-        } else if(_hasReject) {
-            reply = reply.trim();
-            let sv = $('scrVoiceCall'), svd = $('scrVideoCall');
-            if(sv) sv.style.display = 'none';
-            if(svd) svd.style.display = 'none';
-            window._callState.active = false;
-            let decRecord = '📵 对方拒绝了' + (type === 'voice' ? '语音通话' : '视频通话');
-            history.push({ role: 'assistant', content: decRecord + (reply ? '\n' + reply : ''), ts: Date.now() });
-            try { ls.setItem('chatHistory_' + currentChatId, JSON.stringify(history)); } catch(e) {}
-            mkBub(decRecord, 'l');
-            if(reply) setTimeout(() => mkBub(reply, 'l'), 800);
-            updateListPreview();
-        } else {
-            _startCallConnected(type);
-            if(reply) {
-                window._callState.msgs.push({isUser:false, txt:reply});
-                setTimeout(() => _addCallMsg(reply, false, true), 800);
+    // ★ Bug2修复：立即接通（1.5s铃声后），AI开场白后台加载不阻塞
+    setTimeout(function(){ _startCallConnected(type); }, 1500);
+    // 后台请求AI开场白，加载回来再显示
+    (async function(){
+        try {
+            let res = await fetch(pxy, { method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer '+key}, body:JSON.stringify({model:mod, temperature:tp, max_tokens:600, messages:[{role:'user', content:connectSys}]}) });
+            let dat = await res.json();
+            let reply = (dat.choices?.[0]?.message?.content || '').trim();
+            let _hasReject = reply.includes('[拒接通话]');
+            reply = reply.replace('[接听通话]', '').replace('[拒接通话]', '').trim();
+            reply = _sanitizeCallReply(reply);
+            if(!reply) reply = '喂？';
+            if(_hasReject) {
+                // 极少数拒接情况：结束通话
+                _endCall(true);
+                let decRecord = '📵 对方拒绝了' + (type === 'voice' ? '语音通话' : '视频通话');
+                history.push({ role: 'assistant', content: decRecord + (reply ? '\n' + reply : ''), ts: Date.now() });
+                try { ls.setItem('chatHistory_' + currentChatId, JSON.stringify(history)); } catch(e) {}
+                mkBub(decRecord, 'l');
+                if(reply) setTimeout(() => mkBub(reply, 'l'), 800);
+                updateListPreview();
+            } else {
+                if(window._callState.active) {
+                    window._callState.msgs.push({isUser:false, txt:reply});
+                    _addCallMsg(reply, false, true);
+                }
             }
-        }
-    } catch(e) { _startCallConnected(type); }
+        } catch(e) { /* 接通了但没开场白，用户先说也行 */ }
+    })();
 }
 
 function _startCallConnected(type) {
@@ -20847,23 +20834,48 @@ if(document.getElementById('offlineModePanel')) {
   }
   var csBgBtn=document.getElementById('csBgBtn');
   var csBgInput=document.getElementById('csBgInput');
+
+  // ★ Bug1修复：把设置面板动态创建并 append 到 document.body，绕开 overflow:hidden 祖先
+  (function buildCsPanel(){
+    if(document.getElementById('csSettingsPanelBody')) return;
+    // 把 scrCoupleSpace 里的面板 clone 出来挂到 body
+    var src = document.getElementById('csSettingsPanel2');
+    if(!src) return;
+    var panel = src.cloneNode(true);
+    panel.id = 'csSettingsPanelBody';
+    panel.style.display = 'none';
+    panel.style.position = 'fixed';
+    panel.style.inset = '0';
+    panel.style.zIndex = '99999';
+    document.body.appendChild(panel);
+    // 同步 file input 到 body 面板里的按钮
+    var wallBtn = panel.querySelector('#csWallThumb');
+    if(wallBtn) wallBtn.onclick = function(){ if(csBgInput) csBgInput.click(); };
+    var wallBtn2 = panel.querySelector('button[onclick*="csBgInput"]');
+    if(wallBtn2) wallBtn2.onclick = function(){ if(csBgInput) csBgInput.click(); };
+  })();
+
+  function _getCsPanel(){
+    return document.getElementById('csSettingsPanelBody') || document.getElementById('csSettingsPanel2');
+  }
+
   // 打开设置面板
   if(csBgBtn){
     csBgBtn.onclick=function(e){
       e.stopPropagation();
-      var panel=document.getElementById('csSettingsPanel');
+      var panel=_getCsPanel();
       if(!panel)return;
       panel.style.display='flex';
       // 加载壁纸缩略图
       Promise.resolve().then(async function(){
         var d=null;try{d=await localforage.getItem('cs_bg');}catch(e){}
         if(!d){try{d=localStorage.getItem('cs_bg');}catch(e){}}
-        var thumb=document.getElementById('csWallThumbImg');
-        var hint=document.getElementById('csWallThumb');
-        if(d&&d.length>10&&thumb){thumb.src=d;thumb.style.display='block';if(hint)hint.childNodes[0]&&hint.childNodes[0].nodeType===3&&(hint.childNodes[0].textContent='');}
+        var thumb=panel.querySelector('#csWallThumbImg')||document.getElementById('csWallThumbImg');
+        var hint=panel.querySelector('#csWallThumb')||document.getElementById('csWallThumb');
+        if(d&&d.length>10&&thumb){thumb.src=d;thumb.style.display='block';if(hint&&hint.childNodes[0]&&hint.childNodes[0].nodeType===3)hint.childNodes[0].textContent='';}
       });
       // 加载各功能图标
-      document.querySelectorAll('.cs-icon-row').forEach(async function(row){
+      panel.querySelectorAll('.cs-icon-row').forEach(async function(row){
         var key=row.getAttribute('data-lskey');
         var img=row.querySelector('.cs-icon-img');
         var prev=row.querySelector('.cs-icon-preview');
@@ -20871,18 +20883,56 @@ if(document.getElementById('offlineModePanel')) {
         if(!d){try{d=localStorage.getItem(key);}catch(e){}}
         if(d&&d.length>10&&img){img.src=d;img.style.display='block';if(prev)prev.style.fontSize='0';}
       });
+      // 绑定×和空白关闭
+      var closeBtn=panel.querySelector('#csSettingsClose2')||panel.querySelector('[id*="SettingsClose"]');
+      if(closeBtn&&!closeBtn._bound){closeBtn._bound=true;closeBtn.onclick=function(e2){e2.stopPropagation();panel.style.display='none';};}
+      if(!panel._boundBg){panel._boundBg=true;panel.addEventListener('click',function(e2){if(e2.target===panel)panel.style.display='none';});}
+      // 绑定功能图标按钮（body 面板里的）
+      panel.querySelectorAll('.cs-icon-row').forEach(function(row){
+        if(row._bound) return; row._bound=true;
+        var key=row.getAttribute('data-lskey');
+        var def=row.getAttribute('data-default');
+        var func=row.getAttribute('data-func');
+        var inp=row.querySelector('.cs-icon-inp');
+        var img=row.querySelector('.cs-icon-img');
+        var prev=row.querySelector('.cs-icon-preview');
+        var changeBtn=row.querySelector('.cs-icon-change');
+        var resetBtn=row.querySelector('.cs-icon-reset');
+        if(changeBtn&&inp)changeBtn.onclick=function(){inp.click();};
+        if(inp)inp.onchange=function(){
+          var file=this.files[0];if(!file)return;
+          var r=new FileReader();
+          r.onload=function(ev){
+            var d=ev.target.result;
+            localforage.setItem(key,d).catch(function(){});
+            try{localStorage.setItem(key,d);}catch(e){}
+            if(img){img.src=d;img.style.display='block';}
+            if(prev)prev.style.fontSize='0';
+            _csApplyFuncIcon(func,d);
+          };r.readAsDataURL(file);
+        };
+        if(resetBtn)resetBtn.onclick=function(){
+          localforage.removeItem(key).catch(function(){});
+          try{localStorage.removeItem(key);}catch(e){}
+          if(img){img.src='';img.style.display='none';}
+          if(prev)prev.style.fontSize='20px';
+          _csApplyFuncIcon(func,null,def);
+        };
+        // 恢复壁纸
+        var wallRemove=panel.querySelector('#csWallRemove');
+        if(wallRemove&&!wallRemove._bound){wallRemove._bound=true;wallRemove.onclick=function(){
+          localforage.removeItem('cs_bg').catch(function(){});
+          try{localStorage.removeItem('cs_bg');}catch(e){}
+          var scr=document.getElementById('scrCoupleSpace');
+          if(scr){scr.style.backgroundImage='';scr.style.backgroundSize='';scr.style.backgroundPosition='';}
+          var thumb=panel.querySelector('#csWallThumbImg');
+          if(thumb){thumb.src='';thumb.style.display='none';}
+          var hint=panel.querySelector('#csWallThumb');
+          if(hint)hint.style.fontSize='22px';
+        };}
+      });
     };
   }
-  // 关闭面板：点×按钮 或 点遮罩空白处
-  document.addEventListener('click',function(e){
-    var panel=document.getElementById('csSettingsPanel');
-    if(!panel||panel.style.display==='none')return;
-    var closeBtn=document.getElementById('csSettingsClose');
-    if(closeBtn&&(e.target===closeBtn||closeBtn.contains(e.target))){panel.style.display='none';return;}
-    // 点到遮罩本身（不是弹窗内容）
-    var inner=panel.firstElementChild;
-    if(inner&&!inner.contains(e.target)&&e.target===panel){panel.style.display='none';}
-  });
   // 壁纸上传
   if(csBgInput){
     csBgInput.onchange=function(){
