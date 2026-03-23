@@ -19348,7 +19348,7 @@ async function _callAIConnect(type, isIncoming) {
     try {
         let res = await fetch(pxy, { method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer '+key}, body:JSON.stringify({model:mod, temperature:tp, max_tokens:1200, messages:[{role:'user', content:connectSys}]}) });
         let dat = await res.json();
-        let reply = (dat.choices?.[0]?.message?.content || '').trim();
+        let reply = (dat.content?.[0]?.text || dat.choices?.[0]?.message?.content || '').trim();
         // 先提取命令标签，再净化
         let _hasAccept = reply.includes('[接听通话]');
         let _hasReject = reply.includes('[拒接通话]');
@@ -23631,7 +23631,10 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     var res = await fetch(cfg.pxy,{method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+cfg.key},
       body:JSON.stringify({model:cfg.mod,max_tokens:maxTokens||1200,temperature:0.92,
-        messages:[{role:'user',content:prompt}]})});
+        messages:[
+          {role:'system',content:'你是一名专业的中文角色扮演助手。请严格按照用户给出的人设和规则扮演角色。所有输出必须是纯中文，严禁输出任何英文，严禁提及自己是AI或助手，直接以角色第一人称回应，不加任何解释性说明。'},
+          {role:'user',content:prompt}
+        ]})});
     var data = await res.json();
     var txt='';
     if(data.content&&data.content[0])txt=data.content[0].text||'';
@@ -23744,16 +23747,15 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
         '现在有一个身份是「'+identity+'」的人，通过匿名问答平台向'+cc.name+'发送了一个问题，'+cc.name+'不知道对方是谁。\n'+
         '问题是：「'+q+'」\n\n'+
         '请模拟这段匿名问答互动。严格按照'+cc.name+'的人设作答。\n'+
-        '输出格式（直接输出，不加多余说明）：\n'+
-        '【匿名者】：（用符合「'+identity+'」身份的口吻提问，30字内）\n'+
-        '【'+cc.name+'】：（严格按人设作答，50-100字，真实自然）';
+        '请直接输出这段匿名问答互动，严格按以下纯文本格式输出，不加任何额外说明：\n'+
+        '（'+identity+'提问）：[用符合该身份的口吻提问，30字内]\n'+
+        '（'+cc.name+'回答）：[严格按人设作答，50-100字，真实自然，纯中文]';
     } else {
       prompt = sysPrefix+'\n\n'+
         cc.myName+'（用户）现在伪装成「'+identity+'」，匿名向'+cc.name+'提问。'+cc.name+'不知道提问者就是'+cc.myName+'。\n'+
         '用户的问题是：「'+q+'」\n\n'+
         '请模拟'+cc.name+'收到这个匿名问题后的真实回应。不知道提问者是'+cc.myName+'。\n'+
-        '输出格式（直接输出，不加多余说明）：\n'+
-        '【'+cc.name+'】：（严格按人设作答，50-100字，真实自然）';
+        '请直接输出'+cc.name+'收到这个匿名问题后的回答，50-100字，真实自然，纯中文，不加任何格式前缀标签。';
     }
     try{
       var reply = await callApi(cfg, prompt, 800);
@@ -23809,8 +23811,7 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
       cc.myName+'的回答是：「'+ans+'」\n\n'+
       '现在你决定揭开你自己的真实身份，告诉'+cc.myName+'：其实那个匿名提问的人就是你（'+cc.name+'）。\n'+
       '以'+cc.name+'的真实人设对这个回答做出反应（可以吃醋/惊讶/满意/嘲讽/感动，60-100字，真实自然）。\n'+
-      '输出格式：\n'+
-      '【'+cc.name+'揭开身份】：（以真实身份的反应，包含"其实是我/就是我问的"这个揭示）';
+      '请直接输出'+cc.name+'揭开身份后的反应，60-100字，包含"其实那个匿名提问的就是我"这个揭示，真实自然，纯中文，不加任何格式前缀。';
     try{
       var reply = await callApi(cfg, prompt, 800);
       var ts = Date.now();
