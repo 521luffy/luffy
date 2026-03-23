@@ -9327,38 +9327,37 @@ $(`btnConfirmEdit`).onclick = () =>{
     if(!newTxt) return;
     let _saved = false;
 
-    // 方案A: 精准定位 —— 使用bubble上记录的histIdx（线下消息必须走此路径）
+    // 方案A: 精准定位 —— 使用bubble上记录的histIdx
     if(selEl && selEl.dataset.histIdx !== undefined) {
         let _i = parseInt(selEl.dataset.histIdx);
         if(!isNaN(_i) && history[_i]) {
-            // 保留【回复】之前的所有状态块，只替换回复正文
             let _c = history[_i].content;
-            let _reM = _c.match(/([\s\S]*?【回复】[\s]*)([\s\S]*)$/);
-            if(_reM) {
-                history[_i].content = _reM[1] + newTxt;
+            // ★ 核心修复：只替换那一行文本，不替换整个【回复】后内容
+            // 防止char一轮多条气泡时编辑一条导致其他条消失
+            if(_c.includes(editingOldText)) {
+                history[_i].content = _c.replace(editingOldText, newTxt);
             } else {
-                history[_i].content = newTxt;
+                // 找不到原文时，fallback：替换【回复】后内容（线下消息整段替换）
+                let _reM = _c.match(/([\s\S]*?【回复】[\s]*)([\s\S]*)$/);
+                if(_reM) {
+                    history[_i].content = _reM[1] + newTxt;
+                } else {
+                    history[_i].content = newTxt;
+                }
             }
-            if(history[_i].role === 'assistant') history[_i]._userEdited = true; // ★ 标记为用户编辑
+            if(history[_i].role === 'assistant') history[_i]._userEdited = true;
             ls.setItem(`chatHistory`, JSON.stringify(history));
             _saved = true;
         }
     }
 
-    // 方案B: 模糊匹配 —— 用第一行作锚点搜索（实时消息气泡的后备方案）
+    // 方案B: 模糊匹配 —— 精准替换对应行
     if(!_saved) {
-        let _anchor = editingOldText.split('\n')[0].trim();
         for(let i=history.length-1; i>=0; i--) {
             let _c = history[i].content;
-            let _stripped = _c.replace(/^【[^】]*】[^\n]*$/gm,'').replace(/【回复】/g,'').trim();
-            if(_c.includes(editingOldText) || _stripped.includes(_anchor)) {
-                let _reM2 = _c.match(/([\s\S]*?【回复】[\s]*)([\s\S]*)$/);
-                if(_reM2) {
-                    history[i].content = _reM2[1] + newTxt;
-                } else {
-                    history[i].content = _c.replace(editingOldText, newTxt);
-                }
-                if(history[i].role === 'assistant') history[i]._userEdited = true; // ★ 标记为用户编辑
+            if(_c.includes(editingOldText)) {
+                history[i].content = _c.replace(editingOldText, newTxt);
+                if(history[i].role === 'assistant') history[i]._userEdited = true;
                 ls.setItem(`chatHistory`, JSON.stringify(history));
                 break;
             }
