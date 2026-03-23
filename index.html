@@ -9774,7 +9774,7 @@ $(`btnLemon`).onclick = async () =>{
     if(!pxy.includes(`chat/completions`)) pxy = pxy.replace(/\/$/, ``) + `/chat/completions`;
     if(typeof showTyping === `function`) showTyping();
     
-    let sys = `严格按格式回复，勿加多余字符。内容必须极致生动：\n【定位与天气】（100字内，首字为天气emoji）\n【服装】（100字内）\n【表情与动作】（100字内）\n【心声】（200字内）\n【回复】（对我说的话。重要规则：如有多句，必须用回车换行严格分段，严禁只发一段！）\n\n`;
+    let sys = `严格按格式回复，勿加多余字符。内容必须极致生动：\n【定位与天气】（100字内，首字为天气emoji，必须结合当前剧情和上一条消息的内容来描写，禁止照抄之前写过的内容）\n【服装】（100字内，若服装无变化可简短描述，但措辞必须不同于上一次）\n【表情与动作】（100字内，必须反映本轮对话的情绪变化，禁止复用旧内容）\n【心声】（200字内，必须是对本轮对话的最新心理反应，严禁与上一条雷同）\n【回复】（对我说的话。重要规则：如有多句，必须用回车换行严格分段，严禁只发一段！）\n【重要】以上四个状态栏每次都必须根据当前情境全新撰写，严禁复制或微改上一次的内容！\n\n`;
 
     
     let globals = wbData.filter(x => x.type === `global`);
@@ -9933,7 +9933,7 @@ if(charStickers.length > 0) {
         let _olCDialog = window._offlineColorDialog || '#e84393';
         // 线下模式时替换主格式要求，去掉"通过手机发消息"的隐含逻辑
         // 替换主格式（不用/s flag，兼容旧手机浏览器）
-        let _sysHead = `严格按格式回复，勿加多余字符。内容必须极致生动：\n【定位与天气】（100字内，首字为天气emoji，包含当前地点和环境氛围，充分描写感官细节）\n【服装】（100字内，详细描写char当前完整穿着打扮，包含颜色材质细节）\n【表情与动作】（100字内，详细描写当前神态、动作、肢体语言）\n【心声】（200字内）\n【回复】（对我说的话。重要规则：如有多句，必须用回车换行严格分段！）\n\n`;
+        let _sysHead = `严格按格式回复，勿加多余字符。内容必须极致生动：\n【定位与天气】（100字内，首字为天气emoji，必须结合本轮内容全新描写，禁止照抄之前写过的）\n【服装】（100字内，详细描写完整穿着打扮，若无变化简短提及但措辞必须不同）\n【表情与动作】（100字内，必须反映本轮情绪和动作，禁止复用旧内容）\n【心声】（200字内，必须是对本轮对话的最新心理，严禁与上一条雷同）\n【回复】（对我说的话。重要规则：如有多句，必须用回车换行严格分段！）\n【重要】以上四个状态栏每次都必须根据当前情境全新撰写，严禁复制或微改上一次的内容！\n\n`;
         let _sysOldEnd = sys.indexOf(`\n\n`);
         if(_sysOldEnd > 0) sys = _sysHead + sys.slice(_sysOldEnd + 2);
         else sys = _sysHead + sys;
@@ -10096,6 +10096,26 @@ if(charStickers.length > 0) {
         return true;
     });
         let mappedHist = ctxHist.map(m => {
+        // ★ 核心修复：assistant消息传给API前净化状态栏，只保留回复正文
+        // 防止AI看到旧状态栏后照抄复用（导致重复内容/偷懒不更新）
+        let _cleanContent = m.content;
+        if(m.role === 'assistant' && typeof _cleanContent === 'string') {
+            // 提取【回复】后的正文，没有【回复】则去掉所有状态栏块
+            let _rM = _cleanContent.match(/【回复】([\s\S]*)$/);
+            if(_rM) {
+                _cleanContent = _rM[1].trim();
+            } else {
+                _cleanContent = _cleanContent
+                    .replace(/【定位与天气】[\s\S]*?(?=【|$)/g, '')
+                    .replace(/【当日服装】[\s\S]*?(?=【|$)/g, '')
+                    .replace(/【服装】[\s\S]*?(?=【|$)/g, '')
+                    .replace(/【表情与动作】[\s\S]*?(?=【|$)/g, '')
+                    .replace(/【心声】[\s\S]*?(?=【|$)/g, '')
+                    .replace(/【隐秘心声】[\s\S]*?(?=【|$)/g, '')
+                    .replace(/^【[^】]*】[^\n]*$/gm, '')
+                    .replace(/\n{3,}/g, '\n\n').trim();
+            }
+        }
         if (m.content.includes(`[红包消息：`) && m.content.includes(`|data:image`)) {
             let match = m.content.match(/^\[红包消息：([\d\.]+)\|(.*?)\|(.*?)\|(data:image.*?)\]$/);
             if (match) {
@@ -10115,6 +10135,10 @@ if(charStickers.length > 0) {
                 else if(parts[i].trim()) cArr.push({type: `text`, text: parts[i].trim()});
             }
             return {role: m.role, content: cArr};
+        }
+        // 如果content被净化了，用净化后的版本
+        if(_cleanContent !== m.content) {
+            return {role: m.role, content: _cleanContent || m.content};
         }
         return m;
     });
