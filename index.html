@@ -19344,37 +19344,41 @@ async function _callAIConnect(type, isIncoming) {
           ? '\n请根据你的性格和当前情绪状态决定是否接听！\n如接听（大多数情况下应该接）：回复最开头写 [接听通话]，随后用「」写出接起电话后第一句自然的开场白，自然真实（100字以内），就像真实打电话一样，纯中文，禁止英文。\n如拒接（仅在正在吵架或心情极差时才拒接）：回复最开头写 [拒接通话]，随后说明原因（60字以内），不能说成是对方挂了你电话。\n注意：只要不是关系极度僵化，你都应该接听。'
           : '\n你是主动打来的，所以直接以 [接听通话] 开头，然后说出你打来的第一句话（说出你打过来的理由/情绪/目的），100字以内，纯中文，禁止英文。');
 
-    // ★ Bug2修复：立即接通（1.5s铃声后），AI开场白后台加载不阻塞
-    setTimeout(function(){ _startCallConnected(type); }, 1500);
-    // 后台请求AI开场白，加载回来再显示
-    (async function(){
-        try {
-            let res = await fetch(pxy, { method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer '+key}, body:JSON.stringify({model:mod, temperature:tp, max_tokens:1200, messages:[{role:'user', content:connectSys}]}) });
-            let dat = await res.json();
-            let reply = '';
-            if(dat.content&&dat.content[0])reply=(dat.content[0].text||'').trim();
-            else if(dat.choices&&dat.choices[0])reply=(dat.choices[0].message?.content||'').trim();
-            let _hasReject = reply.includes('[拒接通话]');
-            reply = reply.replace('[接听通话]', '').replace('[拒接通话]', '').trim();
-            reply = _sanitizeCallReply(reply);
-            if(!reply) reply = '喂？';
-            if(_hasReject) {
-                // 极少数拒接情况：结束通话
-                _endCall(true);
-                let decRecord = '📵 对方拒绝了' + (type === 'voice' ? '语音通话' : '视频通话');
-                history.push({ role: 'assistant', content: decRecord + (reply ? '\n' + reply : ''), ts: Date.now() });
-                try { ls.setItem('chatHistory_' + currentChatId, JSON.stringify(history)); } catch(e) {}
-                mkBub(decRecord, 'l');
-                if(reply) setTimeout(() => mkBub(reply, 'l'), 800);
-                updateListPreview();
-            } else {
-                if(window._callState.active) {
-                    window._callState.msgs.push({isUser:false, txt:reply});
-                    _addCallMsg(reply, false, true);
-                }
+    // ★ 等待AI回复后再接通，保证开场白完整
+    try {
+        let res = await fetch(pxy, { method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer '+key}, body:JSON.stringify({model:mod, temperature:tp, max_tokens:1200, messages:[{role:'user', content:connectSys}]}) });
+        let dat = await res.json();
+        let reply = (dat.choices?.[0]?.message?.content || '').trim();
+        // 先提取命令标签，再净化
+        let _hasAccept = reply.includes('[接听通话]');
+        let _hasReject = reply.includes('[拒接通话]');
+        reply = reply.replace('[接听通话]', '').replace('[拒接通话]', '').trim();
+        reply = _sanitizeCallReply(reply);
+        if(!reply) reply = '喂？';
+        if(_hasAccept) {
+            _startCallConnected(type);
+            window._callState.msgs.push({isUser:false, txt:reply});
+            setTimeout(() => _addCallMsg(reply, false, true), 800);
+        } else if(_hasReject) {
+            reply = reply.trim();
+            let sv = $('scrVoiceCall'), svd = $('scrVideoCall');
+            if(sv) sv.style.display = 'none';
+            if(svd) svd.style.display = 'none';
+            window._callState.active = false;
+            let decRecord = '📵 对方拒绝了' + (type === 'voice' ? '语音通话' : '视频通话');
+            history.push({ role: 'assistant', content: decRecord + (reply ? '\n' + reply : ''), ts: Date.now() });
+            try { ls.setItem('chatHistory_' + currentChatId, JSON.stringify(history)); } catch(e) {}
+            mkBub(decRecord, 'l');
+            if(reply) setTimeout(() => mkBub(reply, 'l'), 800);
+            updateListPreview();
+        } else {
+            _startCallConnected(type);
+            if(reply) {
+                window._callState.msgs.push({isUser:false, txt:reply});
+                setTimeout(() => _addCallMsg(reply, false, true), 800);
             }
-        } catch(e) { /* 接通了但没开场白，用户先说也行 */ }
-    })();
+        }
+    } catch(e) { _startCallConnected(type); }
 }
 
 function _startCallConnected(type) {
@@ -23632,8 +23636,8 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     var txt='';
     if(data.content&&data.content[0])txt=data.content[0].text||'';
     else if(data.choices&&data.choices[0])txt=(data.choices[0].message&&data.choices[0].message.content)||'';
-    // 清洗：去掉状态栏、日期行、格式标签等
-    txt=txt.replace(/【[^\n】]*】[^\n]*/g,'').replace(/\[更新状态[：:][^\]]*\]/g,'').replace(/^\/\d{4}年.*/gm,'').replace(/\n{3,}/g,'\n\n');
+    // 只清洗状态行，不删对话内容
+    txt=txt.replace(/\[更新状态[：:][^\]]*\]/g,'').replace(/^\/\d{4}年.*/gm,'').replace(/\n{3,}/g,'\n\n');
     return txt.trim();
   }
 
