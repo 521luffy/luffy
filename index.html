@@ -10347,36 +10347,33 @@ let hasAccept = txt.includes(`[收取转账]`);
                             _hm ? parseInt(_hm[1]) : 0,
                             _hm ? parseInt(_hm[2]) : 0
                         ).getTime();
-                        // ★ _baseMs为0时，先用虚拟时间初始化，防止AI乱写的年份被当作基准
-                        if(!window._storyCurrentTimeMs || window._storyCurrentTimeMs === 0) {
-                            if(typeof getVirtualTimeObj === 'function') {
-                                window._storyCurrentTimeMs = getVirtualTimeObj(currentChatId).getTime();
+                        let _year = parseInt(_ym[1]);
+                        // ★ 用真实虚拟时间确定合法年份范围，拒绝偏离超过5年的值
+                        let _trueMs = (typeof getVirtualTimeObj === 'function')
+                            ? getVirtualTimeObj(currentChatId).getTime() : new Date().getTime();
+                        let _trueYear = new Date(_trueMs).getFullYear();
+                        // ★ 如果_storyCurrentTimeMs被污染（年份偏离真实超过5年），立即重置
+                        if(window._storyCurrentTimeMs) {
+                            let _storedYear = new Date(window._storyCurrentTimeMs).getFullYear();
+                            if(Math.abs(_storedYear - _trueYear) > 5) {
+                                window._storyCurrentTimeMs = _trueMs;
                             }
                         }
-                        let _baseMs = window._storyCurrentTimeMs || new Date().getTime();
-                        let _year = parseInt(_ym[1]);
-                        // 只接受：合理年份 + 不早于剧情起始时间（防倒退）
-                        // ★ 额外校验：年份必须在基准年份-1 到 基准年份+5 范围内，彻底拒绝2016这种离谱年份
-                        let _baseYear = new Date(_baseMs).getFullYear();
-                        if(!isNaN(_parsedMs) && _year >= 2000 && _year <= 2050 && _year >= _baseYear - 1) {
-                            // 若AI给的时间在基准时间之后（允许推进），但要限制单次推进量
+                        let _baseMs = window._storyCurrentTimeMs || _trueMs;
+                        // ★ 严格校验：AI写的年份必须在真实年份±3范围内才接受
+                        if(!isNaN(_parsedMs) && Math.abs(_year - _trueYear) <= 3) {
                             if(_parsedMs >= _baseMs) {
-                                // ★ 关键修复：单条消息最多允许推进2小时（防止AI每条消息跳跃多天）
-                                // 若用户消息含明确时间词（如"第二天"、"隔天"、"一周后"），允许大幅推进
-                                const _MAX_ADV_MS = 2 * 60 * 60 * 1000; // 2小时
+                                const _MAX_ADV_MS = 2 * 60 * 60 * 1000;
                                 const _hasTimeJump = /第二天|隔天|明天|后天|一周后|几天后|多少天|下午|晚上|深夜|早上|早晨|凌晨|傍晚|午后|一小时后|几小时后/.test(
                                     (typeof history !== 'undefined' && history.length > 0) ? (history[history.length-1]?.content || '') : ''
                                 );
                                 if(_baseMs > 0 && !_hasTimeJump && (_parsedMs - _baseMs) > _MAX_ADV_MS) {
-                                    // 没有用户明确时间跳跃，但AI跳跃过大 → 仅允许推进15分钟
                                     window._storyCurrentTimeMs = _baseMs + 15 * 60 * 1000;
                                 } else {
                                     window._storyCurrentTimeMs = _parsedMs;
                                 }
                             }
-                            // 若AI给的时间在基准时间之前（污染/倒退），强制修正为当前剧情时间
                             if(_parsedMs < _baseMs) {
-                                // 用当前剧情时间替换AI的日期时间
                                 let _sdt = new Date(_baseMs);
                                 const _wds = ['周日','周一','周二','周三','周四','周五','周六'];
                                 let _correctDate = _sdt.getFullYear()+'年'+(_sdt.getMonth()+1)+'月'+_sdt.getDate()+'日 '+_wds[_sdt.getDay()]+' '+_sdt.getHours()+'时'+String(_sdt.getMinutes()).padStart(2,'0')+'分';
@@ -10385,39 +10382,39 @@ let hasAccept = txt.includes(`[收取转账]`);
                         }
                     }
                 }
-                // ★ 强化：从普通对话内容中也提取日期，更新剧情时间（不只靠状态栏）
+                // 从普通对话提取日期（仅接受真实年份±3范围内的值）
                 if(!_aiDateMatch) {
                     let _plainDateMatch = txt.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
                     if(_plainDateMatch) {
-                        let _py = parseInt(_plainDateMatch[1]), _pm = parseInt(_plainDateMatch[2]), _pd = parseInt(_plainDateMatch[3]);
-                        if(_py >= 2000 && _py <= 2050) {
-                            let _plainMs = new Date(_py, _pm-1, _pd).getTime();
-                            let _baseMs2 = window._storyCurrentTimeMs || 0;
-                            // 只接受合理范围内的日期（不超过3天的推进）
-                            if(_baseMs2 === 0 || (_plainMs >= _baseMs2 && _plainMs - _baseMs2 < 3*24*60*60*1000)) {
+                        let _trueMs2 = (typeof getVirtualTimeObj === 'function')
+                            ? getVirtualTimeObj(currentChatId).getTime() : new Date().getTime();
+                        let _trueYear2 = new Date(_trueMs2).getFullYear();
+                        let _py = parseInt(_plainDateMatch[1]);
+                        if(Math.abs(_py - _trueYear2) <= 3) {
+                            let _plainMs = new Date(_py, parseInt(_plainDateMatch[2])-1, parseInt(_plainDateMatch[3])).getTime();
+                            let _baseMs2 = window._storyCurrentTimeMs || _trueMs2;
+                            if(_plainMs >= _baseMs2 && _plainMs - _baseMs2 < 3*24*60*60*1000) {
                                 window._storyCurrentTimeMs = _plainMs;
                             }
                         }
                     }
                 }
-                // ★ 无论cfgStatusBarOn是否开启，只要有自定义时间，就防止低年份污染
-                // 取当前剧情基准年份（自定义时间或剧情追踪时间）
-                let _refYear = 0;
+                // 年份保护：用真实年份作为基准，替换偏离超过1年的日期
+                let _trueYearFinal = (typeof getVirtualTimeObj === 'function')
+                    ? new Date(getVirtualTimeObj(currentChatId).getTime()).getFullYear()
+                    : new Date().getFullYear();
+                // 同时重置被污染的_storyCurrentTimeMs
                 if(window._storyCurrentTimeMs) {
-                    _refYear = new Date(window._storyCurrentTimeMs).getFullYear();
-                } else if($(`cfgCustomTime`) && $(`cfgCustomTime`).checked) {
-                    _refYear = parseInt($(`ctYear`)?.value || '0');
+                    let _sy = new Date(window._storyCurrentTimeMs).getFullYear();
+                    if(Math.abs(_sy - _trueYearFinal) > 5) window._storyCurrentTimeMs = null;
                 }
-                if(_refYear >= 2000) {
-                    // ★ 替换所有与参考年份偏差超过1年的日期（防止AI写出2016这种离谱年份）
-                    txt = txt.replace(/(\d{4})年(\d{1,2})月(\d{1,2})日/g, (m, y, mo, d) => {
-                        let _y = parseInt(y);
-                        if(Math.abs(_y - _refYear) > 1) {
-                            return _refYear + '年' + mo + '月' + d + '日';
-                        }
-                        return m;
-                    });
-                }
+                txt = txt.replace(/(\d{4})年(\d{1,2})月(\d{1,2})日/g, (m, y, mo, d) => {
+                    let _y = parseInt(y);
+                    if(Math.abs(_y - _trueYearFinal) > 2) {
+                        return _trueYearFinal + '年' + mo + '月' + d + '日';
+                    }
+                    return m;
+                });
             } catch(e) {}
             // ★ 切换char后丢弃回复，不污染新char的history
             if(currentChatId !== _lockedChatId) { rmThk(); return; }
