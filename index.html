@@ -16038,9 +16038,8 @@ function buildMomentCard(post) {
     if(post.img) {
         imgBlock = `<div style="margin:8px 0;border-radius:10px;overflow:hidden;"><img src="${post.img}" style="max-width:100%;max-height:200px;border-radius:10px;object-fit:cover;display:block;"></div>`;
     } else if(post.photoDesc && post.photoDesc.trim()) {
-        imgBlock = `<div class="momentPhotoCard" data-desc="${escHtml(post.photoDesc)}" style="margin:8px 0;width:120px;height:150px;background:linear-gradient(135deg,#fce4ec,#f8bbd0);border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;box-shadow:0 2px 8px rgba(255,100,130,0.15);border:1px solid #ffb6c1;overflow:hidden;position:relative;">
-            <span style="font-size:32px;filter:drop-shadow(0 2px 4px rgba(200,50,80,0.2));">📷</span>
-            <span style="font-size:10px;color:#c44f7a;text-align:center;padding:0 8px;line-height:1.4;font-weight:500;">${escHtml((post.photoDesc||'').slice(0,24))}${post.photoDesc&&post.photoDesc.length>24?'…':''}</span>
+        imgBlock = `<div class="momentPhotoCard" data-desc="${escHtml(post.photoDesc)}" style="margin:8px 0;width:120px;height:150px;background:#fce4ec;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.05);overflow:hidden;position:relative;">
+            <div style="font-size:40px;filter:grayscale(100%) opacity(50%);">📷</div>
         </div>`;
     }
 
@@ -19398,14 +19397,14 @@ function _typewriterEffect(container, text, isVoice) {
     container.appendChild(bub);
     container.scrollTop = container.scrollHeight;
     if(isVoice) {
-        // 打字机特效
+        // 打字机特效：15ms/字，不会被误以为截断
         let i = 0;
         let iv = setInterval(() => {
             bub.innerText = text.slice(0, i+1);
             i++;
             container.scrollTop = container.scrollHeight;
             if(i >= text.length) clearInterval(iv);
-        }, 60);
+        }, 15);
     } else {
         bub.innerText = text;
     }
