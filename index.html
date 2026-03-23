@@ -8411,7 +8411,7 @@ $(`btnViewMem`).onclick = () =>{
         
         $(`btnDelMem`).onclick = async () => {
             if(selMems.size === 0) { alert(`请先选中要删除的记忆！`); return; }
-            if(confirm(`确定删除这 ` + selMems.size + ` 条记忆吗？`)) {
+            if(await window._customConfirm(`确定删除这 ` + selMems.size + ` 条记忆吗？`)) {
                 let mems = await getMems();
                 mems = mems.filter((_, i) => !selMems.has(i));
                 await saveMems(mems);
@@ -9078,6 +9078,15 @@ window._csHandleInviteReply = async function(action) {
             if(typeof ls !== 'undefined') ls.setItem('chatHistory', JSON.stringify(history));
         }
     }
+    // ★ 开通情侣空间后，强制从存储恢复cfgStatusBarOn，防止状态栏消失
+    if(action === 'accept') {
+        try {
+            var _sbonKey = 'cStatusBarOn_' + cid;
+            var _sbonVal = originalGetItem.call(ls, _sbonKey);
+            if(!_sbonVal) { try { localforage.getItem(_sbonKey).then(function(v){ if(v && $('cfgStatusBarOn')) $('cfgStatusBarOn').checked = (v===true||v==='true'); }).catch(function(){}); } catch(e2){} }
+            if(_sbonVal && $('cfgStatusBarOn')) $('cfgStatusBarOn').checked = (_sbonVal === 'true' || _sbonVal === true);
+        } catch(e3) {}
+    }
     // 直接更新已渲染的邀请卡片（不调用redrawChat，避免打断打字动画）
     var newHtml = action === 'accept'
         ? '<div style="font-size:28px;margin-bottom:6px;">💕</div><div style="font-size:14px;font-weight:700;color:#c44f7a;">恭喜你们已开通情侣空间！</div>'
@@ -9204,16 +9213,11 @@ function redrawChat() {
             });
 
             
-            let newOut = newLines.join(`\n`);
-            if(out !== newOut && rM) {
-                msg.content = txt.replace(rM[1], `\n` + newOut);
-                changed = true;
-            }
+            // ★ 不修改history内容，只渲染，避免编辑消息后重绘时误改其他消息
             } // end else (non-offline)
         } // end else if(assistant)
     }); // end history.forEach
     window._renderingHistIdx = null;
-    if(changed) ls.setItem(`chatHistory`, JSON.stringify(history));
 }
 
 
@@ -9783,7 +9787,22 @@ $(`btnLemon`).onclick = async () =>{
     if($(`cfgName`).value) sys += `你的名字：` + $(`cfgName`).value + `\n`;
     if($(`cfgAiP`).value) sys += `你的设定：` + $(`cfgAiP`).value + `\n`;
         if($(`cfgMyName`).value) sys += `我的名字：` + $(`cfgMyName`).value + `\n`;
-    if($(`cfgMyP`).value) sys += `我的设定：` + $(`cfgMyP`).value + `\n`; 
+    if($(`cfgMyP`).value) sys += `我的设定：` + $(`cfgMyP`).value + `\n`;
+    // ★ 注入关系背景（cR字段）
+    let _charRel = originalGetItem.call(ls, `cR_` + currentChatId) || ``;
+    if(_charRel) sys += `【你和我的关系背景】${_charRel}\n`;
+    // ★ 注入记忆库（加强版，强制要求AI记住）
+    try {
+        let _mems = await getMems(currentChatId);
+        if(_mems && _mems.length > 0) {
+            let _memLines = _mems.map(function(m){ return m.content || m.text || ''; }).filter(Boolean);
+            if(_memLines.length > 0) {
+                sys += `【专属记忆库 - 最高优先级·必须记住】以下是你和我之间真实发生过的重要事件和情感节点，你必须完全记住这些内容，在聊天中自然体现，绝对不能遗忘或矛盾：\n`;
+                _memLines.forEach(function(m, i){ sys += `${i+1}. ${m}\n`; });
+                sys += `【重要】上述记忆是你真实经历过的，不是假设，必须在言谈举止中有所体现。\n`;
+            }
+        }
+    } catch(e) {}
 
     let npcData = originalGetItem.call(ls, `npcList_` + currentChatId);
     let npcs = npcData ? JSON.parse(npcData) : [];
@@ -9882,6 +9901,10 @@ if(charStickers.length > 0) {
 3. 实时位置：如果剧情中你们开始一起共享位置，加入 [发送实时位置：你当前所在地点]
 4. 对方主动索要定位：如果对方用任何方式要求你发送位置/定位，必须立刻用 [发送定位：你当前所在的具体地点] 回应！
 注意：要求4是强制的；其余情况只在情绪合适的剧情节点使用，不要每次都用！`;
+    // ★ 线上模式语序提醒（避免一直倒装）
+    if(!window._offlineMode) {
+        sys += `\n【语言风格要求】回复时使用自然口语化的表达，避免在连续多条消息里都使用倒装句式（如"好的，是这样"可以偶尔用，但不要每句都倒装）。语气要符合人设，说话自然真实。\n`;
+    }
     if(!window._offlineMode) sys += window._locSysAddon;
     // 实时位置共享中，在提示词中也告知AI
     if(!window._offlineMode && typeof _liveLocActive !== 'undefined' && _liveLocActive) {
@@ -9929,7 +9952,7 @@ if(charStickers.length > 0) {
             + (_olWords ? `▶ 【字数硬性限制 - 极度重要】每次回复的【回复】正文总字数必须严格控制在${_olWords}字以内，不得超出！这是最高优先级规定，绝对不允许以任何理由（情节紧张、描写丰富等）突破此限制！超出即视为严重错误。\n` : '')
             + '▶ 描写段落与「」对话交替出现，段落间空一行，不加任何前缀符号。\n'
             + '▶ 【强制标点规范】必须使用正确中文标点（句号。逗号，感叹号！省略号……等），严禁用空格代替标点！\n'
-            + '▶ 【语序规范】必须使用正常语序表达，严禁倒装句。\n'
+            + '▶ 【语序规范】使用自然语序表达，避免在连续多句中使用倒装句（偶尔一句可以，但不要每句都倒装）。\n'
             + '▶ 【单条回复】必须将本次全部回复内容合并为一整段连续文本发出，不得分成多条消息。\n'
             + '▶ 【严禁使用手机功能】线下面对面场景绝对禁止输出[图片消息:...]、URL链接、[发送定位:]等任何手机指令格式，违反视为严重错误。';
         // ★ AI学习能力：检测玩家近期编辑过的消息，提取修改规律注入提示词
