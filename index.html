@@ -9837,7 +9837,7 @@ $(`btnLemon`).onclick = async () =>{
     if(!pxy.includes(`chat/completions`)) pxy = pxy.replace(/\/$/, ``) + `/chat/completions`;
     if(typeof showTyping === `function`) showTyping();
     
-    let sys = `严格按格式回复，勿加多余字符。内容必须极致生动：\n【定位与天气】（100字内，首字为天气emoji，每次必须全新撰写，体现当前环境氛围细节）\n【服装】（100字内，每次必须全新描写，哪怕穿着未变也要从不同角度描述面料质感、当下光线下的样子等细节，绝不能与上次相同）\n【表情与动作】（100字内，必须反映本轮对话的情绪，每次全新描写，不得复用）\n【心声】（200字内，必须是对本轮对话的最新心理，每次全新，严禁雷同）\n【回复】（对我说的话。重要规则：如有多句，必须用回车换行严格分段，严禁只发一段！）\n【强制要求】以上四个栏目每次都必须100%全新撰写，不得有任何重复措辞，这是最高优先级规定！\n\n`;
+    let sys = `严格按格式回复，勿加多余字符。每次回复必须包含全部五个标签且顺序不变：\n【定位与天气】（100字内，首字为天气emoji，每次必须全新撰写，体现当前环境氛围细节）\n【服装】（100字内，每次必须全新描写，哪怕穿着未变也要从不同角度描述，绝不能与上次相同）\n【表情与动作】（100字内，必须反映本轮情绪，每次全新，不得复用）\n【心声】（200字内，必须是对本轮的最新心理，每次全新，严禁雷同）\n【回复】（对我说的话，必须存在此标签！如有多句用回车换行分段）\n【绝对禁止】：缺少任何一个标签视为严重格式错误。以上五个标签每轮必须全部输出，一个都不能少！\n\n`;
 
     
     let globals = wbData.filter(x => x.type === `global`);
@@ -10419,14 +10419,17 @@ let hasAccept = txt.includes(`[收取转账]`);
 
             
             let out = txt, wM = txt.match(/【定位与天气】([\s\S]*?)【/), cM = txt.match(/【服装】([\s\S]*?)【/), aM = txt.match(/【表情与动作】([\s\S]*?)【/), tM = txt.match(/【心声】([\s\S]*?)(?:【|$)/), rM = txt.match(/【回复】([\s\S]*)$/);
-                        if(rM) {
+            // ★ 无论有没有【回复】标签，只要有状态栏字段就立刻更新aiStatus
+            let _statusUpdated = false;
+            if(wM) { aiStatus.weather = wM[1].trim(); _statusUpdated = true; }
+            if(cM) { aiStatus.clothing = cM[1].trim(); _statusUpdated = true; }
+            if(aM) { aiStatus.action = aM[1].trim(); _statusUpdated = true; }
+            if(tM) { aiStatus.thought = tM[1].trim(); _statusUpdated = true; }
+            if(_statusUpdated && currentChatId === _lockedChatId) {
+                localforage.setItem(`aiStatus_`+_lockedChatId, aiStatus).catch(()=>{});
+            }
+            if(rM) {
                 out = rM[1].trim();
-                if(wM) aiStatus.weather = wM[1].trim(); if(cM) aiStatus.clothing = cM[1].trim();
-                if(aM) aiStatus.action = aM[1].trim(); if(tM) aiStatus.thought = tM[1].trim();
-                // ★ 只有仍在同一个char页面时才写入，防止切换后写到别的char
-                if(currentChatId === _lockedChatId) {
-                    localforage.setItem(`aiStatus_`+_lockedChatId, aiStatus).catch(()=>{});
-                }
             }
             // 无论是否有【回复】，都清除可能残留在out里的【状态行】（避免渲染为气泡）
             // 先清除整个 【XX】...（下一个【前）的多行块，再清除单行标签
