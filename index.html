@@ -21704,7 +21704,7 @@ ${adultMode?'【🔞私密模式】可以写青春期的身体觉醒、某次暧
 
     } else if(ch === '恋爱经历'){
       // 只要设定里没有明确提到前任/恋爱经历，就默认只喜欢user
-      var hasPastLove = (charAP+charRel).match(/前任|分手|前女友|前男友|失恋|恋爱过|谈过恋爱|初恋.*不是|花花公子|滥情|多段感情|前任很多|风流|劈腿|出轨|情史/);
+      var hasPastLove = (charAP+charRel).match(/前任|分手|前女友|前男友|失恋|恋爱过|谈过恋爱|初恋.*不是|花花公子|滥情|多段感情|前任很多|风流|劈腿|出轨|情史|多情|渣男|玩感情|感情经历|喜欢过很多|谈了很多|不少女友|多个女友|感情复杂|难忘的她|爱过别人|曾经爱过|有过女朋友|有过男朋友|曾交往|前女友|绿茶|备胎|放荡|浪荡|浪子|情场|爱情经历|恋爱史/);
       var isOnlyUserLove = !hasPastLove;
       if(isOnlyUserLove){
         // 不走API，直接插入一张特殊记忆卡
@@ -21806,9 +21806,9 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     if(genBtn){ genBtn.disabled=true; genBtn.style.opacity='0.6'; }
 
     try{
-      var resp = await fetch(pxy,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:3000,messages:[{role:'user',content:sys}]})});
+      var resp = await fetch(pxy,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify({model:mod,temperature:tp,max_tokens:4000,messages:[{role:'system',content:'你是一名专业的中文角色扮演作家。请严格按照人设生成记忆内容，所有输出必须是纯中文，必须严格遵守输出格式要求，用|||分隔符标记每段记忆结尾。'},{role:'user',content:sys}]})});
       var data = await resp.json();
-      var raw = (data.choices?.[0]?.message?.content||'').trim();
+      var raw = (data.content?.[0]?.text || data.choices?.[0]?.message?.content||'').trim();
 
       // 解析：每条记忆以 |||有你 或 |||无你 结尾，按此切割（支持多行长文本）
       var arr = [];
@@ -23758,7 +23758,7 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
         '请直接输出'+cc.name+'收到这个匿名问题后的回答，50-100字，真实自然，纯中文，不加任何格式前缀标签。';
     }
     try{
-      var reply = await callApi(cfg, prompt, 800);
+      var reply = await callApi(cfg, prompt, 1500);
       var ts = Date.now();
       var record = {id:ts,mode:mode,identity:identity,question:q,answer:reply,charName:cc.name,ts:ts};
       // Fix2: 先存再渲染
@@ -23787,7 +23787,7 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
       '请将以下问题改写成符合「'+_beCurrentId+'」身份口吻的表达（20-40字，自然流露，不要暴露你是'+cc.name+'）：\n'+
       '原始问题：'+q+'\n只输出改写后的问题，不加任何前缀。';
     try{
-      var rewrittenQ = await callApi(cfg, prompt, 100);
+      var rewrittenQ = await callApi(cfg, prompt, 400);
       _beCurrentQ = rewrittenQ;
       var qEl = document.getElementById('anonBeQ'); if(qEl)qEl.textContent=rewrittenQ;
       var area = document.getElementById('anonBeQuestionArea'); if(area)area.style.display='block';
@@ -23813,7 +23813,7 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
       '以'+cc.name+'的真实人设对这个回答做出反应（可以吃醋/惊讶/满意/嘲讽/感动，60-100字，真实自然）。\n'+
       '请直接输出'+cc.name+'揭开身份后的反应，60-100字，包含"其实那个匿名提问的就是我"这个揭示，真实自然，纯中文，不加任何格式前缀。';
     try{
-      var reply = await callApi(cfg, prompt, 800);
+      var reply = await callApi(cfg, prompt, 1500);
       var ts = Date.now();
       var record = {id:ts,mode:'be',identity:_beCurrentId,question:_beCurrentQ,userAnswer:ans,answer:reply,charName:cc.name,ts:ts};
       var records = await _loadRecords();
