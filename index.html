@@ -943,8 +943,82 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
     <span id="csBack">＜</span>
     <span id="csTitle">💕 情侣空间</span>
     <span id="csCharBtn" title="切换角色">👥</span>
-    <span id="csBgBtn" title="换壁纸">🖼</span>
+    <span id="csBgBtn" title="情侣空间设置" style="font-size:20px;cursor:pointer;width:30px;text-align:right;line-height:1;">⚙️</span>
     <input type="file" id="csBgInput" accept="image/*" style="display:none">
+
+    <!-- 情侣空间设置面板 -->
+    <div id="csSettingsPanel" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;z-index:200;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);">
+      <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:90%;max-width:380px;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 12px 36px rgba(0,0,0,.2);max-height:82vh;display:flex;flex-direction:column;">
+        <div style="background:linear-gradient(135deg,#ff8fab,#c44f7a);color:white;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+          <span style="font-weight:700;font-size:15px;">⚙️ 情侣空间设置</span>
+          <span id="csSettingsClose" style="cursor:pointer;font-size:22px;line-height:1;">×</span>
+        </div>
+        <div style="overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:14px;">
+          <!-- 页面壁纸 -->
+          <div style="background:#fff9fb;border-radius:14px;padding:12px;">
+            <div style="font-size:13px;font-weight:700;color:#c44f7a;margin-bottom:10px;">🖼 页面壁纸</div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div id="csWallThumb" onclick="document.getElementById('csBgInput').click()" style="width:54px;height:54px;border-radius:10px;background:#f5e0e8;border:2px dashed #ffb6c1;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:22px;overflow:hidden;position:relative;flex-shrink:0;">🌸
+                <img id="csWallThumbImg" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" alt="">
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px;flex:1;">
+                <button onclick="document.getElementById('csBgInput').click()" style="padding:7px 14px;background:linear-gradient(135deg,#ff8fab,#c44f7a);color:white;border:none;border-radius:10px;font-size:12px;cursor:pointer;font-weight:bold;">换壁纸</button>
+                <button id="csWallRemove" style="padding:7px 14px;background:#fff0f3;color:#e75480;border:1px solid #ffd6e0;border-radius:10px;font-size:12px;cursor:pointer;">恢复默认</button>
+              </div>
+            </div>
+          </div>
+          <!-- 功能图标 -->
+          <div style="background:#fff9fb;border-radius:14px;padding:12px;">
+            <div style="font-size:13px;font-weight:700;color:#c44f7a;margin-bottom:10px;">🎨 功能图标自定义</div>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div class="cs-icon-row" data-func="Period" data-default="🩸" data-lskey="cs_icon_Period">
+                <span class="cs-icon-lbl">大姨妈</span>
+                <div class="cs-icon-preview">🩸<img class="cs-icon-img" style="display:none;" alt=""></div>
+                <input type="file" class="cs-icon-inp" accept="image/*" style="display:none">
+                <button class="cs-icon-change">换图</button>
+                <button class="cs-icon-reset">恢复</button>
+              </div>
+              <div class="cs-icon-row" data-func="LoveList" data-default="📖" data-lskey="cs_icon_LoveList">
+                <span class="cs-icon-lbl">TA的过去</span>
+                <div class="cs-icon-preview">📖<img class="cs-icon-img" style="display:none;" alt=""></div>
+                <input type="file" class="cs-icon-inp" accept="image/*" style="display:none">
+                <button class="cs-icon-change">换图</button>
+                <button class="cs-icon-reset">恢复</button>
+              </div>
+              <div class="cs-icon-row" data-func="Diary" data-default="📒" data-lskey="cs_icon_Diary">
+                <span class="cs-icon-lbl">共享日记</span>
+                <div class="cs-icon-preview">📒<img class="cs-icon-img" style="display:none;" alt=""></div>
+                <input type="file" class="cs-icon-inp" accept="image/*" style="display:none">
+                <button class="cs-icon-change">换图</button>
+                <button class="cs-icon-reset">恢复</button>
+              </div>
+              <div class="cs-icon-row" data-func="Horoscope" data-default="⭐" data-lskey="cs_icon_Horoscope">
+                <span class="cs-icon-lbl">每日星运</span>
+                <div class="cs-icon-preview">⭐<img class="cs-icon-img" style="display:none;" alt=""></div>
+                <input type="file" class="cs-icon-inp" accept="image/*" style="display:none">
+                <button class="cs-icon-change">换图</button>
+                <button class="cs-icon-reset">恢复</button>
+              </div>
+              <div class="cs-icon-row" data-func="Challenge" data-default="💑" data-lskey="cs_icon_Challenge">
+                <span class="cs-icon-lbl">匿名问答</span>
+                <div class="cs-icon-preview">💑<img class="cs-icon-img" style="display:none;" alt=""></div>
+                <input type="file" class="cs-icon-inp" accept="image/*" style="display:none">
+                <button class="cs-icon-change">换图</button>
+                <button class="cs-icon-reset">恢复</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <style>
+    .cs-icon-row{display:flex;align-items:center;gap:8px;}
+    .cs-icon-lbl{font-size:13px;color:#555;width:56px;flex-shrink:0;}
+    .cs-icon-preview{width:38px;height:38px;border-radius:10px;background:#f5e0e8;display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden;position:relative;flex-shrink:0;}
+    .cs-icon-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+    .cs-icon-change{flex:1;padding:6px;background:linear-gradient(135deg,#ff8fab,#c44f7a);color:white;border:none;border-radius:8px;font-size:11px;cursor:pointer;font-weight:bold;}
+    .cs-icon-reset{padding:6px 10px;background:#fff0f3;color:#e75480;border:1px solid #ffd6e0;border-radius:8px;font-size:11px;cursor:pointer;}
+    </style>
   </div>
 
   <!-- char切换下拉面板 -->
@@ -1256,7 +1330,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 
 <!-- 软木板内容区 -->
 <div id="pmBoard">
-  <div class="pm-empty" id="pmEmpty">还没有任何记忆<br>点击下方按钮让他讲述这段时光</div>
+  <div class="pm-empty" id="pmEmpty">还没有任何记忆<br>点击下方按钮让TA讲述这段时光</div>
 </div>
 
 <!-- 底部生成按钮 -->
@@ -3019,7 +3093,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
           <!-- 常用功能（改了名字） -->
           <div class="me-section-label">🗂 常用功能</div>
           <div id=btnGoCharSticker class=me-menu-item>
-            <div class=me-menu-left><div class=me-menu-title>他の专属表情</div><div class=me-menu-sub>设定专属表情，让他随时懂你</div></div>
+            <div class=me-menu-left><div class=me-menu-title>TAの专属表情</div><div class=me-menu-sub>设定专属表情，让TA随时懂你</div></div>
             <div class=me-menu-right>＞</div>
           </div>
           <div id=btnGoFav class=me-menu-item>
@@ -3035,7 +3109,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
             <div class=me-menu-right>＞</div>
           </div>
           <div id=btnMeLogs class=me-menu-item>
-            <div class=me-menu-left><div class=me-menu-title>📝 空间日志</div><div class=me-menu-sub>空间日志，他看得见</div></div>
+            <div class=me-menu-left><div class=me-menu-title>📝 空间日志</div><div class=me-menu-sub>空间日志，TA看得见</div></div>
             <div class=me-menu-right>＞</div>
           </div>
 
@@ -3050,7 +3124,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
             <div class=me-menu-right>＞</div>
           </div>
           <div id=btnMeCapsule class=me-menu-item>
-            <div class=me-menu-left><div class=me-menu-title>💌 💌 时光胶囊</div><div class=me-menu-sub>藏一句话，等他来拆</div></div>
+            <div class=me-menu-left><div class=me-menu-title>💌 💌 时光胶囊</div><div class=me-menu-sub>藏一句话，等TA来拆</div></div>
             <div class=me-menu-right>＞</div>
           </div>
         </div>
@@ -3065,7 +3139,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 <div id=scrCharSticker class=scr-flex>
                                 <div class=room-header>
             <span id=btnCharStickerBack class=back-btn>＜</span>
-            <span class=header-center>角色表情包库</span>
+            <span class=header-center>TAの专属表情</span>
 
             <span id=btnEditCharSticker style=cursor:pointer;font-size:14px;color:#6c5ce7;font-weight:bold;>管理</span>
         </div>
@@ -3990,12 +4064,12 @@ window.wkDelSongRecord=function(idx,cid){
 <div id="scrLogList"class="scr-flex">
     <div class="room-header">
         <span id="btnLogListBack" class="back-btn">＜</span>
-        <span class="header-center">专属日志本</span>
+        <span class="header-center">空间日志</span>
         <span id="btnWriteLog" class="plus-btn" style="font-size: 20px;">✏️</span>
     </div>
     <div class="log-list-header">
         <div id="tabMyLogs" class="log-tab log-tab-active">我的日志</div>
-        <div id="tabAiLogs" class="log-tab">Ta的日志</div>
+        <div id="tabAiLogs" class="log-tab">TA的日志</div>
     </div>
     <div id="logListContainer" class="list-content" style="padding-bottom: 20px; overflow-y: auto;">
     </div>
@@ -4718,7 +4792,7 @@ window.wkDelSongRecord=function(idx,cid){
 
         <div class="room-header" style="background:#6c5ce7; color:white; border:none;">
             <span id="btnWalletBack" class="back-btn" style="color:white;">＜</span>
-            <span class="header-center">我的钱包</span>
+            <span class="header-center">随手记の账单</span>
             <span id="btnWalletSet" style="font-size:18px; cursor:pointer;">⚙️</span>
         </div>
 
@@ -4756,7 +4830,7 @@ window.wkDelSongRecord=function(idx,cid){
     <div id="scrFav" class="scr-flex">
         <div class="room-header">
             <span id="btnFavBack" class="back-btn">＜</span>
-            <span class="header-center">我的收藏</span>
+            <span class="header-center">那些藏在聊天里の回忆</span>
             <span class="empty-btn"></span>
         </div>
         <div id="favListContainer" class="list-content" style="padding: 15px; overflow-y: auto; background-color: #f5f6fa;"></div>
@@ -15926,7 +16000,8 @@ function buildMomentCard(post) {
                 ${imgBlock}
                 <div style="font-size:11px;color:#bbb;margin-top:6px;">${post.time}</div>
                 
-                <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+                <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center;">
+                    <button class="momentLikeBtn" data-id="${post.id}" style="font-size:11px;background:${(post.likedByMe)?'#ffe0ec':'#fff0f3'};border:1px solid #ffd6e0;border-radius:14px;padding:3px 10px;cursor:pointer;color:${(post.likedByMe)?'#e75480':'#bbb'};display:flex;align-items:center;gap:3px;">${(post.likedByMe)?'❤️':'🤍'} <span class="momentLikeCount">${post.likes||0}</span></button>
                     <button class="momentSummonBtn" data-id="${post.id}" style="font-size:11px;background:#fff0f3;border:1px solid #ffd6e0;border-radius:14px;padding:3px 10px;cursor:pointer;color:#e75480;">💬 召唤评论</button>
                     <button class="momentUserCommentBtn" data-id="${post.id}" style="font-size:11px;background:#fff0f3;border:1px solid #ffd6e0;border-radius:14px;padding:3px 10px;cursor:pointer;color:#e75480;">✏️ 写评论</button>
                 </div>
@@ -16021,6 +16096,28 @@ async function aiGenDraft(post) {
 // 事件委托
 if($(`momentList`)) {
     $(`momentList`).addEventListener(`click`, async (e) => {
+        // 点赞
+        let likeBtn = e.target.closest(`.momentLikeBtn`);
+        if(likeBtn) {
+            let pid = likeBtn.dataset.id;
+            let post = momentData.find(p=>p.id===pid);
+            if(!post) return;
+            post.likes = (post.likes||0);
+            if(post.likedByMe){
+                post.likedByMe = false;
+                post.likes = Math.max(0, post.likes-1);
+            } else {
+                post.likedByMe = true;
+                post.likes = post.likes+1;
+            }
+            await saveMoments();
+            // 局部更新按钮，不用重新渲染整个列表
+            likeBtn.style.background = post.likedByMe ? '#ffe0ec' : '#fff0f3';
+            likeBtn.style.color = post.likedByMe ? '#e75480' : '#bbb';
+            likeBtn.innerHTML = `${post.likedByMe?'❤️':'🤍'} <span class="momentLikeCount">${post.likes}</span>`;
+            return;
+        }
+
         // 草稿偷看
         let heartEl = e.target.closest(`.momentDraftHeart`);
         if(heartEl) {
@@ -20573,7 +20670,7 @@ if(document.getElementById('offlineModePanel')) {
           msgs.scrollTop=msgs.scrollHeight;
         }
 
-        showCsSuccessToast('💌 邀请卡已发送！去聊天页面发消息等他回应吧~');
+        showCsSuccessToast('💌 邀请卡已发送！去聊天页面发消息等TA回应吧~');
       };
     }
 
@@ -20650,8 +20747,39 @@ if(document.getElementById('offlineModePanel')) {
   }
   var csBgBtn=document.getElementById('csBgBtn');
   var csBgInput=document.getElementById('csBgInput');
-  if(csBgBtn&&csBgInput){
-    csBgBtn.onclick=function(){csBgInput.click();};
+  // 打开设置面板
+  if(csBgBtn){
+    csBgBtn.onclick=function(){
+      var panel=document.getElementById('csSettingsPanel');
+      if(panel){panel.style.display='block';}
+      // 加载壁纸缩略图
+      Promise.resolve().then(async function(){
+        var d=null;try{d=await localforage.getItem('cs_bg');}catch(e){}
+        if(!d){try{d=localStorage.getItem('cs_bg');}catch(e){}}
+        var thumb=document.getElementById('csWallThumbImg');
+        var hint=document.getElementById('csWallThumb');
+        if(d&&d.length>10&&thumb){thumb.src=d;thumb.style.display='block';if(hint)hint.style.fontSize='0';}
+      });
+      // 加载各功能图标
+      document.querySelectorAll('.cs-icon-row').forEach(async function(row){
+        var key=row.getAttribute('data-lskey');
+        var def=row.getAttribute('data-default');
+        var img=row.querySelector('.cs-icon-img');
+        var prev=row.querySelector('.cs-icon-preview');
+        var d=null;try{d=await localforage.getItem(key);}catch(e){}
+        if(!d){try{d=localStorage.getItem(key);}catch(e){}}
+        if(d&&d.length>10&&img){img.src=d;img.style.display='block';if(prev)prev.style.fontSize='0';}
+      });
+    };
+  }
+  // 关闭面板
+  var csClose=document.getElementById('csSettingsClose');
+  if(csClose)csClose.onclick=function(){document.getElementById('csSettingsPanel').style.display='none';};
+  document.getElementById('csSettingsPanel') && document.getElementById('csSettingsPanel').addEventListener('click',function(e){
+    if(e.target===this)this.style.display='none';
+  });
+  // 壁纸上传
+  if(csBgInput){
     csBgInput.onchange=function(){
       var file=this.files[0];if(!file)return;
       var r=new FileReader();
@@ -20661,9 +20789,82 @@ if(document.getElementById('offlineModePanel')) {
         try{localStorage.setItem('cs_bg',d);}catch(e){}
         var scr=document.getElementById('scrCoupleSpace');
         if(scr){scr.style.backgroundImage='url('+d+')';scr.style.backgroundSize='cover';scr.style.backgroundPosition='center';}
+        // 更新缩略图
+        var thumb=document.getElementById('csWallThumbImg');
+        if(thumb){thumb.src=d;thumb.style.display='block';}
+        var hint=document.getElementById('csWallThumb');
+        if(hint)hint.style.fontSize='0';
       };r.readAsDataURL(file);
     };
   }
+  // 恢复壁纸
+  var csWallRemove=document.getElementById('csWallRemove');
+  if(csWallRemove)csWallRemove.onclick=function(){
+    localforage.removeItem('cs_bg').catch(function(){});
+    try{localStorage.removeItem('cs_bg');}catch(e){}
+    var scr=document.getElementById('scrCoupleSpace');
+    if(scr){scr.style.backgroundImage='';scr.style.backgroundSize='';scr.style.backgroundPosition='';}
+    var thumb=document.getElementById('csWallThumbImg');
+    if(thumb){thumb.src='';thumb.style.display='none';}
+    var hint=document.getElementById('csWallThumb');
+    if(hint)hint.style.fontSize='22px';
+  };
+  // 功能图标换图&恢复
+  document.querySelectorAll('.cs-icon-row').forEach(function(row){
+    var key=row.getAttribute('data-lskey');
+    var def=row.getAttribute('data-default');
+    var func=row.getAttribute('data-func');
+    var inp=row.querySelector('.cs-icon-inp');
+    var img=row.querySelector('.cs-icon-img');
+    var prev=row.querySelector('.cs-icon-preview');
+    var changeBtn=row.querySelector('.cs-icon-change');
+    var resetBtn=row.querySelector('.cs-icon-reset');
+    if(changeBtn&&inp)changeBtn.onclick=function(){inp.click();};
+    if(inp)inp.onchange=function(){
+      var file=this.files[0];if(!file)return;
+      var r=new FileReader();
+      r.onload=function(ev){
+        var d=ev.target.result;
+        localforage.setItem(key,d).catch(function(){});
+        try{localStorage.setItem(key,d);}catch(e){}
+        if(img){img.src=d;img.style.display='block';}
+        if(prev)prev.style.fontSize='0';
+        // 更新主界面图标
+        _csApplyFuncIcon(func,d);
+      };r.readAsDataURL(file);
+    };
+    if(resetBtn)resetBtn.onclick=function(){
+      localforage.removeItem(key).catch(function(){});
+      try{localStorage.removeItem(key);}catch(e){}
+      if(img){img.src='';img.style.display='none';}
+      if(prev){prev.style.fontSize='20px';}
+      _csApplyFuncIcon(func,null,def);
+    };
+  });
+  // 应用功能图标到主界面
+  function _csApplyFuncIcon(func,data,defEmoji){
+    var el=document.querySelector('#csFunc'+func+' .cs-func-icon');
+    if(!el)return;
+    var existImg=el.querySelector('img.cs-func-custom-img');
+    if(data){
+      if(!existImg){existImg=document.createElement('img');existImg.className='cs-func-custom-img';existImg.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:inherit;position:absolute;inset:0;';el.style.position='relative';el.appendChild(existImg);}
+      existImg.src=data;existImg.style.display='block';el.style.fontSize='0';
+    }else{
+      if(existImg){existImg.style.display='none';}
+      el.style.fontSize='';
+      if(defEmoji)el.childNodes[0]&&(el.childNodes[0].nodeType===3)&&(el.childNodes[0].textContent=defEmoji);
+    }
+  }
+  // 页面打开时自动加载已存图标
+  Promise.resolve().then(async function(){
+    var funcs=[{id:'Period',key:'cs_icon_Period',def:'🩸'},{id:'LoveList',key:'cs_icon_LoveList',def:'📖'},{id:'Diary',key:'cs_icon_Diary',def:'📒'},{id:'Horoscope',key:'cs_icon_Horoscope',def:'⭐'},{id:'Challenge',key:'cs_icon_Challenge',def:'💑'}];
+    for(var i=0;i<funcs.length;i++){
+      var f=funcs[i];var d=null;
+      try{d=await localforage.getItem(f.key);}catch(e){}
+      if(!d){try{d=localStorage.getItem(f.key);}catch(e){}}
+      if(d&&d.length>10)_csApplyFuncIcon(f.id,d);
+    }
+  });
 
   // 头像
   function bindAva(btnId,inpId,imgId,lsKey){
@@ -23920,19 +24121,23 @@ async function renderInlineTags(){
   var saved=Array.isArray(raw)?raw:[];
   var row=document.getElementById('meTagsRow');if(!row)return;
   row.innerHTML='';
-  // 渲染已有标签
-  saved.forEach(function(txt,idx){
-    var col=_TAG_COLORS[idx%_TAG_COLORS.length];
-    var chip=_makeTagChip(txt,idx,col,saved);
-    row.appendChild(chip);
-  });
-  // 如果不足6个，加一个"+"占位
-  if(saved.length<6){
-    var plus=document.createElement('div');
-    plus.style.cssText='min-width:28px;height:24px;border-radius:12px;border:1.5px dashed #ccc;display:flex;align-items:center;justify-content:center;font-size:14px;color:#ccc;cursor:pointer;';
-    plus.textContent='+';
-    plus.onclick=function(){_addTagChip(saved);};
-    row.appendChild(plus);
+  // 始终渲染6个固定颜色的框，有内容的显示文字，空的显示"+"
+  for(var i=0;i<6;i++){
+    var col=_TAG_COLORS[i];
+    if(i<saved.length){
+      // 有内容的标签
+      var chip=_makeTagChip(saved[i],i,col,saved);
+      row.appendChild(chip);
+    }else{
+      // 空框显示"+"，点击添加
+      (function(idx,c,arr){
+        var empty=document.createElement('div');
+        empty.style.cssText='min-width:56px;height:26px;border-radius:12px;border:1.5px dashed '+c.bd+';background:'+c.bg+';display:flex;align-items:center;justify-content:center;font-size:14px;color:'+c.bd+';cursor:pointer;padding:0 8px;';
+        empty.textContent='+';
+        empty.onclick=function(){_addTagChipAt(idx,arr);};
+        row.appendChild(empty);
+      })(i,col,saved);
+    }
   }
   // 更新统计
   var el3=document.getElementById('meStatTagCount');if(el3)el3.textContent=saved.length||'—';
@@ -23977,6 +24182,33 @@ function _editTagChip(idx,allTags,col){
     meSave('me_labels',allTags).then(function(){renderInlineTags();});
   };
   inp.addEventListener('keydown',function(e){if(e.key==='Enter'){box.querySelector('#_tagEditOk').click();}});
+  overlay.onclick=function(e){if(e.target===overlay)overlay.remove();};
+}
+
+function _addTagChipAt(idx,allTags){
+  if(allTags.length>=6){meToast('最多6个标签');return;}
+  var colors=_TAG_COLORS[idx];
+  var overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;';
+  var box=document.createElement('div');
+  box.style.cssText='background:white;border-radius:16px;padding:16px 16px 12px;width:75vw;max-width:280px;box-shadow:0 8px 24px rgba(0,0,0,0.15);';
+  box.innerHTML='<div style="font-size:13px;color:#999;margin-bottom:10px;">添加新标签（最多6字）</div>'+
+    '<input id="_tagAddInp2" maxlength="6" placeholder="输入标签内容" style="width:100%;padding:8px 10px;border:1.5px solid '+colors.bd+';border-radius:10px;font-size:14px;box-sizing:border-box;outline:none;text-align:center;">'+
+    '<div style="display:flex;gap:8px;margin-top:10px;">'+
+    '<button id="_tagAddCancel2" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:10px;background:white;font-size:13px;cursor:pointer;color:#999;">取消</button>'+
+    '<button id="_tagAddOk2" style="flex:2;padding:8px;background:'+colors.bd+';color:white;border:none;border-radius:10px;font-size:13px;cursor:pointer;font-weight:bold;">添加</button>'+
+    '</div>';
+  overlay.appendChild(box);document.body.appendChild(overlay);
+  var inp=box.querySelector('#_tagAddInp2');inp.focus();
+  box.querySelector('#_tagAddCancel2').onclick=function(){overlay.remove();};
+  box.querySelector('#_tagAddOk2').onclick=function(){
+    var v=inp.value.trim().slice(0,6);
+    overlay.remove();
+    if(!v)return;
+    allTags[idx]=v; // 直接设置对应位置
+    meSave('me_labels',allTags).then(function(){renderInlineTags();});
+  };
+  inp.addEventListener('keydown',function(e){if(e.key==='Enter'){box.querySelector('#_tagAddOk2').click();}});
   overlay.onclick=function(e){if(e.target===overlay)overlay.remove();};
 }
 
@@ -24057,10 +24289,19 @@ function goPage(n){
   if(d2){d2.style.background=n===2?'rgba(200,80,130,0.85)':'rgba(200,80,130,0.25)';d2.style.width=n===2?'18px':'6px';d2.style.borderRadius=n===2?'4px':'50%';}
 }
 
-var _sx=0,_sy=0,_drag=false;
+var _sx=0,_sy=0,_drag=false,_isHoriz=false;
 var wrap=document.getElementById('homePagesWrap');
 if(wrap){
-  wrap.addEventListener('touchstart',function(e){_sx=e.touches[0].clientX;_sy=e.touches[0].clientY;_drag=true;},{passive:true});
+  wrap.addEventListener('touchstart',function(e){_sx=e.touches[0].clientX;_sy=e.touches[0].clientY;_drag=true;_isHoriz=false;},{passive:true});
+  wrap.addEventListener('touchmove',function(e){
+    if(!_drag)return;
+    var dx=e.touches[0].clientX-_sx,dy=e.touches[0].clientY-_sy;
+    // 判断是水平滑动就阻止默认行为（防止触发浏览器后退/前进手势）
+    if(!_isHoriz && Math.abs(dx)>Math.abs(dy)&&Math.abs(dx)>10){
+      _isHoriz=true;
+    }
+    if(_isHoriz){e.preventDefault();}
+  },{passive:false});
   wrap.addEventListener('touchend',function(e){
     if(!_drag)return;
     var dx=e.changedTouches[0].clientX-_sx,dy=e.changedTouches[0].clientY-_sy;
@@ -24068,7 +24309,7 @@ if(wrap){
       if(dx<0&&_curPage===1)goPage(2);
       else if(dx>0&&_curPage===2)goPage(1);
     }
-    _drag=false;
+    _drag=false;_isHoriz=false;
   },{passive:true});
 }
 
