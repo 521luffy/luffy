@@ -971,47 +971,57 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         <!-- 功能图标 -->
         <div style="background:#fff9fb;border-radius:14px;padding:12px;">
           <div style="font-size:13px;font-weight:700;color:#c44f7a;margin-bottom:10px;">🎨 功能图标自定义</div>
-          <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="display:flex;flex-direction:column;gap:12px;">
             <div class="cs-icon-row" data-func="Period" data-default="🩸" data-lskey="cs_icon_Period">
               <span class="cs-icon-lbl">大姨妈</span>
-              <div class="cs-icon-preview">🩸<img class="cs-icon-img" style="display:none;" alt=""></div>
+              <div class="cs-icon-preview"><span class="cs-icon-emoji">🩸</span><img class="cs-icon-img" alt=""></div>
               <input type="file" class="cs-icon-inp" accept="image/*" style="display:none">
-              <button class="cs-icon-change">换图</button>
-              <button class="cs-icon-reset">恢复</button>
+              <button class="cs-icon-change">🌸 换图</button>
+              <button class="cs-icon-reset">↩ 恢复</button>
             </div>
             <div class="cs-icon-row" data-func="LoveList" data-default="📖" data-lskey="cs_icon_LoveList">
               <span class="cs-icon-lbl">TA的过去</span>
-              <div class="cs-icon-preview">📖<img class="cs-icon-img" style="display:none;" alt=""></div>
+              <div class="cs-icon-preview"><span class="cs-icon-emoji">📖</span><img class="cs-icon-img" alt=""></div>
               <input type="file" class="cs-icon-inp" accept="image/*" style="display:none">
-              <button class="cs-icon-change">换图</button>
-              <button class="cs-icon-reset">恢复</button>
+              <button class="cs-icon-change">🌸 换图</button>
+              <button class="cs-icon-reset">↩ 恢复</button>
             </div>
             <div class="cs-icon-row" data-func="Diary" data-default="📒" data-lskey="cs_icon_Diary">
               <span class="cs-icon-lbl">共享日记</span>
-              <div class="cs-icon-preview">📒<img class="cs-icon-img" style="display:none;" alt=""></div>
+              <div class="cs-icon-preview"><span class="cs-icon-emoji">📒</span><img class="cs-icon-img" alt=""></div>
               <input type="file" class="cs-icon-inp" accept="image/*" style="display:none">
-              <button class="cs-icon-change">换图</button>
-              <button class="cs-icon-reset">恢复</button>
+              <button class="cs-icon-change">🌸 换图</button>
+              <button class="cs-icon-reset">↩ 恢复</button>
             </div>
             <div class="cs-icon-row" data-func="Horoscope" data-default="⭐" data-lskey="cs_icon_Horoscope">
               <span class="cs-icon-lbl">每日星运</span>
-              <div class="cs-icon-preview">⭐<img class="cs-icon-img" style="display:none;" alt=""></div>
+              <div class="cs-icon-preview"><span class="cs-icon-emoji">⭐</span><img class="cs-icon-img" alt=""></div>
               <input type="file" class="cs-icon-inp" accept="image/*" style="display:none">
-              <button class="cs-icon-change">换图</button>
-              <button class="cs-icon-reset">恢复</button>
+              <button class="cs-icon-change">🌸 换图</button>
+              <button class="cs-icon-reset">↩ 恢复</button>
             </div>
             <div class="cs-icon-row" data-func="Challenge" data-default="💑" data-lskey="cs_icon_Challenge">
               <span class="cs-icon-lbl">匿名问答</span>
-              <div class="cs-icon-preview">💑<img class="cs-icon-img" style="display:none;" alt=""></div>
+              <div class="cs-icon-preview"><span class="cs-icon-emoji">💑</span><img class="cs-icon-img" alt=""></div>
               <input type="file" class="cs-icon-inp" accept="image/*" style="display:none">
-              <button class="cs-icon-change">换图</button>
-              <button class="cs-icon-reset">恢复</button>
+              <button class="cs-icon-change">🌸 换图</button>
+              <button class="cs-icon-reset">↩ 恢复</button>
             </div>
           </div>
         </div>
       </div>
     </div>
   </div>
+  <style>
+  .cs-icon-row{display:flex;align-items:center;gap:8px;padding:2px 0;}
+  .cs-icon-lbl{font-size:12px;color:#c44f7a;width:52px;flex-shrink:0;font-weight:600;}
+  .cs-icon-preview{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#fff0f5,#ffe0ec);border:1.5px solid #ffb6c1;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;flex-shrink:0;}
+  .cs-icon-emoji{font-size:22px;line-height:1;position:relative;z-index:1;}
+  .cs-icon-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:10px;display:none;}
+  .cs-icon-change{flex:1;padding:7px 6px;background:linear-gradient(135deg,#ff8fab,#c44f7a);color:white;border:none;border-radius:20px;font-size:11px;cursor:pointer;font-weight:bold;white-space:nowrap;}
+  .cs-icon-reset{padding:7px 10px;background:white;color:#c44f7a;border:1.5px solid #ffb6c1;border-radius:20px;font-size:11px;cursor:pointer;white-space:nowrap;}
+  .cs-icon-change:active{opacity:0.8;} .cs-icon-reset:active{background:#fff0f5;}
+  </style>
 
   <!-- char切换下拉面板 -->
   <div id="csCharPanel" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;z-index:100;background:rgba(0,0,0,.4);backdrop-filter:blur(4px);">
@@ -16023,10 +16033,16 @@ function buildMomentCard(post) {
         ? `<span class="momentDraftHeart" data-id="${post.id}" title="草稿偷看" style="position:absolute;top:12px;right:12px;font-size:20px;cursor:pointer;color:#ffb3c6;user-select:none;">🤍</span>`
         : ``;
 
-    // 图片
-    let imgBlock = post.img
-        ? `<div style="margin:8px 0;border-radius:10px;overflow:hidden;"><img src="${post.img}" style="max-width:100%;max-height:200px;border-radius:10px;object-fit:cover;display:block;"></div>`
-        : ``;
+    // 图片 / 图片描述粉色卡片
+    let imgBlock = ``;
+    if(post.img) {
+        imgBlock = `<div style="margin:8px 0;border-radius:10px;overflow:hidden;"><img src="${post.img}" style="max-width:100%;max-height:200px;border-radius:10px;object-fit:cover;display:block;"></div>`;
+    } else if(post.photoDesc && post.photoDesc.trim()) {
+        imgBlock = `<div class="momentPhotoCard" data-desc="${escHtml(post.photoDesc)}" style="margin:8px 0;width:120px;height:150px;background:linear-gradient(135deg,#fce4ec,#f8bbd0);border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;box-shadow:0 2px 8px rgba(255,100,130,0.15);border:1px solid #ffb6c1;overflow:hidden;position:relative;">
+            <span style="font-size:32px;filter:drop-shadow(0 2px 4px rgba(200,50,80,0.2));">📷</span>
+            <span style="font-size:10px;color:#c44f7a;text-align:center;padding:0 8px;line-height:1.4;font-weight:500;">${escHtml((post.photoDesc||'').slice(0,24))}${post.photoDesc&&post.photoDesc.length>24?'…':''}</span>
+        </div>`;
+    }
 
     // 评论区
     let commentsHtml = buildCommentsHtml(post);
@@ -16057,7 +16073,34 @@ function buildMomentCard(post) {
             </div>
         </div>
         ${draftHeart}`;
+    // 长按删除（user自己发的动态）
+    if(post.authorType === 'user') {
+        let _lpTimer;
+        div.addEventListener('pointerdown', () => { _lpTimer = setTimeout(() => _momentLongPress(post.id), 600); });
+        div.addEventListener('pointerup', () => clearTimeout(_lpTimer));
+        div.addEventListener('pointercancel', () => clearTimeout(_lpTimer));
+    }
     return div;
+}
+
+function _momentLongPress(postId) {
+    let overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;';
+    let box = document.createElement('div');
+    box.style.cssText = 'background:white;border-radius:18px;overflow:hidden;width:72vw;max-width:260px;box-shadow:0 8px 24px rgba(0,0,0,0.18);';
+    box.innerHTML = '<div style="padding:16px 18px 12px;font-size:14px;color:#555;border-bottom:1px solid #f5f5f5;">删除这条动态？</div>' +
+        '<div style="display:flex;">' +
+        '<button id="_lpCancel" style="flex:1;padding:13px;border:none;background:white;font-size:15px;color:#999;cursor:pointer;border-right:1px solid #f0f0f0;">取消</button>' +
+        '<button id="_lpDel" style="flex:1;padding:13px;border:none;background:white;font-size:15px;font-weight:700;color:#e75480;cursor:pointer;">删除</button>' +
+        '</div>';
+    overlay.appendChild(box); document.body.appendChild(overlay);
+    box.querySelector('#_lpCancel').onclick = () => overlay.remove();
+    box.querySelector('#_lpDel').onclick = async () => {
+        overlay.remove();
+        let idx = momentData.findIndex(p => p.id === postId);
+        if(idx >= 0) { momentData.splice(idx, 1); await saveMoments(); renderMoments(); }
+    };
+    overlay.onclick = e => { if(e.target === overlay) overlay.remove(); };
 }
 
 function buildCommentsHtml(post) {
@@ -16137,6 +16180,22 @@ async function aiGenDraft(post) {
 // 事件委托
 if($(`momentList`)) {
     $(`momentList`).addEventListener(`click`, async (e) => {
+        // 图片描述卡片点击
+        let photoCard = e.target.closest(`.momentPhotoCard`);
+        if(photoCard) {
+            let desc = photoCard.dataset.desc || '';
+            let ov = document.createElement('div');
+            ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;';
+            let box = document.createElement('div');
+            box.style.cssText = 'background:white;border-radius:18px;padding:20px;width:82vw;max-width:300px;box-shadow:0 8px 24px rgba(0,0,0,0.18);';
+            box.innerHTML = '<div style="font-size:13px;color:#999;margin-bottom:10px;">📷 图片描述</div>' +
+                '<div style="font-size:14px;color:#333;line-height:1.7;white-space:pre-wrap;">' + desc + '</div>' +
+                '<button style="margin-top:14px;width:100%;padding:10px;border:none;border-radius:12px;background:linear-gradient(135deg,#ff9a9e,#fad0c4);color:white;font-weight:bold;cursor:pointer;font-size:14px;">知道了 💕</button>';
+            ov.appendChild(box); document.body.appendChild(ov);
+            box.querySelector('button').onclick = () => ov.remove();
+            ov.onclick = e2 => { if(e2.target === ov) ov.remove(); };
+            return;
+        }
         // 点赞（微信风格：名字列表）
         let likeBtn = e.target.closest(`.momentLikeBtn`);
         if(likeBtn) {
@@ -16629,7 +16688,7 @@ if($(`btnGenCharMoments`)) $(`btnGenCharMoments`).onclick = async () => {
         }
 
         let _apMoment = charAP ? `【性格人设】${charAP.slice(0,400)}` : ``;
-        let sysMsg = `你是${name}。\n${_apMoment}\n${recentCtx}\n\n【必须】你发的朋友圈内容必须直接反映上方最近聊天记录的情绪状态：\n- 聊天甜蜜→朋友圈甜蜜，聊天冷淡→朋友圈疏离，刚发生重要事→围绕那件事发圈\n- 不写和聊天记录完全无关的内容\n- 用你自己的性格风格，详细描述你的心理活动和事情经过，字数控制在300到500字之间，必须把话说完整，不要截断，直接输出正文`;
+        let sysMsg = `你是${name}。\n${_apMoment}\n${recentCtx}\n\n【必须】你发的朋友圈内容必须直接反映上方最近聊天记录的情绪状态：\n- 聊天甜蜜→朋友圈甜蜜，聊天冷淡→朋友圈疏离，刚发生重要事→围绕那件事发圈\n- 不写和聊天记录完全无关的内容\n- 用你自己的性格风格，详细描述你的心理活动和事情经过，字数控制在300到500字之间，必须把话说完整，不要截断\n- 有30%概率在正文结尾后另起一行加上【配图：一句话描述你想配的图片画面，20字以内】，没有配图就不加这行\n直接输出正文`;
 
 
         try {
@@ -16663,7 +16722,10 @@ if(!postTxt) continue;
             let newPost = {
                 id: `m`+Date.now()+`_`+Math.random().toString(36).slice(2,5),
                 author: name, authorId: String(val), authorType: type||`char`,
-                avatar: authorAvatar, text: postTxt, img: null,
+                avatar: authorAvatar,
+                text: postTxt.replace(/【配图：[\s\S]*?】\s*$/, '').trim(),
+                img: null,
+                photoDesc: (postTxt.match(/【配图：([\s\S]*?)】\s*$/) || [])[1]?.trim() || null,
                 time: new Date().toLocaleString(`zh-CN`), comments: [], draftPeek: null,
                 postTs: Date.now()
             };
@@ -19288,7 +19350,7 @@ async function _callAIConnect(type, isIncoming) {
     // 后台请求AI开场白，加载回来再显示
     (async function(){
         try {
-            let res = await fetch(pxy, { method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer '+key}, body:JSON.stringify({model:mod, temperature:tp, max_tokens:600, messages:[{role:'user', content:connectSys}]}) });
+            let res = await fetch(pxy, { method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer '+key}, body:JSON.stringify({model:mod, temperature:tp, max_tokens:1200, messages:[{role:'user', content:connectSys}]}) });
             let dat = await res.json();
             let reply = (dat.choices?.[0]?.message?.content || '').trim();
             let _hasReject = reply.includes('[拒接通话]');
@@ -20881,7 +20943,7 @@ if(document.getElementById('offlineModePanel')) {
         var prev=row.querySelector('.cs-icon-preview');
         var d=null;try{d=await localforage.getItem(key);}catch(e){}
         if(!d){try{d=localStorage.getItem(key);}catch(e){}}
-        if(d&&d.length>10&&img){img.src=d;img.style.display='block';if(prev)prev.style.fontSize='0';}
+        if(d&&d.length>10&&img){img.src=d;img.style.display='block';var _emo=prev?prev.querySelector('.cs-icon-emoji'):null;if(_emo)_emo.style.display='none';}
       });
       // 绑定×和空白关闭
       var closeBtn=panel.querySelector('#csSettingsClose2')||panel.querySelector('[id*="SettingsClose"]');
@@ -20907,7 +20969,7 @@ if(document.getElementById('offlineModePanel')) {
             localforage.setItem(key,d).catch(function(){});
             try{localStorage.setItem(key,d);}catch(e){}
             if(img){img.src=d;img.style.display='block';}
-            if(prev)prev.style.fontSize='0';
+            var _emo2=prev?prev.querySelector('.cs-icon-emoji'):null;if(_emo2)_emo2.style.display='none';
             _csApplyFuncIcon(func,d);
           };r.readAsDataURL(file);
         };
@@ -20983,7 +21045,7 @@ if(document.getElementById('offlineModePanel')) {
         localforage.setItem(key,d).catch(function(){});
         try{localStorage.setItem(key,d);}catch(e){}
         if(img){img.src=d;img.style.display='block';}
-        if(prev)prev.style.fontSize='0';
+        var _emo4=prev?prev.querySelector('.cs-icon-emoji'):null;if(_emo4)_emo4.style.display='none';
         // 更新主界面图标
         _csApplyFuncIcon(func,d);
       };r.readAsDataURL(file);
