@@ -14916,9 +14916,15 @@ if($(`btnSpyFootprintClear`)) $(`btnSpyFootprintClear`).onclick = async () => {
 // 优先级：剧情追踪时间 > 自定义时间 > 现实时间
 function getVirtualTimeObj(charId) {
     charId = charId || (typeof currentChatId !== 'undefined' ? currentChatId : 'default');
-    // 1. 优先用剧情追踪时间（_storyCurrentTimeMs）
+    // 1. 优先用剧情追踪时间，但先校验年份是否合理（防2016年污染扩散到日记/足迹等所有功能）
     if(window._storyCurrentTimeMs && window._storyCurrentTimeMs > 0) {
-        return new Date(window._storyCurrentTimeMs);
+        let _storedYear = new Date(window._storyCurrentTimeMs).getFullYear();
+        let _nowYear = new Date().getFullYear();
+        if(Math.abs(_storedYear - _nowYear) <= 10) { // 合理范围内才用
+            return new Date(window._storyCurrentTimeMs);
+        } else {
+            window._storyCurrentTimeMs = null; // 污染值，清掉
+        }
     }
     // 2. 用自定义时间
     let isCustom = originalGetItem.call(ls, 'cCTon_' + charId);
