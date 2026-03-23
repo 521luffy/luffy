@@ -24472,6 +24472,17 @@ function getMyAva(){var a=(window._origLSGet||localStorage.getItem.bind(localSto
 function getChars(){var names=[];try{var opened=JSON.parse(localStorage.getItem('cs_opened_chars')||'[]');opened.forEach(function(cid){var n=localStorage.getItem('cN_'+cid);var ava=localStorage.getItem('charAva_'+cid)||'';if(n){var ov=_charOverrides&&_charOverrides[n];names.push({name:n,type:'char',ava:(ov&&ov.ava)||ava,handle:ov&&ov.handle,bio:ov&&ov.bio,persona:ov&&ov.persona,following:ov&&ov.following,followers:ov&&ov.followers});}});opened.forEach(function(cid){var raw=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'npcList_'+cid);if(raw){try{JSON.parse(raw).forEach(function(n){if(n.name){var ov=_charOverrides&&_charOverrides[n.name];names.push({name:n.name,type:'npc',ava:(ov&&ov.ava)||n.avatar||''});}});}catch(e){}}});}catch(e){}_extraCharsData.forEach(function(d){if(!names.find(function(c){return c.name===d.name;}))names.push({name:d.name,type:'extra',ava:d.ava||'',bio:d.bio||'',persona:d.persona||''});});return names;}
 function getS(){return{wv:(document.getElementById('fWvArea')||{}).value||'',pr:(document.getElementById('fPrArea')||{}).value||'',dt:(document.getElementById('fDtInp')||{}).value||'2026年3月'};}
 function aColor(name){var c=['#1d9bf0','#e17055','#00b894','#a29bfe','#e84393','#f39c12'],h=0;for(var i=0;i<name.length;i++)h=(h*31+name.charCodeAt(i))&0xffff;return c[h%c.length];}
+// ── 智能清理帖子：保留user帖和置顶帖，其余超过上限就裁剪 ──
+function trimPosts(maxOther){
+  maxOther=maxOther||150;
+  var keep=[];var rest=[];
+  _posts.forEach(function(p){
+    if(p.topicKey==='_user'||p._pinned||(p.type==='user'&&p.name===getMyName()))keep.push(p);
+    else rest.push(p);
+  });
+  if(rest.length>maxOther)rest=rest.slice(0,maxOther);
+  _posts=keep.concat(rest);
+}
 // ── 分级人设读取：不同关系的角色对玩家了解程度不同 ──
 var _cachedMyPersona='';
 // 启动时从localforage加载
@@ -24716,13 +24727,15 @@ function renderFollowingFeed(container){
       // 生成散开的时间（让帖子看起来不是同时发的）
       var timeOffsets=[0,25,60,120,180,300];
       var now=new Date();
+      // 清掉旧的关注帖（刷新后旧帖没用了，减少存储占用）
+      _posts=_posts.filter(function(p){return p.topicKey!=='_follow';});
       items.forEach(function(item,idx){if(!item.name||!item.content)return;var c=charMap[item.name];
         var _mn2=(window._origLSGet||localStorage.getItem.bind(localStorage)).call(localStorage,'fMyName')||getMyName();
         if(item.name===_mn2)return; // 禁止user出现
         var postTime=new Date(now.getTime()-timeOffsets[idx%timeOffsets.length]*60000);
         var tstr=timeAgo(postTime.toISOString());
         _posts.unshift({name:item.name,type:c?'char':'net',ava:c?c.ava||null:null,title:'',content:item.content.slice(0,60),fullContent:item.content,board:'关注',likes:Math.floor((postHash({name:item.name,content:item.content})%480)+20),hot:false,time:tstr,comments:[],isStub:false,topicKey:'_follow'});});
-      if(_posts.length>300)_posts=_posts.slice(0,300);// 限制最多300条
+      trimPosts();
       fS('posts',_posts);loadFollowFeed();toast('已刷新 ✓');
     }catch(e){toast('刷新失败：'+(e.message||'').slice(0,25));}
     rfBtn.classList.remove('spinning');
@@ -25834,6 +25847,8 @@ async function openTopic(topic){
     var items=fJson(raw);
     if(!Array.isArray(items)||!items.length) throw new Error('解析为空');
     var charMap={};chars.forEach(function(c){charMap[c.name]=c;});
+    // 清掉同话题的旧帖（刷新后旧帖没用了，减少存储占用）
+    _posts=_posts.filter(function(p){return p.topicKey!==topic.title;});
     // 散开时间让帖子显得自然
     var now2=new Date();var timeOff2=[0,20,45,90,200];
     bd.innerHTML='';
@@ -25847,7 +25862,7 @@ async function openTopic(topic){
       _posts.unshift(post);
       newPosts.push(post);
     });
-    if(_posts.length>300)_posts=_posts.slice(0,300);
+    trimPosts();
     fS('posts',_posts);
     renderTopicPosts(newPosts, bd);
     if(topicRefBtn)topicRefBtn.classList.remove('spinning');
@@ -27165,6 +27180,8 @@ var ec=await fL('extraChars',[]);if(Array.isArray(ec))_extraChars=ec;var ecd=awa
 var fl=await fL('following',[]);if(Array.isArray(fl))_following=fl;
 var sdm=await fL('strangerDMs',[]);if(Array.isArray(sdm))_strangerDMs=sdm;
 var posts=await fL('posts',[]);if(Array.isArray(posts))_posts=posts;
+trimPosts(); // 启动时清理旧帖，释放存储空间
+fS('posts',_posts); // 把清理后的结果存回去
 var rcp=await fL('recommendPosts',[]);if(Array.isArray(rcp))_recommendPosts=rcp;
 var tbt=await fL('topicsByTab',{});if(tbt&&typeof tbt==='object')_topicsByTab=tbt;
 }catch(e){console.error('论坛init数据加载出错:',e);}
