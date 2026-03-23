@@ -2770,10 +2770,35 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         </div>
         <div class="api-form">
             <div class="section-card">
-                <div class="section-title" style="color:#fd79a8;">🎨 字体文件URL</div>
-                <div style="font-size:12px;color:#888;margin-bottom:8px;">请输入以 .ttf 或 .woff 结尾的字体直链（留空则恢复默认）</div>
-                <div class="input-group">
-                    <input type="text" id="fontUrl" class="input-field" placeholder="https://...">
+                <div class="section-title" style="color:#fd79a8;">🎨 自定义字体（最多3个）</div>
+                <div style="font-size:12px;color:#888;margin-bottom:12px;">输入字体名称和以 .ttf 或 .woff 结尾的字体直链，留空则跳过</div>
+                <div style="display:flex;gap:8px;margin-bottom:6px;">
+                    <input type="text" id="fontName1" class="input-field" placeholder="字体1名称（如：霞鹜文楷）" style="flex:1;">
+                </div>
+                <div class="input-group" style="margin-bottom:14px;">
+                    <input type="text" id="fontUrl" class="input-field" placeholder="字体1 URL（https://...）">
+                </div>
+                <div style="display:flex;gap:8px;margin-bottom:6px;">
+                    <input type="text" id="fontName2" class="input-field" placeholder="字体2名称" style="flex:1;">
+                </div>
+                <div class="input-group" style="margin-bottom:14px;">
+                    <input type="text" id="fontUrl2" class="input-field" placeholder="字体2 URL（https://...）">
+                </div>
+                <div style="display:flex;gap:8px;margin-bottom:6px;">
+                    <input type="text" id="fontName3" class="input-field" placeholder="字体3名称" style="flex:1;">
+                </div>
+                <div class="input-group" style="margin-bottom:6px;">
+                    <input type="text" id="fontUrl3" class="input-field" placeholder="字体3 URL（https://...）">
+                </div>
+                <div style="font-size:12px;color:#a29bfe;margin-top:8px;">💡 填写多个字体后，可在下方选择当前使用哪一个</div>
+                <div style="margin-top:10px;">
+                    <label style="font-size:13px;color:#333;font-weight:bold;">当前使用字体：</label>
+                    <select id="fontActive" class="input-field" style="margin-top:6px;">
+                        <option value="1">字体1</option>
+                        <option value="2">字体2</option>
+                        <option value="3">字体3</option>
+                        <option value="0">默认字体</option>
+                    </select>
                 </div>
             </div>
             <div class="section-card">
@@ -5958,14 +5983,16 @@ function showScreen(showId) {
 
 
 async function applyCustomFont() {
-    // localStorage 优先，为空则从 localforage 读（解决 LS 满时字体配置丢失）
     let _fget = async (k) => {
         let v = originalGetItem.call(ls, k);
         if (v !== null && v !== undefined && v !== '') return v;
         try { let lf = await localforage.getItem(k); if(lf) return String(lf); } catch(e) {}
         return null;
     };
-    let url    = (await _fget('customFontUrl'))       || '';
+    // 读取三个字体配置
+    let urls  = [await _fget('customFontUrl')||'', await _fget('customFontUrl2')||'', await _fget('customFontUrl3')||''];
+    let names = [await _fget('customFontName1')||'', await _fget('customFontName2')||'', await _fget('customFontName3')||''];
+    let active = parseInt(await _fget('customFontActive')||'1') - 1; // 0-2
     let size   = (await _fget('customFontSize'))      || '14';
     let cColor = (await _fget('customFontColorChar')) || '';
     let uColor = (await _fget('customFontColorUser')) || '';
@@ -5977,15 +6004,24 @@ async function applyCustomFont() {
         document.head.appendChild(styleTag);
     }
     let css = '';
-    if(url) {
-        css += `@font-face { font-family: 'MyCustomFont'; src: url('${url}'); } \n`;
-        css += `body, .bubble, .input-field, textarea, .chat-preview, .role-name, .me-name, .app-name, .wb-title, .wb-prev, .log-card-content, .quote-txt, .me-menu-title { font-family: 'MyCustomFont', sans-serif !important; } \n`;
+    // 注册所有字体face
+    urls.forEach((url, i) => {
+        if(url) {
+            let fname = names[i] ? names[i].replace(/['"]/g,'') : ('MyCustomFont'+(i===0?'':'_'+(i+1)));
+            css += `@font-face { font-family: '${fname}'; src: url('${url}'); }\n`;
+        }
+    });
+    // 应用当前激活的字体
+    let activeUrl = urls[active] || '';
+    let activeName = activeUrl ? (names[active] ? names[active].replace(/['"]/g,'') : ('MyCustomFont'+(active===0?'':'_'+(active+1)))) : '';
+    if(activeName) {
+        css += `body, .bubble, .input-field, textarea, .chat-preview, .role-name, .me-name, .app-name, .wb-title, .wb-prev, .log-card-content, .quote-txt, .me-menu-title { font-family: '${activeName}', sans-serif !important; }\n`;
     } else {
-        css += `body, .bubble, .input-field, textarea, .chat-preview, .role-name, .me-name, .app-name, .wb-title, .wb-prev, .log-card-content, .quote-txt, .me-menu-title { font-family: sans-serif; } \n`;
+        css += `body, .bubble, .input-field, textarea, .chat-preview, .role-name, .me-name, .app-name, .wb-title, .wb-prev, .log-card-content, .quote-txt, .me-menu-title { font-family: sans-serif; }\n`;
     }
-    if(size) css += `.bubble { font-size: ${size}px !important; } \n`;
-    if(cColor) css += `.bub-left { color: ${cColor} !important; } \n`;
-    if(uColor) css += `.bub-right { color: ${uColor} !important; } \n`;
+    if(size) css += `.bubble { font-size: ${size}px !important; }\n`;
+    if(cColor) css += `.bub-left { color: ${cColor} !important; }\n`;
+    if(uColor) css += `.bub-right { color: ${uColor} !important; }\n`;
     styleTag.innerHTML = css;
 }
 applyCustomFont();
@@ -6966,7 +7002,14 @@ if($(`btnHomeFont`)) {
             try { let lf = await localforage.getItem(k); if(lf) return String(lf); } catch(e){}
             return def || '';
         };
-        $(`fontUrl`).value = await _fg('customFontUrl', '');
+        $(`fontUrl`).value    = await _fg('customFontUrl',  '');
+        $(`fontUrl2`).value   = await _fg('customFontUrl2', '');
+        $(`fontUrl3`).value   = await _fg('customFontUrl3', '');
+        $(`fontName1`).value  = await _fg('customFontName1', '');
+        $(`fontName2`).value  = await _fg('customFontName2', '');
+        $(`fontName3`).value  = await _fg('customFontName3', '');
+        let _fa = await _fg('customFontActive', '1');
+        if($('fontActive')) $('fontActive').value = _fa;
         $(`fontSizeSlider`).value = await _fg('customFontSize', '14');
         $(`fontSizeVal`).innerText = $(`fontSizeSlider`).value;
         $(`fontColorChar`).value = await _fg('customFontColorChar', '#6B6B8E');
@@ -7437,10 +7480,16 @@ if($(`fontSizeSlider`)) {
 if($(`btnSaveFont`)) {
     $(`btnSaveFont`).onclick = async () => {
         let fontData = {
-            customFontUrl:       $(`fontUrl`).value.trim(),
-            customFontSize:      $(`fontSizeSlider`).value,
-            customFontColorChar: $(`fontColorChar`).value,
-            customFontColorUser: $(`fontColorUser`).value,
+            customFontUrl:        $(`fontUrl`).value.trim(),
+            customFontUrl2:       $(`fontUrl2`)?.value.trim()||'',
+            customFontUrl3:       $(`fontUrl3`)?.value.trim()||'',
+            customFontName1:      $(`fontName1`)?.value.trim()||'',
+            customFontName2:      $(`fontName2`)?.value.trim()||'',
+            customFontName3:      $(`fontName3`)?.value.trim()||'',
+            customFontActive:     $(`fontActive`)?.value||'1',
+            customFontSize:       $(`fontSizeSlider`).value,
+            customFontColorChar:  $(`fontColorChar`).value,
+            customFontColorUser:  $(`fontColorUser`).value,
         };
         // 同时写 localStorage 和 localforage（双保险，解决 LS 满时字体设置丢失）
         for(let [k, v] of Object.entries(fontData)) {
@@ -7672,7 +7721,10 @@ async function renderContacts() {
             // 强制状态栏加载（per-char，双读兜底）
             let _sbonC = originalGetItem.call(ls, `cStatusBarOn_` + c.id);
             if(_sbonC === null) { try { _sbonC = await localforage.getItem(`cStatusBarOn_` + c.id); } catch(e){} }
-            if($(`cfgStatusBarOn`)) $(`cfgStatusBarOn`).checked = (_sbonC === `true` || _sbonC === true);
+            // ★ 只有明确存了值才覆盖，没存过（新char）保持当前开关状态不变
+            if(_sbonC !== null && _sbonC !== undefined && $(`cfgStatusBarOn`)) {
+                $(`cfgStatusBarOn`).checked = (_sbonC === `true` || _sbonC === true);
+            }
             let _charSbv = ``;
             let _sbvC = originalGetItem.call(ls, `cStatusBar_` + c.id);
             if(!_sbvC) { try { _sbvC = await localforage.getItem(`cStatusBar_` + c.id); } catch(e){} }
@@ -7830,16 +7882,21 @@ async function renderContacts() {
                 document.body.appendChild(ov);
                 ov.onclick = async (ev2) => {
                     ev2.stopPropagation();
-                    ov.remove();
+                    // 先隐藏而不是remove，防止confirm期间被touchstart监听器干扰
+                    ov.style.pointerEvents = 'none';
+                    ov.style.opacity = '0.5';
+                    let _delId = String(c.id); // 锁定要删除的id
                     let confirmed = await window._customConfirm('你确定删除该好友吗？\n此操作不可恢复！');
+                    ov.remove();
                     if(!confirmed) return;
-                    contacts = contacts.filter(x => String(x.id) !== String(c.id));
+                    // 重新过滤（用锁定的id，防止闭包问题）
+                    contacts = contacts.filter(x => String(x.id) !== _delId);
                     originalSetItem.call(ls, 'myContacts', JSON.stringify(contacts));
                     await localforage.setItem('myContacts', JSON.stringify(contacts));
                     ['chatHistory_','cN_','cR_','cMyN_','cAP_','cMP_','cBubbleCss_','cCtx_','cT_','cCTon_','cStatusBarOn_','cStatusBar_','cSign_','cStatusTxt_','cStatusColor_','isBlocked_','aiStatus_','lastChatTime_'].forEach(k => {
-                        try { ls.removeItem(k+String(c.id)); } catch(e2) {}
+                        try { ls.removeItem(k+_delId); } catch(e2) {}
                     });
-                    divC.remove();
+                    if(divC.parentNode) divC.remove();
                     if(typeof renderContactGroups === 'function') renderContactGroups();
                 };
                 // Tap anywhere else closes it; but ignore touches ON the button itself
@@ -9998,6 +10055,10 @@ if(charStickers.length > 0) {
     // 只从DOM读取（已加入isolatedKeys，自动按char隔离）
     let _sbOn = $(`cfgStatusBarOn`) && $(`cfgStatusBarOn`).checked;
     let _sbVal = ($(`cfgStatusBar`) && $(`cfgStatusBar`).value.trim()) || ``;
+    // ★ 如果开关开着但模板为空，用默认日常陪伴模板兜底
+    if(_sbOn && !_sbVal) {
+        _sbVal = `📅 日期：（自动填入） | 🌤️ 天气：（写当前剧情天气） | 📍 地点：（写当前剧情地点）`;
+    }
     // 日常陪伴型：如果用户使用格式模板，注入时动态填入真实时间/天气/地点
     if(_sbOn && _sbVal && _sbVal.includes(`📅 日期：`)) {
         let _dateStr, _timeStr;
@@ -10034,9 +10095,10 @@ if(charStickers.length > 0) {
         _sbVal = `📅 日期：${_dateStr} ${_timeStr} | 🌤️ 天气：${_wStr} | 📍 地点：${_locStr}`;
     }
     if(_sbOn && _sbVal) {
-        sys += `\n\n【系统最高指令 - 格式执行 - 优先级HIGHEST】` +
-               `在你输出【回复】的内容时，第一行必须严格按照以下格式要求输出状态行，之后换行再写对话正文。` +
-               `注意：状态行只能放在【回复】标签后的第一行，不要在其他任何地方（如【定位与天气】【服装】等段落内）重复输出。` +
+        sys += `\n\n【系统最高指令 - 强制状态行 - 优先级HIGHEST，不得忽略】` +
+               `无论任何情况，你的本次回复中必须包含以下强制状态行，且必须单独占一行输出。` +
+               `有【回复】标签时放在【回复】后第一行；没有【回复】标签时放在回复内容的第一行。` +
+               `这是强制硬性要求，不受任何其他指令影响，不得以"已有状态栏"为由跳过。` +
                `【时间推进核心规则】📅日期时间字段以下方基准时间为起点，必须根据剧情上下文自然推进：` +
                `① 玩家消息中若含有明确的时间词（如"第二天"、"早上"、"下午"、"深夜"、"几小时后"等），必须严格按照玩家给出的时间线输出，不得忽视；` +
                `② 若剧情推进了时间（如隔天、几小时后），必须在状态行中体现对应的日期/时间变化；` +
