@@ -10226,6 +10226,8 @@ if(charStickers.length > 0) {
     arr = arr.concat(mappedHist);
     
     try {
+        // ★ 锁定当前chatId，防止异步回调时currentChatId已切换到别的char
+        let _lockedChatId = currentChatId;
 
         let res = await fetch(pxy, { method:`POST`, headers:{Authorization:`Bearer `+key, [`Content-Type`]:`application/json`}, body:JSON.stringify({model:mod, messages:arr, temperature:tp}) });
         let dat = await res.json(); rmThk();
@@ -10409,6 +10411,8 @@ let hasAccept = txt.includes(`[收取转账]`);
                     });
                 }
             } catch(e) {}
+            // ★ 切换char后丢弃回复，不污染新char的history
+            if(currentChatId !== _lockedChatId) { rmThk(); return; }
             history.push({role: `assistant`, content: txt, _offline: !!window._offlineMode});
             ls.setItem(`chatHistory`, JSON.stringify(history));
 
@@ -10419,9 +10423,10 @@ let hasAccept = txt.includes(`[收取转账]`);
                 out = rM[1].trim();
                 if(wM) aiStatus.weather = wM[1].trim(); if(cM) aiStatus.clothing = cM[1].trim();
                 if(aM) aiStatus.action = aM[1].trim(); if(tM) aiStatus.thought = tM[1].trim();
-                ls.setItem(`aiStatus`, JSON.stringify(aiStatus));
-                // 同步写 localforage（防 localStorage 满）
-                localforage.setItem(`aiStatus_`+currentChatId, aiStatus).catch(()=>{});
+                // ★ 只有仍在同一个char页面时才写入，防止切换后写到别的char
+                if(currentChatId === _lockedChatId) {
+                    localforage.setItem(`aiStatus_`+_lockedChatId, aiStatus).catch(()=>{});
+                }
             }
             // 无论是否有【回复】，都清除可能残留在out里的【状态行】（避免渲染为气泡）
             // 先清除整个 【XX】...（下一个【前）的多行块，再清除单行标签
