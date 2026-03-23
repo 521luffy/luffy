@@ -7882,28 +7882,28 @@ async function renderContacts() {
                 document.body.appendChild(ov);
                 ov.onclick = async (ev2) => {
                     ev2.stopPropagation();
-                    // 先隐藏而不是remove，防止confirm期间被touchstart监听器干扰
-                    ov.style.pointerEvents = 'none';
-                    ov.style.opacity = '0.5';
-                    let _delId = String(c.id); // 锁定要删除的id
+                    ov.style.display = 'none'; // 立即隐藏，消灭重影（z-index:9999压在弹窗上）
+                    let _delId = String(c.id);
                     let confirmed = await window._customConfirm('你确定删除该好友吗？\n此操作不可恢复！');
-                    ov.remove();
+                    if(ov.parentNode) ov.remove();
                     if(!confirmed) return;
-                    // 重新过滤（用锁定的id，防止闭包问题）
                     contacts = contacts.filter(x => String(x.id) !== _delId);
                     originalSetItem.call(ls, 'myContacts', JSON.stringify(contacts));
                     await localforage.setItem('myContacts', JSON.stringify(contacts));
                     ['chatHistory_','cN_','cR_','cMyN_','cAP_','cMP_','cBubbleCss_','cCtx_','cT_','cCTon_','cStatusBarOn_','cStatusBar_','cSign_','cStatusTxt_','cStatusColor_','isBlocked_','aiStatus_','lastChatTime_'].forEach(k => {
                         try { ls.removeItem(k+_delId); } catch(e2) {}
                     });
+                    // localforage也清理
+                    ['chatHistory_','cN_','cR_','cMyN_','cAP_','cMP_','cBubbleCss_','cCtx_','cT_','cCTon_','cStatusBarOn_','cStatusBar_','cSign_','cStatusTxt_','cStatusColor_','isBlocked_','aiStatus_','lastChatTime_'].forEach(k => {
+                        try { localforage.removeItem(k+_delId).catch(()=>{}); } catch(e2) {}
+                    });
                     if(divC.parentNode) divC.remove();
-                    if(typeof renderContactGroups === 'function') renderContactGroups();
+                    renderContacts();
                 };
-                // Tap anywhere else closes it; but ignore touches ON the button itself
-                // (otherwise ov gets removed before the click fires, causing ghost-click on divC)
+                // 点其他地方关闭
                 setTimeout(() => {
                     document.addEventListener('touchstart', function _rmOv(e){
-                        if(ov && ov.contains(e.target)) return; // touching the button — let onclick handle it
+                        if(ov && ov.contains(e.target)) return;
                         if(ov && ov.parentNode) ov.remove();
                         document.removeEventListener('touchstart', _rmOv);
                     }, {passive:true});
