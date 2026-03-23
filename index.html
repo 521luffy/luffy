@@ -5741,8 +5741,8 @@ window._customConfirm = function(msg) {
         if($(`customConfirmModal`)) $(`customConfirmModal`).style.display = `flex`;
         let ok=$(`btnCustomConfirmOk`), cancel=$(`btnCustomConfirmCancel`);
         let cleanup=()=>{ if($(`customConfirmModal`)) $(`customConfirmModal`).style.display=`none`; };
-        if(ok){ let h=()=>{ ok.onclick=null; if(cancel) cancel.onclick=null; cleanup(); resolve(true); }; ok.onclick=h; }
-        if(cancel){ let h=()=>{ if(ok) ok.onclick=null; cancel.onclick=null; cleanup(); resolve(false); }; cancel.onclick=h; }
+        if(ok){ let h=(e)=>{ if(e) e.stopPropagation(); ok.onclick=null; if(cancel) cancel.onclick=null; cleanup(); resolve(true); }; ok.onclick=h; }
+        if(cancel){ let h=(e)=>{ if(e) e.stopPropagation(); if(ok) ok.onclick=null; cancel.onclick=null; cleanup(); resolve(false); }; cancel.onclick=h; }
     });
 };
 
@@ -7590,8 +7590,9 @@ async function renderContacts() {
     }));
     // 按时间降序排列（最新在前）
     _sortedContacts.sort((a, b) => b._t - a._t);
-    for (let {c, _t} of _sortedContacts) {
-        let _itemTimePreloaded = _t;
+    for (let _sci = 0; _sci < _sortedContacts.length; _sci++) {
+        let c = _sortedContacts[_sci].c;
+        let _itemTimePreloaded = _sortedContacts[_sci]._t || 0;
       try {
         let div = document.createElement(`div`);
         div.className = `chat-item`;
@@ -9883,6 +9884,15 @@ if(charStickers.length > 0) {
 【重要：实时位置共享进行中】玩家目前正在与你共享实时位置：${_bannerTxt}，请在剧情中适当体现你知道对方实时在哪里这一事实。`;
     }
     // ===== 线下模式提示词注入 =====
+    // ★ 刚退出线下模式：在sys最开头注入最高优先级线上恢复指令，用完清除flag
+    if(window._justExitedOffline) {
+        window._justExitedOffline = false;
+        sys = '【最高优先级·格式强制切换】你刚从"线下面对面"模式切换回了普通手机聊天模式。' +
+              '从现在这条回复开始，必须完全恢复正常的手机聊天格式：' +
+              '①禁止使用「」括号；②禁止写动作描写、场景描写、心理描写；' +
+              '③像正常发微信一样，直接说话，简短自然，一两句话即可。' +
+              '这是最高优先级指令，不得以任何理由违反。\n\n' + sys;
+    }
     if(window._offlineMode) {
         let _olScene = window._offlineScene || '';
         let _olRelation = window._offlineRelation || '';
@@ -10046,8 +10056,8 @@ if(charStickers.length > 0) {
         if(m.type === 'cs_breakup' || m.type === 'll_reply') return false;
         if(m.role === 'system') return false;
         if(!m.content) return false;
-        // 过滤线下模式开关的系统提示，不让它影响线上/线下切换后的AI行为
-        if(m._offlineDivider) return false;
+        // 注意：_offlineDivider消息（线下模式开启提示）保留在context里
+        // 让AI知道历史上曾有过线下模式，有助于理解剧情上下文
         return true;
     });
     // cs_invite 卡片：保留发给API（content字段里有邀请文字），但过滤掉已处理的
@@ -20205,6 +20215,7 @@ window._callSysAddon = '\n【主动发起通话规则 - 极度重要】两种情
 // ============================================================
 // 线下模式状态 - 按char隔离恢复
 window._offlineMode = false;
+window._justExitedOffline = false; // 退出线下模式的一次性flag
 window._offlineScene = '';
 window._offlineRelation = '';
 // ★ 故事时间追踪：随着剧情发展自动推进（非固定在自定义初始时间）
@@ -20524,15 +20535,8 @@ async function _exitOfflineMode() {
     window._storyCurrentTimeMs = null; // 退出线下模式时重置剧情时间
     try { originalSetItem.call(ls, 'offlineState_' + _lockedChatId, JSON.stringify({active: false})); } catch(e) {}
     localforage.setItem('offlineState_' + _lockedChatId, {active: false}).catch(()=>{});
-    // ★ 注入线上恢复指令，让AI明确知道切回线上聊天格式
-    history.push({
-        role: 'user',
-        content: '[系统提示：线下模式已关闭，已恢复线上聊天模式。请立刻恢复正常的手机聊天风格：不要用「」括号，不要写场景动作描写，像平时发微信一样简短自然地回复。]',
-        ts: Date.now(),
-        _sys: true,
-        _offlineDivider: true
-    });
-    try { ls.setItem('chatHistory', JSON.stringify(history)); } catch(e) {}
+    // ★ 设置一次性flag，下次发消息时sys里强制注入线上恢复指令
+    window._justExitedOffline = true;
     let menuLabel = document.getElementById('offlineModeMenuLabel');
     if(menuLabel) menuLabel.textContent = '线下模式';
     _closeOfflinePanel();
