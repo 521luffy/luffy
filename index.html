@@ -1021,6 +1021,72 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
     </style>
   </div>
 
+  <!-- 情侣空间设置面板（fixed全屏遮罩，挂在scrCoupleSpace下） -->
+  <div id="csSettingsPanel" style="display:none;position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);align-items:center;justify-content:center;">
+    <div style="width:90%;max-width:380px;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 12px 36px rgba(0,0,0,.25);max-height:82vh;display:flex;flex-direction:column;">
+      <div style="background:linear-gradient(135deg,#ff8fab,#c44f7a);color:white;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+        <span style="font-weight:700;font-size:15px;">⚙️ 情侣空间设置</span>
+        <span id="csSettingsClose" style="cursor:pointer;font-size:26px;line-height:1;padding:0 4px;">×</span>
+      </div>
+      <div style="overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:14px;">
+        <!-- 页面壁纸 -->
+        <div style="background:#fff9fb;border-radius:14px;padding:12px;">
+          <div style="font-size:13px;font-weight:700;color:#c44f7a;margin-bottom:10px;">🖼 页面壁纸</div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div id="csWallThumb" onclick="document.getElementById('csBgInput').click()" style="width:54px;height:54px;border-radius:10px;background:#f5e0e8;border:2px dashed #ffb6c1;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:22px;overflow:hidden;position:relative;flex-shrink:0;">🌸
+              <img id="csWallThumbImg" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" alt="">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;flex:1;">
+              <button onclick="document.getElementById('csBgInput').click()" style="padding:7px 14px;background:linear-gradient(135deg,#ff8fab,#c44f7a);color:white;border:none;border-radius:10px;font-size:12px;cursor:pointer;font-weight:bold;">换壁纸</button>
+              <button id="csWallRemove" style="padding:7px 14px;background:#fff0f3;color:#e75480;border:1px solid #ffd6e0;border-radius:10px;font-size:12px;cursor:pointer;">恢复默认</button>
+            </div>
+          </div>
+        </div>
+        <!-- 功能图标 -->
+        <div style="background:#fff9fb;border-radius:14px;padding:12px;">
+          <div style="font-size:13px;font-weight:700;color:#c44f7a;margin-bottom:10px;">🎨 功能图标自定义</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div class="cs-icon-row" data-func="Period" data-default="🩸" data-lskey="cs_icon_Period">
+              <span class="cs-icon-lbl">大姨妈</span>
+              <div class="cs-icon-preview">🩸<img class="cs-icon-img" style="display:none;" alt=""></div>
+              <input type="file" class="cs-icon-inp" accept="image/*" style="display:none">
+              <button class="cs-icon-change">换图</button>
+              <button class="cs-icon-reset">恢复</button>
+            </div>
+            <div class="cs-icon-row" data-func="LoveList" data-default="📖" data-lskey="cs_icon_LoveList">
+              <span class="cs-icon-lbl">TA的过去</span>
+              <div class="cs-icon-preview">📖<img class="cs-icon-img" style="display:none;" alt=""></div>
+              <input type="file" class="cs-icon-inp" accept="image/*" style="display:none">
+              <button class="cs-icon-change">换图</button>
+              <button class="cs-icon-reset">恢复</button>
+            </div>
+            <div class="cs-icon-row" data-func="Diary" data-default="📒" data-lskey="cs_icon_Diary">
+              <span class="cs-icon-lbl">共享日记</span>
+              <div class="cs-icon-preview">📒<img class="cs-icon-img" style="display:none;" alt=""></div>
+              <input type="file" class="cs-icon-inp" accept="image/*" style="display:none">
+              <button class="cs-icon-change">换图</button>
+              <button class="cs-icon-reset">恢复</button>
+            </div>
+            <div class="cs-icon-row" data-func="Horoscope" data-default="⭐" data-lskey="cs_icon_Horoscope">
+              <span class="cs-icon-lbl">每日星运</span>
+              <div class="cs-icon-preview">⭐<img class="cs-icon-img" style="display:none;" alt=""></div>
+              <input type="file" class="cs-icon-inp" accept="image/*" style="display:none">
+              <button class="cs-icon-change">换图</button>
+              <button class="cs-icon-reset">恢复</button>
+            </div>
+            <div class="cs-icon-row" data-func="Challenge" data-default="💑" data-lskey="cs_icon_Challenge">
+              <span class="cs-icon-lbl">匿名问答</span>
+              <div class="cs-icon-preview">💑<img class="cs-icon-img" style="display:none;" alt=""></div>
+              <input type="file" class="cs-icon-inp" accept="image/*" style="display:none">
+              <button class="cs-icon-change">换图</button>
+              <button class="cs-icon-reset">恢复</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- char切换下拉面板 -->
   <div id="csCharPanel" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;z-index:100;background:rgba(0,0,0,.4);backdrop-filter:blur(4px);">
     <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:88%;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.2);max-height:70vh;display:flex;flex-direction:column;">
@@ -3063,7 +3129,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
             </div>
             <div id=meBio class=me-bio style="margin-top:4px;">请添加你的个性签名吧！</div>
             <!-- ══ 内联标签区 ══ -->
-            <div id="meTagsRow" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;"></div>
+            <div id="meTagsRow" style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:8px;width:100%;"></div>
           </div>
           <span id=btnEditMe style="cursor:pointer;font-size:18px;color:#a29bfe;flex-shrink:0;">📝</span>
         </div>
@@ -7722,8 +7788,21 @@ async function renderContacts() {
             divC.className = `chat-item`;
             let charStatusText2 = originalGetItem.call(ls, `cStatusTxt_` + c.id) || "在线";
             let charStatusColorClass2 = originalGetItem.call(ls, `cStatusColor_` + c.id) || "status-online";
+            // ★ Bug5修复：优先从localforage读签名，localStorage只做fallback
             let charSign2 = originalGetItem.call(ls, `cSign_` + c.id) || "（该角色还在思考个性签名...）";
-            divC.innerHTML = avaHtml2 + `<div class=chat-info> <div class=role-header-row> <div class=role-name>` + isoName2 + `</div> <div class=role-status><div class="status-dot ` + charStatusColorClass2 + `"></div>` + charStatusText2 + `</div> </div> <div class=role-signature>` + charSign2 + `</div> </div>`;
+            divC.innerHTML = avaHtml2 + `<div class=chat-info> <div class=role-header-row> <div class=role-name>` + isoName2 + `</div> <div class=role-status><div class="status-dot ` + charStatusColorClass2 + `"></div>` + charStatusText2 + `</div> </div> <div class=role-signature id="sig_${c.id}">` + charSign2 + `</div> </div>`;
+            // 异步从 localforage 读最新签名并更新
+            (async function(cid, el){
+                try {
+                    let lfs = await localforage.getItem(`cSign_`+cid);
+                    if(lfs && typeof lfs === 'string' && lfs.trim()){
+                        let sigEl = el.querySelector(`#sig_${cid}`);
+                        if(sigEl) sigEl.textContent = lfs;
+                        // 同步回 localStorage 保持一致
+                        try { originalSetItem.call(ls, `cSign_`+cid, lfs); } catch(e){}
+                    }
+                } catch(e){}
+            })(c.id, divC);
             divC.onclick = async () => {
                 window._prevScreen = 'scrContact'; window._prevContactTab = 'friends';
                 // ★ 先保存当前char的线下状态，再切换
@@ -16001,10 +16080,11 @@ function buildMomentCard(post) {
                 <div style="font-size:11px;color:#bbb;margin-top:6px;">${post.time}</div>
                 
                 <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center;">
-                    <button class="momentLikeBtn" data-id="${post.id}" style="font-size:11px;background:${(post.likedByMe)?'#ffe0ec':'#fff0f3'};border:1px solid #ffd6e0;border-radius:14px;padding:3px 10px;cursor:pointer;color:${(post.likedByMe)?'#e75480':'#bbb'};display:flex;align-items:center;gap:3px;">${(post.likedByMe)?'❤️':'🤍'} <span class="momentLikeCount">${post.likes||0}</span></button>
+                    <button class="momentLikeBtn" data-id="${post.id}" style="font-size:11px;background:#fff0f3;border:1px solid #ffd6e0;border-radius:14px;padding:3px 10px;cursor:pointer;color:#e75480;display:flex;align-items:center;gap:3px;">${(()=>{let mn=($('cfgMyName')?.value||'我');return (Array.isArray(post.likedNames)&&post.likedNames.includes(mn))?'❤️ 赞':'🤍 赞';})()}</button>
                     <button class="momentSummonBtn" data-id="${post.id}" style="font-size:11px;background:#fff0f3;border:1px solid #ffd6e0;border-radius:14px;padding:3px 10px;cursor:pointer;color:#e75480;">💬 召唤评论</button>
                     <button class="momentUserCommentBtn" data-id="${post.id}" style="font-size:11px;background:#fff0f3;border:1px solid #ffd6e0;border-radius:14px;padding:3px 10px;cursor:pointer;color:#e75480;">✏️ 写评论</button>
                 </div>
+                ${(post.likedNames&&post.likedNames.length)?`<div class="momentLikeNames" data-id="${post.id}" style="font-size:12px;color:#e75480;margin-top:4px;background:#fff5f8;border-radius:8px;padding:4px 8px;line-height:1.6;">❤️ ${post.likedNames.map(n=>escHtml(n)).join('、')}</div>`:`<div class="momentLikeNames" data-id="${post.id}" style="display:none;font-size:12px;color:#e75480;margin-top:4px;background:#fff5f8;border-radius:8px;padding:4px 8px;line-height:1.6;"></div>`}
                 
                 <div class="momentWriteBox" data-id="${post.id}" style="display:none;margin-top:6px;display:none;">
                     <div style="display:flex;gap:6px;align-items:center;">
@@ -16096,25 +16176,39 @@ async function aiGenDraft(post) {
 // 事件委托
 if($(`momentList`)) {
     $(`momentList`).addEventListener(`click`, async (e) => {
-        // 点赞
+        // 点赞（微信风格：名字列表）
         let likeBtn = e.target.closest(`.momentLikeBtn`);
         if(likeBtn) {
             let pid = likeBtn.dataset.id;
             let post = momentData.find(p=>p.id===pid);
             if(!post) return;
-            post.likes = (post.likes||0);
-            if(post.likedByMe){
-                post.likedByMe = false;
-                post.likes = Math.max(0, post.likes-1);
+            if(!Array.isArray(post.likedNames)) post.likedNames = [];
+            // 迁移旧版 likedByMe/likes 数据
+            let myName = $('cfgMyName')?.value || '我';
+            let alreadyIdx = post.likedNames.indexOf(myName);
+            if(alreadyIdx >= 0){
+                // 取消点赞
+                post.likedNames.splice(alreadyIdx, 1);
+                likeBtn.innerHTML = '🤍 赞';
+                likeBtn.style.color = '#e75480';
             } else {
-                post.likedByMe = true;
-                post.likes = post.likes+1;
+                // 点赞
+                post.likedNames.push(myName);
+                likeBtn.innerHTML = '❤️ 赞';
+                likeBtn.style.color = '#e75480';
+            }
+            // 更新名字展示区
+            let namesDiv = document.querySelector(`.momentLikeNames[data-id="${pid}"]`);
+            if(namesDiv){
+                if(post.likedNames.length){
+                    namesDiv.style.display='block';
+                    namesDiv.innerHTML = '❤️ ' + post.likedNames.map(n=>escHtml(n)).join('、');
+                } else {
+                    namesDiv.style.display='none';
+                    namesDiv.innerHTML='';
+                }
             }
             await saveMoments();
-            // 局部更新按钮，不用重新渲染整个列表
-            likeBtn.style.background = post.likedByMe ? '#ffe0ec' : '#fff0f3';
-            likeBtn.style.color = post.likedByMe ? '#e75480' : '#bbb';
-            likeBtn.innerHTML = `${post.likedByMe?'❤️':'🤍'} <span class="momentLikeCount">${post.likes}</span>`;
             return;
         }
 
@@ -19186,9 +19280,15 @@ async function _callAIConnect(type, isIncoming) {
         : (myName + '：' + m.content.slice(0,40))).join('\n');
     let callTypeName = type === 'voice' ? '语音通话' : '视频通话';
     let tp = parseFloat(originalGetItem.call(ls,'temp')||'0.8') || 0.8;
-    let connectSys = '你是' + charName + '。' + (charAP ? '你的设定：' + charAP : '') + '\n你当前面板状态：' + curStatus + '。\n近期聊天：\n' + recentHist + '\n\n【' + myName + '向你发起了' + callTypeName + '，正在等你接听】\n' +
+    let connectSys = '你是' + charName + '。' + (charAP ? '你的设定：' + charAP : '') + '\n你当前面板状态：' + curStatus + '。\n近期聊天：\n' + recentHist + '\n\n' +
+        (isIncoming
+          ? '【' + myName + '向你发起了' + callTypeName + '，正在等你接听】\n'
+          : '【你主动发起了' + callTypeName + '，' + myName + '已接听，现在你们已接通，你是主动打来的那一方】\n') +
         (type === 'voice' ? '【语音通话规则】接起后只能描写听觉细节（呼吸声/环境音/语气），严禁描写任何视觉画面（"看到你""你在我视线里"等）。' : '【视频通话规则】接起后可以描写视觉细节（你的表情/背景/对方画面）。') +
-        '\n请根据你的性格和当前情绪状态决定是否接听！\n如接听（大多数情况下应该接）：回复最开头写 [接听通话]，随后用「」写出接起电话后第一句自然的开场白，自然真实（100字以内），就像真实打电话一样，纯中文，禁止英文。\n如拒接（仅在正在吵架或心情极差时才拒接）：回复最开头写 [拒接通话]，随后说明原因（60字以内），不能说成是对方挂了你电话。\n注意：只要不是关系极度僵化，你都应该接听。';
+        '\n【禁止旁白开头】严禁以"听筒里传来""电话里传来""话筒里""听筒那头"等第三方旁白视角开头，必须以角色第一人称直接开口说话。' +
+        (isIncoming
+          ? '\n请根据你的性格和当前情绪状态决定是否接听！\n如接听（大多数情况下应该接）：回复最开头写 [接听通话]，随后用「」写出接起电话后第一句自然的开场白，自然真实（100字以内），就像真实打电话一样，纯中文，禁止英文。\n如拒接（仅在正在吵架或心情极差时才拒接）：回复最开头写 [拒接通话]，随后说明原因（60字以内），不能说成是对方挂了你电话。\n注意：只要不是关系极度僵化，你都应该接听。'
+          : '\n你是主动打来的，所以直接以 [接听通话] 开头，然后说出你打来的第一句话（说出你打过来的理由/情绪/目的），100字以内，纯中文，禁止英文。');
 
     try {
         let res = await fetch(pxy, { method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer '+key}, body:JSON.stringify({model:mod, temperature:tp, max_tokens:(type==='video'?1600:1200), messages:[{role:'user', content:connectSys}]}) });
@@ -19363,7 +19463,7 @@ async function _callSendMsg(txt) {
         }).filter(Boolean).join('\n');
         if(_preHist) preCallCtx = '\n\n【通话前的聊天记录（请据此判断当前情绪和话题）：】\n' + _preHist;
     }
-    let voiceRules = type === 'voice' ? '【语音通话规则 - 极度重要】你们正在进行语音通话，双方看不到对方。你必须：\n1. 完全禁止描写任何视觉动作（如"瞪了一眼""我看着你"），只描写听觉和触觉（呼吸声、环境音、物体声响、衣物摩擦声等）。\n2. 像真实打电话一样自然说话，语气要有质感，【强制要求】你的每次回复每次回复严格在80字以内，像真实打电话一样简短自然，不要大段描写，说当下最想说的一两句话。\n3. 可以描写背景里的声音细节，让对方脑补环境。\n4. 【极其重要】你必须直接回应对方刚才说的话，不要自说自话，不要重复上一条内容。\n5. 【禁止输出英文】所有输出必须是纯中文，禁止夹带任何英文括号说明。' : '【视频通话规则 - 极度重要】你们正在进行视频通话，可以看到彼此。你必须：\n1. 大量描写视觉细节：你穿了什么、头发状态、距离镜头的远近、眼神交互。\n2. 如果想展示周围的东西，可以用[发送照片：详细描述]指令翻转镜头。\n3. 如果网络卡了可以演戏说画面定格了，回复控制在200字以内。\n4. 【极其重要】你必须直接回应对方刚才说的话，不要自说自话，不要重复上一条内容。\n5. 【禁止输出英文】所有输出必须是纯中文，禁止夹带任何英文括号说明。';
+    let voiceRules = type === 'voice' ? '【语音通话规则 - 极度重要】你们正在进行语音通话，双方看不到对方。你必须：\n1. 完全禁止描写任何视觉动作（如"瞪了一眼""我看着你"），只描写听觉和触觉（呼吸声、环境音、物体声响、衣物摩擦声等）。\n2. 像真实打电话一样自然说话，语气要有质感，【强制要求】你的每次回复严格在80字以内，像真实打电话一样简短自然，不要大段描写，说当下最想说的一两句话。\n3. 可以描写背景里的声音细节，让对方脑补环境。\n4. 【极其重要】你必须直接回应对方刚才说的话，不要自说自话，不要重复上一条内容。\n5. 【禁止输出英文】所有输出必须是纯中文，禁止夹带任何英文括号说明。\n6. 【禁止旁白视角】严禁以"听筒里传来""电话里传来""话筒里""听筒那头"等第三方旁白开头，必须第一人称直接说话。' : '【视频通话规则 - 极度重要】你们正在进行视频通话，可以看到彼此。你必须：\n1. 大量描写视觉细节：你穿了什么、头发状态、距离镜头的远近、眼神交互。\n2. 如果想展示周围的东西，可以用[发送照片：详细描述]指令翻转镜头。\n3. 如果网络卡了可以演戏说画面定格了，回复控制在200字以内。\n4. 【极其重要】你必须直接回应对方刚才说的话，不要自说自话，不要重复上一条内容。\n5. 【禁止输出英文】所有输出必须是纯中文，禁止夹带任何英文括号说明。\n6. 【禁止旁白视角】严禁以第三人称旁白开头，必须第一人称直接说话。';
 let callSys = '你是' + charName + '。' + (charAP ? '你的设定：' + charAP : '') + preCallCtx + '\n\n' + voiceRules + '\n\n【当前通话记录：】\n' + callLog + '\n\n' + myName + '刚才说：' + txt + '\n\n请直接针对' + myName + '说的内容回复，无需任何前缀，禁止用英文。【强制要求：必须在200字内把这段话说完整，符合真实沟通状态，不得截断！】';
 
 
@@ -20749,21 +20849,22 @@ if(document.getElementById('offlineModePanel')) {
   var csBgInput=document.getElementById('csBgInput');
   // 打开设置面板
   if(csBgBtn){
-    csBgBtn.onclick=function(){
+    csBgBtn.onclick=function(e){
+      e.stopPropagation();
       var panel=document.getElementById('csSettingsPanel');
-      if(panel){panel.style.display='block';}
+      if(!panel)return;
+      panel.style.display='flex';
       // 加载壁纸缩略图
       Promise.resolve().then(async function(){
         var d=null;try{d=await localforage.getItem('cs_bg');}catch(e){}
         if(!d){try{d=localStorage.getItem('cs_bg');}catch(e){}}
         var thumb=document.getElementById('csWallThumbImg');
         var hint=document.getElementById('csWallThumb');
-        if(d&&d.length>10&&thumb){thumb.src=d;thumb.style.display='block';if(hint)hint.style.fontSize='0';}
+        if(d&&d.length>10&&thumb){thumb.src=d;thumb.style.display='block';if(hint)hint.childNodes[0]&&hint.childNodes[0].nodeType===3&&(hint.childNodes[0].textContent='');}
       });
       // 加载各功能图标
       document.querySelectorAll('.cs-icon-row').forEach(async function(row){
         var key=row.getAttribute('data-lskey');
-        var def=row.getAttribute('data-default');
         var img=row.querySelector('.cs-icon-img');
         var prev=row.querySelector('.cs-icon-preview');
         var d=null;try{d=await localforage.getItem(key);}catch(e){}
@@ -20772,11 +20873,15 @@ if(document.getElementById('offlineModePanel')) {
       });
     };
   }
-  // 关闭面板
-  var csClose=document.getElementById('csSettingsClose');
-  if(csClose)csClose.onclick=function(){document.getElementById('csSettingsPanel').style.display='none';};
-  document.getElementById('csSettingsPanel') && document.getElementById('csSettingsPanel').addEventListener('click',function(e){
-    if(e.target===this)this.style.display='none';
+  // 关闭面板：点×按钮 或 点遮罩空白处
+  document.addEventListener('click',function(e){
+    var panel=document.getElementById('csSettingsPanel');
+    if(!panel||panel.style.display==='none')return;
+    var closeBtn=document.getElementById('csSettingsClose');
+    if(closeBtn&&(e.target===closeBtn||closeBtn.contains(e.target))){panel.style.display='none';return;}
+    // 点到遮罩本身（不是弹窗内容）
+    var inner=panel.firstElementChild;
+    if(inner&&!inner.contains(e.target)&&e.target===panel){panel.style.display='none';}
   });
   // 壁纸上传
   if(csBgInput){
