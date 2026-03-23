@@ -7560,8 +7560,38 @@ async function renderContacts() {
     // 消息列表（listContent）和联系人页（contactContent）
     let contactsSorted = [...contacts]; // 联系人页保持添加顺序
 
-    // ★ 消息列表：不预排序，构建时从聊天记录提取时间戳，最后用DOM排序
-    for (let c of contacts) {
+    // ★ 消息列表：先读所有lastChatTime，排好序再渲染（彻底解决排序问题）
+    // 同步读取所有char的lastChatTime（localStorage快速路径）
+    let _sortedContacts = contacts.map(c => {
+        let _t = 0;
+        try {
+            let _lct = originalGetItem.call(ls, 'lastChatTime_' + c.id);
+            if(_lct) _t = Number(_lct) || 0;
+        } catch(e) {}
+        return {c, _t};
+    });
+    // 异步补全localforage里的时间（只在所有同步读完后一次性排序）
+    await Promise.all(_sortedContacts.map(async item => {
+        if(!item._t) {
+            try {
+                let _lft = await localforage.getItem('lastChatTime_' + item.c.id);
+                if(_lft) item._t = Number(_lft) || 0;
+            } catch(e) {}
+        }
+        // 如果还是0，从聊天记录兜底
+        if(!item._t) {
+            try {
+                let _h = await localforage.getItem('chatHistory_' + item.c.id);
+                if(!_h) _h = originalGetItem.call(ls, 'chatHistory_' + item.c.id);
+                let _arr = _h ? (typeof _h === 'string' ? JSON.parse(_h) : _h) : [];
+                if(_arr.length) { let _lm = _arr[_arr.length-1]; item._t = _lm.ts || _lm.time || 0; }
+            } catch(e) {}
+        }
+    }));
+    // 按时间降序排列（最新在前）
+    _sortedContacts.sort((a, b) => b._t - a._t);
+    for (let {c, _t} of _sortedContacts) {
+        let _itemTimePreloaded = _t;
       try {
         let div = document.createElement(`div`);
         div.className = `chat-item`;
@@ -7593,29 +7623,8 @@ async function renderContacts() {
         div.innerHTML = avaHtml + `<div class=chat-info><div class=chat-name>` + isoName + `</div><div class=chat-preview>` + prevTxt + `</div></div>`;
         // 设置最后聊天时间（用于消息列表排序）
         // ★ 从已加载的聊天记录直接提取最后消息时间戳
-        let _itemTime = 0;
-        try {
-            // 优先用 lastChatTime（更准确）
-            let _lct = originalGetItem.call(ls, `lastChatTime_`+c.id);
-            if(_lct) _itemTime = Number(_lct) || 0;
-            // 兜底：从聊天记录最后一条消息取时间（同步可用时先用这个）
-            if(!_itemTime && isoHist && isoHist.length) {
-                let _lm = isoHist[isoHist.length-1];
-                _itemTime = _lm.ts || _lm.time || 0;
-            }
-            // 异步从localforage读更精确的时间，读完后更新div并重排
-            (async (_div, _cid, _curT) => {
-                try {
-                    let _lft = await localforage.getItem(`lastChatTime_`+_cid);
-                    let _t = _lft ? Number(_lft)||0 : 0;
-                    if(_t > _curT) {
-                        _div.dataset.lasttime = String(_t);
-                        // 重新排序消息列表
-                        if(typeof _sortMsgListByTime === 'function') _sortMsgListByTime();
-                    }
-                } catch(e){}
-            })(div, c.id, _itemTime);
-        } catch(e){}
+        // 时间戳已在循环前预加载，直接用
+        let _itemTime = _itemTimePreloaded || 0;
         div.dataset.lasttime = String(_itemTime);
                 div.onclick = async () => {
             // ★ 先保存当前char的线下状态，再切换（防止切走时丢失状态）
@@ -7855,7 +7864,7 @@ async function renderContacts() {
         setTimeout(function(){ renderContacts(); }, 50);
     }
   }
-    if(typeof _sortMsgListByTime===`function`) try { _sortMsgListByTime(); } catch(e){}
+    // 消息列表已在渲染前按时间预排序，无需再次DOM排序
 }
 
 // === 全局加载角色聊天室函数（被抓包等场景使用）===
@@ -9241,11 +9250,13 @@ let editingOldText = ``;
 $(`ctxCopy`).onclick = () =>{ if(selEl) navigator.clipboard.writeText(getCleanText(selEl)).then(()=>{ alert(`复制成功`); $(`ctxMenu`).style.display = `none`; }); };
 $(`ctxDel`).onclick = async () => { 
     if(selEl) { 
+        let _savedEl = selEl; // 先保存，防止confirm期间被document.onclick清空
+        $(`ctxMenu`).style.display = `none`; // 立即关菜单，避免confirm后selEl变null
         let _delConfirmed = await window._customConfirm(`确定要删除这1条信息吗？`);
         if(_delConfirmed) {
-            let _selText = getCleanText(selEl);
-            let _selRaw = selEl.dataset && selEl.dataset.raw ? selEl.dataset.raw : '';
-            let _imgEl = selEl.querySelector(`img`);
+            let _selText = getCleanText(_savedEl);
+            let _selRaw = _savedEl.dataset && _savedEl.dataset.raw ? _savedEl.dataset.raw : '';
+            let _imgEl = _savedEl.querySelector(`img`);
             let _searchTarget = '';
             if(_selRaw && (_selRaw.startsWith(`[定位消息：`) || _selRaw.startsWith(`[实时位置：`))) _searchTarget = _selRaw;
             else if(_imgEl) _searchTarget = _imgEl.getAttribute(`src`);
@@ -9253,8 +9264,8 @@ $(`ctxDel`).onclick = async () => {
             
             // 先确定目标history索引
             let _targetIdx = -1;
-            if(selEl.dataset.histIdx !== undefined) {
-                _targetIdx = parseInt(selEl.dataset.histIdx);
+            if(_savedEl.dataset.histIdx !== undefined) {
+                _targetIdx = parseInt(_savedEl.dataset.histIdx);
             } else {
                 for(let i=history.length-1; i>=0; i--) {
                     if(history[i].content && history[i].content.includes(_searchTarget)) { _targetIdx = i; break; }
@@ -9288,7 +9299,6 @@ $(`ctxDel`).onclick = async () => {
             redrawChat();
             if(typeof updateListPreview === `function`) updateListPreview();
         }
-        $(`ctxMenu`).style.display = `none`; 
     } 
 };
 
@@ -10036,6 +10046,8 @@ if(charStickers.length > 0) {
         if(m.type === 'cs_breakup' || m.type === 'll_reply') return false;
         if(m.role === 'system') return false;
         if(!m.content) return false;
+        // 过滤线下模式开关的系统提示，不让它影响线上/线下切换后的AI行为
+        if(m._offlineDivider) return false;
         return true;
     });
     // cs_invite 卡片：保留发给API（content字段里有邀请文字），但过滤掉已处理的
@@ -20512,6 +20524,15 @@ async function _exitOfflineMode() {
     window._storyCurrentTimeMs = null; // 退出线下模式时重置剧情时间
     try { originalSetItem.call(ls, 'offlineState_' + _lockedChatId, JSON.stringify({active: false})); } catch(e) {}
     localforage.setItem('offlineState_' + _lockedChatId, {active: false}).catch(()=>{});
+    // ★ 注入线上恢复指令，让AI明确知道切回线上聊天格式
+    history.push({
+        role: 'user',
+        content: '[系统提示：线下模式已关闭，已恢复线上聊天模式。请立刻恢复正常的手机聊天风格：不要用「」括号，不要写场景动作描写，像平时发微信一样简短自然地回复。]',
+        ts: Date.now(),
+        _sys: true,
+        _offlineDivider: true
+    });
+    try { ls.setItem('chatHistory', JSON.stringify(history)); } catch(e) {}
     let menuLabel = document.getElementById('offlineModeMenuLabel');
     if(menuLabel) menuLabel.textContent = '线下模式';
     _closeOfflinePanel();
