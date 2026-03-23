@@ -23957,12 +23957,42 @@ ${existing?'【已有记忆，不要重复】'+existing:''}`;
     switchAnonTab(1);
   };
 
+  // 记录上一次打开时的charId，用于切换检测
+  var _anonLastCharId = '';
+
   var _origAnonShow = window.showScreen;
   window.showScreen = function(id){
     _origAnonShow(id);
     if(id==='scrAnon'){
       // 刷新charId，保证记录key正确
       if(typeof csGetCurrentCharId==='function') csGetCurrentCharId();
+      var currentCid = _cid();
+      // 只要charId变了（或首次打开），就清空所有结果区
+      if(currentCid !== _anonLastCharId){
+        _anonLastCharId = currentCid;
+        // 清空三个结果区
+        var pr = document.getElementById('anonPeekResult');
+        var mr = document.getElementById('anonMaskResult');
+        var br = document.getElementById('anonBeResult');
+        if(pr) pr.innerHTML = '';
+        if(mr) mr.innerHTML = '';
+        if(br) br.innerHTML = '';
+        // 清空问题输入框
+        var pq = document.getElementById('anonPeekQ');
+        var mq = document.getElementById('anonMaskQ');
+        if(pq) pq.value = '';
+        if(mq) mq.value = '';
+        // 重置被问区域
+        var ba = document.getElementById('anonBeQuestionArea');
+        if(ba) ba.style.display = 'none';
+        var bb = document.getElementById('anonBeAskBtn');
+        if(bb){ bb.style.display = ''; bb.textContent = '💌 让TA来问我'; }
+        var bans = document.getElementById('anonBeAnswer');
+        if(bans) bans.value = '';
+        _beCurrentQ = ''; _beCurrentId = '';
+        // 切换回tab1
+        switchAnonTab(1);
+      }
       renderIdGrid('anonPeekIdGrid','anonPeekIdCustom');
       renderIdGrid('anonMaskIdGrid','anonMaskIdCustom');
       renderIdGrid('anonBeIdGrid','anonBeIdCustom');
