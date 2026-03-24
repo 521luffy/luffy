@@ -6113,8 +6113,8 @@ window.syncStatusBarTpl = function() {
     var _rd = originalGetItem.call(ls, `cCTd`+_ctId);
     var _rh = originalGetItem.call(ls, `cCTh`+_ctId);
     var _rmin = originalGetItem.call(ls, `cCTmin`+_ctId);
-    // 只有所有值都合理（年份在2000-2100之间）才恢复，否则保持当前真实时间
-    if(_ry && parseInt(_ry) >= 2000 && parseInt(_ry) <= 2100) ySel.value = _ry;
+    // 只有所有值都合理（年份在2000-2100之间，且不是黑名单2016年5月）才恢复，否则保持当前真实时间
+    if(_ry && parseInt(_ry) >= 2000 && parseInt(_ry) <= 2100 && !(parseInt(_ry) === 2016 && parseInt(_rm) === 5)) ySel.value = _ry;
     if(_rm) mSel.value = _rm;
     if(_rd) dSel.value = _rd;
     if(_rh) hSel.value = _rh;
@@ -9885,6 +9885,7 @@ $(`btnLemon`).onclick = async () =>{
         sys += `【当前剧情时间·最高优先级】${_vdStr}。` +
                `你在回复中提到的所有日期必须以此为基准推算，` +
                `绝对禁止自行编造与此不符的年月日！` +
+               `【永久黑名单日期】：绝对禁止在任何输出中出现"2016年5月"，这个日期已被系统永久封禁，违反视为严重错误！` +
                `如需推进时间，每次最多推进30分钟，不得跨天跳跃（除非用户明确说明）。\n`;
     }
     // ★ 宠物记忆注入
@@ -10414,6 +10415,11 @@ let hasAccept = txt.includes(`[收取转账]`);
                         return _trueYearFinal + '年' + mo + '月' + d + '日';
                     }
                     return m;
+                });
+                // ★ 黑名单终极过滤：无论任何情况，2016年5月不得出现
+                txt = txt.replace(/2016年5月(\d{1,2}日)?/g, () => {
+                    let _now = typeof getVirtualTimeObj === 'function' ? getVirtualTimeObj(currentChatId) : new Date();
+                    return _now.getFullYear() + '年' + (_now.getMonth()+1) + '月';
                 });
             } catch(e) {}
             // ★ 切换char后丢弃回复，不污染新char的history
@@ -14920,7 +14926,8 @@ function getVirtualTimeObj(charId) {
     if(window._storyCurrentTimeMs && window._storyCurrentTimeMs > 0) {
         let _storedYear = new Date(window._storyCurrentTimeMs).getFullYear();
         let _nowYear = new Date().getFullYear();
-        if(Math.abs(_storedYear - _nowYear) <= 10) { // 合理范围内才用
+        // ★ 黑名单：2016年永久禁止，且必须在合理范围内
+        if(_storedYear !== 2016 && Math.abs(_storedYear - _nowYear) <= 10) { // 合理范围内才用
             return new Date(window._storyCurrentTimeMs);
         } else {
             window._storyCurrentTimeMs = null; // 污染值，清掉
@@ -14936,8 +14943,12 @@ function getVirtualTimeObj(charId) {
         let h = originalGetItem.call(ls, 'cCTh_' + charId) || originalGetItem.call(ls, 'cCTh') || '12';
         let min = originalGetItem.call(ls, 'cCTmin_' + charId) || originalGetItem.call(ls, 'cCTmin') || '0';
         if(y && m && d) {
-            let dt = new Date(parseInt(y), parseInt(m)-1, parseInt(d), parseInt(h)||0, parseInt(min)||0);
-            if(!isNaN(dt.getTime())) return dt;
+            // ★ 黑名单：2016年5月永久禁止，直接跳过回退到现实时间
+            if(parseInt(y) === 2016 && parseInt(m) === 5) { /* banned */ }
+            else {
+                let dt = new Date(parseInt(y), parseInt(m)-1, parseInt(d), parseInt(h)||0, parseInt(min)||0);
+                if(!isNaN(dt.getTime())) return dt;
+            }
         }
     }
     // 3. 现实时间
@@ -27646,7 +27657,32 @@ setTimeout(function(){var btn=document.getElementById('btnHomeForum');if(btn)btn
 <div id="scrForum" style="display:none;flex-direction:column;position:absolute;top:0;width:100%;height:100%;z-index:40;overflow:hidden;background:#f5f6fa;">
 </div>
 </html><script>
-// 补丁：统一setAva helper & 所有页面头像修复
+// ★★★ 全局黑名单终极拦截器：2016年5月永久封禁 ★★★
+// 无论从AI、存储、还是任何来源，只要在页面上显示就会被清除
+(function() {
+    var _BANNED_DATE_RE = /2016年5月(\d{1,2}日)?/g;
+    var _origSetInner = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML');
+    var _origSetText = Object.getOwnPropertyDescriptor(Node.prototype, 'textContent');
+    function _sanitize(str) {
+        if(typeof str !== 'string') return str;
+        return str.replace(_BANNED_DATE_RE, function() { return '（某年某月）'; });
+    }
+    if(_origSetInner && _origSetInner.set) {
+        Object.defineProperty(Element.prototype, 'innerHTML', {
+            set: function(v) { _origSetInner.set.call(this, _sanitize(v)); },
+            get: _origSetInner.get,
+            configurable: true
+        });
+    }
+    if(_origSetText && _origSetText.set) {
+        Object.defineProperty(Node.prototype, 'textContent', {
+            set: function(v) { _origSetText.set.call(this, _sanitize(v)); },
+            get: _origSetText.get,
+            configurable: true
+        });
+    }
+})();
+
 (function(){
 var _netSVG='<svg viewBox="0 0 40 40" width="100%" height="100%" fill="none"><circle cx="20" cy="20" r="20" fill="#9aa0a6"/><circle cx="20" cy="15" r="7" fill="#fff"/><ellipse cx="20" cy="32" rx="12" ry="9" fill="#fff"/></svg>';
 window._netSVG=_netSVG;
