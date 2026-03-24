@@ -10417,9 +10417,38 @@ let hasAccept = txt.includes(`[收取转账]`);
                     return m;
                 });
                 // ★ 黑名单终极过滤：无论任何情况，2016年5月不得出现
-                txt = txt.replace(/2016年5月(\d{1,2}日)?/g, () => {
-                    let _now = typeof getVirtualTimeObj === 'function' ? getVirtualTimeObj(currentChatId) : new Date();
-                    return _now.getFullYear() + '年' + (_now.getMonth()+1) + '月';
+                // 替换优先级：聊天最后3条推断日期 > 自定义时间 > 现实时间
+                txt = txt.replace(/2016年5月(\d{1,2}日)?/g, (fullMatch, dayPart) => {
+                    // 1. 优先从聊天最后3条消息里提取非2016年5月的日期
+                    let _inferredDate = null;
+                    try {
+                        let _recentMsgs = (typeof history !== 'undefined' && Array.isArray(history))
+                            ? history.slice(-3) : [];
+                        for(let _i = _recentMsgs.length - 1; _i >= 0; _i--) {
+                            let _msgContent = _recentMsgs[_i].content || '';
+                            let _dm = _msgContent.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
+                            if(_dm) {
+                                let _dy = parseInt(_dm[1]), _dmm = parseInt(_dm[2]), _dd = parseInt(_dm[3]);
+                                // 排除2016年5月本身，且年份合理
+                                if(!(_dy === 2016 && _dmm === 5) && _dy >= 2000 && _dy <= 2100) {
+                                    _inferredDate = { y: _dy, m: _dmm, d: _dd };
+                                    break;
+                                }
+                            }
+                        }
+                    } catch(e) {}
+                    if(_inferredDate) {
+                        return dayPart
+                            ? _inferredDate.y + '年' + _inferredDate.m + '月' + _inferredDate.d + '日'
+                            : _inferredDate.y + '年' + _inferredDate.m + '月';
+                    }
+                    // 2. 用自定义时间或剧情追踪时间（getVirtualTimeObj已包含这两个优先级）
+                    let _fallback = typeof getVirtualTimeObj === 'function' ? getVirtualTimeObj(currentChatId) : new Date();
+                    // 如果fallback本身也是2016年5月，强制用现实时间
+                    if(_fallback.getFullYear() === 2016 && _fallback.getMonth() === 4) _fallback = new Date();
+                    return dayPart
+                        ? _fallback.getFullYear() + '年' + (_fallback.getMonth()+1) + '月' + _fallback.getDate() + '日'
+                        : _fallback.getFullYear() + '年' + (_fallback.getMonth()+1) + '月';
                 });
             } catch(e) {}
             // ★ 切换char后丢弃回复，不污染新char的history
@@ -27663,9 +27692,41 @@ setTimeout(function(){var btn=document.getElementById('btnHomeForum');if(btn)btn
     var _BANNED_DATE_RE = /2016年5月(\d{1,2}日)?/g;
     var _origSetInner = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML');
     var _origSetText = Object.getOwnPropertyDescriptor(Node.prototype, 'textContent');
+
+    // 智能替换：优先聊天最后3条推断 > 自定义时间 > 现实时间
+    function _smartReplace(dayPart) {
+        // 1. 从聊天最后3条提取合法日期
+        try {
+            var _hist = (typeof history !== 'undefined' && Array.isArray(history)) ? history : [];
+            var _recent = _hist.slice(-3);
+            for(var _i = _recent.length - 1; _i >= 0; _i--) {
+                var _mc = _recent[_i].content || '';
+                var _dm = _mc.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
+                if(_dm) {
+                    var _dy = parseInt(_dm[1]), _dmm = parseInt(_dm[2]), _dd = parseInt(_dm[3]);
+                    if(!(_dy === 2016 && _dmm === 5) && _dy >= 2000 && _dy <= 2100) {
+                        return dayPart
+                            ? _dy + '年' + _dmm + '月' + _dd + '日'
+                            : _dy + '年' + _dmm + '月';
+                    }
+                }
+            }
+        } catch(e) {}
+        // 2. 自定义时间 / 剧情时间（getVirtualTimeObj优先级已包含）
+        var _fb;
+        try {
+            _fb = (typeof getVirtualTimeObj === 'function' && typeof currentChatId !== 'undefined')
+                ? getVirtualTimeObj(currentChatId) : new Date();
+            if(_fb.getFullYear() === 2016 && _fb.getMonth() === 4) _fb = new Date();
+        } catch(e) { _fb = new Date(); }
+        return dayPart
+            ? _fb.getFullYear() + '年' + (_fb.getMonth()+1) + '月' + _fb.getDate() + '日'
+            : _fb.getFullYear() + '年' + (_fb.getMonth()+1) + '月';
+    }
+
     function _sanitize(str) {
         if(typeof str !== 'string') return str;
-        return str.replace(_BANNED_DATE_RE, function() { return '（某年某月）'; });
+        return str.replace(_BANNED_DATE_RE, function(full, day) { return _smartReplace(day); });
     }
     if(_origSetInner && _origSetInner.set) {
         Object.defineProperty(Element.prototype, 'innerHTML', {
