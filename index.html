@@ -10346,122 +10346,70 @@ let hasAccept = txt.includes(`[收取转账]`);
                 }
             }
             
-            // ★ FIX4: 状态栏日期修正 + 剧情时间追踪
+            // ★ FIX4: 状态栏日期强制修正（终极重写版）
+            // 核心思路：AI写的日期只能用来提取【时分】，年月日必须由自定义时间/现实时间决定，AI无权更改
             try {
-                // ★ 先从AI响应的状态栏行中提取日期时间，用于更新剧情追踪时间
-                let _aiDateMatch = txt.match(/📅[^|\n]*日期[：:]([^|\n]+)/);
-                if(_aiDateMatch) {
-                    let _aiDateRaw = _aiDateMatch[1].trim();
-                    // 解析日期时间，如 "2017年5月31日 星期三 08时30分"
-                    let _ym = _aiDateRaw.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
-                    let _hm = _aiDateRaw.match(/(\d{1,2})时(\d{1,2})分/);
-                    if(_ym) {
-                        let _parsedMs = new Date(
-                            parseInt(_ym[1]), parseInt(_ym[2])-1, parseInt(_ym[3]),
-                            _hm ? parseInt(_hm[1]) : 0,
-                            _hm ? parseInt(_hm[2]) : 0
-                        ).getTime();
-                        let _year = parseInt(_ym[1]);
-                        // ★ 用真实虚拟时间确定合法年份范围，拒绝偏离超过5年的值
-                        let _trueMs = (typeof getVirtualTimeObj === 'function')
-                            ? getVirtualTimeObj(currentChatId).getTime() : new Date().getTime();
-                        let _trueYear = new Date(_trueMs).getFullYear();
-                        // ★ 如果_storyCurrentTimeMs被污染（年份偏离真实超过5年），立即重置
-                        if(window._storyCurrentTimeMs) {
-                            let _storedYear = new Date(window._storyCurrentTimeMs).getFullYear();
-                            if(Math.abs(_storedYear - _trueYear) > 5) {
-                                window._storyCurrentTimeMs = _trueMs;
-                            }
-                        }
-                        let _baseMs = window._storyCurrentTimeMs || _trueMs;
-                        // ★ 严格校验：AI写的年份必须在真实年份±3范围内才接受
-                        if(!isNaN(_parsedMs) && Math.abs(_year - _trueYear) <= 3) {
-                            if(_parsedMs >= _baseMs) {
-                                const _MAX_ADV_MS = 2 * 60 * 60 * 1000;
-                                const _hasTimeJump = /第二天|隔天|明天|后天|一周后|几天后|多少天|下午|晚上|深夜|早上|早晨|凌晨|傍晚|午后|一小时后|几小时后/.test(
-                                    (typeof history !== 'undefined' && history.length > 0) ? (history[history.length-1]?.content || '') : ''
-                                );
-                                if(_baseMs > 0 && !_hasTimeJump && (_parsedMs - _baseMs) > _MAX_ADV_MS) {
-                                    window._storyCurrentTimeMs = _baseMs + 15 * 60 * 1000;
-                                } else {
-                                    window._storyCurrentTimeMs = _parsedMs;
-                                }
-                            }
-                            if(_parsedMs < _baseMs) {
-                                let _sdt = new Date(_baseMs);
-                                const _wds = ['周日','周一','周二','周三','周四','周五','周六'];
-                                let _correctDate = _sdt.getFullYear()+'年'+(_sdt.getMonth()+1)+'月'+_sdt.getDate()+'日 '+_wds[_sdt.getDay()]+' '+_sdt.getHours()+'时'+String(_sdt.getMinutes()).padStart(2,'0')+'分';
-                                txt = txt.replace(/(📅[^|\n]*日期[：:])([^|\n]+)/g, (_m, prefix) => prefix + _correctDate + ' ');
-                            }
-                        }
+                // 获取"权威基准时间"：自定义时间 > 现实时间（AI无权覆盖这个）
+                let _authMs = (typeof getVirtualTimeObj === 'function')
+                    ? getVirtualTimeObj(currentChatId).getTime() : new Date().getTime();
+                let _authDt = new Date(_authMs);
+                // 自定义时间是否开启
+                let _ctOn = originalGetItem.call(ls, 'cCTon_'+currentChatId) || originalGetItem.call(ls, 'cCTon');
+                let _hasCustomTime = (_ctOn === 'true');
+
+                // ★ 从AI状态栏提取时分（仅取时分，日期不信任AI）
+                let _aiStatusMatch = txt.match(/📅[^|\n]*日期[：:]([^|\n]+)/);
+                let _aiHour = null, _aiMin = null;
+                if(_aiStatusMatch) {
+                    let _hm = _aiStatusMatch[1].match(/(\d{1,2})时(\d{1,2})分/);
+                    if(_hm) { _aiHour = parseInt(_hm[1]); _aiMin = parseInt(_hm[2]); }
+                    if(_aiHour === null) {
+                        let _hm2 = _aiStatusMatch[1].match(/(\d{1,2}):(\d{2})/);
+                        if(_hm2) { _aiHour = parseInt(_hm2[1]); _aiMin = parseInt(_hm2[2]); }
                     }
                 }
-                // 从普通对话提取日期（仅接受真实年份±3范围内的值）
-                if(!_aiDateMatch) {
-                    let _plainDateMatch = txt.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
-                    if(_plainDateMatch) {
-                        let _trueMs2 = (typeof getVirtualTimeObj === 'function')
-                            ? getVirtualTimeObj(currentChatId).getTime() : new Date().getTime();
-                        let _trueYear2 = new Date(_trueMs2).getFullYear();
-                        let _py = parseInt(_plainDateMatch[1]);
-                        if(Math.abs(_py - _trueYear2) <= 3) {
-                            let _plainMs = new Date(_py, parseInt(_plainDateMatch[2])-1, parseInt(_plainDateMatch[3])).getTime();
-                            let _baseMs2 = window._storyCurrentTimeMs || _trueMs2;
-                            if(_plainMs >= _baseMs2 && _plainMs - _baseMs2 < 3*24*60*60*1000) {
-                                window._storyCurrentTimeMs = _plainMs;
-                            }
-                        }
+
+                // ★ 构建"正确时间"：年月日锁死为权威基准，时分允许在合理范围内推进
+                let _correctDt = new Date(_authDt);
+                if(_aiHour !== null && _aiMin !== null) {
+                    let _authTotalMin = _authDt.getHours() * 60 + _authDt.getMinutes();
+                    let _aiTotalMin = _aiHour * 60 + _aiMin;
+                    let _diff = _aiTotalMin - _authTotalMin;
+                    // 只允许向前推进且不超过12小时，防止AI随意跨天
+                    if(_diff >= 0 && _diff <= 720) {
+                        _correctDt.setHours(_aiHour, _aiMin, 0, 0);
                     }
                 }
-                // 年份保护：用真实年份作为基准，替换偏离超过1年的日期
-                let _trueYearFinal = (typeof getVirtualTimeObj === 'function')
-                    ? new Date(getVirtualTimeObj(currentChatId).getTime()).getFullYear()
-                    : new Date().getFullYear();
-                // 同时重置被污染的_storyCurrentTimeMs
-                if(window._storyCurrentTimeMs) {
-                    let _sy = new Date(window._storyCurrentTimeMs).getFullYear();
-                    if(Math.abs(_sy - _trueYearFinal) > 5) window._storyCurrentTimeMs = null;
-                }
-                txt = txt.replace(/(\d{4})年(\d{1,2})月(\d{1,2})日/g, (m, y, mo, d) => {
-                    let _y = parseInt(y);
-                    if(Math.abs(_y - _trueYearFinal) > 2) {
-                        return _trueYearFinal + '年' + mo + '月' + d + '日';
+                // 更新剧情追踪时间（锁定在权威年月日上）
+                window._storyCurrentTimeMs = _correctDt.getTime();
+
+                // ★ 强制替换AI输出里所有的日期为正确日期
+                const _wds4 = ['周日','周一','周二','周三','周四','周五','周六'];
+                let _correctDateStr = _correctDt.getFullYear()+'年'+(_correctDt.getMonth()+1)+'月'+_correctDt.getDate()+'日';
+                let _correctFullStr = _correctDateStr + ' ' + _wds4[_correctDt.getDay()] + ' ' + _correctDt.getHours()+'时'+String(_correctDt.getMinutes()).padStart(2,'0')+'分';
+
+                // 替换状态栏里的日期行
+                txt = txt.replace(/(📅[^|\n]*日期[：:])([^|\n]+)/g, function(_m, prefix) {
+                    return prefix + _correctFullStr + ' ';
+                });
+
+                // 替换正文里出现的年月日
+                txt = txt.replace(/(\d{4})年(\d{1,2})月(\d{1,2})日/g, function(m, y, mo) {
+                    let _y = parseInt(y), _mo = parseInt(mo);
+                    // 黑名单：2016年5月直接替换
+                    if(_y === 2016 && _mo === 5) return _correctDateStr;
+                    // 自定义时间开启时：AI写的年月必须与权威基准一致，否则替换
+                    if(_hasCustomTime) {
+                        if(_y !== _authDt.getFullYear() || _mo !== (_authDt.getMonth()+1)) {
+                            return _correctDateStr;
+                        }
+                    } else {
+                        // 无自定义时间：年份偏离现实超过1年的替换
+                        if(Math.abs(_y - new Date().getFullYear()) > 1) {
+                            return _correctDateStr;
+                        }
                     }
                     return m;
-                });
-                // ★ 黑名单终极过滤：无论任何情况，2016年5月不得出现
-                // 替换优先级：聊天最后3条推断日期 > 自定义时间 > 现实时间
-                txt = txt.replace(/2016年5月(\d{1,2}日)?/g, (fullMatch, dayPart) => {
-                    // 1. 优先从聊天最后3条消息里提取非2016年5月的日期
-                    let _inferredDate = null;
-                    try {
-                        let _recentMsgs = (typeof history !== 'undefined' && Array.isArray(history))
-                            ? history.slice(-3) : [];
-                        for(let _i = _recentMsgs.length - 1; _i >= 0; _i--) {
-                            let _msgContent = _recentMsgs[_i].content || '';
-                            let _dm = _msgContent.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
-                            if(_dm) {
-                                let _dy = parseInt(_dm[1]), _dmm = parseInt(_dm[2]), _dd = parseInt(_dm[3]);
-                                // 排除2016年5月本身，且年份合理
-                                if(!(_dy === 2016 && _dmm === 5) && _dy >= 2000 && _dy <= 2100) {
-                                    _inferredDate = { y: _dy, m: _dmm, d: _dd };
-                                    break;
-                                }
-                            }
-                        }
-                    } catch(e) {}
-                    if(_inferredDate) {
-                        return dayPart
-                            ? _inferredDate.y + '年' + _inferredDate.m + '月' + _inferredDate.d + '日'
-                            : _inferredDate.y + '年' + _inferredDate.m + '月';
-                    }
-                    // 2. 用自定义时间或剧情追踪时间（getVirtualTimeObj已包含这两个优先级）
-                    let _fallback = typeof getVirtualTimeObj === 'function' ? getVirtualTimeObj(currentChatId) : new Date();
-                    // 如果fallback本身也是2016年5月，强制用现实时间
-                    if(_fallback.getFullYear() === 2016 && _fallback.getMonth() === 4) _fallback = new Date();
-                    return dayPart
-                        ? _fallback.getFullYear() + '年' + (_fallback.getMonth()+1) + '月' + _fallback.getDate() + '日'
-                        : _fallback.getFullYear() + '年' + (_fallback.getMonth()+1) + '月';
                 });
             } catch(e) {}
             // ★ 切换char后丢弃回复，不污染新char的history
