@@ -9874,14 +9874,27 @@ $(`btnLemon`).onclick = async () =>{
     });
     if(npcCtx !== `\n【关联人物档案】\n`) sys += npcCtx;
 
-    // ★ 注入统一虚拟时间（优先剧情追踪>自定义>现实），并初始化_storyCurrentTimeMs
+    // ★ 注入统一虚拟时间（自定义时间>剧情追踪>现实），并初始化_storyCurrentTimeMs
     {
         let _vdt = getVirtualTimeObj(currentChatId);
         let _vdStr = getVirtualFullStr(currentChatId);
-        // 如果_storyCurrentTimeMs未初始化，用当前虚拟时间初始化
+        // 如果_storyCurrentTimeMs未初始化，必须以当前虚拟时间（含自定义）为基准初始化，绝不能用现实时间覆盖自定义时间
         if(!window._storyCurrentTimeMs || window._storyCurrentTimeMs === 0) {
             window._storyCurrentTimeMs = _vdt.getTime();
         }
+        // ★ 如果自定义时间已开启，且_storyCurrentTimeMs跑偏（不在自定义同月内），强制重置回自定义基准
+        try {
+            let _ctOn = originalGetItem.call(ls, 'cCTon_'+currentChatId) || originalGetItem.call(ls, 'cCTon');
+            if(_ctOn === 'true' && window._storyCurrentTimeMs) {
+                let _stY = new Date(window._storyCurrentTimeMs).getFullYear();
+                let _stM = new Date(window._storyCurrentTimeMs).getMonth()+1;
+                let _cuY = parseInt(originalGetItem.call(ls,'cCTy_'+currentChatId)||originalGetItem.call(ls,'cCTy')||0);
+                let _cuM = parseInt(originalGetItem.call(ls,'cCTm_'+currentChatId)||originalGetItem.call(ls,'cCTm')||0);
+                if(_cuY && _cuM && !(_stY === _cuY && _stM === _cuM)) {
+                    window._storyCurrentTimeMs = _vdt.getTime(); // 强制重置回自定义基准
+                }
+            }
+        } catch(e) {}
         sys += `【当前剧情时间·最高优先级】${_vdStr}。` +
                `你在回复中提到的所有日期必须以此为基准推算，` +
                `绝对禁止自行编造与此不符的年月日！` +
@@ -14948,21 +14961,11 @@ if($(`btnSpyFootprintClear`)) $(`btnSpyFootprintClear`).onclick = async () => {
 
 // 提取当前界面的精准日期（已修复自定义时间逻辑）
 // ★ 统一虚拟时间获取函数 - 所有功能共用，确保日期一致
-// 优先级：剧情追踪时间 > 自定义时间 > 现实时间
+// ★★ 优先级（修正版）：自定义时间（最高，用户明确设置必须遵守）> 剧情追踪时间（只能在自定义基准上微进）> 现实时间
 function getVirtualTimeObj(charId) {
     charId = charId || (typeof currentChatId !== 'undefined' ? currentChatId : 'default');
-    // 1. 优先用剧情追踪时间，但先校验年份是否合理（防2016年污染扩散到日记/足迹等所有功能）
-    if(window._storyCurrentTimeMs && window._storyCurrentTimeMs > 0) {
-        let _storedYear = new Date(window._storyCurrentTimeMs).getFullYear();
-        let _nowYear = new Date().getFullYear();
-        // ★ 黑名单：2016年永久禁止，且必须在合理范围内
-        if(_storedYear !== 2016 && Math.abs(_storedYear - _nowYear) <= 10) { // 合理范围内才用
-            return new Date(window._storyCurrentTimeMs);
-        } else {
-            window._storyCurrentTimeMs = null; // 污染值，清掉
-        }
-    }
-    // 2. 用自定义时间
+
+    // ★ 第一优先：自定义时间（只要用户开启了开关，必须严格遵守，不得被剧情追踪时间覆盖）
     let isCustom = originalGetItem.call(ls, 'cCTon_' + charId);
     if(isCustom === null) isCustom = originalGetItem.call(ls, 'cCTon');
     if(isCustom === 'true') {
@@ -14972,15 +14975,41 @@ function getVirtualTimeObj(charId) {
         let h = originalGetItem.call(ls, 'cCTh_' + charId) || originalGetItem.call(ls, 'cCTh') || '12';
         let min = originalGetItem.call(ls, 'cCTmin_' + charId) || originalGetItem.call(ls, 'cCTmin') || '0';
         if(y && m && d) {
-            // ★ 黑名单：2016年5月永久禁止，直接跳过回退到现实时间
-            if(parseInt(y) === 2016 && parseInt(m) === 5) { /* banned */ }
+            // ★ 黑名单：2016年5月永久禁止
+            if(parseInt(y) === 2016 && parseInt(m) === 5) { /* banned, fall through to real time */ }
             else {
-                let dt = new Date(parseInt(y), parseInt(m)-1, parseInt(d), parseInt(h)||0, parseInt(min)||0);
-                if(!isNaN(dt.getTime())) return dt;
+                let _customBase = new Date(parseInt(y), parseInt(m)-1, parseInt(d), parseInt(h)||0, parseInt(min)||0);
+                if(!isNaN(_customBase.getTime())) {
+                    // 允许剧情时间在自定义基准上小幅推进（同月内），但绝不能跳到其他月份
+                    if(window._storyCurrentTimeMs && window._storyCurrentTimeMs > 0) {
+                        let _storyDt = new Date(window._storyCurrentTimeMs);
+                        let _sy = _storyDt.getFullYear(), _sm = _storyDt.getMonth()+1;
+                        let _cy = parseInt(y), _cm = parseInt(m);
+                        let _monthDiff = (_sy - _cy) * 12 + (_sm - _cm);
+                        // 剧情时间只能在自定义基准的同月内推进，且不是黑名单日期
+                        if(!(_sy === 2016 && _sm === 5) && _monthDiff === 0 && _storyDt >= _customBase) {
+                            return _storyDt;
+                        }
+                    }
+                    return _customBase;
+                }
             }
         }
     }
-    // 3. 现实时间
+
+    // ★ 第二优先：剧情追踪时间（仅在无自定义时间时启用），校验年份合理性防污染
+    if(window._storyCurrentTimeMs && window._storyCurrentTimeMs > 0) {
+        let _storedYear = new Date(window._storyCurrentTimeMs).getFullYear();
+        let _storedMonth = new Date(window._storyCurrentTimeMs).getMonth()+1;
+        let _nowYear = new Date().getFullYear();
+        if(!(_storedYear === 2016 && _storedMonth === 5) && Math.abs(_storedYear - _nowYear) <= 10) {
+            return new Date(window._storyCurrentTimeMs);
+        } else {
+            window._storyCurrentTimeMs = null;
+        }
+    }
+
+    // ★ 兜底：现实时间
     return typeof updTime === 'function' ? updTime() : new Date();
 }
 function getVirtualDateStr(charId) {
