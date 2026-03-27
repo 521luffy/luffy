@@ -473,23 +473,23 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
           display:flex;flex-direction:column;min-height:195px;
         }
         #hdTodoBg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;z-index:0;pointer-events:none;border-radius:14px;}
-        #hdTodoHeader{display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:16px;}
+        #hdTodoHeader{display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:20px;}
         #hdTodoCard .todo-title{font-size:16px;font-weight:900;color:#222;text-align:center;letter-spacing:1px;pointer-events:auto;}
         #hdTodoHeader *{pointer-events:auto;}
         #hdTodoItems *{pointer-events:auto;}
-        #hdTodoContent{position:relative;z-index:1;pointer-events:none;padding:18px 14px 6px;}
-        .todo-item{display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:0 4px;}
-        .todo-icon{font-size:14px;flex-shrink:0;width:18px;text-align:center;opacity:0.85;}
+        #hdTodoContent{position:relative;z-index:1;pointer-events:none;padding:24px 10px 6px;}
+        .todo-item{display:flex;align-items:center;gap:6px;margin-bottom:9px;padding:0 2px;}
+        .todo-icon{font-size:13px;flex-shrink:0;width:16px;text-align:center;opacity:0.85;}
         .todo-ce{
           font-size:12px;color:#333;flex:1;font-family:inherit;
-          min-width:0;white-space:nowrap;overflow:hidden;
-          text-overflow:ellipsis;user-select:none;-webkit-user-select:none;pointer-events:none;
+          min-width:0;white-space:nowrap;overflow:visible;
+          user-select:none;-webkit-user-select:none;pointer-events:none;
         }
         .todo-ce.done-txt{text-decoration:line-through;color:#bbb;}
         .todo-cb{
-          width:18px;height:18px;border:1.5px solid #8ec6e0;border-radius:4px;
+          width:16px;height:16px;border:1.5px solid #8ec6e0;border-radius:4px;
           flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;
-          font-size:11px;-webkit-tap-highlight-color:transparent;background:rgba(255,255,255,0.6);
+          font-size:10px;-webkit-tap-highlight-color:transparent;background:rgba(255,255,255,0.6);
         }
         .todo-cb.done{background:#6db5d8;border-color:#6db5d8;color:white;}
         /* 下半部分空白区（背景图铺满）*/
