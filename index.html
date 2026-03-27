@@ -460,38 +460,16 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
           width:200px;text-align:center;font-family:inherit;color:#555;
         }
 
-        /* ══ 中间两图 + 日历 ══ */
-        #hdMidRow{display:flex;gap:8px;margin-top:6px;margin-bottom:28px;flex-shrink:0;align-items:stretch;}
-        #hdImgBig{
-          flex:0 0 47%;background:white;border-radius:14px;
-          box-shadow:0 2px 8px rgba(0,0,0,.06);height:195px;
-          display:flex;align-items:center;justify-content:center;
-          overflow:hidden;position:relative;cursor:pointer;
-        }
-        #hdImgBig img{width:100%;height:100%;object-fit:cover;display:none;}
-        #hdImgBigHint{color:#ddd;font-size:24px;pointer-events:none;}
+        /* ══ 主内容行（左列+右列）══ */
+        #hdMidRow{display:flex;gap:8px;margin-top:6px;margin-bottom:8px;flex-shrink:0;align-items:stretch;}
+        #hdLeftCol{flex:0 0 47%;display:flex;flex-direction:column;gap:7px;min-width:0;}
         #hdRightCol{flex:1;display:flex;flex-direction:column;gap:7px;min-width:0;}
-        #hdCal{
-          background:white;border-radius:14px;padding:5px 7px 7px;
-          box-shadow:0 2px 8px rgba(0,0,0,.06);flex:1;
-          position:relative;overflow:hidden;cursor:pointer;
-        }
-        #hdCalBg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;z-index:0;pointer-events:none;border-radius:14px;}
-        #hdCalContent{position:relative;z-index:1;pointer-events:none;}
-        #hdCal .cal-month{text-align:right;font-size:12px;color:#333;margin-bottom:2px;font-weight:600;}
-        #hdCal .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);}
-        #hdCal .cal-head{font-size:9px;color:#aaa;text-align:center;padding:2px 0;}
-        #hdCal .cal-day{font-size:10px;text-align:center;color:#444;border-radius:50%;
-                        width:18px;height:18px;display:flex;align-items:center;justify-content:center;margin:1px auto;}
-        #hdCal .cal-day.today{background:#e8556a;color:white;font-weight:700;}
-        #hdCal .cal-day.other{color:#ddd;}
 
-        /* ══ 底部行 ══ */
-        #hdBotRow{display:flex;gap:8px;margin-top:0;margin-bottom:7px;flex-shrink:0;align-items:stretch;}
+        /* 左列：todo */
         #hdTodo{
-          flex:0 0 47%;background:white;border-radius:14px;
+          background:white;border-radius:14px;
           padding:9px 11px;box-shadow:0 2px 8px rgba(0,0,0,.06);box-sizing:border-box;
-          position:relative;overflow:hidden;cursor:pointer;
+          position:relative;overflow:hidden;cursor:pointer;flex-shrink:0;
         }
         #hdTodoBg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;z-index:0;pointer-events:none;border-radius:14px;}
         #hdTodoContent{position:relative;z-index:1;pointer-events:none;}
@@ -499,24 +477,73 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         #hdTodo .todo-title{font-size:14px;font-weight:900;color:#111;flex:1;pointer-events:auto;}
         #hdTodoHeader *{pointer-events:auto;}
         #hdTodoItems *{pointer-events:auto;}
-        #hdTodoEmoji{
-          font-size:15px;cursor:pointer;border:none;background:transparent;
-          padding:0 1px;outline:none;-webkit-tap-highlight-color:transparent;font-family:inherit;
-        }
         .todo-item{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
         .todo-cb{
-          width:19px;height:19px;border:2px solid #999;border-radius:4px;
+          width:19px;height:19px;border:2px solid #aaa;border-radius:4px;
           flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;
           font-size:12px;-webkit-tap-highlight-color:transparent;
         }
-        .todo-cb.done{background:#555;border-color:#555;color:white;}
+        .todo-cb.done{background:#6db5d8;border-color:#6db5d8;color:white;}
         .todo-ce{
-          font-size:13px;color:#222;flex:1;font-family:inherit;
+          font-size:12px;color:#333;flex:1;font-family:inherit;
           min-width:0;white-space:nowrap;overflow:hidden;
           text-overflow:ellipsis;user-select:none;-webkit-user-select:none;pointer-events:none;
         }
         .todo-ce.done-txt{text-decoration:line-through;color:#bbb;}
-        #hdApps{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:7px;box-sizing:border-box;}
+
+        /* 左列：大图 */
+        #hdImgBig{
+          flex:1;background:rgba(208,232,245,0.5);border-radius:14px;
+          box-shadow:0 2px 8px rgba(0,0,0,.06);min-height:90px;
+          display:flex;align-items:center;justify-content:center;
+          overflow:hidden;position:relative;cursor:pointer;
+        }
+        #hdImgBig img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;}
+        #hdImgBigHint{color:rgba(100,170,210,0.6);font-size:22px;pointer-events:none;}
+
+        /* 右列：Lucky day卡片 */
+        #hdLuckyDay{
+          flex:1;background:linear-gradient(160deg,#d6ecf8,#e8f5fd);border-radius:14px;
+          box-shadow:0 2px 8px rgba(0,0,0,.06);min-height:130px;
+          overflow:hidden;position:relative;cursor:pointer;
+          display:flex;align-items:center;justify-content:center;
+        }
+        #hdLuckyDayBg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;z-index:0;border-radius:14px;}
+        #hdLuckyDayContent{position:relative;z-index:1;padding:10px 8px;text-align:center;width:100%;pointer-events:none;}
+        #hdLuckyDayTitle{font-size:13px;font-weight:700;color:#4a9fc4;margin-bottom:4px;letter-spacing:.5px;}
+        #hdLuckyDayBear{font-size:28px;margin:2px 0;}
+        #hdLuckyDayBox{background:rgba(255,255,255,0.75);border-radius:8px;padding:5px 8px;margin-top:4px;}
+        #hdLuckyDayLabel{font-size:11px;color:#888;margin-bottom:2px;}
+        #hdLuckyDayText{font-size:12px;color:#444;font-weight:500;line-height:1.4;}
+        #hdLuckyDaySub{font-size:9px;color:#aaa;margin-top:3px;font-style:italic;}
+
+        /* 右列：两个圆形图 */
+        #hdCirclesRow{display:flex;gap:10px;justify-content:center;flex-shrink:0;padding:2px 0;}
+        .hd-circle{
+          width:60px;height:60px;border-radius:50%;
+          background:linear-gradient(135deg,#cce4f7,#b8d9f2);
+          overflow:hidden;position:relative;cursor:pointer;
+          display:flex;align-items:center;justify-content:center;
+          box-shadow:0 3px 10px rgba(100,170,210,0.25);
+          border:2.5px solid rgba(255,255,255,0.85);
+          flex-shrink:0;
+        }
+        .hd-circle img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;}
+        .hd-circle-hint{font-size:16px;color:rgba(100,160,200,0.7);pointer-events:none;}
+
+        /* ══ 底部行 ══ */
+        #hdBotRow{display:flex;gap:8px;margin-top:0;margin-bottom:7px;flex-shrink:0;align-items:stretch;}
+        #hdApps{flex:0 0 47%;display:grid;grid-template-columns:1fr 1fr;gap:7px;box-sizing:border-box;}
+
+        /* 底部右侧自定义图 */
+        #hdBotImg{
+          flex:1;background:linear-gradient(135deg,#cce4f7,#b8d9f2);border-radius:14px;
+          box-shadow:0 2px 8px rgba(0,0,0,.06);
+          overflow:hidden;position:relative;cursor:pointer;
+          display:flex;align-items:center;justify-content:center;min-height:90px;
+        }
+        #hdBotImg img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;}
+        #hdBotImgHint{font-size:22px;color:rgba(100,160,200,0.6);pointer-events:none;}
         .hd-app{
           background:white;border-radius:14px;display:flex;flex-direction:column;
           align-items:center;overflow:hidden;
@@ -602,42 +629,63 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         <span id="hdTaglineEmoji" onclick="hdToggleTglEmoji()" style="font-size:15px;cursor:pointer;padding:0 2px;-webkit-tap-highlight-color:transparent;flex-shrink:0;display:inline-block;">❤️</span><input id="hdTaglineEmojiInp" type="text" maxlength="4" placeholder="❤️" style="display:none;font-size:14px;width:42px;border:none;border-bottom:2px solid #f5b8d4;text-align:center;padding:1px 2px;outline:none;font-family:inherit;background:transparent;color:#555;" onblur="hdSaveTglEmoji()" onkeydown="if(event.key==='Enter')this.blur()">
       </div>
 
-      <!-- ══ 大图 | 小图+日历 ══ -->
+      <!-- ══ 主内容行（左：todo+大图 | 右：lucky day+圆形图）══ -->
       <div id="hdMidRow">
-        <div id="hdImgBig" onclick="document.getElementById('hdImgBigInput').click()">
-          <span id="hdImgBigHint">🖼️</span>
-          <img id="hdImgBigEl" alt="">
-          <input type="file" id="hdImgBigInput" accept="image/*" style="display:none">
-        </div>
-        <div id="hdRightCol">
-          <div id="hdCal" onclick="if(event.target===document.getElementById('hdCal')||event.target===document.getElementById('hdCalBg')){document.getElementById('hdCalBgInp').click();}">
-            <img id="hdCalBg" alt="">
-            <div id="hdCalContent">
-              <div id="hdCalMonth" class="cal-month"><span id="hdCalMonthTxt"></span></div>
-              <div class="cal-grid">
-                <div class="cal-head">日</div><div class="cal-head">一</div><div class="cal-head">二</div>
-                <div class="cal-head">三</div><div class="cal-head">四</div><div class="cal-head">五</div><div class="cal-head">六</div>
+        <!-- 左列 -->
+        <div id="hdLeftCol">
+          <!-- To-do list（固定文字，可打勾，可换背景图）-->
+          <div id="hdTodo" onclick="if(event.target===this||event.target===document.getElementById('hdTodoBg')){document.getElementById('hdTodoBgInp').click();}">
+            <img id="hdTodoBg" alt="">
+            <div id="hdTodoContent">
+              <div id="hdTodoHeader">
+                <span class="todo-title">to do list</span>
+                <span style="font-size:13px;flex-shrink:0;">✨</span>
               </div>
-              <div class="cal-grid" id="hdCalBody"></div>
+              <div id="hdTodoItems"></div>
             </div>
-            <input type="file" id="hdCalBgInp" accept="image/*" style="display:none">
+            <input type="file" id="hdTodoBgInp" accept="image/*" style="display:none">
+          </div>
+          <!-- 大自定义图 -->
+          <div id="hdImgBig" onclick="document.getElementById('hdImgBigInput').click()">
+            <span id="hdImgBigHint">🖼️</span>
+            <img id="hdImgBigEl" alt="">
+            <input type="file" id="hdImgBigInput" accept="image/*" style="display:none">
+          </div>
+        </div>
+        <!-- 右列 -->
+        <div id="hdRightCol">
+          <!-- Lucky day 卡片（可换背景图）-->
+          <div id="hdLuckyDay" onclick="document.getElementById('hdLuckyDayInp').click()">
+            <img id="hdLuckyDayBg" alt="">
+            <div id="hdLuckyDayContent">
+              <div id="hdLuckyDayTitle">Lucky day 🐾</div>
+              <div id="hdLuckyDayBear">🐻</div>
+              <div id="hdLuckyDayBox">
+                <div id="hdLuckyDayLabel">小狗说：</div>
+                <div id="hdLuckyDayText">「烦恼都走开！」</div>
+                <div id="hdLuckyDaySub">Go away with all your troubles</div>
+              </div>
+            </div>
+            <input type="file" id="hdLuckyDayInp" accept="image/*" style="display:none">
+          </div>
+          <!-- 两个圆形自定义图 -->
+          <div id="hdCirclesRow">
+            <div class="hd-circle" id="hdCircle1" onclick="document.getElementById('hdCircle1Inp').click()">
+              <img id="hdCircle1Img" alt="">
+              <span class="hd-circle-hint" id="hdCircle1Hint">📷</span>
+              <input type="file" id="hdCircle1Inp" accept="image/*" style="display:none">
+            </div>
+            <div class="hd-circle" id="hdCircle2" onclick="document.getElementById('hdCircle2Inp').click()">
+              <img id="hdCircle2Img" alt="">
+              <span class="hd-circle-hint" id="hdCircle2Hint">📷</span>
+              <input type="file" id="hdCircle2Inp" accept="image/*" style="display:none">
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- ══ todo | 四图标 ══ -->
+      <!-- ══ 四图标 | 底部自定义图 ══ -->
       <div id="hdBotRow">
-        <div id="hdTodo" onclick="if(event.target===this||event.target===document.getElementById('hdTodoBg')){document.getElementById('hdTodoBgInp').click();}">
-          <img id="hdTodoBg" alt="">
-          <div id="hdTodoContent">
-            <div id="hdTodoHeader">
-              <span class="todo-title">to do list</span>
-              <span id="hdTodoEmoji" onclick="hdToggleTodoEmoji()" style="font-size:15px;cursor:pointer;padding:0 1px;-webkit-tap-highlight-color:transparent;flex-shrink:0;display:inline-block;position:relative;z-index:2;">✨</span><input id="hdTodoEmojiInp" type="text" maxlength="4" placeholder="✨" style="display:none;font-size:14px;width:40px;border:none;border-bottom:2px solid #f5b8d4;text-align:center;padding:1px 2px;outline:none;font-family:inherit;background:transparent;color:#555;position:relative;z-index:2;" onblur="hdSaveTodoEmoji()" onkeydown="if(event.key==='Enter')this.blur()">
-            </div>
-            <div id="hdTodoItems"></div>
-          </div>
-          <input type="file" id="hdTodoBgInp" accept="image/*" style="display:none">
-        </div>
         <div id="hdApps">
           <div class="hd-app" id="btnHomeCfg">
             <div class="hd-app-icon" id="haIconCfg"><img id="haImgCfg" style="display:none;" alt=""><span id="haEmojiCfg">⚙️</span></div>
@@ -655,6 +703,12 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
             <div class="hd-app-icon" id="haIconFont" style="font-size:22px;font-weight:700;font-family:serif;"><img id="haImgFont" style="display:none;" alt=""><span id="haEmojiFont">Aa</span></div>
             <span class="hd-app-lbl" id="haLblFont">字体</span>
           </div>
+        </div>
+        <!-- 底部右侧自定义图 -->
+        <div id="hdBotImg" onclick="document.getElementById('hdBotImgInp').click()">
+          <span id="hdBotImgHint">🖼️</span>
+          <img id="hdBotImgEl" alt="">
+          <input type="file" id="hdBotImgInp" accept="image/*" style="display:none">
         </div>
       </div>
 
@@ -6494,25 +6548,55 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
     };
   })();
 
-  // 日历背景
-  (async function loadCalBg(){
-    let bg=el_('hdCalBg');if(!bg)return;
-    let data=await lfGet('hd_cal_bg');
-    if(data){bg.src=data;bg.style.display='block';}
+  // Lucky day 背景图
+  setupImg('hdLuckyDayInp','hd_lucky_day_bg','hdLuckyDayBg','');
+  (async function loadLuckyDayBg(){
+    let data=await lfGet('hd_lucky_day_bg');
+    let bg=el_('hdLuckyDayBg'),content=el_('hdLuckyDayContent');
+    if(data&&bg){bg.src=data;bg.style.display='block';if(content)content.style.display='none';}
   })();
-  (function setupCalBg(){
-    let inp=el_('hdCalBgInp');if(!inp)return;
+  (function setupLuckyDayInp(){
+    let inp=el_('hdLuckyDayInp');if(!inp)return;
     inp.onchange=function(){
       let file=this.files[0];if(!file)return;
       let r=new FileReader();
       r.onload=ev=>{
-        let data=ev.target.result;
-        lfSet('hd_cal_bg',data);
-        let bg=el_('hdCalBg');
-        if(bg){bg.src=data;bg.style.display='block';}
+        compressImg(ev.target.result,1200,function(data){
+          lfSet('hd_lucky_day_bg',data);
+          let bg=el_('hdLuckyDayBg'),ct=el_('hdLuckyDayContent');
+          if(bg){bg.src=data;bg.style.display='block';}
+          if(ct)ct.style.display='none';
+        });
       };r.readAsDataURL(file);
     };
   })();
+
+  // 圆形图1、圆形图2
+  function setupCircle(inpId,key,imgId,hintId){
+    (async function(){
+      let data=await lfGet(key);
+      let img=el_(imgId),hint=el_(hintId);
+      if(data&&img){img.src=data;img.style.display='block';if(hint)hint.style.display='none';}
+    })();
+    let inp=el_(inpId);if(!inp)return;
+    inp.onchange=function(){
+      let file=this.files[0];if(!file)return;
+      let r=new FileReader();
+      r.onload=ev=>{
+        compressImg(ev.target.result,600,function(data){
+          lfSet(key,data);
+          let img=el_(imgId),hint=el_(hintId);
+          if(img){img.src=data;img.style.display='block';}
+          if(hint)hint.style.display='none';
+        });
+      };r.readAsDataURL(file);
+    };
+  }
+  setupCircle('hdCircle1Inp','hd_circle1','hdCircle1Img','hdCircle1Hint');
+  setupCircle('hdCircle2Inp','hd_circle2','hdCircle2Img','hdCircle2Hint');
+
+  // 底部自定义图
+  setupImg('hdBotImgInp','hd_bot_img','hdBotImgEl','hdBotImgHint');
 
   // ── 纪念日卡片 ──
   const ANN={bg:'hd_ann_bg',avaL:'hd_ann_ava_l',avaR:'hd_ann_ava_r',
@@ -6616,47 +6700,35 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
   window.hdEditTaglineEmoji=window.hdToggleTglEmoji;
 
   // ── Todo emoji ──
-  const EMO_KEY='hd_todo_emoji';
-  (async function loadEmoji(){
-    let e=await lfGet(EMO_KEY);
-    if(el_('hdTodoEmoji'))el_('hdTodoEmoji').textContent=e||'✨';
-  })();
-  window.hdToggleTodoEmoji=function(){
-    let sp=el_('hdTodoEmoji'),inp=el_('hdTodoEmojiInp');if(!sp||!inp)return;
-    if(inp.style.display==='none'||inp.style.display===''){
-      inp.value=sp.textContent.trim()||'✨';
-      sp.style.display='none';inp.style.display='inline-block';inp.focus();inp.select();
-    } else {hdSaveTodoEmoji();}
-  };
-  window.hdSaveTodoEmoji=function(){
-    let sp=el_('hdTodoEmoji'),inp=el_('hdTodoEmojiInp');if(!sp||!inp)return;
-    let t=(inp.value.trim()||'✨').slice(0,4);
-    sp.textContent=t;sp.style.display='inline-block';inp.style.display='none';lfSet(EMO_KEY,t);
-  };
-  window.hdEditTodoEmoji=window.hdToggleTodoEmoji;
+  // (todo emoji removed - fixed ✨ in header)
 
-  // ── To-do list ──
-  const TODO_KEY='hd_todo_items';
-  const DTODOS=[{txt:'准时起床',done:false},{txt:'喝八杯水',done:false},{txt:'努力打工',done:false},{txt:'早睡早起',done:false}];
-  let todos=[...DTODOS];
-  (async function loadTodos(){
-    try{let v=await localforage.getItem(TODO_KEY);if(Array.isArray(v)&&v.length)todos=v;}
-    catch(e){let r=localStorage.getItem(TODO_KEY);if(r)try{todos=JSON.parse(r);}catch(e2){}}
+  // ── To-do list（固定文字，仅打勾状态可变）──
+  const TODO_KEY='hd_todo_done'; // 只存done状态
+  const FIXED_TODOS=['保持好心情💙','每天喝八杯水🍵','坚持减肥运动🏃','去看海吹泡泡🌊'];
+  let todoDone=[false,false,false,false];
+  (async function loadTodoDone(){
+    try{
+      let v=await localforage.getItem(TODO_KEY);
+      if(Array.isArray(v)&&v.length===4)todoDone=v;
+    }catch(e){
+      let r=localStorage.getItem(TODO_KEY);
+      if(r)try{let p=JSON.parse(r);if(Array.isArray(p)&&p.length===4)todoDone=p;}catch(e2){}
+    }
     renderTodos();
   })();
-  function saveTodos(){lfSet(TODO_KEY,todos);}
+  function saveTodos(){lfSet(TODO_KEY,todoDone);}
   function renderTodos(){
     let box=el_('hdTodoItems');if(!box)return;box.innerHTML='';
-    todos.forEach((item,i)=>{
+    FIXED_TODOS.forEach((txt,i)=>{
       let row=document.createElement('div');row.className='todo-item';
       let cb=document.createElement('div');
-      cb.className='todo-cb'+(item.done?' done':'');
-      if(item.done)cb.textContent='✓';
-      cb.addEventListener('touchend',e=>{e.preventDefault();e.stopPropagation();todos[i].done=!todos[i].done;saveTodos();renderTodos();});
-      cb.onclick=e=>{e.stopPropagation();todos[i].done=!todos[i].done;saveTodos();renderTodos();};
+      cb.className='todo-cb'+(todoDone[i]?' done':'');
+      if(todoDone[i])cb.textContent='✓';
+      cb.addEventListener('touchend',e=>{e.preventDefault();e.stopPropagation();todoDone[i]=!todoDone[i];saveTodos();renderTodos();});
+      cb.onclick=e=>{e.stopPropagation();todoDone[i]=!todoDone[i];saveTodos();renderTodos();};
       let ce=document.createElement('div');
-      ce.className='todo-ce'+(item.done?' done-txt':'');
-      ce.textContent=item.txt;
+      ce.className='todo-ce'+(todoDone[i]?' done-txt':'');
+      ce.textContent=txt;
       row.appendChild(cb);row.appendChild(ce);box.appendChild(row);
     });
   }
