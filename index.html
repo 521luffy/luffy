@@ -2590,7 +2590,11 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
                 <div class=section-title style="color:#fd79a8;">角色设定💜</div>
                 <div class=input-group><label>对方人设</label><textarea id=cfgAiP class=textarea-field rows=3 placeholder=填写性格与身份></textarea></div>
                 <div class=input-group><label>我的人设</label><textarea id=cfgMyP class=textarea-field rows=2 placeholder=填写你的设定></textarea></div>
-                <div class=input-group><label>上下文记忆条数</label><input type=number id=cfgCtx class=input-field value=100 min=2 max=9999></div>
+                <div class=input-group>
+                  <label>上下文记忆条数</label>
+                  <input type=number id=cfgCtx class=input-field value=100 min=2 max=9999>
+                  <div style="font-size:12px;color:#888;margin-top:5px;">已发信息 <span id="cfgMsgCount" style="color:#fd79a8;font-weight:bold;">0</span> 条</div>
+                </div>
                 <div class=flex-row><label style=font-size:12px;color:#888;font-weight:bold;>开启真实时间感知</label><input type=checkbox id=cfgTime checked style=width:20px;height:20px;></div>
                 
                 <div class=flex-row style="margin-top:5px;"><label style=font-size:12px;color:#888;font-weight:bold;>使用自定义时间</label><input type=checkbox id=cfgCustomTime style=width:20px;height:20px;></div>
@@ -8668,6 +8672,19 @@ window.loadChatSettings = async function() {
     let _ctx = await _get('cCtx');
     $(`cfgCtx`).value = _ctx || 100;
 
+    // ★ 已发信息条数（线上模式数全部user/assistant条，线下模式数_offline:true的气泡）
+    try {
+        let _hist = history || [];
+        let _cnt = 0;
+        if(window._offlineMode) {
+            _cnt = _hist.filter(m => m._offline).length;
+        } else {
+            _cnt = _hist.filter(m => m.role === 'user' || m.role === 'assistant').length;
+        }
+        let _cntEl = $('cfgMsgCount');
+        if(_cntEl) _cntEl.textContent = _cnt;
+    } catch(e) {}
+
     // 时间设置
     let _cT = await _get('cT');
     $(`cfgTime`).checked = _cT !== `false`;
@@ -10322,7 +10339,24 @@ if(charStickers.length > 0) {
     } catch(e) {}
     if(window._callSysAddon && !window._offlineMode) sys += window._callSysAddon;
                 let arr = sys ? [{role: `system`, content: sys}] : [];
-    let ctxHist = history.slice(-(parseInt($(`cfgCtx`).value)||10));
+    // ★ 从localforage直接读上下文条数，不依赖DOM输入框（防止设置页面未打开时读到空值）
+    let _ctxCount = 100;
+    try {
+        let _ctxStored = await window._lfGet('cCtx', currentChatId);
+        let _ctxParsed = parseInt(_ctxStored);
+        if(!isNaN(_ctxParsed) && _ctxParsed >= 2) {
+            _ctxCount = _ctxParsed;
+            // 顺手同步到输入框，保持UI一致
+            if($(`cfgCtx`)) $(`cfgCtx`).value = _ctxCount;
+        } else {
+            // localforage没值，再看DOM有没有（用户在本次会话里设置过但还没保存）
+            let _domVal = parseInt($(`cfgCtx`)?.value);
+            if(!isNaN(_domVal) && _domVal >= 2) _ctxCount = _domVal;
+        }
+    } catch(e) {}
+    // ★ 告知AI当前记忆条数设置
+    sys += `\n【记忆设置】当前保留最近 ${_ctxCount} 条对话作为上下文记忆，请严格基于这些记忆进行回复。\n`;
+    let ctxHist = history.slice(-_ctxCount);
     // ★ 过滤掉非标准消息（邀请卡片、解除卡片等），这些不能发给API
     ctxHist = ctxHist.filter(m => {
         if(m.type === 'cs_breakup' || m.type === 'll_reply') return false;
