@@ -450,7 +450,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
           margin-bottom:10px;margin-top:4px;flex-shrink:0;
         }
         #hdTagline {
-          font-size:12px;color:#999;font-style:italic;
+          font-size:12px;color:#111;font-style:italic;
           text-align:center;cursor:pointer;max-width:260px;
           padding:2px 8px;border-radius:8px;-webkit-tap-highlight-color:transparent;
         }
@@ -6605,21 +6605,31 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
   setupImg('hdAnnAvaRInp',ANN.avaR,'hdAnnAvaRImg','hdAnnAvaRHint');
 
   // ── 纪念日天数自动计算（存起始日期，每次打开自动算距今天数）──
-  // 存储格式：hd_ann_date 存 "YYYY-MM-DD"（新），兼容旧格式（纯数字）
+  // 存储格式：hd_ann_date 存 "YYYY-MM-DD"（新），兼容旧格式（纯数字自动迁移）
   async function updateDays(){
     let val=await lfGet(ANN.date);
     let el=el_('hdAnnDaysNum');if(!el)return;
     if(!val){el.textContent=0;return;}
     // 新格式：YYYY-MM-DD
-    if(typeof val==='string'&&val.match(/^\d{4}-\d{2}-\d{2}$/)){
+    if(typeof val==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(val)){
       let start=new Date(val);start.setHours(0,0,0,0);
       let today=new Date();today.setHours(0,0,0,0);
       let diff=Math.round((today-start)/(1000*60*60*24));
       el.textContent=diff>=0?diff:0;
     } else {
-      // 兼容旧格式（纯数字），直接显示
+      // 旧格式（纯数字）：自动迁移为起始日期，以后就能自动增加了
       let num=parseInt(val);
-      el.textContent=(!isNaN(num)&&num>=0)?num:0;
+      if(!isNaN(num)&&num>=0){
+        let startDate=new Date();startDate.setDate(startDate.getDate()-num);
+        let yy=startDate.getFullYear();
+        let mm=String(startDate.getMonth()+1).padStart(2,'0');
+        let dd=String(startDate.getDate()).padStart(2,'0');
+        let newVal=yy+'-'+mm+'-'+dd;
+        lfSet(ANN.date,newVal); // 迁移存储
+        el.textContent=num; // 当天显示不变
+      } else {
+        el.textContent=0;
+      }
     }
   }
   updateDays();
@@ -8198,6 +8208,15 @@ $(`btnConfirmAddFriend`).onclick = async () =>{
     contacts = freshContacts; // 同步全局变量
     await localforage.setItem(`myContacts`, freshContacts).catch(()=>{});
     try { originalSetItem.call(ls, `myContacts`, JSON.stringify(freshContacts)); } catch(e){}
+
+    // ★ 自动把名字和初始设定存到对应char的设置里，打开好友设置时就直接有了
+    try { originalSetItem.call(ls, `cN_`+newId, n); } catch(e){}
+    await localforage.setItem(`cN_`+newId, n).catch(()=>{});
+    if(p) {
+        try { originalSetItem.call(ls, `cAP_`+newId, p); } catch(e){}
+        await localforage.setItem(`cAP_`+newId, p).catch(()=>{});
+    }
+
     renderContacts();
 
     $(`addFriendModal`).style.display=`none`;
@@ -8741,6 +8760,21 @@ $(`btnSaveChat`).onclick = async () => {
             if(key === `cMyN`) {
                 if(!window._nameCache) window._nameCache = {};
                 window._nameCache[currentChatId] = dataObj[key];
+            }
+        }
+        // ★ Fix4: 保存角色真名后，同步更新 contacts 数组和存储，确保联系人列表显示新名字
+        if(dataObj.cN && typeof contacts !== `undefined` && currentChatId) {
+            let newName = dataObj.cN.trim();
+            if(newName) {
+                // 更新内存里的 contacts
+                let ct = contacts.find(c => String(c.id) === String(currentChatId));
+                if(ct) ct.name = newName;
+                // 更新 localStorage 和 localforage
+                try { originalSetItem.call(ls, `cN_`+currentChatId, newName); } catch(e){}
+                await localforage.setItem(`cN_`+currentChatId, newName).catch(()=>{});
+                // 同步保存 contacts 列表
+                await localforage.setItem(`myContacts`, contacts).catch(()=>{});
+                try { originalSetItem.call(ls, `myContacts`, JSON.stringify(contacts)); } catch(e){}
             }
         }
 
