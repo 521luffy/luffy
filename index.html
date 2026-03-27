@@ -465,16 +465,17 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         #hdLeftCol{flex:0 0 47%;display:flex;flex-direction:column;gap:7px;min-width:0;}
         #hdRightCol{flex:1;display:flex;flex-direction:column;gap:7px;min-width:0;}
 
-        /* 左列：todo */
-        #hdTodo{
-          background:white;border-radius:14px;
-          padding:9px 11px;box-shadow:0 2px 8px rgba(0,0,0,.06);box-sizing:border-box;
-          position:relative;overflow:hidden;cursor:pointer;flex-shrink:0;
+        /* 左列：todo+图 合体大卡片 */
+        #hdTodoCard{
+          flex:1;background:white;border-radius:14px;
+          box-shadow:0 2px 8px rgba(0,0,0,.06);
+          position:relative;overflow:hidden;cursor:pointer;
+          display:flex;flex-direction:column;min-height:195px;
         }
         #hdTodoBg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;z-index:0;pointer-events:none;border-radius:14px;}
-        #hdTodoContent{position:relative;z-index:1;pointer-events:none;}
+        #hdTodoContent{position:relative;z-index:1;pointer-events:none;padding:9px 11px 6px;}
         #hdTodoHeader{display:flex;align-items:center;gap:4px;margin-bottom:5px;}
-        #hdTodo .todo-title{font-size:14px;font-weight:900;color:#111;flex:1;pointer-events:auto;}
+        #hdTodoCard .todo-title{font-size:14px;font-weight:900;color:#111;flex:1;pointer-events:auto;}
         #hdTodoHeader *{pointer-events:auto;}
         #hdTodoItems *{pointer-events:auto;}
         .todo-item{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
@@ -490,16 +491,12 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
           text-overflow:ellipsis;user-select:none;-webkit-user-select:none;pointer-events:none;
         }
         .todo-ce.done-txt{text-decoration:line-through;color:#bbb;}
-
-        /* 左列：大图 */
-        #hdImgBig{
-          flex:1;background:rgba(208,232,245,0.5);border-radius:14px;
-          box-shadow:0 2px 8px rgba(0,0,0,.06);min-height:90px;
-          display:flex;align-items:center;justify-content:center;
-          overflow:hidden;position:relative;cursor:pointer;
+        /* 下半部分空白区（背景图铺满）*/
+        #hdTodoImgArea{flex:1;position:relative;z-index:1;min-height:70px;}
+        #hdTodoImgAreaHint{
+          position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+          color:rgba(100,170,210,0.5);font-size:20px;pointer-events:none;
         }
-        #hdImgBig img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;}
-        #hdImgBigHint{color:rgba(100,170,210,0.6);font-size:22px;pointer-events:none;}
 
         /* 右列：Lucky day卡片 */
         #hdLuckyDay{
@@ -631,10 +628,9 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 
       <!-- ══ 主内容行（左：todo+大图 | 右：lucky day+圆形图）══ -->
       <div id="hdMidRow">
-        <!-- 左列 -->
+        <!-- 左列：todo+图 合体大卡片 -->
         <div id="hdLeftCol">
-          <!-- To-do list（固定文字，可打勾，可换背景图）-->
-          <div id="hdTodo" onclick="if(event.target===this||event.target===document.getElementById('hdTodoBg')){document.getElementById('hdTodoBgInp').click();}">
+          <div id="hdTodoCard" onclick="if(event.target===this||event.target===document.getElementById('hdTodoBg')||event.target===document.getElementById('hdTodoImgArea')||event.target===document.getElementById('hdTodoImgAreaHint')){document.getElementById('hdTodoBgInp').click();}">
             <img id="hdTodoBg" alt="">
             <div id="hdTodoContent">
               <div id="hdTodoHeader">
@@ -643,13 +639,11 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
               </div>
               <div id="hdTodoItems"></div>
             </div>
+            <!-- 下半空白区，背景图铺满，点击换图 -->
+            <div id="hdTodoImgArea">
+              <span id="hdTodoImgAreaHint">🖼️</span>
+            </div>
             <input type="file" id="hdTodoBgInp" accept="image/*" style="display:none">
-          </div>
-          <!-- 大自定义图 -->
-          <div id="hdImgBig" onclick="document.getElementById('hdImgBigInput').click()">
-            <span id="hdImgBigHint">🖼️</span>
-            <img id="hdImgBigEl" alt="">
-            <input type="file" id="hdImgBigInput" accept="image/*" style="display:none">
           </div>
         </div>
         <!-- 右列 -->
@@ -6526,13 +6520,14 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
     };
     loadImg(key,imgId,hintId);
   }
-  setupImg('hdImgBigInput','hd_img_big','hdImgBigEl','hdImgBigHint');
-
-  // Todo背景
+  // Todo卡片背景（todo+图合体，统一一张背景图）
   (async function loadTodoBg(){
     let bg=el_('hdTodoBg');if(!bg)return;
     let data=await lfGet('hd_todo_bg');
-    if(data){bg.src=data;bg.style.display='block';}
+    if(data){
+      bg.src=data;bg.style.display='block';
+      let hint=el_('hdTodoImgAreaHint');if(hint)hint.style.display='none';
+    }
   })();
   (function setupTodoBg(){
     let inp=el_('hdTodoBgInp');if(!inp)return;
@@ -6540,10 +6535,12 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
       let file=this.files[0];if(!file)return;
       let r=new FileReader();
       r.onload=ev=>{
-        let data=ev.target.result;
-        lfSet('hd_todo_bg',data);
-        let bg=el_('hdTodoBg');
-        if(bg){bg.src=data;bg.style.display='block';}
+        compressImg(ev.target.result,1200,function(data){
+          lfSet('hd_todo_bg',data);
+          let bg=el_('hdTodoBg');
+          if(bg){bg.src=data;bg.style.display='block';}
+          let hint=el_('hdTodoImgAreaHint');if(hint)hint.style.display='none';
+        });
       };r.readAsDataURL(file);
     };
   })();
@@ -6606,11 +6603,23 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
   setupImg('hdAnnAvaLInp',ANN.avaL,'hdAnnAvaLImg','hdAnnAvaLHint');
   setupImg('hdAnnAvaRInp',ANN.avaR,'hdAnnAvaRImg','hdAnnAvaRHint');
 
+  // ── 纪念日天数自动计算（存起始日期，每次打开自动算距今天数）──
+  // 存储格式：hd_ann_date 存 "YYYY-MM-DD"（新），兼容旧格式（纯数字）
   async function updateDays(){
-    let n=await lfGet(ANN.date); // now stores direct number
+    let val=await lfGet(ANN.date);
     let el=el_('hdAnnDaysNum');if(!el)return;
-    let num=parseInt(n);
-    el.textContent=(!isNaN(num)&&num>=0)?num:0;
+    if(!val){el.textContent=0;return;}
+    // 新格式：YYYY-MM-DD
+    if(typeof val==='string'&&val.match(/^\d{4}-\d{2}-\d{2}$/)){
+      let start=new Date(val);start.setHours(0,0,0,0);
+      let today=new Date();today.setHours(0,0,0,0);
+      let diff=Math.round((today-start)/(1000*60*60*24));
+      el.textContent=diff>=0?diff:0;
+    } else {
+      // 兼容旧格式（纯数字），直接显示
+      let num=parseInt(val);
+      el.textContent=(!isNaN(num)&&num>=0)?num:0;
+    }
   }
   updateDays();
 
@@ -6628,13 +6637,38 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
       let lbl=el_('hdAnnNameEl'),inp=el_('hdAnnNameEdit');
       inp.value=lbl.textContent;lbl.style.display='none';inp.style.display='block';inp.focus();inp.select();
     }else if(field==='days'){
-      let wrap=el_('hdAnnDaysWrap'),inp=el_('hdAnnDaysEdit');
-      wrap.style.display='none';inp.style.display='block';
-      lfGet(ANN.date).then(v=>{
-        let n=parseInt(v);
-        inp.value=(!isNaN(n)&&n>=0)?n:0;
-        inp.focus();inp.select();
+      // 弹出日期选择器，让用户设置在一起的起始日期
+      var wrap=el_('hdAnnDaysWrap');
+      // 创建临时日期输入
+      var tmpInp=document.createElement('input');
+      tmpInp.type='date';
+      tmpInp.style.cssText='position:fixed;opacity:0;top:50%;left:50%;z-index:9999;';
+      document.body.appendChild(tmpInp);
+      // 预填当前存的日期
+      lfGet(ANN.date).then(function(v){
+        if(v&&v.match&&v.match(/^\d{4}-\d{2}-\d{2}$/)){
+          tmpInp.value=v;
+        } else {
+          // 旧格式：尝试反推起始日期
+          var n=parseInt(v);
+          if(!isNaN(n)&&n>=0){
+            var d=new Date();d.setDate(d.getDate()-n);
+            tmpInp.value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+          }
+        }
+        tmpInp.focus();tmpInp.click();
       });
+      tmpInp.onchange=function(){
+        var v=this.value;// YYYY-MM-DD
+        if(v){
+          lfSet(ANN.date,v);
+          updateDays();
+        }
+        document.body.removeChild(tmpInp);
+      };
+      tmpInp.onblur=function(){
+        setTimeout(function(){if(document.body.contains(tmpInp))document.body.removeChild(tmpInp);},300);
+      };
     }else if(field==='botL'){
       let lbl=el_('hdAnnBotL'),inp=el_('hdAnnBotLEdit');
       inp.value=lbl.textContent;lbl.style.display='none';inp.style.display='block';inp.focus();inp.select();
@@ -6649,10 +6683,9 @@ $(`btnHomeApi`).onclick = () =>showScreen(`scrSetApi`);
       let t=inp.value.trim()||'在一起的';
       lbl.textContent=t;lbl.style.display='';inp.style.display='none';lfSet(ANN.name,t);
     }else if(field==='days'){
+      // date picker로 처리되므로 여기서는 wrap 복원만
       let wrap=el_('hdAnnDaysWrap'),inp=el_('hdAnnDaysEdit');
-      let n=parseInt(inp.value);
-      if(!isNaN(n)&&n>=0)lfSet(ANN.date,String(n));
-      wrap.style.display='';inp.style.display='none';updateDays();
+      if(wrap)wrap.style.display='';if(inp)inp.style.display='none';
     }else if(field==='botL'){
       let lbl=el_('hdAnnBotL'),inp=el_('hdAnnBotLEdit');
       let t=inp.value.trim()||'点击编辑';
@@ -24891,6 +24924,31 @@ async function hp2Init(){
 }
 
 setTimeout(hp2Init,300);
+
+// ★ 每天自动刷新纪念日天数和倒计时（防止整天不关页面导致不更新）
+(function autoRefreshDailyCounters(){
+  function refreshAll(){
+    // 刷新纪念日
+    if(typeof updateDays==='function')updateDays();
+    // 刷新倒计时
+    var cdEl=document.getElementById('hp2CdDate');
+    var dateStr=cdEl&&(cdEl.dataset.date||cdEl.textContent);
+    if(dateStr&&dateStr.match&&dateStr.match(/\d{4}-\d{2}-\d{2}/)){
+      var m=dateStr.match(/(\d{4})-(\d{2})-(\d{2})/);
+      if(m)hp2UpdateCd(m[1]+'-'+m[2]+'-'+m[3]);
+    }
+  }
+  // 计算到今天午夜的毫秒数
+  function msToMidnight(){
+    var now=new Date();
+    var midnight=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1);
+    return midnight-now;
+  }
+  function scheduleNext(){
+    setTimeout(function(){refreshAll();scheduleNext();},msToMidnight());
+  }
+  scheduleNext();
+})();
 
 })();
 </script>
