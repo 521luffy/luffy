@@ -530,7 +530,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         .hd-circle-hint{font-size:16px;color:rgba(100,160,200,0.7);pointer-events:none;}
 
         /* ══ 底部行 ══ */
-        #hdBotRow{display:flex;gap:8px;margin-top:0;margin-bottom:7px;flex-shrink:0;align-items:stretch;}
+        #hdBotRow{display:flex;gap:8px;margin-top:10px;margin-bottom:7px;flex-shrink:0;align-items:stretch;}
         #hdApps{flex:0 0 47%;display:grid;grid-template-columns:1fr 1fr;gap:7px;box-sizing:border-box;}
 
         /* 底部右侧自定义图 */
@@ -544,22 +544,23 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
         #hdBotImg img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;}
         #hdBotImgHint{font-size:22px;color:rgba(100,160,200,0.6);pointer-events:none;}
         .hd-app{
-          background:white;border-radius:14px;display:flex;flex-direction:column;
-          align-items:center;overflow:hidden;
-          box-shadow:0 2px 7px rgba(0,0,0,.07);cursor:pointer;gap:0;
-          padding:0 0 5px;-webkit-tap-highlight-color:transparent;transition:transform .1s;
+          display:flex;flex-direction:column;
+          align-items:center;cursor:pointer;gap:4px;
+          padding:0;-webkit-tap-highlight-color:transparent;transition:transform .1s;
         }
         .hd-app:active{transform:scale(.95);}
         .hd-app-icon{
-          width:100%;flex:1;min-height:42px;position:relative;
+          width:100%;aspect-ratio:1;min-height:42px;position:relative;
           display:flex;align-items:center;justify-content:center;
           font-size:22px;line-height:1;overflow:hidden;
+          background:white;border-radius:14px;
+          box-shadow:0 2px 7px rgba(0,0,0,.07);
         }
         .hd-app-icon img{
           position:absolute;inset:0;width:100%;height:100%;
-          object-fit:cover;border-radius:14px 14px 0 0;
+          object-fit:cover;border-radius:14px;
         }
-        .hd-app-lbl{font-size:10px;color:#444;font-weight:500;margin-top:4px;text-align:center;}
+        .hd-app-lbl{font-size:10px;color:#fff;font-weight:600;margin-top:0;text-align:center;text-shadow:0 1px 3px rgba(0,0,0,0.5);}
 
         /* ══ Dock ══ */
         #hdDock{
