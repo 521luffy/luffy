@@ -8930,7 +8930,7 @@ window.uploadNpcAvatar = function(index, e) {
             let reader = new FileReader();
             reader.onload = res => {
                 let img = new Image();
-                img.onload = () => {
+                img.onload = async () => {
                     let canvas = document.createElement('canvas');
                     let ctx = canvas.getContext('2d');
                     let maxSize = 150; 
@@ -8951,10 +8951,11 @@ window.uploadNpcAvatar = function(index, e) {
                     ctx.drawImage(img, 0, 0, width, height);
                     let compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
                     let npcData = originalGetItem.call(ls, `npcList_` + currentChatId);
-                    let npcs = npcData ? JSON.parse(npcData) : [];
+                    if(!npcData){try{let lf=await localforage.getItem(`npcList_`+currentChatId);if(lf)npcData=typeof lf==='string'?lf:JSON.stringify(lf);}catch(e){}}
+                    let npcs = npcData ? (typeof npcData==='string'?JSON.parse(npcData):npcData) : [];
                     if(npcs[index]) {
                         npcs[index].avatar = compressedBase64;
-                        var _npcJson = JSON.stringify(npcs);
+                        let _npcJson = JSON.stringify(npcs);
                         try{originalSetItem.call(ls, `npcList_` + currentChatId, _npcJson);}catch(e){}
                         localforage.setItem(`npcList_` + currentChatId, _npcJson).catch(function(){});
                         renderNpcList();
