@@ -2588,8 +2588,8 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; d
 
                         <div class=section-card>
                 <div class=section-title style="color:#fd79a8;">角色设定💜</div>
-                <div class=input-group><label>对方人设</label><textarea id=cfgAiP class=textarea-field rows=3 placeholder=填写性格与身份></textarea></div>
-                <div class=input-group><label>我的人设</label><textarea id=cfgMyP class=textarea-field rows=2 placeholder=填写你的设定></textarea></div>
+                <div class=input-group><label>对方人设</label><textarea id=cfgAiP class=textarea-field rows=7 placeholder=填写性格与身份></textarea></div>
+                <div class=input-group><label>我的人设</label><textarea id=cfgMyP class=textarea-field rows=7 placeholder=填写你的设定></textarea></div>
                 <div class=input-group>
                   <label>上下文记忆条数</label>
                   <input type=number id=cfgCtx class=input-field value=100 min=2 max=9999>
@@ -6177,10 +6177,17 @@ window.syncStatusBarTpl = function() {
 setTimeout(initCustomTimeUI, 100);
 
 
-if(ls.getItem(`pxy`)) $(`apiPxy`).value = ls.getItem(`pxy`);
-if(ls.getItem(`key`)) $(`apiK`).value = ls.getItem(`key`);
-if(ls.getItem(`mod`)) $(`apiMod`).value = ls.getItem(`mod`);
-if(ls.getItem(`temp`)) { $(`apiTemp`).value = ls.getItem(`temp`); $(`tempVal`).innerText = ls.getItem(`temp`); }
+// ★ API设置加载：localStorage优先，找不到再从localforage读（防丢失）
+(async function loadApiSettings(){
+    let _pxy=ls.getItem(`pxy`)||await localforage.getItem(`pxy`).catch(()=>null)||``;
+    let _key=ls.getItem(`key`)||await localforage.getItem(`key`).catch(()=>null)||``;
+    let _mod=ls.getItem(`mod`)||await localforage.getItem(`mod`).catch(()=>null)||``;
+    let _temp=ls.getItem(`temp`)||await localforage.getItem(`temp`).catch(()=>null)||``;
+    if(_pxy) $(`apiPxy`).value=_pxy;
+    if(_key) $(`apiK`).value=_key;
+    if(_mod) $(`apiMod`).value=_mod;
+    if(_temp){ $(`apiTemp`).value=_temp; $(`tempVal`).innerText=_temp; }
+})();
 $(`apiTemp`).oninput = function() { $(`tempVal`).innerText = this.value; };
 
 if(ls.getItem(`cN`)) $(`cfgName`).value = ls.getItem(`cN`);
@@ -9014,9 +9021,18 @@ if (originalShowScreen_npc) {
 
 
 
-$(`btnSaveApi`).onclick = () =>{
-    ls.setItem(`pxy`, $(`apiPxy`).value); ls.setItem(`key`, $(`apiK`).value); 
-    ls.setItem(`mod`, $(`apiMod`).value); ls.setItem(`temp`, $(`apiTemp`).value);
+$(`btnSaveApi`).onclick = async () =>{
+    let _pxy=$(`apiPxy`).value, _key=$(`apiK`).value, _mod=$(`apiMod`).value, _temp=$(`apiTemp`).value;
+    // localStorage
+    ls.setItem(`pxy`, _pxy); ls.setItem(`key`, _key);
+    ls.setItem(`mod`, _mod); ls.setItem(`temp`, _temp);
+    // ★ 同时写入localforage，防止localStorage满了丢失配置
+    try {
+        await localforage.setItem(`pxy`, _pxy);
+        await localforage.setItem(`key`, _key);
+        await localforage.setItem(`mod`, _mod);
+        await localforage.setItem(`temp`, _temp);
+    } catch(e) {}
     alert(`网络已保存！`); showScreen(`scrHome`);
 };
 
