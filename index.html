@@ -16577,6 +16577,9 @@ ${uName}刚刚给你的动态写了评论，请以你的第一人称和性格自
                     let dat=await resp.json();
                     let cmtxt=(dat.choices?.[0]?.message?.content||``).trim()||`（评论失败）`;
                     post.comments.push({author:s.name,text:cmtxt,time:new Date().toLocaleString()});
+                    // ★ 评论的角色自动点赞（80%概率）
+                    if(!Array.isArray(post.likedNames)) post.likedNames=[];
+                    if(post.likedNames.indexOf(s.name)<0 && Math.random()<0.8) post.likedNames.push(s.name);
                     await saveMoments(); renderMoments();
                 }catch(err){}
                 await new Promise(r=>setTimeout(r,200));
@@ -16663,6 +16666,9 @@ if($(`btnConfirmMomentPost`)) $(`btnConfirmMomentPost`).onclick = async () => {
             for(let s of summons) {
                 let cmtxt = await aiGenComment(newPost.id, s, null);
                 newPost.comments.push({author:s.name,text:cmtxt,time:new Date().toLocaleString()});
+                // ★ 评论的角色自动点赞（80%概率）
+                if(!Array.isArray(newPost.likedNames)) newPost.likedNames=[];
+                if(newPost.likedNames.indexOf(s.name)<0 && Math.random()<0.8) newPost.likedNames.push(s.name);
                 await saveMoments();
                 renderMoments();
             }
@@ -26620,7 +26626,7 @@ function renderTopicPosts(postList, bd){
     bd.appendChild(card);
   });
 }
-async function doSearch(q){if(!q)return;var feed=document.getElementById('fFeed');if(!feed)return;var local=_posts.filter(function(p){return p.content&&p.content.includes(q);});feed.innerHTML='<div style="padding:10px 14px;font-size:14px;font-weight:700;color:#536471;border-bottom:1px solid #eff3f4;">搜索：'+q+'</div>';if(local.length)local.forEach(function(p){feed.appendChild(buildCard(p,_posts.indexOf(p)));});var cfg=await fApi();if(!cfg)return;var s=getS();var pr='生成5条关于"'+q+'"的帖子，时间：'+s.dt+'\n输出JSON：[{"name":"网友名","type":"net","content":"60字内","board":"综合","likes":数字,"hot":false,"comments":[]}]\n只输出JSON数组。';try{var raw=await fCall(cfg,pr);var items=fJson(raw);var tstr=new Date().toISOString();items.forEach(function(item){var p={name:item.name,type:'net',ava:null,content:item.content,board:item.board||'综合',likes:item.likes||0,hot:false,time:tstr,comments:[]};feed.appendChild(buildCard(p,_posts.length));_posts.push(p);});fS('posts',_posts);}catch(e){}}
+async function doSearch(q){if(!q)return;var feed=document.getElementById('fFeed');if(!feed)return;var board=_curTab||'综合';var local=_posts.filter(function(p){return p.content&&p.content.includes(q);});feed.innerHTML='<div style="padding:10px 14px;font-size:14px;font-weight:700;color:#536471;border-bottom:1px solid #eff3f4;">搜索：'+q+' <span style="font-size:12px;color:#1d9bf0;">（'+board+'）</span></div>';if(local.length)local.forEach(function(p){feed.appendChild(buildCard(p,_posts.indexOf(p)));});var cfg=await fApi();if(!cfg)return;var s=getS();var boardCtx=(board==='推荐'||board==='热搜')?'':'帖子必须属于「'+board+'」板块，内容风格要贴合该板块。\n';var pr=boardCtx+'生成5条关于"'+q+'"的帖子，时间：'+s.dt+'\n每条正文100-200字，口语化，带#话题标签。\n【附件】每条正文末尾必须附加媒体标记：\n选项A：【图片描述：详细描述画面，至少40字】\n选项B：【分享音乐：歌名|歌手|专辑名】\n输出JSON：[{"name":"网友名","type":"net","content":"正文+媒体标记","board":"'+board+'","likes":数字,"hot":false,"comments":[]}]\n只输出JSON数组。';try{var raw=await fCall(cfg,pr);var items=fJson(raw);var tstr=new Date().toISOString();items.forEach(function(item){var p={name:item.name,type:'net',ava:null,content:item.content?item.content.slice(0,80):'',fullContent:item.content||'',board:item.board||board,likes:item.likes||0,hot:false,time:tstr,comments:[]};feed.appendChild(buildCard(p,_posts.length));_posts.push(p);});fS('posts',_posts);}catch(e){}}
 window.fDoSearch=doSearch;
 
 function newPost(){
@@ -26945,35 +26951,27 @@ function buildDMRow(name,ava,type,lastMsg){
 
   var row=ce('div');row.style.cssText='display:flex;align-items:center;gap:12px;padding:14px 16px;background:#fff;transition:transform 0.2s;position:relative;z-index:1;cursor:pointer;';
 
-  // ★ 左滑手势逻辑 + 点击兜底
-  var _sx=0,_swiped=false,_movedDist=0,_touchHandled=false;
-  row.addEventListener('touchstart',function(e){_sx=e.touches[0].clientX;_swiped=false;_movedDist=0;},{passive:true});
+  // ★ 左滑删除手势
+  var _sx=0,_sy=0,_swiped=false,_didSwipe=false;
+  row.addEventListener('touchstart',function(e){_sx=e.touches[0].clientX;_sy=e.touches[0].clientY;_didSwipe=false;},{passive:true});
   row.addEventListener('touchmove',function(e){
     var dx=e.touches[0].clientX-_sx;
-    _movedDist=Math.abs(dx);
-    if(dx<-10){e.preventDefault();var t=Math.max(-80,Math.min(0,dx));row.style.transform='translateX('+t+'px)';_swiped=(dx<-40);}
+    var dy=e.touches[0].clientY-_sy;
+    if(Math.abs(dx)>Math.abs(dy)&&dx<-10){
+      e.preventDefault();_didSwipe=true;
+      row.style.transform='translateX('+Math.max(-80,Math.min(0,dx))+'px)';
+      _swiped=(dx<-40);
+    }
   },{passive:false});
-  row.addEventListener('touchend',function(e){
-    _touchHandled=true;
-    setTimeout(function(){_touchHandled=false;},400);
-    if(_swiped){
-      row.style.transform='translateX(-80px)';
-    } else {
-      row.style.transform='translateX(0)';
-      // ★ 未左滑、且移动距离小于10px时，视为点击
-      if(_movedDist<10 && !e.target.closest('[data-del-bg]') && typeof wrap._onTap==='function'){
-        wrap._onTap();
-      }
-    }
+  row.addEventListener('touchend',function(){
+    if(_didSwipe){row.style.transform=_swiped?'translateX(-80px)':'translateX(0)';}
   });
-  // ★ click 兜底：PC端无touch事件时也能点击进入私信
-  row.addEventListener('click',function(e){
-    if(_touchHandled)return; // 移动端touch已处理，跳过click防重复
-    if(_swiped)return;
-    if(!e.target.closest('[data-del-bg]') && typeof wrap._onTap==='function'){
-      wrap._onTap();
-    }
-  });
+  // ★ 点击统一用 wrap.onclick，移动端和PC端都可靠
+  wrap.onclick=function(e){
+    if(e.target.closest('[data-del-bg]'))return;
+    if(_swiped){_swiped=false;row.style.transform='translateX(0)';return;}
+    if(typeof wrap._onTap==='function')wrap._onTap();
+  };
 
   // 删除按钮点击 — 自定义弹窗，不用浏览器 confirm
   delBg.onclick=function(e){
