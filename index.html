@@ -27126,10 +27126,10 @@ function openDMChat(name,ava,type,initialMsg){
         else{bub.style.cssText='display:flex;align-items:flex-end;gap:8px;';var lAv2=ce('div');lAv2.style.cssText='width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;overflow:hidden;background-size:cover;background-position:center;';setAva(lAv2,ava,name,type);var img2=ce('img');img2.src=msg.imgSrc;img2.style.cssText='max-width:180px;max-height:180px;border-radius:12px;border:1px solid #eff3f4;';bub.appendChild(lAv2);bub.appendChild(img2);}
         // 长按删除/多选
         (function(b,idx){
-          var _pt=null;
-          b.addEventListener('touchstart',function(){_pt=setTimeout(function(){if(_multiSelect){toggleMsgSelect(b);}else{showMsgMenu(b);}},600);});
-          b.addEventListener('touchend',function(){clearTimeout(_pt);});
-          b.addEventListener('touchmove',function(){clearTimeout(_pt);});
+          var _pt=null,_mv=false;
+          b.addEventListener('touchstart',function(){_mv=false;_pt=setTimeout(function(){_pt=null;if(!_multiSelect)showMsgMenu(b);},600);},{passive:true});
+          b.addEventListener('touchend',function(){if(_pt){clearTimeout(_pt);_pt=null;if(_multiSelect&&!_mv)toggleMsgSelect(b);}},{passive:true});
+          b.addEventListener('touchmove',function(){_mv=true;clearTimeout(_pt);_pt=null;},{passive:true});
         })(bub,i);
         ma.appendChild(bub);
       }
@@ -27149,10 +27149,10 @@ function openDMChat(name,ava,type,initialMsg){
           bub.appendChild(lAv3);bub.appendChild(lTxt);
         }
         (function(b,idx){
-          var _pt=null;
-          b.addEventListener('touchstart',function(){_pt=setTimeout(function(){if(_multiSelect){toggleMsgSelect(b);}else{showMsgMenu(b);}},600);});
-          b.addEventListener('touchend',function(){clearTimeout(_pt);});
-          b.addEventListener('touchmove',function(){clearTimeout(_pt);});
+          var _pt=null,_mv=false;
+          b.addEventListener('touchstart',function(){_mv=false;_pt=setTimeout(function(){_pt=null;if(!_multiSelect)showMsgMenu(b);},600);},{passive:true});
+          b.addEventListener('touchend',function(){if(_pt){clearTimeout(_pt);_pt=null;if(_multiSelect&&!_mv)toggleMsgSelect(b);}},{passive:true});
+          b.addEventListener('touchmove',function(){_mv=true;clearTimeout(_pt);_pt=null;},{passive:true});
         })(bub,i);
         ma.appendChild(bub);
       }
@@ -27176,11 +27176,10 @@ function openDMChat(name,ava,type,initialMsg){
     }
     // 长按删除/多选
     var _pressTimer=null;
-    bub.addEventListener('touchstart',function(){_pressTimer=setTimeout(function(){
-      if(_multiSelect){toggleMsgSelect(bub);}else{showMsgMenu(bub);}
-    },600);});
-    bub.addEventListener('touchend',function(){clearTimeout(_pressTimer);});
-    bub.addEventListener('touchmove',function(){clearTimeout(_pressTimer);});
+    var _mv2=false;
+    bub.addEventListener('touchstart',function(){_mv2=false;_pressTimer=setTimeout(function(){_pressTimer=null;if(!_multiSelect)showMsgMenu(bub);},600);},{passive:true});
+    bub.addEventListener('touchend',function(){if(_pressTimer){clearTimeout(_pressTimer);_pressTimer=null;if(_multiSelect&&!_mv2)toggleMsgSelect(bub);}},{passive:true});
+    bub.addEventListener('touchmove',function(){_mv2=true;clearTimeout(_pressTimer);_pressTimer=null;},{passive:true});
     ma.appendChild(bub);
     if(scroll!==false)ma.scrollTop=ma.scrollHeight;
   }
@@ -27251,7 +27250,7 @@ function openDMChat(name,ava,type,initialMsg){
       // ★ 修复：用 histIdx 过滤，而非 splice（避免索引漂移）
       if(!isNaN(idx)&&idx>=0){_chatHistory=_chatHistory.filter(function(_,i){return i!==idx;});}
       localforage.setItem('dmhist_'+chatKey,_chatHistory).catch(function(){});
-      bub.remove();menu.remove();toast('已删除');
+      renderHistory(_chatHistory);menu.remove();toast('已删除');
     };
     var multiItem=ce('div');multiItem.style.cssText='padding:14px 20px;font-size:15px;color:#1d9bf0;cursor:pointer;text-align:center;border-top:1px solid #eff3f4;';multiItem.textContent='多选删除';
     multiItem.onclick=function(){menu.remove();_multiSelect=true;multiSelectBtn.textContent='退出多选';multiBar.style.display='flex';multiCountEl.textContent='已选 0 条';toggleMsgSelect(bub);};
