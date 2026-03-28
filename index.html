@@ -6186,10 +6186,11 @@ setTimeout(initCustomTimeUI, 100);
     let _temp=await localforage.getItem(`temp`).catch(()=>null)||ls.getItem(`temp`)||``;
     if(_pxy) $(`apiPxy`).value=_pxy;
     if(_key) $(`apiK`).value=_key;
-    if(_mod) $(`apiMod`).value=_mod;
+    // ★ 每次打开设置页，强制切回文本框模式，显示真正保存的模型，防止 select 残留误导
+    $(`apiModSel`).style.display=`none`;
+    $(`apiMod`).style.display=``;
+    $(`apiMod`).value=_mod||``;
     if(_temp){ $(`apiTemp`).value=_temp; $(`tempVal`).innerText=_temp; }
-    // ★ 不在此处写回 localStorage，避免"打开设置页"本身触发意外保存
-    // 保存动作只在用户点击"保存网络配置"时执行
 })();
 $(`apiTemp`).oninput = function() { $(`tempVal`).innerText = this.value; };
 
@@ -26881,11 +26882,8 @@ function renderDM(){
           var chatKey='dmChat_'+s.name.replace(/[^\w\u4e00-\u9fa5]/g,'_');
           // 先用原始lastMsg渲染，再异步更新
           var row=buildDMRow(s.name,s.ava||'',s.type||'net',s.lastMsg||'');
-          row.onclick=function(e){
-            // 如果点的是删除背景区域就不处理
-            if(e.target.closest&&e.target.closest('[data-del-bg]'))return;
-            openDMChat(s.name,s.ava||'',s.type||'net',s.lastMsg||'');
-          };
+          // ★ 用 _onTap 而非 onclick，避免移动端 touchmove preventDefault 取消 click
+          row._onTap=function(){openDMChat(s.name,s.ava||'',s.type||'net',s.lastMsg||'');};
           dmContent.appendChild(row);
         });
       }
@@ -26899,10 +26897,7 @@ function renderDM(){
         chars.forEach(function(c){
           var ov3=_charOverrides&&_charOverrides[c.name]||{};
           var row=buildDMRow(c.name,c.ava||ov3.ava||'',c.type||'char',c.greeting||'');
-          row.onclick=function(e){
-            if(e.target.closest&&e.target.closest('[data-del-bg]'))return;
-            openDMChat(c.name,c.ava||ov3.ava||'',c.type||'char');
-          };
+          row._onTap=function(){openDMChat(c.name,c.ava||ov3.ava||'',c.type||'char');};
           dmContent.appendChild(row);
         });
       }
@@ -26932,18 +26927,26 @@ function buildDMRow(name,ava,type,lastMsg){
   delBg.innerHTML='<span style="color:#fff;font-size:13px;font-weight:700;">删除</span>';
 
   var row=ce('div');row.style.cssText='display:flex;align-items:center;gap:12px;padding:14px 16px;background:#fff;transition:transform 0.2s;position:relative;z-index:1;';
-  // ★ 不在这里设 onclick，由 showDMTab 外部统一设置，避免双重触发
+  // ★ 不在这里设 onclick，改用 touchend 事件，避免 touchmove preventDefault 取消 click 合成事件
 
   // ★ 左滑手势逻辑
-  var _sx=0,_swiped=false;
-  row.addEventListener('touchstart',function(e){_sx=e.touches[0].clientX;_swiped=false;},{passive:true});
+  var _sx=0,_swiped=false,_moved=false;
+  row.addEventListener('touchstart',function(e){_sx=e.touches[0].clientX;_swiped=false;_moved=false;},{passive:true});
   row.addEventListener('touchmove',function(e){
     var dx=e.touches[0].clientX-_sx;
+    _moved=true;
     if(dx<-10){e.preventDefault();var t=Math.max(-80,Math.min(0,dx));row.style.transform='translateX('+t+'px)';_swiped=(dx<-40);}
   },{passive:false});
-  row.addEventListener('touchend',function(){
-    if(_swiped){row.style.transform='translateX(-80px)';}
-    else{row.style.transform='translateX(0)';}
+  row.addEventListener('touchend',function(e){
+    if(_swiped){
+      row.style.transform='translateX(-80px)';
+    } else {
+      row.style.transform='translateX(0)';
+      // ★ 未左滑时，视为点击——通过 wrap._onTap 回调触发导航
+      if(!e.target.closest('[data-del-bg]') && typeof wrap._onTap==='function'){
+        wrap._onTap();
+      }
+    }
   });
 
   // 删除按钮点击 — 自定义弹窗，不用浏览器 confirm
