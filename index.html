@@ -14125,7 +14125,7 @@ if($(`btnSpyWechatAdvance`)) $(`btnSpyWechatAdvance`).onclick = () => {
     generateSpyWechat(true);
 };
 
-function renderSpyWechat() {
+async function renderSpyWechat() {
     let list = $(`spyWechatList`);
     list.innerHTML = ``;
     let unreadCount = spyWechatData.filter(i => !i.isRead).length;
@@ -14134,13 +14134,15 @@ function renderSpyWechat() {
         $(`spyWcCount`).innerText = ``;
         return;
     }
+    // NPC读取移到forEach外部，避免在回调里用await
+    let _npcData = originalGetItem.call(ls, `npcList_` + currentChatId);
+    if(!_npcData){try{let lf=await localforage.getItem(`npcList_`+currentChatId);if(lf)_npcData=typeof lf===`string`?lf:JSON.stringify(lf);}catch(e){}}
+    let _npcs = _npcData ? (typeof _npcData===`string`?JSON.parse(_npcData):_npcData) : [];
     spyWechatData.forEach((item, idx) => {
         let div = document.createElement(`div`);
         div.className = `spy-wc-item`;
         let avatarHtml = `👤`;
-        let npcData = originalGetItem.call(ls, `npcList_` + currentChatId);
-        let npcs = npcData ? JSON.parse(npcData) : [];
-        let matchedNpc = npcs.find(n => n.name === item.name);
+        let matchedNpc = _npcs.find(n => n.name === item.name);
         if(matchedNpc && matchedNpc.avatar) {
             avatarHtml = `<img src="${matchedNpc.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">`;
         }
@@ -14251,7 +14253,8 @@ try {
     if(recentChat) pmt += `【以下是${charN}刚才经历的真实对话记录，务必结合这些最新发生的事情来生成微信聊天，侧面反映TA刚才的经历或当下的心情，但生成的微信内绝对不能出现我（${myN}）】：\n${recentChat}\n\n`;
 
     let npcData = originalGetItem.call(ls, `npcList_` + charId);
-    let npcs = npcData ? JSON.parse(npcData) : [];
+    if(!npcData){try{let lf=await localforage.getItem(`npcList_`+charId);if(lf)npcData=typeof lf===`string`?lf:JSON.stringify(lf);}catch(e){}}
+    let npcs = npcData ? (typeof npcData===`string`?JSON.parse(npcData):npcData) : [];
     pmt += `要求：\n1. 结合以上设定和最新剧情，生成合理且真实的社交联系人。必须优先从以下设定的核心社交圈挑选互动对象（必须用以下身份和名字）：\n`;
     npcs.forEach(n => {
         if(n.name) pmt += `姓名：${n.name}，详情：${n.desc || '暂无'}\n`;
@@ -14420,7 +14423,8 @@ try {
     if(recentChat) pmt += `\n【近期聊天剧情参考（重点挖掘TA刚才可能在和谁通电话，或者是否有因为在忙某事而产生的未接来电）：\n${recentChat}\n`;
     
     let npcData = originalGetItem.call(ls, `npcList_` + charId);
-    let npcs = npcData ? JSON.parse(npcData) : [];
+    if(!npcData){try{let lf=await localforage.getItem(`npcList_`+charId);if(lf)npcData=typeof lf===`string`?lf:JSON.stringify(lf);}catch(e){}}
+    let npcs = npcData ? (typeof npcData===`string`?JSON.parse(npcData):npcData) : [];
     pmt += `\n要求：\n1. 结合人物设定和最新剧情，生成合理来电人员。可以从以下核心社交圈挑选，严禁出现方煜这个名字：\n`;
     npcs.forEach(n => { if(n.name) pmt += `姓名：${n.name}，详情：${n.desc || '暂无'}\n`; });
     pmt += `2. 必须穿插至少1到2个骚扰电话（如房产中介、保险理财）或生活服务电话（如外卖快递、10086）。如果近期剧情里涉及看病、住酒店或收快递，也可直接体现。\n`;
