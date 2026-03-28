@@ -8954,7 +8954,9 @@ window.uploadNpcAvatar = function(index, e) {
                     let npcs = npcData ? JSON.parse(npcData) : [];
                     if(npcs[index]) {
                         npcs[index].avatar = compressedBase64;
-                        originalSetItem.call(ls, `npcList_` + currentChatId, JSON.stringify(npcs));
+                        var _npcJson = JSON.stringify(npcs);
+                        try{originalSetItem.call(ls, `npcList_` + currentChatId, _npcJson);}catch(e){}
+                        localforage.setItem(`npcList_` + currentChatId, _npcJson).catch(function(){});
                         renderNpcList();
                     }
                 };
@@ -27217,7 +27219,7 @@ function openDMChat(name,ava,type,initialMsg){
       b.remove();
     });
     _chatHistory=_chatHistory.filter(function(_,i){return !idxSet.has(i);});
-    localforage.setItem('dmhist_'+chatKey,_chatHistory).catch(function(){});
+    (function(h){localforage.setItem('dmhist_'+chatKey,h).catch(function(){});localforage.setItem('f_'+chatKey,h).catch(function(){});}(_chatHistory.slice()));
     _selectedBubs=[];
     exitMultiSelect();
     toast('已删除 '+idxSet.size+' 条消息');
@@ -27249,7 +27251,7 @@ function openDMChat(name,ava,type,initialMsg){
     delItem.onclick=function(){
       // ★ 修复：用 histIdx 过滤，而非 splice（避免索引漂移）
       if(!isNaN(idx)&&idx>=0){_chatHistory=_chatHistory.filter(function(_,i){return i!==idx;});}
-      localforage.setItem('dmhist_'+chatKey,_chatHistory).catch(function(){});
+      (function(h){localforage.setItem('dmhist_'+chatKey,h).catch(function(){});localforage.setItem('f_'+chatKey,h).catch(function(){});}(_chatHistory.slice()));
       renderHistory(_chatHistory);menu.remove();toast('已删除');
     };
     var multiItem=ce('div');multiItem.style.cssText='padding:14px 20px;font-size:15px;color:#1d9bf0;cursor:pointer;text-align:center;border-top:1px solid #eff3f4;';multiItem.textContent='多选删除';
@@ -27427,12 +27429,12 @@ function openDMChat(name,ava,type,initialMsg){
   (async function loadHistory(){
     var hist=null;
     try{hist=await localforage.getItem('dmhist_'+chatKey);}catch(e){}
-    // 兼容旧数据（fL存的key）
-    if(!Array.isArray(hist)||!hist.length){
+    // 兼容旧数据（fL存的key）—— 只有 null/undefined 时才 fallback，空数组[]代表已清空不 fallback
+    if(hist===null||hist===undefined||!Array.isArray(hist)){
       try{
         var old=await localforage.getItem('f_'+chatKey);
         if(typeof old==='string'){try{old=JSON.parse(old);}catch(e){old=null;}}
-        if(Array.isArray(old)&&old.length)hist=old;
+        if(Array.isArray(old))hist=old;
       }catch(e){}
     }
     if(Array.isArray(hist)&&hist.length){
