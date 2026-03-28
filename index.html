@@ -6188,11 +6188,8 @@ setTimeout(initCustomTimeUI, 100);
     if(_key) $(`apiK`).value=_key;
     if(_mod) $(`apiMod`).value=_mod;
     if(_temp){ $(`apiTemp`).value=_temp; $(`tempVal`).innerText=_temp; }
-    // ★ 同步保存到 localStorage，保持两边一致
-    if(_pxy) ls.setItem(`pxy`,_pxy);
-    if(_key) ls.setItem(`key`,_key);
-    if(_mod) ls.setItem(`mod`,_mod);
-    if(_temp) ls.setItem(`temp`,_temp);
+    // ★ 不在此处写回 localStorage，避免"打开设置页"本身触发意外保存
+    // 保存动作只在用户点击"保存网络配置"时执行
 })();
 $(`apiTemp`).oninput = function() { $(`tempVal`).innerText = this.value; };
 
@@ -9254,9 +9251,7 @@ $(`btnPull`).onclick = async () =>{
             $(`apiModSel`).style.display=`block`; $(`apiMod`).style.display=`none`;
             $(`apiModSel`).onchange = function(){
                 $(`apiMod`).value = this.value;
-                // ★ 下拉选择模型时立即自动保存，防止退出页面后模型丢失
-                ls.setItem(`mod`, this.value);
-                localforage.setItem(`mod`, this.value).catch(function(){});
+                // 只同步到输入框，不自动保存——用户须手动点"保存网络配置"
             };
             $(`apiMod`).value = d.data[0].id; alert(`拉取成功，请在下拉框选择。`);
         } else alert(`拉取失败：未获取到列表。`);
@@ -26886,7 +26881,11 @@ function renderDM(){
           var chatKey='dmChat_'+s.name.replace(/[^\w\u4e00-\u9fa5]/g,'_');
           // 先用原始lastMsg渲染，再异步更新
           var row=buildDMRow(s.name,s.ava||'',s.type||'net',s.lastMsg||'');
-          row.onclick=function(){openDMChat(s.name,s.ava||'',s.type||'net',s.lastMsg||'');};
+          row.onclick=function(e){
+            // 如果点的是删除背景区域就不处理
+            if(e.target.closest&&e.target.closest('[data-del-bg]'))return;
+            openDMChat(s.name,s.ava||'',s.type||'net',s.lastMsg||'');
+          };
           dmContent.appendChild(row);
         });
       }
@@ -26900,7 +26899,10 @@ function renderDM(){
         chars.forEach(function(c){
           var ov3=_charOverrides&&_charOverrides[c.name]||{};
           var row=buildDMRow(c.name,c.ava||ov3.ava||'',c.type||'char',c.greeting||'');
-          row.onclick=function(){openDMChat(c.name,c.ava||ov3.ava||'',c.type||'char');};
+          row.onclick=function(e){
+            if(e.target.closest&&e.target.closest('[data-del-bg]'))return;
+            openDMChat(c.name,c.ava||ov3.ava||'',c.type||'char');
+          };
           dmContent.appendChild(row);
         });
       }
@@ -26926,11 +26928,11 @@ function buildDMRow(name,ava,type,lastMsg){
   // ★ 左滑删除：外层容器
   var wrap=ce('div');wrap.style.cssText='position:relative;overflow:hidden;border-bottom:1px solid #eff3f4;';
   // 删除按钮（背景）
-  var delBg=ce('div');delBg.style.cssText='position:absolute;right:0;top:0;height:100%;width:80px;background:#ff3b30;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;';
+  var delBg=ce('div');delBg.dataset.delBg='1';delBg.style.cssText='position:absolute;right:0;top:0;height:100%;width:80px;background:#ff3b30;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;';
   delBg.innerHTML='<span style="color:#fff;font-size:13px;font-weight:700;">删除</span>';
 
   var row=ce('div');row.style.cssText='display:flex;align-items:center;gap:12px;padding:14px 16px;background:#fff;transition:transform 0.2s;position:relative;z-index:1;';
-  row.onclick=function(){openDMChat(name,ava,type);};
+  // ★ 不在这里设 onclick，由 showDMTab 外部统一设置，避免双重触发
 
   // ★ 左滑手势逻辑
   var _sx=0,_swiped=false;
@@ -26944,21 +26946,32 @@ function buildDMRow(name,ava,type,lastMsg){
     else{row.style.transform='translateX(0)';}
   });
 
-  // 删除按钮点击
+  // 删除按钮点击 — 自定义弹窗，不用浏览器 confirm
   delBg.onclick=function(e){
     e.stopPropagation();
-    if(confirm('删除与「'+name+'」的对话？')){
-      // 从对应数组移除
-      var idx=-1;
+    // 先收起滑动状态
+    row.style.transform='translateX(0)';_swiped=false;
+    // 自定义确认弹窗
+    var ov=ce('div');ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;';
+    var box=ce('div');box.style.cssText='background:#fff;border-radius:16px;padding:20px 20px 14px;width:78vw;max-width:300px;text-align:center;';
+    var ttl=ce('div');ttl.style.cssText='font-size:15px;font-weight:700;color:#0f1419;margin-bottom:8px;';ttl.textContent='删除对话';
+    var desc=ce('div');desc.style.cssText='font-size:13px;color:#536471;margin-bottom:18px;line-height:1.5;';desc.textContent='删除与「'+name+'」的对话及聊天记录？';
+    var btns=ce('div');btns.style.cssText='display:flex;gap:10px;';
+    var canBtn=ce('button');canBtn.style.cssText='flex:1;padding:10px;border:1.5px solid #cfd9de;border-radius:24px;background:#fff;font-size:14px;cursor:pointer;color:#536471;';canBtn.textContent='取消';
+    var okBtn=ce('button');okBtn.style.cssText='flex:1;padding:10px;background:#ff3b30;color:#fff;border:none;border-radius:24px;font-size:14px;cursor:pointer;font-weight:700;';okBtn.textContent='删除';
+    canBtn.onclick=function(){ov.remove();};
+    okBtn.onclick=function(){
+      ov.remove();
       var isStranger=(type==='net'||type==='stranger');
-      if(isStranger){idx=_strangerDMs.findIndex(function(s){return s.name===name;});if(idx>=0)_strangerDMs.splice(idx,1);fS('strangerDMs',_strangerDMs);}
-      // 清除聊天记录
+      if(isStranger){var si=_strangerDMs.findIndex(function(s){return s.name===name;});if(si>=0)_strangerDMs.splice(si,1);fS('strangerDMs',_strangerDMs);}
       var chatKey='dmChat_'+name.replace(/[^\w\u4e00-\u9fa5]/g,'_');
       localforage.removeItem('dmhist_'+chatKey).catch(function(){});
       localforage.removeItem('f_'+chatKey).catch(function(){});
       wrap.remove();
       toast('已删除');
-    }
+    };
+    btns.appendChild(canBtn);btns.appendChild(okBtn);box.appendChild(ttl);box.appendChild(desc);box.appendChild(btns);ov.appendChild(box);document.body.appendChild(ov);
+    ov.onclick=function(ev){if(ev.target===ov)ov.remove();};
   };
 
   wrap.appendChild(delBg);
