@@ -10077,7 +10077,8 @@ $(`btnLemon`).onclick = async () =>{
     } catch(e) {}
 
     let npcData = originalGetItem.call(ls, `npcList_` + currentChatId);
-    let npcs = npcData ? JSON.parse(npcData) : [];
+    if(!npcData){try{let lf=await localforage.getItem(`npcList_`+currentChatId);if(lf)npcData=typeof lf===`string`?lf:JSON.stringify(lf);}catch(e){}}
+    let npcs = npcData ? (typeof npcData===`string`?JSON.parse(npcData):npcData) : [];
     let npcCtx = npcs.length > 0 ? `\n【关联人物档案】\n` : ``;
     npcs.forEach(n => {
         if(n.name) npcCtx += `姓名：${n.name}\n详情：${n.desc || '暂无'}\n`;
